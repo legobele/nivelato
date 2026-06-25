@@ -475,10 +475,20 @@ let currentUser;
     html += row('Ubicación', job.location || '—');
     html += sec('Hueco (Abertura)');
     if (job.hueco) {
-      html += row('Ancho superior', (job.hueco.anchoTop||job.hueco.anchoSuperior) ? (job.hueco.anchoTop||job.hueco.anchoSuperior) + '"' : (job.hueco.ancho ? job.hueco.ancho + '"' : '—'));
+      // Compute dimensions from desniveles if stored computed values are missing
+      var _pIv = extractValue(job.desniveles && job.desniveles.paredIzq);
+      var _pDv = extractValue(job.desniveles && job.desniveles.paredDer);
+      var _tcv = extractValue(job.desniveles && job.desniveles.techo);
+      var _psv = extractValue(job.desniveles && job.desniveles.piso);
+      var _anchoBot = (job.hueco.anchoBot || job.hueco.anchoAbajo || job.hueco.anchoBottom || job.hueco.ancho || 0);
+      var _altoIzq = (job.hueco.altoIzq || job.hueco.altoIzquierda || job.hueco.alto || 0);
+      var _computedAnchoTop = _anchoBot > 0 ? _anchoBot - _pIv - _pDv : 0;
+      var _computedAltoDer = _altoIzq > 0 ? _altoIzq - _tcv - _psv : 0;
+
+      html += row('Ancho superior', (job.hueco.anchoTop || job.hueco.anchoSuperior || _computedAnchoTop) ? (job.hueco.anchoTop || job.hueco.anchoSuperior || _computedAnchoTop) + '"' : '—');
       html += row('Ancho inferior', (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) ? (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) + '"' : '—');
       html += row('Alto izquierdo', (job.hueco.altoIzq||job.hueco.altoIzquierda) ? (job.hueco.altoIzq||job.hueco.altoIzquierda) + '"' : (job.hueco.alto ? job.hueco.alto + '"' : '—'));
-      html += row('Alto derecho',   (job.hueco.altoDer||job.hueco.altoDerecha) ? (job.hueco.altoDer||job.hueco.altoDerecha) + '"' : '—');
+      html += row('Alto derecho',   (job.hueco.altoDer || job.hueco.altoDerecha || _computedAltoDer) ? (job.hueco.altoDer || job.hueco.altoDerecha || _computedAltoDer) + '"' : '—');
     } else { html += row('Hueco', '—'); }
     html += sec('Desniveles');
     html += row('Pared Izq.', job.desniveles?.paredIzq || '—');
