@@ -76,36 +76,42 @@ window.embedGraph = function(cvs, data) {
   var anchoBot = data.anchoBot || 36, altoIzq = data.altoIzq || 84;
   var anchoTop = anchoBot - pIv - pDv, altoDer = altoIzq - tcv - psv;
   if (anchoBot > 0) {
+    var byOff = 24;
     dctx.strokeStyle = '#adb5bd'; dctx.lineWidth = 1; dctx.setLineDash([3,3]);
-    dctx.beginPath(); dctx.moveTo(roughBL.x, roughBL.y + 40); dctx.lineTo(roughBR.x, roughBR.y + 40); dctx.stroke(); dctx.setLineDash([]);
-    dctx.beginPath(); dctx.moveTo(roughBL.x, roughBL.y + 40 - 6); dctx.lineTo(roughBL.x, roughBL.y + 40 + 6); dctx.stroke();
-    dctx.beginPath(); dctx.moveTo(roughBR.x, roughBR.y + 40 - 6); dctx.lineTo(roughBR.x, roughBR.y + 40 + 6); dctx.stroke();
-    dctx.fillStyle = '#495057'; dctx.font = 'bold 12px Inter, system-ui, sans-serif'; dctx.textAlign = 'center'; dctx.textBaseline = 'bottom';
-    dctx.fillText(anchoBot + '"', (roughBL.x + roughBR.x) / 2, roughBR.y + 40 - 2);
+    dctx.beginPath(); dctx.moveTo(roughBL.x, roughBL.y + byOff); dctx.lineTo(roughBR.x, roughBR.y + byOff); dctx.stroke(); dctx.setLineDash([]);
+    dctx.beginPath(); dctx.moveTo(roughBL.x, roughBL.y + byOff - 6); dctx.lineTo(roughBL.x, roughBL.y + byOff + 6); dctx.stroke();
+    dctx.beginPath(); dctx.moveTo(roughBR.x, roughBR.y + byOff - 6); dctx.lineTo(roughBR.x, roughBR.y + byOff + 6); dctx.stroke();
+    dctx.fillStyle = '#495057'; dctx.font = 'bold 12px Inter, system-ui, sans-serif'; dctx.textAlign = 'center'; dctx.textBaseline = 'top';
+    dctx.fillText(anchoBot + '"', (roughBL.x + roughBR.x) / 2, Math.max(roughBL.y, roughBR.y) + byOff + 10);
   }
   if (anchoBot > 0) {
+    var tyOff = 24;
     dctx.strokeStyle = '#adb5bd'; dctx.lineWidth = 1; dctx.setLineDash([3,3]);
-    dctx.beginPath(); dctx.moveTo(roughTL.x, roughTL.y - 24); dctx.lineTo(roughTR.x, roughTR.y - 24); dctx.stroke(); dctx.setLineDash([]);
-    dctx.beginPath(); dctx.moveTo(roughTL.x, roughTL.y - 24 - 6); dctx.lineTo(roughTL.x, roughTL.y - 24 + 6); dctx.stroke();
-    dctx.beginPath(); dctx.moveTo(roughTR.x, roughTR.y - 24 - 6); dctx.lineTo(roughTR.x, roughTR.y - 24 + 6); dctx.stroke();
+    dctx.beginPath(); dctx.moveTo(roughTL.x, roughTL.y - tyOff); dctx.lineTo(roughTR.x, roughTR.y - tyOff); dctx.stroke(); dctx.setLineDash([]);
+    dctx.beginPath(); dctx.moveTo(roughTL.x, roughTL.y - tyOff - 6); dctx.lineTo(roughTL.x, roughTL.y - tyOff + 6); dctx.stroke();
+    dctx.beginPath(); dctx.moveTo(roughTR.x, roughTR.y - tyOff - 6); dctx.lineTo(roughTR.x, roughTR.y - tyOff + 6); dctx.stroke();
     dctx.fillStyle = '#495057'; dctx.font = 'bold 12px Inter, system-ui, sans-serif'; dctx.textAlign = 'center'; dctx.textBaseline = 'bottom';
-    dctx.fillText(anchoTop + '"', (roughTL.x + roughTR.x) / 2, roughTR.y - 24 - 2);
+    dctx.fillText(anchoTop + '"', (roughTL.x + roughTR.x) / 2, Math.min(roughTL.y, roughTR.y) - tyOff - 10);
   }
   if (altoIzq > 0) {
+    var lxOff = 24;
+    var lyMid = (roughTL.y + roughBL.y) / 2;
     dctx.strokeStyle = '#adb5bd'; dctx.lineWidth = 1; dctx.setLineDash([3,3]);
-    dctx.beginPath(); dctx.moveTo(roughTL.x - 24, roughTL.y); dctx.lineTo(roughBL.x - 24, roughBL.y); dctx.stroke(); dctx.setLineDash([]);
-    dctx.beginPath(); dctx.moveTo(roughTL.x - 24 - 6, roughTL.y - 6); dctx.lineTo(roughTL.x - 24 + 6, roughTL.y + 6); dctx.stroke();
-    dctx.beginPath(); dctx.moveTo(roughBL.x - 24 - 6, roughBL.y - 6); dctx.lineTo(roughBL.x - 24 + 6, roughBL.y + 6); dctx.stroke();
-    dctx.fillStyle = '#495057'; dctx.font = 'bold 12px Inter, system-ui, sans-serif'; dctx.textAlign = 'center'; dctx.textBaseline = 'bottom';
-    dctx.fillText(altoIzq + '"', (roughTL.x + roughBL.x) / 2 - 24, roughBL.y - 2);
+    dctx.beginPath(); dctx.moveTo(roughTL.x - lxOff, roughTL.y); dctx.lineTo(roughBL.x - lxOff, roughBL.y); dctx.stroke(); dctx.setLineDash([]);
+    dctx.beginPath(); dctx.moveTo(roughTL.x - lxOff - 6, roughTL.y - 6); dctx.lineTo(roughTL.x - lxOff + 6, roughTL.y + 6); dctx.stroke();
+    dctx.beginPath(); dctx.moveTo(roughBL.x - lxOff - 6, roughBL.y - 6); dctx.lineTo(roughBL.x - lxOff + 6, roughBL.y + 6); dctx.stroke();
+    dctx.fillStyle = '#495057'; dctx.font = 'bold 12px Inter, system-ui, sans-serif'; dctx.textAlign = 'right'; dctx.textBaseline = 'middle';
+    dctx.fillText(altoIzq + '"', Math.min(roughTL.x, roughBL.x) - lxOff - 10, lyMid);
   }
   if (altoIzq > 0) {
+    var rxOff = 24;
+    var ryMid = (roughTR.y + roughBR.y) / 2;
     dctx.strokeStyle = '#adb5bd'; dctx.lineWidth = 1; dctx.setLineDash([3,3]);
-    dctx.beginPath(); dctx.moveTo(roughTR.x + 24, roughTR.y); dctx.lineTo(roughBR.x + 24, roughBR.y); dctx.stroke(); dctx.setLineDash([]);
-    dctx.beginPath(); dctx.moveTo(roughTR.x + 24 - 6, roughTR.y - 6); dctx.lineTo(roughTR.x + 24 + 6, roughTR.y + 6); dctx.stroke();
-    dctx.beginPath(); dctx.moveTo(roughBR.x + 24 - 6, roughBR.y - 6); dctx.lineTo(roughBR.x + 24 + 6, roughBR.y + 6); dctx.stroke();
-    dctx.fillStyle = '#495057'; dctx.font = 'bold 12px Inter, system-ui, sans-serif'; dctx.textAlign = 'center'; dctx.textBaseline = 'bottom';
-    dctx.fillText(altoDer + '"', (roughTR.x + roughBR.x) / 2 + 24, roughBR.y - 2);
+    dctx.beginPath(); dctx.moveTo(roughTR.x + rxOff, roughTR.y); dctx.lineTo(roughBR.x + rxOff, roughBR.y); dctx.stroke(); dctx.setLineDash([]);
+    dctx.beginPath(); dctx.moveTo(roughTR.x + rxOff - 6, roughTR.y - 6); dctx.lineTo(roughTR.x + rxOff + 6, roughTR.y + 6); dctx.stroke();
+    dctx.beginPath(); dctx.moveTo(roughBR.x + rxOff - 6, roughBR.y - 6); dctx.lineTo(roughBR.x + rxOff + 6, roughBR.y + 6); dctx.stroke();
+    dctx.fillStyle = '#495057'; dctx.font = 'bold 12px Inter, system-ui, sans-serif'; dctx.textAlign = 'left'; dctx.textBaseline = 'middle';
+    dctx.fillText(altoDer + '"', Math.max(roughTR.x, roughBR.x) + rxOff + 10, ryMid);
   }
   dctx.restore();
 };
