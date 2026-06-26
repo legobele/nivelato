@@ -2,11 +2,11 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Nivelato — Dashboard</title>
-<script>console.log('nivelato v1.0.0 — commit ad8af28')</script>
-<script type="module" src="firebase-config.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>console.log('nivelato v1.1.0 — mobile dashboard')</script>
+  <script type="module" src="firebase-config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="dashboard.css" />
 </head>
 <body>
@@ -17,7 +17,12 @@
   <div class="header-right">
     <div class="org-badge" id="org-name-badge">…</div>
     <button id="btn-new-measure" onclick="window.location.href='index.html'" style="display:none;background:#1971c2;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Nueva medida</button>
-    <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
+    <div class="account-menu-wrap">
+      <button class="account-btn" id="account-btn" onclick="toggleAccountMenu()">👤 <span id="user-name">Cargando…</span></button>
+      <div class="account-dropdown" id="account-dropdown">
+        <div class="account-dropdown-item" onclick="doLogout()">🔒 Cerrar sesión</div>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -32,27 +37,23 @@
   </div>
 
   <div class="stats-row">
-    <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Medidas totales</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-today">—</div><div class="stat-label">Hoy</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-warn">—</div><div class="stat-label">Con advertencias</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-today">0</div><div class="stat-label">Hoy</div></div>
+    <div class="stat-box"><div class="stat-num" id="stat-warn">0</div><div class="stat-label">Advertencias</div></div>
   </div>
 
-  <div class="filter-row">
-    <input type="date" id="filter-date" onchange="applyFilters()" />
-    <select id="filter-installer" onchange="applyFilters()">
-      <option value="">Todos los técnicos</option>
-    </select>
-    <select id="filter-customer" onchange="applyFilters()">
-      <option value="">Todos los clientes</option>
-    </select>
+  <div class="filter-bar">
+    <button class="filter-chip" id="filter-date-chip" onclick="openFilterSheet('date')">📅 Fecha</button>
+    <button class="filter-chip" id="filter-installer-chip" onclick="openFilterSheet('installer')">👤 Técnico</button>
+    <button class="filter-chip" id="filter-customer-chip" onclick="openFilterSheet('customer')">🏢 Cliente</button>
+    <button class="filter-chip" id="filter-group-chip" onclick="openFilterSheet('group')">📂 Agrupar</button>
+    <button class="filter-chip" id="filter-sort-chip" onclick="openFilterSheet('sort')">🔃 Ordenar</button>
   </div>
 
-  <div class="job-list" id="job-list">
-    <div class="loading">Cargando medidas…</div>
-  </div>
+  <div id="job-list"></div>
 </main>
 
-<!-- JOB DETAIL MODAL -->
+<!-- DESKTOP MODAL -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
   <div class="modal" id="modal">
     <div class="modal-title" id="modal-title">Detalle</div>
@@ -69,7 +70,39 @@
   </div>
 </div>
 
+<!-- MOILE BOTTOM SHEET MODAL -->
+<div class="mobile-modal-overlay" id="mobile-modal-overlay" onclick="closeMobileModal(event)">
+  <div class="mobile-modal" id="mobile-modal">
+    <div class="mobile-modal-handle" onclick="toggleMobileModal()">
+      <div class="drag-bar"></div>
+    </div>
+    <div class="mobile-modal-title" id="mobile-modal-title">Detalle</div>
+    <div class="mobile-modal-tabs">
+      <button class="mobile-tab active" onclick="switchMobileTab('details')" id="tab-details">Detalles</button>
+      <button class="mobile-tab" onclick="switchMobileTab('graph')" id="tab-graph">Gráfica</button>
+    </div>
+    <div class="mobile-modal-body">
+      <div class="mobile-tab-content active" id="content-details">
+        <div id="mobile-modal-body"></div>
+        <button class="btn-delete" onclick="deleteCurrentJob()">🗑 Eliminar medida</button>
+      </div>
+      <div class="mobile-tab-content" id="content-graph">
+        <canvas id="mobile-modal-canvas" width="340" height="420"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FILTER BOTTOM SHEET -->
+<div class="filter-sheet-overlay" id="filter-sheet-overlay" onclick="closeFilterSheet(event)">
+  <div class="filter-sheet" id="filter-sheet">
+    <div class="filter-sheet-handle"><div class="drag-bar"></div></div>
+    <div class="filter-sheet-title" id="filter-sheet-title">Filtrar</div>
+    <div class="filter-sheet-body" id="filter-sheet-body"></div>
+    <button class="btn-primary" style="margin-top:16px;width:100%;" onclick="applyFilterSelection()">Aplicar</button>
+  </div>
+</div>
+
 <script type="module" src="dashboard.js"></script>
 </body>
 </html>
-
