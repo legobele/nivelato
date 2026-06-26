@@ -55,8 +55,8 @@ window.embedGraph = function(cvs, data) {
   var bottomOffsetRight = clamp(-((psv) / pMax) * EXAG * (bh / bw), EXAG);
   var roughTL = { x: bx + leftOffsetTop, y: by };
   var roughTR = { x: bx + bw + rightOffsetTop, y: by + topOffsetRight };
-  var roughBR = { x: bx + bw + rightOffsetTop, y: by + bh + bottomOffsetRight };
-  var roughBL = { x: bx + leftOffsetTop, y: by + bh };
+  var roughBR = { x: bx + bw, y: by + bh + bottomOffsetRight };
+  var roughBL = { x: bx, y: by + bh };
   dctx.beginPath();
   dctx.moveTo(roughTL.x, roughTL.y);
   dctx.lineTo(roughTR.x, roughTR.y);
