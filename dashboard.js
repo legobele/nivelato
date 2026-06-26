@@ -187,23 +187,72 @@ let currentUser;
   }
 
   window.applyFilters = () => {
-    const date = document.getElementById('filter-date').value;
-    const installer = document.getElementById('filter-installer').value;
-    const customer = document.getElementById('filter-customer').value;
+    const dateEl = document.getElementById('filter-date');
+    const installerEl = document.getElementById('filter-installer');
+    const customerEl = document.getElementById('filter-customer');
+    const dateChip = document.getElementById('filter-date-chip');
+    const installerChip = document.getElementById('filter-installer-chip');
+    const customerChip = document.getElementById('filter-customer-chip');
+    const groupChip = document.getElementById('filter-group-chip');
+    const sortChip = document.getElementById('filter-sort-chip');
+
+    const dateVal = (dateEl && dateEl.value) ? dateEl.value : (dateChip?.dataset.value || 'Todas las fechas');
+    const installerVal = (installerEl && installerEl.value) ? installerEl.value : (installerChip?.dataset.value || 'Todos');
+    const customerVal = (customerEl && customerEl.value) ? customerEl.value : (customerChip?.dataset.value || 'Todos');
+    const groupVal = groupChip?.dataset.value || 'Sin agrupar';
+    const sortVal = sortChip?.dataset.value || 'Más reciente';
+
     let filtered = allJobs;
-    if (date) {
+
+    if (dateVal && dateVal !== 'Todas las fechas') {
+      const today = new Date(); today.setHours(0,0,0,0);
       filtered = filtered.filter(j => {
         if (!j.createdAt) return false;
         const d = j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt);
-        return d.toISOString().slice(0,10) === date;
+        const d0 = new Date(d); d0.setHours(0,0,0,0);
+        if (dateVal === 'Hoy') return d0.getTime() === today.getTime();
+        if (dateVal === 'Ayer') { const y = new Date(today); y.setDate(y.getDate()-1); return d0.getTime() === y.getTime(); }
+        if (dateVal === 'Esta semana') { const w = new Date(today); w.setDate(w.getDate()-7); return d0 >= w; }
+        if (dateVal === 'Este mes') { return d0.getMonth() === today.getMonth() && d0.getFullYear() === today.getFullYear(); }
+        return d.toISOString().slice(0,10) === dateVal;
       });
     }
-    if (installer) filtered = filtered.filter(j => j.installerName === installer);
-    if (customer) filtered = filtered.filter(j => j.customer === customer);
-    renderJobs(filtered);
+    if (installerVal && installerVal !== 'Todos') filtered = filtered.filter(j => j.installerName === installerVal);
+    if (customerVal && customerVal !== 'Todos') filtered = filtered.filter(j => j.customer === customerVal);
+
+    filtered = sortJobs(filtered, sortVal);
+    renderJobs(filtered, groupVal);
   };
 
-  function renderJobs(jobs) {
+  function sortJobs(jobs, sortVal) {
+    return [...jobs].sort((a, b) => {
+      switch (sortVal) {
+        case 'Más reciente': {
+          const ta = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+          const tb = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+          return tb - ta;
+        }
+        case 'Más antiguo': {
+          const ta = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+          const tb = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+          return ta - tb;
+        }
+        case 'Cliente A-Z': return (a.customer || '').localeCompare(b.customer || '');
+        case 'Proyecto A-Z': return (a.project || '').localeCompare(b.project || '');
+        case 'Técnico A-Z': return (a.installerName || '').localeCompare(b.installerName || '');
+        case 'Con advertencias': {
+          const wa = (a.warnings?.length || 0) > 0;
+          const wb = (b.warnings?.length || 0) > 0;
+          if (wa && !wb) return -1;
+          if (!wa && wb) return 1;
+          return 0;
+        }
+        default: return 0;
+      }
+    });
+  }
+
+  function renderJobs(jobs, groupBy) {
     const list = document.getElementById('job-list');
     // stats
     const today = new Date().toISOString().slice(0,10);
@@ -221,7 +270,8 @@ let currentUser;
       list.innerHTML = '<div class="empty-state">No hay medidas registradas aún.</div>';
       return;
     }
-    list.innerHTML = jobs.map((job, i) => {
+
+    const renderCard = (job, i) => {
       const date = job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now());
       const dateStr = date.toLocaleDateString('es-PR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
       const hasWarn = job.warnings && job.warnings.length > 0;
@@ -242,7 +292,58 @@ let currentUser;
             ${job.notas ? `<span>📝 ${job.notas.slice(0,30)}${job.notas.length>30?'…':''}</span>` : ''}
           </div>
         </div>`;
-    }).join('');
+    };
+
+    if (!groupBy || groupBy === 'Sin agrupar') {
+      list.innerHTML = jobs.map((job, i) => renderCard(job, i)).join('');
+    } else {
+      // Group jobs
+      const groups = {};
+      jobs.forEach(job => {
+        let key;
+        if (groupBy === 'Proyecto') key = job.project || 'Sin proyecto';
+        else if (groupBy === 'Cliente') key = job.customer || 'Sin cliente';
+        else if (groupBy === 'Fecha') {
+          const d = job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now());
+          const today = new Date(); today.setHours(0,0,0,0);
+          const yest = new Date(today); yest.setDate(yest.getDate()-1);
+          const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate()-7);
+          const d0 = new Date(d); d0.setHours(0,0,0,0);
+          if (d0.getTime() === today.getTime()) key = 'Hoy';
+          else if (d0.getTime() === yest.getTime()) key = 'Ayer';
+          else if (d0 >= weekAgo) key = 'Esta semana';
+          else key = d.toLocaleDateString('es-PR', { month: 'short', year: 'numeric' });
+        } else key = 'Sin agrupar';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(job);
+      });
+
+      // Sort group keys
+      const order = ['Hoy', 'Ayer', 'Esta semana'];
+      let keys = Object.keys(groups);
+      if (groupBy === 'Fecha') {
+        keys.sort((a, b) => {
+          const ia = order.indexOf(a), ib = order.indexOf(b);
+          if (ia !== -1 && ib !== -1) return ia - ib;
+          if (ia !== -1) return -1; if (ib !== -1) return 1;
+          return a.localeCompare(b);
+        });
+      } else {
+        keys.sort((a, b) => a.localeCompare(b));
+      }
+
+      list.innerHTML = keys.map(key => `
+        <div class="job-group">
+          <div class="job-group-header" onclick="this.nextElementSibling.classList.toggle('collapsed');this.classList.toggle('collapsed')">
+            <span class="group-chevron">▼</span>
+            <span class="group-title">${key}</span>
+            <span class="group-count">${groups[key].length} medida${groups[key].length !== 1 ? 's' : ''}</span>
+          </div>
+          <div class="job-group-jobs">${groups[key].map((job, i) => renderCard(job, jobs.indexOf(job))).join('')}</div>
+        </div>
+      `).join('');
+    }
+
     window._jobs = jobs;
   }
 
