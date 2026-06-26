@@ -332,7 +332,163 @@ let currentUser;
     });
   };
 
-  window.doLogout = async () => {
-    await signOut(auth);
-    window.location.href = 'login.html';
+  
+// ─── MOBILE DETECTION ──────────────────────────────────────────────────────
+const isMobile = () => window.innerWidth <= 640 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+// ─── ACCOUNT MENU ────────────────────────────────────────────────────────────
+window.toggleAccountMenu = () => {
+  document.getElementById('account-dropdown').classList.toggle('open');
+};
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.account-menu-wrap')) {
+    document.getElementById('account-dropdown')?.classList.remove('open');
+  }
+});
+
+// ─── FILTER BOTTOM SHEETS ──────────────────────────────────────────────────
+let _filterSheetType = null;
+let _filterSheetOptions = [];
+let _filterSheetSelected = null;
+
+window.openFilterSheet = (type) => {
+  _filterSheetType = type;
+  const sheet = document.getElementById('filter-sheet-overlay');
+  const title = document.getElementById('filter-sheet-title');
+  const body = document.getElementById('filter-sheet-body');
+
+  const opts = {
+    date: ['Todas las fechas', 'Hoy', 'Ayer', 'Esta semana', 'Este mes'],
+    installer: ['Todos', ...new Set(allJobs.map(j => j.installerName).filter(Boolean))],
+    customer: ['Todos', ...new Set(allJobs.map(j => j.customer).filter(Boolean))],
+    group: ['Sin agrupar', 'Proyecto', 'Cliente', 'Fecha'],
+    sort: ['Más reciente', 'Más antiguo', 'Cliente A-Z', 'Proyecto A-Z', 'Técnico A-Z', 'Con advertencias']
   };
+
+  const labels = { date: 'Fecha', installer: 'Técnico', customer: 'Cliente', group: 'Agrupar por', sort: 'Ordenar por' };
+  title.textContent = labels[type] || 'Filtrar';
+
+  const chip = document.getElementById(`filter-${type}-chip`);
+  const currentVal = chip?.dataset.value || opts[type][0];
+
+  body.innerHTML = (opts[type] || []).map(opt => {
+    const esc = opt.replace(/'/g, "\'");
+    return `<div class="filter-radio-option ${opt === currentVal ? 'selected' : ''}" onclick="selectFilterOption('${esc}')">
+      <input type="radio" name="filter-sheet-radio" ${opt === currentVal ? 'checked' : ''}>
+      <label>${opt}</label>
+    </div>`;
+  }).join('');
+
+  _filterSheetOptions = opts[type] || [];
+  sheet.classList.add('open');
+};
+
+window.selectFilterOption = (val) => {
+  _filterSheetSelected = val;
+  document.querySelectorAll('.filter-radio-option').forEach(el => {
+    const label = el.querySelector('label').textContent;
+    el.classList.toggle('selected', label === val);
+    el.querySelector('input').checked = label === val;
+  });
+};
+
+window.applyFilterSelection = () => {
+  if (!_filterSheetSelected) { closeFilterSheet(); return; }
+  const type = _filterSheetType;
+  const chip = document.getElementById(`filter-${type}-chip`);
+  chip.dataset.value = _filterSheetSelected;
+  chip.textContent = _filterSheetSelected.length > 12 ? _filterSheetSelected.slice(0,12) + '…' : _filterSheetSelected;
+  chip.classList.add('active');
+  closeFilterSheet();
+  applyFilters();
+};
+
+window.closeFilterSheet = (e) => {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('filter-sheet-overlay').classList.remove('open');
+};
+
+// ─── MOBILE MODAL ──────────────────────────────────────────────────────────
+window.switchMobileTab = (tab) => {
+  document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.mobile-tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.getElementById(`content-${tab}`).classList.add('active');
+};
+
+window.toggleMobileModal = () => {
+  const overlay = document.getElementById('mobile-modal-overlay');
+  overlay.classList.toggle('dismissed');
+};
+
+window.closeMobileModal = (e) => {
+  if (!e || e.target === document.getElementById('mobile-modal-overlay')) {
+    document.getElementById('mobile-modal-overlay').classList.remove('open');
+    document.getElementById('mobile-modal-overlay').classList.remove('dismissed');
+  }
+};
+
+window.openJob = (i) => {
+  window._currentJobIdx = i;
+  const job = window._jobs[i];
+  const date = job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now());
+  const dateStr = date.toLocaleDateString('es-PR', { day:'2-digit', month:'short', year:'numeric' }) + ' ' + date.toLocaleTimeString('es-PR', { hour:'2-digit', minute:'2-digit' });
+
+  const row = (l,v) => `<div class="detail-row"><span class="detail-label">${l}</span><span class="detail-val">${v}</span></div>`;
+  const sec = (t) => `<div class="detail-section-title">${t}</div>`;
+  let html = '';
+  html += sec('General');
+  html += row('Técnico', job.installerName || '—');
+  html += row('Fecha', dateStr);
+  html += row('Cliente', job.customer || '—');
+  html += row('Proyecto', job.project || '—');
+  html += row('Ubicación', job.location || '—');
+  html += sec('Hueco (Abertura)');
+  if (job.hueco) {
+    var _pIv = extractValue(job.desniveles && job.desniveles.paredIzq);
+    var _pDv = extractValue(job.desniveles && job.desniveles.paredDer);
+    var _tcv = extractValue(job.desniveles && job.desniveles.techo);
+    var _psv = extractValue(job.desniveles && job.desniveles.piso);
+    var _anchoBot = (job.hueco.anchoBot || job.hueco.anchoAbajo || job.hueco.anchoBottom || job.hueco.ancho || 0);
+    var _altoIzq = (job.hueco.altoIzq || job.hueco.altoIzquierda || job.hueco.alto || 0);
+    var _computedAnchoTop = _anchoBot > 0 ? _anchoBot - _pIv - _pDv : 0;
+    var _computedAltoDer = _altoIzq > 0 ? _altoIzq - _tcv - _psv : 0;
+    html += row('Ancho superior', (job.hueco.anchoTop || job.hueco.anchoSuperior || _computedAnchoTop) ? (job.hueco.anchoTop || job.hueco.anchoSuperior || _computedAnchoTop) + '"' : '—');
+    html += row('Ancho inferior', (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) ? (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) + '"' : '—');
+    html += row('Alto izquierdo', (job.hueco.altoIzq||job.hueco.altoIzquierda) ? (job.hueco.altoIzq||job.hueco.altoIzquierda) + '"' : (job.hueco.alto ? job.hueco.alto + '"' : '—'));
+    html += row('Alto derecho',   (job.hueco.altoDer || job.hueco.altoDerecha || _computedAltoDer) ? (job.hueco.altoDer || job.hueco.altoDerecha || _computedAltoDer) + '"' : '—');
+  } else { html += row('Hueco', '—'); }
+  html += sec('Desniveles');
+  html += row('Pared Izq.', job.desniveles?.paredIzq || '—');
+  html += row('Pared Der.', job.desniveles?.paredDer || '—');
+  html += row('Techo',      job.desniveles?.techo    || '—');
+  html += row('Piso',       job.desniveles?.piso     || '—');
+  if (job.warnings && job.warnings.length > 0) {
+    html += `<div style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;color:#e67700">${job.warnings.map(w=>`⚠ ${w}`).join('<br>')}</div>`;
+  }
+  if (job.notas) html += `<div class="modal-notes">📝 ${job.notas}</div>`;
+
+  const graphData = {
+    anchoBot: job.hueco?.anchoBot || 36,
+    altoIzq: job.hueco?.altoIzq || 84,
+    pIL: job.desniveles?.paredIzq || 'Nivel',
+    pDL: job.desniveles?.paredDer || 'Nivel',
+    tL: job.desniveles?.techo || 'Nivel',
+    pL: job.desniveles?.piso || 'Nivel'
+  };
+
+  if (isMobile()) {
+    document.getElementById('mobile-modal-title').textContent = `Medida — ${job.installerName || 'Técnico'}`;
+    document.getElementById('mobile-modal-body').innerHTML = html;
+    document.getElementById('mobile-modal-overlay').classList.add('open');
+    document.getElementById('mobile-modal-overlay').classList.remove('dismissed');
+    switchMobileTab('details');
+    window.embedGraph(document.getElementById('mobile-modal-canvas'), graphData);
+  } else {
+    document.getElementById('modal-title').textContent = `Medida — ${job.installerName || 'Técnico'}`;
+    document.getElementById('modal-body').innerHTML = html;
+    document.getElementById('modal-overlay').classList.add('open');
+    window.embedGraph(document.getElementById('modal-canvas'), graphData);
+  }
+};
+
