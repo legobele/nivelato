@@ -329,7 +329,13 @@ let currentUser;
           return a.localeCompare(b);
         });
       } else {
-        keys.sort((a, b) => a.localeCompare(b));
+        keys.sort((a, b) => {
+          const aIsEmpty = a.startsWith('Sin ');
+          const bIsEmpty = b.startsWith('Sin ');
+          if (aIsEmpty && !bIsEmpty) return 1;
+          if (!aIsEmpty && bIsEmpty) return -1;
+          return a.localeCompare(b);
+        });
       }
 
       list.innerHTML = keys.map(key => `
@@ -521,6 +527,47 @@ window.toggleMobileModal = () => {
   const overlay = document.getElementById('mobile-modal-overlay');
   overlay.classList.toggle('dismissed');
 };
+
+// Draggable handle
+(function() {
+  const handle = document.querySelector('.mobile-modal-handle');
+  const overlay = document.getElementById('mobile-modal-overlay');
+  const modal = document.getElementById('mobile-modal');
+  if (!handle || !overlay || !modal) return;
+
+  let startY = 0, startTransform = 0, isDragging = false;
+
+  handle.addEventListener('pointerdown', (e) => {
+    isDragging = true;
+    startY = e.clientY;
+    modal.style.transition = 'none';
+    handle.setPointerCapture(e.pointerId);
+  });
+
+  handle.addEventListener('pointermove', (e) => {
+    if (!isDragging) return;
+    const delta = e.clientY - startY;
+    if (delta > 0) {
+      modal.style.transform = `translateY(${delta}px)`;
+    }
+  });
+
+  handle.addEventListener('pointerup', (e) => {
+    isDragging = false;
+    modal.style.transition = '';
+    const delta = e.clientY - startY;
+    if (delta > 120) {
+      overlay.classList.add('dismissed');
+      modal.style.transform = '';
+    } else if (delta > 40 && overlay.classList.contains('dismissed')) {
+      overlay.classList.remove('dismissed');
+      modal.style.transform = '';
+    } else {
+      modal.style.transform = '';
+    }
+    handle.releasePointerCapture(e.pointerId);
+  });
+})();
 
 window.closeMobileModal = (e) => {
   if (!e || e.target === document.getElementById('mobile-modal-overlay')) {
