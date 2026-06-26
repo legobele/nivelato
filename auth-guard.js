@@ -34,8 +34,8 @@ onAuthStateChanged(auth, async (user) => {
     header.appendChild(pill);
   }
 
-  // owner/cotizador → show dashboard link
-  if (currentUserData?.role === 'owner' || currentUserData?.role === 'cotizador') {
+  // owner/cotizador/supervisor → show dashboard link
+  if (currentUserData?.role === 'owner' || currentUserData?.role === 'cotizador' || currentUserData?.role === 'supervisor') {
     const header = document.getElementById('app-header');
     if (header) {
       const dashBtn = document.createElement('a');
