@@ -77,11 +77,11 @@ window.embedGraph = function(cvs, data) {
   var anchoTop = anchoBot - pIv - pDv, altoDer = altoIzq - tcv - psv;
   if (anchoBot > 0) {
     dctx.strokeStyle = '#adb5bd'; dctx.lineWidth = 1; dctx.setLineDash([3,3]);
-    dctx.beginPath(); dctx.moveTo(roughBL.x, roughBL.y + 24); dctx.lineTo(roughBR.x, roughBR.y + 24); dctx.stroke(); dctx.setLineDash([]);
-    dctx.beginPath(); dctx.moveTo(roughBL.x, roughBL.y + 24 - 6); dctx.lineTo(roughBL.x, roughBL.y + 24 + 6); dctx.stroke();
-    dctx.beginPath(); dctx.moveTo(roughBR.x, roughBR.y + 24 - 6); dctx.lineTo(roughBR.x, roughBR.y + 24 + 6); dctx.stroke();
+    dctx.beginPath(); dctx.moveTo(roughBL.x, roughBL.y + 40); dctx.lineTo(roughBR.x, roughBR.y + 40); dctx.stroke(); dctx.setLineDash([]);
+    dctx.beginPath(); dctx.moveTo(roughBL.x, roughBL.y + 40 - 6); dctx.lineTo(roughBL.x, roughBL.y + 40 + 6); dctx.stroke();
+    dctx.beginPath(); dctx.moveTo(roughBR.x, roughBR.y + 40 - 6); dctx.lineTo(roughBR.x, roughBR.y + 40 + 6); dctx.stroke();
     dctx.fillStyle = '#495057'; dctx.font = 'bold 12px Inter, system-ui, sans-serif'; dctx.textAlign = 'center'; dctx.textBaseline = 'bottom';
-    dctx.fillText(anchoBot + '"', (roughBL.x + roughBR.x) / 2, roughBR.y + 24 - 2);
+    dctx.fillText(anchoBot + '"', (roughBL.x + roughBR.x) / 2, roughBR.y + 40 - 2);
   }
   if (anchoBot > 0) {
     dctx.strokeStyle = '#adb5bd'; dctx.lineWidth = 1; dctx.setLineDash([3,3]);
