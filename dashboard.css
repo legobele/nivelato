@@ -290,3 +290,12 @@
   .mobile-modal { display: none !important; }
   .filter-sheet-overlay { display: none !important; }
 }
+
+/* Desktop/mobile filter visibility */
+.desktop-filter { display: inline-block; }
+.mobile-filter { display: none; }
+
+@media (max-width: 640px) {
+  .desktop-filter { display: none !important; }
+  .mobile-filter { display: inline-block !important; }
+}
