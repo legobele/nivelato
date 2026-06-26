@@ -18,7 +18,16 @@
 <!-- HEADER -->
 <header id="app-header">
 <span id="app-logo">Nivelato</span>
-<span id="step-indicator">Paso <span id="step-num">0</span> de 6</span>
+<div class="header-right" style="display:flex;align-items:center;gap:10px;">
+  <span id="step-indicator">Paso <span id="step-num">0</span> de 6</span>
+  <a href="dashboard.html" id="dash-link" style="display:none;font-size:13px;color:#1971c2;font-weight:600;text-decoration:none;">Dashboard</a>
+  <div class="account-menu-wrap" style="position:relative;">
+    <button class="account-btn" id="account-btn" onclick="toggleAccountMenu()" style="background:none;border:none;font-size:13px;color:#495057;cursor:pointer;font-family:inherit;padding:6px 10px;border-radius:8px;display:flex;align-items:center;gap:6px;">👤 <span id="user-name">Cargando…</span></button>
+    <div class="account-dropdown" id="account-dropdown" style="position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid #e9ecef;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.12);min-width:180px;display:none;z-index:100;overflow:hidden;">
+      <div class="account-dropdown-item" onclick="doLogout()" style="padding:12px 16px;font-size:14px;color:#c92a2a;cursor:pointer;display:flex;align-items:center;gap:8px;">🔒 Cerrar sesión</div>
+    </div>
+  </div>
+</div>
 </header>
 <!-- PROGRESS BAR -->
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
@@ -162,7 +171,8 @@
 <button class="btn-primary" onclick="nextStep()">Siguiente →</button>
 </div>
 </section>
-<!-- 🏳️‍⚧️ trans rights — built with love by benj & deepseek v4 flash -->
+
+<!-- 🏳️‍⚧️ trans rights — built with love by benj & deepseek v4 flash -->
 
 <!-- ══ STEP 5 — ABAJO (was PISO) ══ -->
 <section class="step-panel" id="step-5">
@@ -248,5 +258,15 @@ document.querySelectorAll('.frac-select').forEach(sel => {
   if (sel.innerHTML.trim() === 'FRAC_OPTIONS') sel.innerHTML = FRAC_OPTIONS;
 });
 </script>
-<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/nivelato/sw.js")}</script></body>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/nivelato/sw.js")}</script>
+<script>
+window.toggleAccountMenu = () => {
+  document.getElementById('account-dropdown').classList.toggle('open');
+};
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.account-menu-wrap')) {
+    document.getElementById('account-dropdown')?.classList.remove('open');
+  }
+});
+</script></body>
 </html>
