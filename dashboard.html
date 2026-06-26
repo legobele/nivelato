@@ -43,11 +43,37 @@
   </div>
 
   <div class="filter-bar">
-    <button class="filter-chip" id="filter-date-chip" onclick="openFilterSheet('date')">📅 Fecha</button>
-    <button class="filter-chip" id="filter-installer-chip" onclick="openFilterSheet('installer')">👤 Técnico</button>
-    <button class="filter-chip" id="filter-customer-chip" onclick="openFilterSheet('customer')">🏢 Cliente</button>
-    <button class="filter-chip" id="filter-group-chip" onclick="openFilterSheet('group')">📂 Agrupar</button>
-    <button class="filter-chip" id="filter-sort-chip" onclick="openFilterSheet('sort')">🔃 Ordenar</button>
+    <!-- Desktop: native selects -->
+    <select id="filter-date" onchange="applyFilters()" class="desktop-filter">
+      <option value="">📅 Todas las fechas</option>
+    </select>
+    <select id="filter-installer" onchange="applyFilters()" class="desktop-filter">
+      <option value="">👤 Todos los técnicos</option>
+    </select>
+    <select id="filter-customer" onchange="applyFilters()" class="desktop-filter">
+      <option value="">🏢 Todos los clientes</option>
+    </select>
+    <select id="filter-group" onchange="applyFilters()" class="desktop-filter">
+      <option value="Sin agrupar">📂 Sin agrupar</option>
+      <option value="Proyecto">📂 Proyecto</option>
+      <option value="Cliente">📂 Cliente</option>
+      <option value="Fecha">📂 Fecha</option>
+    </select>
+    <select id="filter-sort" onchange="applyFilters()" class="desktop-filter">
+      <option value="Más reciente">🔃 Más reciente</option>
+      <option value="Más antiguo">🔃 Más antiguo</option>
+      <option value="Cliente A-Z">🔃 Cliente A-Z</option>
+      <option value="Proyecto A-Z">🔃 Proyecto A-Z</option>
+      <option value="Técnico A-Z">🔃 Técnico A-Z</option>
+      <option value="Con advertencias">🔃 Con advertencias</option>
+    </select>
+
+    <!-- Mobile: chips -->
+    <button class="filter-chip mobile-filter" id="filter-date-chip" onclick="openFilterSheet('date')" data-value="Todas las fechas">📅 Fecha</button>
+    <button class="filter-chip mobile-filter" id="filter-installer-chip" onclick="openFilterSheet('installer')" data-value="Todos">👤 Técnico</button>
+    <button class="filter-chip mobile-filter" id="filter-customer-chip" onclick="openFilterSheet('customer')" data-value="Todos">🏢 Cliente</button>
+    <button class="filter-chip mobile-filter" id="filter-group-chip" onclick="openFilterSheet('group')" data-value="Sin agrupar">📂 Agrupar</button>
+    <button class="filter-chip mobile-filter" id="filter-sort-chip" onclick="openFilterSheet('sort')" data-value="Más reciente">🔃 Ordenar</button>
   </div>
 
   <div id="job-list"></div>
