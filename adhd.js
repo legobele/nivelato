@@ -371,7 +371,10 @@ function showShare() {
 }
 
 function _saveCurrentJob(warnings) {
-  if (typeof window.saveJobToFirestore !== 'function') return;
+  if (typeof window.saveJobToFirestore !== 'function') {
+    console.error('[Nivelato] saveJobToFirestore no está disponible — ¿se cargó auth-guard.js?');
+    return;
+  }
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
   const anchoTop = results.anchoTop || 0;
@@ -453,7 +456,7 @@ let animFrame = null;
 
 function resizeCanvas() {
   const wrap = document.getElementById('canvas-wrap');
-  if (!wrap) return;
+  if (!wrap || !canvas) return;
   canvas.width  = wrap.offsetWidth  * window.devicePixelRatio;
   canvas.height = wrap.offsetHeight * window.devicePixelRatio;
   canvas.style.width  = wrap.offsetWidth  + 'px';
@@ -472,6 +475,7 @@ const STEP_VIEWS = [
 ];
 
 function getGlassRect() {
+  if (!canvas) return { x: 0, y: 0, w: 100, h: 100 };
   const W = canvas.width  / window.devicePixelRatio;
   const H = canvas.height / window.devicePixelRatio;
   const ancho = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 48;
@@ -487,6 +491,7 @@ function getGlassRect() {
 }
 
 function animateCanvas(step) {
+  if (!canvas) return;
   const sv  = STEP_VIEWS[step] || STEP_VIEWS[0];
   const W   = canvas.width  / window.devicePixelRatio;
   const H   = canvas.height / window.devicePixelRatio;
@@ -532,6 +537,7 @@ function smoothAnimate() {
 }
 
 function drawCanvas() {
+  if (!canvas || !ctx) return;
   const dpr = window.devicePixelRatio;
   const W   = canvas.width  / dpr;
   const H   = canvas.height / dpr;

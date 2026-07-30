@@ -52,20 +52,16 @@ window._doLogout = async () => {
 
 // saveJob — called from adhd.js on share
 window.saveJobToFirestore = async (jobData) => {
-  if (!currentUser || !currentUserData) return;
-  if (!_can('createMeasurements')) { console.warn('[Nivelato] No tienes permiso para crear medidas.'); return; }
-  try {
-    const orgId = currentUserData.orgId;
-    await addDoc(collection(db, 'orgs', orgId, 'jobs'), {
-      ...jobData,
-      installerUid:  currentUser.uid,
-      installerName: currentUserData.name || currentUser.email,
-      installerRole: currentUserData.role,
-      orgId,
-      createdAt: serverTimestamp()
-    });
-    console.log('[Nivelato] Job saved to Firestore');
-  } catch(e) {
-    console.error('[Nivelato] Failed to save job:', e);
-  }
+  if (!currentUser || !currentUserData) throw new Error('No autenticado');
+  if (!_can('createMeasurements')) throw new Error('No tienes permiso para crear medidas');
+  const orgId = currentUserData.orgId;
+  await addDoc(collection(db, 'orgs', orgId, 'jobs'), {
+    ...jobData,
+    installerUid:  currentUser.uid,
+    installerName: currentUserData.name || currentUser.email,
+    installerRole: currentUserData.role,
+    orgId,
+    createdAt: serverTimestamp()
+  });
+  console.log('[Nivelato] Job saved to Firestore');
 };
