@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nivelato — Dashboard</title>
-<script>console.log('nivelato v1.0.0 — commit 9dc0e84')</script>
+<script>console.log('nivelato v1.0.0 — commit fe7f1ee')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
 <script type="module" src="account-selector.js"></script>
@@ -82,7 +82,36 @@
       box-shadow: 0 0 0 3px #e7f5ff;
     }
     .filter-row select:disabled { color: #adb5bd; background-color: #f8f9fa; cursor: default; }
-    .filter-row input[type="date"] { flex: 1; min-width: 130px; }
+    .date-input-wrap {
+      flex: 1; min-width: 130px; position: relative;
+    }
+    .date-input-wrap input[type="date"] {
+      width: 100%; padding: 9px 14px;
+      border: 1.5px solid #dee2e6;
+      border-radius: 8px;
+      font-size: 13px; font-family: inherit;
+      outline: none; background: #fff;
+      color: #495057; height: 38px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      color-scheme: light;
+    }
+    .date-input-wrap input[type="date"]:focus {
+      border-color: #1971c2;
+      box-shadow: 0 0 0 3px #e7f5ff;
+    }
+    .date-input-wrap .date-placeholder {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      font-size: 13px; color: #868e96;
+      pointer-events: none; white-space: nowrap;
+      z-index: 1;
+    }
+    .date-input-wrap input[type="date"]:focus + .date-placeholder,
+    .date-input-wrap input[type="date"]:valid + .date-placeholder { display: none; }
+    .date-input-wrap input[type="date"]::-webkit-calendar-picker-indicator {
+      cursor: pointer; opacity: 0.5;
+    }
+    .date-input-wrap input[type="date"]:hover::-webkit-calendar-picker-indicator,
+    .date-input-wrap input[type="date"]:focus::-webkit-calendar-picker-indicator { opacity: 1; }
 
     /* JOB LIST */
     .job-list { display: flex; flex-direction: column; gap: 10px; }
@@ -111,9 +140,17 @@
       align-items: center; justify-content: center;
       padding: 20px;
       z-index: 100;
-      display: none;
+      display: flex;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transition: visibility 0.3s, opacity 0.3s;
     }
-    .modal-overlay.open { display: flex; }
+    .modal-overlay.open {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
+    }
     .modal {
       background: #fff;
       border-radius: 16px;
@@ -156,6 +193,15 @@
     .btn-close { width: 100%; padding: 12px; margin-top: 8px; background: #f1f3f5; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
     .btn-delete { width: 100%; padding: 12px; margin-top: 16px; background: #fff5f5; border: 1.5px solid #ffc9c9; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; color: #c92a2a; }
     .btn-delete:hover { background: #ffe3e3; }
+    .btn-edit { width: 100%; padding: 12px; margin-top: 8px; background: #e7f5ff; border: 1.5px solid #1971c2; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; color: #1971c2; }
+    .btn-edit:hover { background: #d0ebff; }
+    .btn-save { width: 100%; padding: 12px; margin-top: 8px; background: #1971c2; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .btn-save:hover { background: #1864ab; }
+    .btn-cancel { width: 100%; padding: 12px; margin-top: 4px; background: #f1f3f5; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .modal-edit-input { width: 100%; padding: 8px 10px; border: 1.5px solid #dee2e6; border-radius: 6px; font-size: 13px; font-family: inherit; color: #212529; margin-top: 2px; }
+    .modal-edit-input:focus { outline: none; border-color: #1971c2; box-shadow: 0 0 0 3px #e7f5ff; }
+    .modal-edit-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #adb5bd; margin-top: 12px; display: block; }
+    .modal-edit-label:first-of-type { margin-top: 0; }
 
     .empty-state { text-align: center; padding: 48px 20px; color: #868e96; font-size: 14px; }
     .loading { text-align: center; padding: 40px; color: #868e96; }
@@ -169,10 +215,13 @@
       .stat-num { font-size: 22px; }
       .stat-label { font-size: 11px; }
       .filter-row { flex-direction: column; gap: 8px; }
-      .filter-row input, .filter-row select { width: 100%; }
+      .filter-row input, .filter-row select, .date-input-wrap { width: 100%; }
       .job-card-top { flex-direction: column; gap: 4px; }
       .job-date { font-size: 11px; }
-      .modal { padding: 20px 16px; border-radius: 12px; }
+      .modal { padding: 20px 16px; border-radius: 16px 16px 0 0; max-height: 85dvh; transform: translateY(100%); transition: transform 0.3s ease-out; }
+      .modal::before { content: ''; display: block; width: 36px; height: 4px; background: #ced4da; border-radius: 2px; margin: 0 auto 12px; }
+      .modal-overlay.open .modal { transform: translateY(0); }
+      .modal-overlay { align-items: flex-end; padding: 0; }
       .modal-title { font-size: 16px; }
       #join-code-section { flex-direction: column; align-items: flex-start; gap: 8px; }
       #join-code-section button { width: 100%; }
@@ -212,7 +261,10 @@
   </div>
 
   <div class="filter-row">
-    <input type="date" id="filter-date" onchange="applyFilters()" />
+    <div class="date-input-wrap">
+      <input type="date" id="filter-date" onchange="applyFilters()" />
+      <span class="date-placeholder">📅 Filtrar por fecha</span>
+    </div>
     <select id="filter-installer" onchange="applyFilters()">
       <option value="">Todos los técnicos</option>
     </select>
@@ -233,7 +285,13 @@
     <div class="modal-inner">
       <div class="modal-details">
         <div id="modal-body"></div>
+        <div id="modal-edit-fields" style="display:none;"></div>
         <button class="btn-delete" id="modal-delete-btn" onclick="deleteCurrentJob()">🗑 Eliminar medida</button>
+        <button class="btn-edit" id="modal-edit-btn" onclick="editCurrentJob()" style="display:none;">✏️ Editar</button>
+        <div id="modal-edit-actions" style="display:none;">
+          <button class="btn-save" onclick="saveEdit()">💾 Guardar cambios</button>
+          <button class="btn-cancel" onclick="cancelEdit()">Cancelar</button>
+        </div>
         <button class="btn-share-modal" id="modal-share-btn" onclick="toggleSharePanel()" style="display:none;margin-top:8px;background:#e7f5ff;color:#1971c2;border:1px solid #1971c2;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;">🔗 Compartir medida</button>
         <div id="share-panel" style="display:none;margin-top:8px;padding:12px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;">
           <div style="font-size:12px;font-weight:600;color:#495057;margin-bottom:8px;">Compartir con:</div>
@@ -397,7 +455,7 @@ let currentUser;
     window._currentUserData = userData;
 
     if (!_can('viewDashboard')) {
-      window.location.href = 'blocked.html'; return;
+      window.location.href = 'index.html'; return;
     }
     const orgId = userData.orgId;
     // Nueva medida button — only if user can create measurements
@@ -431,6 +489,8 @@ let currentUser;
     const canViewOthers = _can('viewOthersMeasurements');
     allJobs = allJobs.filter(j => {
       const isOwn = j.installerUid === user.uid;
+      const isShared = j.sharedWith && Array.isArray(j.sharedWith) && j.sharedWith.includes(user.uid);
+      if (isShared) return true;
       if (isOwn) return canViewOwn;
       return canViewOthers;
     });
@@ -554,6 +614,18 @@ let currentUser;
     if (delBtn) {
       delBtn.style.display = window._can && canEditJob(job, currentUser, window._can) ? 'block' : 'none';
     }
+    // gate edit button by edit permission
+    const editBtn = document.getElementById('modal-edit-btn');
+    if (editBtn) {
+      editBtn.style.display = window._can && canEditJob(job, currentUser, window._can) ? 'block' : 'none';
+    }
+    // hide edit fields & actions on open
+    const ef = document.getElementById('modal-edit-fields');
+    const ea = document.getElementById('modal-edit-actions');
+    const mb = document.getElementById('modal-body');
+    if (ef) ef.style.display = 'none';
+    if (ea) ea.style.display = 'none';
+    if (mb) mb.style.display = '';
     // gate share button by editOthers permission
     const shareBtn = document.getElementById('modal-share-btn');
     if (shareBtn) {
@@ -571,6 +643,80 @@ let currentUser;
       tL: job.desniveles?.techo || 'Nivel',
       pL: job.desniveles?.piso || 'Nivel'
     });
+  };
+
+  window.editCurrentJob = () => {
+    const job = window._currentJobIdx != null ? window._jobs[window._currentJobIdx] : null;
+    if (!job) return;
+    document.getElementById('modal-body').style.display = 'none';
+    document.getElementById('modal-edit-btn').style.display = 'none';
+    document.getElementById('modal-delete-btn').style.display = 'none';
+    document.getElementById('modal-share-btn').style.display = 'none';
+    document.getElementById('share-panel').style.display = 'none';
+    document.getElementById('modal-edit-actions').style.display = 'block';
+
+    const l = (text, key, val) => `<label class="modal-edit-label">${text}</label><input class="modal-edit-input" id="edit-${key}" value="${val || ''}" />`;
+    const ta = (text, key, val) => `<label class="modal-edit-label">${text}</label><textarea class="modal-edit-input" id="edit-${key}" style="min-height:60px;resize:vertical;">${val || ''}</textarea>`;
+    let html = '';
+    html += l('Cliente', 'customer', job.customer || '');
+    html += l('Proyecto', 'project', job.project || '');
+    html += l('Ubicación', 'location', job.location || '');
+    html += ta('Notas', 'notas', job.notas || '');
+    document.getElementById('modal-edit-fields').innerHTML = html;
+    document.getElementById('modal-edit-fields').style.display = 'block';
+  };
+
+  window.cancelEdit = () => {
+    document.getElementById('modal-body').style.display = '';
+    document.getElementById('modal-edit-fields').style.display = 'none';
+    document.getElementById('modal-edit-actions').style.display = 'none';
+    // re-show buttons respecting perms
+    const job = window._currentJobIdx != null ? window._jobs[window._currentJobIdx] : null;
+    if (job) {
+      const delBtn = document.getElementById('modal-delete-btn');
+      const editBtn = document.getElementById('modal-edit-btn');
+      const shareBtn = document.getElementById('modal-share-btn');
+      if (delBtn) delBtn.style.display = window._can && canEditJob(job, currentUser, window._can) ? 'block' : 'none';
+      if (editBtn) editBtn.style.display = window._can && canEditJob(job, currentUser, window._can) ? 'block' : 'none';
+      if (shareBtn) shareBtn.style.display = window._can && window._can('editOthersMeasurements') ? 'block' : 'none';
+    }
+  };
+
+  window.saveEdit = async () => {
+    const job = window._currentJobIdx != null ? window._jobs[window._currentJobIdx] : null;
+    if (!job) return;
+    const updates = {};
+    const customer = document.getElementById('edit-customer')?.value ?? '';
+    const project = document.getElementById('edit-project')?.value ?? '';
+    const location = document.getElementById('edit-location')?.value ?? '';
+    const notas = document.getElementById('edit-notas')?.value ?? '';
+    if (customer !== (job.customer || '')) updates.customer = customer;
+    if (project !== (job.project || '')) updates.project = project;
+    if (location !== (job.location || '')) updates.location = location;
+    if (notas !== (job.notas || '')) updates.notas = notas;
+    if (Object.keys(updates).length === 0) { cancelEdit(); return; }
+    try {
+      await updateDoc(doc(db, 'orgs', window._orgId, 'jobs', job.id), updates);
+      // update local in both arrays
+      Object.assign(job, updates);
+      window._jobs[window._currentJobIdx] = job;
+      const allIdx = allJobs.findIndex(j => j.id === job.id);
+      if (allIdx >= 0) allJobs[allIdx] = job;
+      // rebuild modal view
+      document.getElementById('modal-body').style.display = '';
+      document.getElementById('modal-edit-fields').style.display = 'none';
+      document.getElementById('modal-edit-actions').style.display = 'none';
+      window.openJob(window._currentJobIdx);
+      // quick flash
+      const status = document.getElementById('share-status');
+      if (status) {
+        status.style.display = 'inline';
+        status.textContent = '✓ Guardado';
+        setTimeout(() => status.style.display = 'none', 2000);
+      }
+    } catch(e) {
+      alert('Error al guardar: ' + e.message);
+    }
   };
 
   window.deleteCurrentJob = async () => {

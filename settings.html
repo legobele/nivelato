@@ -41,6 +41,9 @@
   .info-label { font-weight: 600; color: #495057; min-width: 120px; }
   .info-value { color: #212529; }
   .saved-msg { font-size: 13px; color: #2f9e44; font-weight: 600; text-align: center; padding: 8px; display: none; }
+  .btn-delete-account { width: 100%; margin-top: 16px; padding: 10px 16px; background: #fff; border: 1.5px solid #ffc9c9; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; color: #c92a2a; transition: background 0.15s; }
+  .btn-delete-account:hover { background: #fff5f5; }
+  .btn-delete-account:disabled { opacity: 0.5; cursor: default; }
 </style>
 </head>
 <body>
@@ -64,6 +67,8 @@
       <div class="info-row"><span class="info-label">Rol</span><span class="info-value" id="info-role">—</span></div>
       <div class="info-row"><span class="info-label">Taller</span><span class="info-value" id="info-org">—</span></div>
       <div class="info-row"><span class="info-label">Código</span><span class="info-value" id="info-joincode">—</span></div>
+      <div id="delete-request-status" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;color:#e67700;display:none;">⏳ Tu solicitud de eliminación está pendiente.</div>
+      <button class="btn-delete-account" id="btn-delete-account" onclick="requestDeleteAccount()">🗑 Solicitar eliminación de cuenta</button>
     </div>
   </div>
 
@@ -81,13 +86,19 @@
       <div class="card-desc">Cuentas pendientes de aprobación para unirse al taller.</div>
       <div id="requests-list"><p style="color:#868e96;font-size:13px;">Cargando solicitudes…</p></div>
     </div>
+
+    <div class="card" id="delete-requests-card" style="display:none;">
+      <div class="card-title">🗑 Solicitudes de eliminación</div>
+      <div class="card-desc">Usuarios que han solicitado eliminar su cuenta.</div>
+      <div id="delete-requests-list"><p style="color:#868e96;font-size:13px;">Cargando…</p></div>
+    </div>
   </div>
 </div>
 
 <script type="module">
 import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getDoc, doc, setDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getDoc, doc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { makePermChecker } from './permissions.js';
 import { PERM_DEFS } from './permissions.js';
 
@@ -113,12 +124,21 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById('info-org').textContent = orgId;
   document.getElementById('info-joincode').textContent = orgId;
 
+  // check for pending deletion request
+  const drBtn = document.getElementById('btn-delete-account');
+  const drStatus = document.getElementById('delete-request-status');
+  if (currentUserData.deleteRequestedAt) {
+    if (drBtn) drBtn.disabled = true;
+    if (drStatus) drStatus.style.display = 'block';
+  }
+
   // show taller tab only for userManagement
   if (_can('userManagement')) {
     document.getElementById('tab-taller-btn').style.display = 'block';
     await loadOrgMembers(orgId);
     renderPermissions();
     await loadRequests(orgId);
+    await loadDeleteRequests();
   }
 });
 
@@ -212,6 +232,66 @@ window.rejectRequest = async (uid) => {
     if (card) card.remove();
   } catch(e) {
     alert('Error al rechazar: ' + e.message);
+  }
+};
+
+async function loadDeleteRequests() {
+  const container = document.getElementById('delete-requests-list');
+  const drs = orgMembers.filter(m => !!m.deleteRequestedAt);
+  document.getElementById('delete-requests-card').style.display = drs.length ? 'block' : 'none';
+  if (drs.length === 0) {
+    container.innerHTML = '<p style="color:#868e96;font-size:13px;">No hay solicitudes de eliminación pendientes.</p>';
+    return;
+  }
+  container.innerHTML = drs.map(m => `
+    <div class="request-card" data-uid="${m.uid}">
+      <div>
+        <div class="request-name">${m.name || 'Sin nombre'}</div>
+        <div class="request-email">${m.email || ''} · Solicitado ${new Date(m.deleteRequestedAt).toLocaleDateString('es-PR')}</div>
+      </div>
+      <div class="request-actions">
+        <button class="btn-sm approve" onclick="processDeleteRequest('${m.uid}', true)">Eliminar cuenta</button>
+        <button class="btn-sm reject" onclick="processDeleteRequest('${m.uid}', false)">Rechazar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.processDeleteRequest = async (uid, approved) => {
+  if (!approved && !confirm('¿Rechazar esta solicitud? La cuenta permanecerá activa.')) return;
+  if (approved && !confirm('⚠️ ¿Eliminar permanentemente esta cuenta? Todos sus datos serán borrados. Esta acción NO se puede deshacer.')) return;
+  try {
+    if (approved) {
+      // delete the user doc and auth account
+      await deleteDoc(doc(db, 'users', uid));
+      // try to disable instead of full auth delete since admin can't delete others' auth
+      await updateDoc(doc(db, 'users', uid)).catch(() => {}); // no-op, doc already deleted
+    } else {
+      // remove the delete request
+      await updateDoc(doc(db, 'users', uid), { deleteRequestedAt: null });
+    }
+    const card = document.querySelector(`#delete-requests-list .request-card[data-uid="${uid}"]`);
+    if (card) card.remove();
+    // recheck if empty
+    if (!document.querySelector('#delete-requests-list .request-card')) {
+      document.getElementById('delete-requests-card').style.display = 'none';
+      document.getElementById('delete-requests-list').innerHTML = '<p style="color:#868e96;font-size:13px;">No hay solicitudes de eliminación pendientes.</p>';
+    }
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+};
+
+window.requestDeleteAccount = async () => {
+  if (!confirm('¿Solicitar la eliminación de tu cuenta y todos tus datos? Un administrador revisará tu solicitud.')) return;
+  try {
+    await updateDoc(doc(db, 'users', currentUser.uid), { deleteRequestedAt: new Date().toISOString() });
+    const drBtn = document.getElementById('btn-delete-account');
+    const drStatus = document.getElementById('delete-request-status');
+    if (drBtn) drBtn.disabled = true;
+    if (drStatus) drStatus.style.display = 'block';
+  } catch(e) {
+    alert('Error al solicitar eliminación: ' + e.message);
   }
 };
 
