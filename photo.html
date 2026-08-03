@@ -110,47 +110,6 @@ function fmtInches(v) {
   return (whole > 0 || !s) ? (whole + (s ? ' ' + s : '')) : s;
 }
 
-// ── homography: unit square → quad corners ──
-function solveHomography(c) {
-  const pts = [c.TL, c.TR, c.BR, c.BL];
-  const sq = [[0,0],[1,0],[1,1],[0,1]];
-  const A = [], b = [];
-  for (let i = 0; i < 4; i++) {
-    const [x, y] = sq[i];
-    const u = pts[i].x, v = pts[i].y;
-    A.push([x, y, 1, 0, 0, 0, -u*x, -u*y]); b.push(u);
-    A.push([0, 0, 0, x, y, 1, -v*x, -v*y]); b.push(v);
-  }
-  const n = 8;
-  const M = A.map((row, i) => [...row, b[i]]);
-  for (let col = 0; col < n; col++) {
-    let piv = col;
-    for (let r = col + 1; r < n; r++) if (Math.abs(M[r][col]) > Math.abs(M[piv][col])) piv = r;
-    [M[col], M[piv]] = [M[piv], M[col]];
-    const pv = M[col][col];
-    if (Math.abs(pv) < 1e-9) return null;
-    for (let c2 = col; c2 <= n; c2++) M[col][c2] /= pv;
-    for (let r = 0; r < n; r++) {
-      if (r === col) continue;
-      const f = M[r][col];
-      for (let c2 = col; c2 <= n; c2++) M[r][c2] -= f * M[col][c2];
-    }
-  }
-  return M.map(row => row[n]); // [h11 h12 h13 h21 h22 h23 h31 h32]
-}
-
-function mapPoint(H, x, y) {
-  const w = H[6]*x + H[7]*y + 1;
-  return { x: (H[0]*x + H[1]*y + H[2]) / w, y: (H[3]*x + H[4]*y + H[5]) / w };
-}
-
-function localScale(H, x, y) {
-  const p = mapPoint(H, x, y);
-  const px = mapPoint(H, x + 0.02, y);
-  const py = mapPoint(H, x, y + 0.02);
-  return (Math.hypot(px.x - p.x, px.y - p.y) + Math.hypot(py.x - p.y, py.y - p.y)) / 0.04;
-}
-
 // ── frame geometry (normalized 0..1, mirrors the main graph) ──
 // Computed once from measurements; the corner quad is derived from it.
 let frameNorm = null;  // { TL, TR, BR, BL } in normalized 0..1
@@ -179,20 +138,28 @@ function computeFrameNorm(m) {
   };
 }
 
-// corners (image px) from the normalized frame, fit + centered
+// corners (image px) = the 4 frame corner positions, scaled + centered.
+// The normalized frame is stretched to a large centered quad; each
+// corner maps 1:1, so hit-testing and dragging operate on the same points.
 function cornersFromNorm(g) {
-  const nw = g.TR.x - g.TL.x, nh = g.BL.y - g.TL.y;
+  // bounding box of the normalized frame
+  const xs = [g.TL.x, g.TR.x, g.BR.x, g.BL.x];
+  const ys = [g.TL.y, g.TR.y, g.BR.y, g.BL.y];
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const nw = maxX - minX, nh = maxY - minY;
   const ratio = nw > 0 && nh > 0 ? nh / nw : 1;
   let w = baseW * 0.72;
   let h = w * ratio;
   if (h > baseH * 0.72) { h = baseH * 0.72; w = h / ratio; }
+  const scaleX = w / nw, scaleY = h / nh;
   const cx = baseW / 2, cy = baseH / 2;
-  const TL = { x: cx - w/2, y: cy - h/2 };
+  // center the normalized frame's bbox
+  const offX = cx - (minX + maxX) / 2 * scaleX;
+  const offY = cy - (minY + maxY) / 2 * scaleY;
+  const map = (p) => ({ x: p.x * scaleX + offX, y: p.y * scaleY + offY });
   return {
-    TL,
-    TR: { x: TL.x + w, y: TL.y },
-    BR: { x: TL.x + w, y: TL.y + h },
-    BL: { x: TL.x, y: TL.y + h }
+    TL: map(g.TL), TR: map(g.TR), BR: map(g.BR), BL: map(g.BL)
   };
 }
 
@@ -202,7 +169,6 @@ const LINE_WIDTH = 4;
 const TEXT_COLOR = '#ffffff';
 const PILL_COLOR = 'rgba(0,0,0,0.72)';
 const FILL_COLOR = 'rgba(255,255,255,0.08)';
-const DIM_OFFSET = 0.05;             // normalized distance of dim lines from frame
 
 function pillPath(c, x, y, w, h, r) {
   c.beginPath();
@@ -230,22 +196,26 @@ function drawLabel(c, text, x, y, angle, size) {
   c.restore();
 }
 
-function drawDimLine(c, H, p1n, p2n, label, labelSize) {
-  const a = mapPoint(H, p1n.x, p1n.y);
-  const b = mapPoint(H, p2n.x, p2n.y);
+// draw a dimension line between two image-px points, offset by `off`
+// (normalized fraction of the frame's diagonal) perpendicular to the line.
+function drawDimLinePx(c, a, b, off, diag, label, labelSize) {
+  const ang = Math.atan2(b.y - a.y, b.x - a.x);
+  const perp = { x: -Math.sin(ang), y: Math.cos(ang) };
+  const o = off * diag;
+  const a2 = { x: a.x + perp.x * o, y: a.y + perp.y * o };
+  const b2 = { x: b.x + perp.x * o, y: b.y + perp.y * o };
   // line
   c.strokeStyle = LINE_COLOR;
   c.lineWidth = LINE_WIDTH;
   c.lineCap = 'round';
   c.beginPath();
-  c.moveTo(a.x, a.y);
-  c.lineTo(b.x, b.y);
+  c.moveTo(a2.x, a2.y);
+  c.lineTo(b2.x, b2.y);
   c.stroke();
-  // end ticks (perpendicular)
-  const ang = Math.atan2(b.y - a.y, b.x - a.x);
+  // end ticks
   const tlen = Math.max(7, labelSize * 0.55);
   c.lineWidth = 2.5;
-  for (const p of [a, b]) {
+  for (const p of [a2, b2]) {
     c.beginPath();
     c.moveTo(p.x - tlen * Math.cos(ang - Math.PI/2), p.y - tlen * Math.sin(ang - Math.PI/2));
     c.lineTo(p.x + tlen * Math.cos(ang - Math.PI/2), p.y + tlen * Math.sin(ang - Math.PI/2));
@@ -253,15 +223,14 @@ function drawDimLine(c, H, p1n, p2n, label, labelSize) {
   }
   // label parallel to the line, centered
   if (label) {
-    const mid = { x: (p1n.x + p2n.x) / 2, y: (p1n.y + p2n.y) / 2 };
-    const m = mapPoint(H, mid.x, mid.y);
-    const s = localScale(H, mid.x, mid.y);
-    drawLabel(c, label, m.x, m.y, ang, labelSize * s);
+    const mid = { x: (a2.x + b2.x) / 2, y: (a2.y + b2.y) / 2 };
+    const size = labelSize * (Math.hypot(b.x - a.x, b.y - a.y) / (baseW * 0.5) * 26);
+    drawLabel(c, label, mid.x, mid.y, ang, size);
   }
 }
 
-function renderFrame(c, H, g, opts) {
-  const pts = [g.TL, g.TR, g.BR, g.BL].map(p => mapPoint(H, p.x, p.y));
+function renderFrame(c, corners, opts) {
+  const pts = [corners.TL, corners.TR, corners.BR, corners.BL];
   // translucent fill over the frame region
   c.beginPath();
   c.moveTo(pts[0].x, pts[0].y);
@@ -279,23 +248,23 @@ function renderFrame(c, H, g, opts) {
   c.closePath();
   c.stroke();
 
-  const labelSize = 0.034; // normalized font size (scaled by homography)
-  const o = DIM_OFFSET;
-  // dimension lines: bottom, top, left, right
-  drawDimLine(c, H, { x: g.BL.x, y: g.BL.y + o }, { x: g.BR.x, y: g.BR.y + o }, fmtInches(g.anchoBot) + '"', labelSize);
-  drawDimLine(c, H, { x: g.TL.x, y: g.TL.y - o }, { x: g.TR.x, y: g.TR.y - o }, fmtInches(g.anchoTop) + '"', labelSize);
-  drawDimLine(c, H, { x: g.TL.x - o, y: g.TL.y }, { x: g.BL.x - o, y: g.BL.y }, fmtInches(g.altoIzq) + '"', labelSize);
-  drawDimLine(c, H, { x: g.TR.x + o, y: g.TR.y }, { x: g.BR.x + o, y: g.BR.y }, fmtInches(g.altoDer) + '"', labelSize);
+  const diag = Math.hypot(baseW, baseH);
+  const labelSize = 0.034;
+  const o = 0.05;
+  const g = frameNorm;
+  // dimension lines: bottom, top, left, right (offset outward)
+  drawDimLinePx(c, corners.BL, corners.BR,  o, diag, fmtInches(g.anchoBot) + '"', labelSize);
+  drawDimLinePx(c, corners.TL, corners.TR, -o, diag, fmtInches(g.anchoTop) + '"', labelSize);
+  drawDimLinePx(c, corners.TL, corners.BL, -o, diag, fmtInches(g.altoIzq) + '"', labelSize);
+  drawDimLinePx(c, corners.TR, corners.BR,  o, diag, fmtInches(g.altoDer) + '"', labelSize);
 
-  if (opts && opts.handles) drawHandles(c, H);
+  if (opts && opts.handles) drawHandles(c);
 }
 
-function drawHandles(c, H) {
-  if (!frameNorm) return;
-  const g = frameNorm;
+function drawHandles(c) {
   const r = Math.max(9, baseW * 0.015);
   for (const k of ['TL', 'TR', 'BR', 'BL']) {
-    const p = mapPoint(H, g[k].x, g[k].y);
+    const p = corners[k];
     c.beginPath();
     c.arc(p.x, p.y, r + 3, 0, Math.PI * 2);
     c.fillStyle = 'rgba(0,0,0,0.4)';
@@ -319,10 +288,8 @@ function drawHandles(c, H) {
 function redraw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(img, 0, 0, baseW, baseH);
-  if (!corners || !frameNorm) return;
-  const H = solveHomography(corners);
-  if (!H) return;
-  renderFrame(ctx, H, frameNorm, { handles: true });
+  if (!corners) return;
+  renderFrame(ctx, corners, { handles: true });
 }
 
 // ── corner init / reset ──
@@ -386,14 +353,12 @@ function loadImage(dataUrl) {
 
 // ── corner dragging ──
 function hitHandle(e) {
-  if (!corners || !frameNorm) return null;
-  const H = solveHomography(corners);
-  if (!H) return null;
+  if (!corners) return null;
   const p = toImageCoords(e);
   const tol = 24 / scale;
   let best = null, bestD = tol;
   for (const k of ['TL', 'TR', 'BR', 'BL']) {
-    const hp = mapPoint(H, frameNorm[k].x, frameNorm[k].y);
+    const hp = corners[k];
     const d = Math.hypot(hp.x - p.x, hp.y - p.y);
     if (d < bestD) { bestD = d; best = k; }
   }
@@ -444,8 +409,7 @@ btnDone.addEventListener('click', () => {
   out.width = baseW; out.height = baseH;
   const octx = out.getContext('2d');
   octx.drawImage(img, 0, 0, baseW, baseH);
-  const H = solveHomography(corners);
-  if (H) renderFrame(octx, H, frameNorm, { handles: false });
+  renderFrame(octx, corners, { handles: false });
   const dataUrl = out.toDataURL('image/jpeg', 0.9);
   try {
     if (window.opener) {
