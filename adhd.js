@@ -665,6 +665,21 @@ function drawCanvas() {
 
   ctx.restore();
   ctx.restore();
+
+  // 🍞 bread mode — cover the graph area with bread, cropped to shape
+  if (window.BREAD && window.BREAD.isOn()) {
+    ctx.save();
+    ctx.scale(dpr, dpr);
+    window.BREAD.draw(ctx, W, H);
+    ctx.restore();
+  }
+}
+
+// redraw when bread mode toggles
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('breadchange', function () {
+    if (typeof drawCanvas === 'function') drawCanvas();
+  });
 }
 
 function drawDimLine(ctx, x1, y1, x2, y2, label, scale, vertical) {

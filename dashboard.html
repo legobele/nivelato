@@ -7,6 +7,7 @@
 <script>console.log('nivelato v1.0.0 — commit fe7f1ee')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
+<script src="bread.js"></script>
 <script type="module" src="account-selector.js"></script>
 <script type="module" src="estradiol.js"></script>
 <script type="module" src="grass.js"></script>
@@ -420,7 +421,28 @@ window.embedGraph = function(cvs, data) {
     dctx.fillText(altoDer + '"', (roughTR.x + roughBR.x) / 2 + 24, roughBR.y - 2);
   }
   dctx.restore();
+
+  // 🍞 bread mode — cover the graph area with bread, cropped to shape
+  if (window.BREAD && window.BREAD.isOn()) {
+    window.BREAD.draw(dctx, W, H);
+  }
 };
+
+// redraw open modal graph when bread mode toggles
+document.addEventListener('breadchange', function () {
+  const mc = document.getElementById('modal-canvas');
+  if (mc && window._currentJobIdx != null && window._jobs && window._jobs[window._currentJobIdx]) {
+    const job = window._jobs[window._currentJobIdx];
+    window.embedGraph(mc, {
+      anchoBot: job.hueco?.anchoBot || 36,
+      altoIzq: job.hueco?.altoIzq || 84,
+      pIL: job.desniveles?.paredIzq || 'Nivel',
+      pDL: job.desniveles?.paredDer || 'Nivel',
+      tL: job.desniveles?.techo || 'Nivel',
+      pL: job.desniveles?.piso || 'Nivel'
+    });
+  }
+});
 
   let allJobs = [];
 let currentUser;
