@@ -492,6 +492,14 @@ window.__photoTestState = () => ({
   measurements: Object.assign({}, measurements),
   corners: corners ? Object.assign({}, corners) : null
 });
+
+// debug: expose hitHandle so tests can verify corner detection
+window.__hitTest = (clientX, clientY) => {
+  const rect = canvas.getBoundingClientRect();
+  const e = { clientX, clientY };
+  const hit = hitHandle(e);
+  return { hit, toImg: toImageCoords(e), scale };
+};
 </script>
 </body>
 </html>
