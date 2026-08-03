@@ -58,6 +58,7 @@
       </div>
     </div>
     <canvas id="photo-canvas" style="display:none;touch-action:none;"></canvas>
+    <canvas id="loupe-canvas" style="display:none;position:absolute;width:150px;height:150px;border-radius:50%;box-shadow:0 4px 20px rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.6);pointer-events:none;z-index:5;"></canvas>
   </div>
 
   <div id="hint-bar"></div>
@@ -76,6 +77,10 @@ const hintBar = document.getElementById('hint-bar');
 const btnDone = document.getElementById('btn-done');
 const btnReset = document.getElementById('btn-reset');
 const fileInput = document.getElementById('file-input');
+const loupeCanvas = document.getElementById('loupe-canvas');
+const loupeCtx = loupeCanvas.getContext('2d');
+const LOUPE = 150;          // css px diameter
+const LOUPE_ZOOM = 2.5;     // magnification
 
 let img = null;
 let baseW = 0, baseH = 0;
@@ -221,10 +226,10 @@ function drawDimLinePx(c, a, b, off, diag, label, labelSize) {
     c.lineTo(p.x + tlen * Math.cos(ang - Math.PI/2), p.y + tlen * Math.sin(ang - Math.PI/2));
     c.stroke();
   }
-  // label parallel to the line, centered
+  // label parallel to the line, centered — bigger font multiplier
   if (label) {
     const mid = { x: (a2.x + b2.x) / 2, y: (a2.y + b2.y) / 2 };
-    const size = labelSize * (Math.hypot(b.x - a.x, b.y - a.y) / (baseW * 0.5) * 26);
+    const size = labelSize * (Math.hypot(b.x - a.x, b.y - a.y) / (baseW * 0.5) * 40);
     drawLabel(c, label, mid.x, mid.y, ang, size);
   }
 }
@@ -249,7 +254,7 @@ function renderFrame(c, corners, opts) {
   c.stroke();
 
   const diag = Math.hypot(baseW, baseH);
-  const labelSize = 0.034;
+  const labelSize = 0.05;   // bigger labels
   const o = 0.05;
   const g = frameNorm;
   // dimension lines: bottom, top, left, right (offset outward)
@@ -365,6 +370,54 @@ function hitHandle(e) {
   return best;
 }
 
+// ── magnifier loupe (shown while dragging a corner) ──
+function showLoupe(clientX, clientY) {
+  if (!img || !dragging) return;
+  loupeCanvas.style.display = 'block';
+  const p = toImageCoords({ clientX, clientY });
+  const r = LOUPE / 2;
+  loupeCanvas.width = LOUPE;
+  loupeCanvas.height = LOUPE;
+  loupeCtx.clearRect(0, 0, LOUPE, LOUPE);
+  // circular clip
+  loupeCtx.save();
+  loupeCtx.beginPath();
+  loupeCtx.arc(r, r, r - 2, 0, Math.PI * 2);
+  loupeCtx.clip();
+  // draw zoomed region of the image
+  const srcR = LOUPE / LOUPE_ZOOM / scale; // image-px radius
+  loupeCtx.drawImage(img,
+    p.x - srcR, p.y - srcR, srcR * 2, srcR * 2,
+    0, 0, LOUPE, LOUPE);
+  // redraw frame + handles zoomed into the loupe
+  loupeCtx.save();
+  loupeCtx.translate(r, r);
+  loupeCtx.scale(LOUPE_ZOOM * scale, LOUPE_ZOOM * scale);
+  loupeCtx.translate(-p.x, -p.y);
+  renderFrame(loupeCtx, corners, { handles: true });
+  loupeCtx.restore();
+  loupeCtx.restore();
+  // crosshair at center
+  loupeCtx.strokeStyle = 'rgba(255,255,255,0.9)';
+  loupeCtx.lineWidth = 1;
+  loupeCtx.beginPath();
+  loupeCtx.moveTo(r, r - 8); loupeCtx.lineTo(r, r + 8);
+  loupeCtx.moveTo(r - 8, r); loupeCtx.lineTo(r + 8, r);
+  loupeCtx.stroke();
+  // position: above-right of the cursor, keep on screen
+  let lx = clientX + 24, ly = clientY - LOUPE - 12;
+  if (lx + LOUPE > window.innerWidth) lx = clientX - LOUPE - 24;
+  if (ly < 0) ly = clientY + 24;
+  loupeCanvas.style.left = lx + 'px';
+  loupeCanvas.style.top = ly + 'px';
+  loupeCanvas.style.width = LOUPE + 'px';
+  loupeCanvas.style.height = LOUPE + 'px';
+}
+
+function hideLoupe() {
+  loupeCanvas.style.display = 'none';
+}
+
 canvas.addEventListener('pointerdown', (e) => {
   if (!img || !corners) return;
   e.preventDefault();
@@ -374,6 +427,7 @@ canvas.addEventListener('pointerdown', (e) => {
     activePointer = e.pointerId;
     canvas.setPointerCapture(e.pointerId);
     setHint('Arrastra para mover la esquina');
+    showLoupe(e.clientX, e.clientY);
   }
 });
 
@@ -383,11 +437,13 @@ canvas.addEventListener('pointermove', (e) => {
   const p = toImageCoords(e);
   corners[dragging] = { x: Math.max(0, Math.min(baseW, p.x)), y: Math.max(0, Math.min(baseH, p.y)) };
   redraw();
+  showLoupe(e.clientX, e.clientY);
 });
 
 canvas.addEventListener('pointerup', (e) => {
   if (e.pointerId !== activePointer) return;
   activePointer = null;
+  hideLoupe();
   if (dragging) {
     dragging = null;
     setHint('Arrastra los puntos de las esquinas para alinear el marco con la abertura');
