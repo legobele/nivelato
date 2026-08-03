@@ -4,12 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nivelato — Dashboard</title>
-<script>console.log('nivelato v1.0.0 — commit 280e8e3')</script>
+<script>console.log('nivelato v1.0.0 — commit e1d2089')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
 <script src="bread.js"></script>
 <script type="module" src="account-selector.js"></script>
 <script type="module" src="estradiol.js"></script>
+<script src="italiano.js"></script>
 <script type="module" src="grass.js"></script>
 <script src="testing.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -40,6 +41,19 @@
     .estradiol-mode .header-logo { color: #e64980; }
     .estradiol-mode .org-badge { background: #fce4ec; color: #e64980; border-color: #e64980; }
     .estradiol-mode #btn-new-measure { background: #e64980 !important; }
+
+    /* ITALIANO MODE (type "nivelato") */
+    .italiano-mode .stat-num { color: #008c45; }
+    .italiano-mode .filter-row input:focus, .italiano-mode .filter-row select:focus { border-color: #008c45; box-shadow: 0 0 0 3px #e6f4ea; }
+    .italiano-mode .btn-new-measure { background: #008c45 !important; }
+    .italiano-mode #btn-new-measure { background: #008c45 !important; }
+    .italiano-mode .org-badge { background: #e6f4ea; color: #008c45; }
+    .italiano-mode .header-logo {
+      background: linear-gradient(90deg, #008c45 0%, #008c45 33%, #ffffff 33%, #ffffff 66%, #cd212a 66%, #cd212a 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
 
     /* MAIN */
     main { padding: 24px 20px; max-width: 720px; margin: 0 auto; }

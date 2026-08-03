@@ -597,6 +597,46 @@ html, body {
   border-color: #f8ceda;
 }
 
+/* ─── ITALIANO MODE (type "nivelato") ─── */
+.italiano-mode {
+  --accent: #008c45;            /* Italian green */
+  --accent-light: #e6f4ea;
+}
+.italiano-mode #app-logo,
+.italiano-mode .header-logo {
+  color: #008c45;
+  background: linear-gradient(90deg, #008c45 0%, #008c45 33%, #ffffff 33%, #ffffff 66%, #cd212a 66%, #cd212a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.italiano-mode .btn-primary {
+  background: #008c45;
+}
+.italiano-mode .btn-primary:active {
+  background: #00703a;
+}
+.italiano-mode #progress-bar {
+  background: linear-gradient(90deg, #008c45, #ffffff, #cd212a);
+}
+.italiano-mode .desnivel-pill.has-value {
+  background: #e6f4ea;
+  border-color: #008c45;
+  color: #008c45;
+}
+.italiano-mode .fraction-row input[type="number"]:focus,
+.italiano-mode .input-col input[type="text"]:focus,
+.italiano-mode .frac-select:focus,
+.italiano-mode .notas-block textarea:focus {
+  border-color: #008c45;
+  box-shadow: 0 0 0 3px #e6f4ea;
+}
+.italiano-mode #validation-block.val-ok {
+  background: #e6f4ea;
+  color: #008c45;
+  border-color: #b7e4c7;
+}
+
 /* ─── ESTRADIOL INDICATOR IN HEADER ─── */
 #estradiol-indicator {
   display: none;
