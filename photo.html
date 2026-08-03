@@ -116,7 +116,8 @@ function solveHomography(c) {
   const sq = [[0,0],[1,0],[1,1],[0,1]];
   const A = [], b = [];
   for (let i = 0; i < 4; i++) {
-    const [x, y] = sq[i], [u, v] = pts[i];
+    const [x, y] = sq[i];
+    const u = pts[i].x, v = pts[i].y;
     A.push([x, y, 1, 0, 0, 0, -u*x, -u*y]); b.push(u);
     A.push([0, 0, 0, x, y, 1, -v*x, -v*y]); b.push(v);
   }
