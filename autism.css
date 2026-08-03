@@ -94,7 +94,8 @@ html, body {
 /* ─── CANVAS FIX ─── */
 #canvas-wrap {
   flex: 1 1 auto;
-  min-height: 200px;
+  min-height: 0;            /* let flex distribute space; don't force 200px */
+  min-height: 200px;        /* keep a usable canvas when there's room */
   position: relative;
   overflow: hidden;
   touch-action: none; /* prevent browser zoom/scroll on canvas */
@@ -103,6 +104,17 @@ html, body {
 @media (max-width: 600px) {
   #canvas-wrap {
     min-height: 80px;
+  }
+}
+
+/* Short viewports: the shell is height-constrained, so cap the canvas
+   min-height to keep the header + panel visible and stop upward overflow. */
+@media (max-height: 520px) {
+  #canvas-wrap {
+    min-height: 40px;
+  }
+  #bottom-panel {
+    max-height: 60vh;
   }
 }
 #drawing-canvas {
@@ -491,11 +503,13 @@ html, body {
   height: 100vh;            /* fallback for browsers without dvh */
   height: 100dvh;
   max-height: 100dvh;
+  min-height: 0;
   overflow: hidden;
 }
 
 #bottom-panel {
-  flex-shrink: 0;
+  flex: 0 1 auto;           /* allow the panel to shrink so the shell never overflows */
+  min-height: 0;
   background: var(--white);
   border-top: 1px solid var(--grey-200);
   overflow-y: auto;

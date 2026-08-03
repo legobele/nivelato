@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Nivelato — Foto con medidas</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'Inter', system-ui, sans-serif; background: #0f1216; color: #fff; overflow: hidden; }
+  #app-shell { display: flex; flex-direction: column; height: 100dvh; }
+
+  /* HEADER */
+  header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #171b21; border-bottom: 1px solid #262c35; flex-shrink: 0; }
+  .header-title { font-size: 15px; font-weight: 700; }
+  .header-sub { font-size: 11px; color: #8b93a1; }
+  .header-btn { padding: 8px 14px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; background: #262c35; color: #fff; }
+  .header-btn.primary { background: #1971c2; }
+  .header-btn:hover { filter: brightness(1.15); }
+  .header-btn:disabled { opacity: 0.4; cursor: default; }
+
+  /* STAGE */
+  #stage { flex: 1; position: relative; overflow: hidden; background: #0f1216; display: flex; align-items: center; justify-content: center; touch-action: none; }
+  #stage img, #stage canvas { max-width: 100%; max-height: 100%; }
+  #photo-canvas { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #000; }
+
+  /* EMPTY STATE */
+  #empty-state { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: #8b93a1; text-align: center; padding: 24px; }
+  #empty-state .big { font-size: 44px; }
+  .btn-photo { padding: 14px 22px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; background: #1971c2; color: #fff; }
+  .btn-photo.ghost { background: #262c35; }
+
+  /* TOOLBAR */
+  #toolbar { display: flex; gap: 8px; align-items: center; padding: 10px 12px; background: #171b21; border-top: 1px solid #262c35; overflow-x: auto; flex-shrink: 0; flex-wrap: wrap; }
+  .tool-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 10px; border: 1px solid #262c35; border-radius: 8px; background: transparent; color: #8b93a1; font-family: inherit; font-size: 10px; font-weight: 600; cursor: pointer; }
+  .tool-btn .ico { font-size: 16px; }
+  .tool-btn.active { background: #1d3a5c; border-color: #1971c2; color: #fff; }
+  .tool-btn:disabled { opacity: 0.35; cursor: default; }
+  .tool-sep { width: 1px; height: 28px; background: #262c35; flex-shrink: 0; }
+  .color-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #3a4350; cursor: pointer; flex-shrink: 0; }
+  .color-dot.active { border-color: #fff; }
+  .toolbar-label { font-size: 11px; color: #8b93a1; font-weight: 600; }
+
+  /* LABEL MODAL */
+  #label-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 50; padding: 24px; }
+  #label-modal.open { display: flex; }
+  .label-card { background: #171b21; border: 1px solid #262c35; border-radius: 12px; padding: 20px; width: 100%; max-width: 320px; }
+  .label-card h3 { font-size: 15px; margin-bottom: 12px; }
+  .label-card input { width: 100%; padding: 10px 12px; border: 1px solid #3a4350; border-radius: 8px; background: #0f1216; color: #fff; font-size: 14px; font-family: inherit; margin-bottom: 12px; outline: none; }
+  .label-card input:focus { border-color: #1971c2; }
+  .label-actions { display: flex; gap: 8px; }
+  .label-actions button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .btn-ok { background: #1971c2; color: #fff; }
+  .btn-cancel { background: #262c35; color: #8b93a1; }
+  .quick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .quick-chips button { padding: 6px 10px; border: 1px solid #3a4350; border-radius: 6px; background: transparent; color: #c9ced6; font-size: 12px; font-family: inherit; cursor: pointer; }
+  .quick-chips button:hover { border-color: #1971c2; color: #fff; }
+
+  .hint { font-size: 11px; color: #5b6472; text-align: center; padding: 0 16px 6px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div id="app-shell">
+  <header>
+    <div>
+      <div class="header-title">Foto con medidas</div>
+      <div class="header-sub" id="header-sub">Agrega líneas y medidas a la foto</div>
+    </div>
+    <div>
+      <button class="header-btn" id="btn-done" disabled>✓ Usar esta foto</button>
+    </div>
+  </header>
+
+  <div id="stage">
+    <div id="empty-state">
+      <div class="big">📷</div>
+      <div>Agrega una foto del hueco para marcar las medidas.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+        <button class="btn-photo" id="btn-camera">Tomar foto</button>
+        <button class="btn-photo ghost" id="btn-gallery">Elegir de galería</button>
+      </div>
+    </div>
+    <canvas id="photo-canvas" style="display:none;touch-action:none;"></canvas>
+  </div>
+
+  <div class="hint" id="hint-bar"></div>
+
+  <div id="toolbar" style="display:none;">
+    <button class="tool-btn active" id="tool-line" data-tool="line"><span class="ico">📏</span>Línea</button>
+    <button class="tool-btn" id="tool-arrow" data-tool="arrow"><span class="ico">↔️</span>Flecha</button>
+    <button class="tool-btn" id="tool-rect" data-tool="rect"><span class="ico">▭</span>Caja</button>
+    <button class="tool-btn" id="tool-text" data-tool="text"><span class="ico">🔤</span>Texto</button>
+    <button class="tool-btn" id="tool-draw" data-tool="draw"><span class="ico">✏️</span>Lápiz</button>
+    <span class="tool-sep"></span>
+    <button class="tool-btn" id="btn-undo"><span class="ico">↩️</span>Deshacer</button>
+    <button class="tool-btn" id="btn-clear"><span class="ico">🗑️</span>Limpiar</button>
+    <span class="tool-sep"></span>
+    <span class="toolbar-label">Color</span>
+    <span class="color-dot active" data-color="#e03131" style="background:#e03131"></span>
+    <span class="color-dot" data-color="#1971c2" style="background:#1971c2"></span>
+    <span class="color-dot" data-color="#2f9e44" style="background:#2f9e44"></span>
+    <span class="color-dot" data-color="#f59f00" style="background:#f59f00"></span>
+    <span class="color-dot" data-color="#f8f9fa" style="background:#f8f9fa"></span>
+  </div>
+</div>
+
+<div id="label-modal">
+  <div class="label-card">
+    <h3 id="label-title">Texto de la línea</h3>
+    <div class="quick-chips" id="quick-chips"></div>
+    <input id="label-input" placeholder="Ej: 36\" × 84\"" maxlength="40" />
+    <div class="label-actions">
+      <button class="btn-cancel" id="btn-label-cancel">Cancelar</button>
+      <button class="btn-ok" id="btn-label-ok">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="file-input" accept="image/*" style="display:none" />
+
+<script type="module">
+import { auth } from "./firebase-config.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+const canvas = document.getElementById('photo-canvas');
+const ctx = canvas.getContext('2d');
+const stage = document.getElementById('stage');
+const toolbar = document.getElementById('toolbar');
+const hintBar = document.getElementById('hint-bar');
+const btnDone = document.getElementById('btn-done');
+const fileInput = document.getElementById('file-input');
+
+let img = null;                 // HTMLImageElement
+let baseW = 0, baseH = 0;       // natural photo size
+let scale = 1;                  // css px per image px
+let drawing = false;
+let startPt = null;
+let currentTool = 'line';
+let color = '#e03131';
+let quickLabels = [];
+const strokes = [];             // committed annotations (in image coords)
+let pendingText = null;         // { x, y } text anchor while waiting on modal
+let textPromptOpen = false;
+
+// ── helpers ──
+function toImageCoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left) / scale,
+    y: (e.clientY - rect.top) / scale
+  };
+}
+function fmtInches(v) {
+  if (!v && v !== 0) return null;
+  const whole = Math.floor(v);
+  const frac = v - whole;
+  let s = '';
+  const map = [[0.5,'1/2'],[0.25,'1/4'],[0.75,'3/4'],[0.333,'1/3'],[0.667,'2/3'],[0.125,'1/8'],[0.375,'3/8'],[0.625,'5/8'],[0.875,'7/8'],[0.0625,'1/16'],[0.1875,'3/16'],[0.3125,'5/16'],[0.4375,'7/16'],[0.5625,'9/16'],[0.6875,'11/16'],[0.8125,'13/16'],[0.9375,'15/16']];
+  for (const [f, str] of map) {
+    if (Math.abs(frac - f) < 0.03) { s = str; break; }
+  }
+  if (!s && frac > 0.02) s = Math.round(frac * 16) + '/16';
+  return (whole > 0 || !s) ? (whole + (s ? ' ' + s : '')) : s;
+}
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) { window.location.href = 'login.html'; return; }
+});
+
+document.getElementById('btn-camera').addEventListener('click', () => {
+  fileInput.setAttribute('capture', 'environment');
+  fileInput.click();
+});
+document.getElementById('btn-gallery').addEventListener('click', () => {
+  fileInput.removeAttribute('capture');
+  fileInput.click();
+});
+
+fileInput.addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => loadImage(ev.target.result);
+  reader.readAsDataURL(f);
+  fileInput.value = '';
+});
+
+function loadImage(dataUrl) {
+  const im = new Image();
+  im.onload = () => {
+    img = im;
+    baseW = im.naturalWidth;
+    baseH = im.naturalHeight;
+    // cap long edge at 1400px to keep dataURLs sane
+    const maxEdge = 1400;
+    if (Math.max(baseW, baseH) > maxEdge) {
+      const r = maxEdge / Math.max(baseW, baseH);
+      baseW = Math.round(baseW * r);
+      baseH = Math.round(baseH * r);
+    }
+    canvas.width = baseW;
+    canvas.height = baseH;
+    // fit within stage
+    const stageRect = stage.getBoundingClientRect();
+    const pad = 8;
+    scale = Math.min((stageRect.width - pad) / baseW, (stageRect.height - pad) / baseH);
+    canvas.style.width = (baseW * scale) + 'px';
+    canvas.style.height = (baseH * scale) + 'px';
+    canvas.style.display = 'block';
+    document.getElementById('empty-state').style.display = 'none';
+    toolbar.style.display = 'flex';
+    btnDone.disabled = false;
+    redraw();
+    setHint('Elige una herramienta y dibuja sobre la foto');
+  };
+  im.src = dataUrl;
+}
+
+// ── drawing ──
+function setHint(t) { hintBar.textContent = t; }
+
+function redraw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, baseW, baseH);
+  for (const s of strokes) drawStroke(s);
+  if (pendingText && textPromptOpen) { /* placeholder drawn on commit */ }
+}
+
+function drawStroke(s) {
+  ctx.strokeStyle = s.color;
+  ctx.fillStyle = s.color;
+  ctx.lineWidth = s.width;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.font = 'bold ' + Math.max(18, Math.round(28 * (s.width / 6))) + 'px Inter, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  if (s.type === 'line' || s.type === 'arrow') {
+    ctx.beginPath();
+    ctx.moveTo(s.x1, s.y1);
+    ctx.lineTo(s.x2, s.y2);
+    ctx.stroke();
+    if (s.type === 'arrow') {
+      const ang = Math.atan2(s.y2 - s.y1, s.x2 - s.x1);
+      const head = 14 * (s.width / 4);
+      ctx.beginPath();
+      ctx.moveTo(s.x2, s.y2);
+      ctx.lineTo(s.x2 - head * Math.cos(ang - 0.45), s.y2 - head * Math.sin(ang - 0.45));
+      ctx.moveTo(s.x2, s.y2);
+      ctx.lineTo(s.x2 - head * Math.cos(ang + 0.45), s.y2 - head * Math.sin(ang + 0.45));
+      ctx.stroke();
+    }
+    if (s.label) {
+      ctx.lineWidth = 4 * (s.width / 4);
+      ctx.strokeStyle = 'rgba(0,0,0,0.65)';
+      ctx.beginPath();
+      ctx.moveTo((s.x1 + s.x2) / 2 - 1, (s.y1 + s.y2) / 2 - 1);
+      ctx.lineTo((s.x1 + s.x2) / 2 - 1, (s.y1 + s.y2) / 2 - 1);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(0,0,0,0.65)';
+      const t = measureText(s.label, ctx);
+      ctx.fillRect((s.x1 + s.x2) / 2 - t.width / 2 - 6, (s.y1 + s.y2) / 2 - t.actualH / 2 - 3, t.width + 12, t.actualH + 6);
+      ctx.fillStyle = s.color;
+      ctx.fillText(s.label, (s.x1 + s.x2) / 2, (s.y1 + s.y2) / 2);
+    }
+  } else if (s.type === 'rect') {
+    ctx.strokeRect(Math.min(s.x1, s.x2), Math.min(s.y1, s.y2), Math.abs(s.x2 - s.x1), Math.abs(s.y2 - s.y1));
+    if (s.label) {
+      const cx = (s.x1 + s.x2) / 2, cy = (s.y1 + s.y2) / 2;
+      ctx.fillStyle = 'rgba(0,0,0,0.65)';
+      const t = measureText(s.label, ctx);
+      ctx.fillRect(cx - t.width / 2 - 6, cy - t.actualH / 2 - 3, t.width + 12, t.actualH + 6);
+      ctx.fillStyle = s.color;
+      ctx.fillText(s.label, cx, cy);
+    }
+  } else if (s.type === 'text') {
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    const t = measureText(s.label, ctx);
+    ctx.fillRect(s.x - t.width / 2 - 6, s.y - t.actualH / 2 - 3, t.width + 12, t.actualH + 6);
+    ctx.fillStyle = s.color;
+    ctx.fillText(s.label, s.x, s.y);
+  } else if (s.type === 'draw') {
+    ctx.beginPath();
+    ctx.moveTo(s.points[0].x, s.points[0].y);
+    for (let i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i].x, s.points[i].y);
+    ctx.stroke();
+  }
+}
+
+function measureText(t, c) {
+  const m = c.measureText(t);
+  return { width: m.width, actualH: 24 * (c.font.includes('28px') ? 1 : 1) };
+}
+
+// pointer events (mouse + touch)
+let activePointer = null;
+canvas.addEventListener('pointerdown', (e) => {
+  if (!img) return;
+  e.preventDefault();
+  canvas.setPointerCapture(e.pointerId);
+  activePointer = e.pointerId;
+  const p = toImageCoords(e);
+  if (currentTool === 'text') {
+    openLabelPrompt('Texto', 'text', p.x, p.y);
+    return;
+  }
+  drawing = true;
+  startPt = p;
+  pendingText = null;
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (!img || !drawing || e.pointerId !== activePointer) return;
+  e.preventDefault();
+  redraw();
+  const p = toImageCoords(e);
+  // live preview
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 4;
+  ctx.globalAlpha = 0.7;
+  ctx.beginPath();
+  ctx.moveTo(startPt.x, startPt.y);
+  ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+  ctx.restore();
+});
+canvas.addEventListener('pointerup', (e) => {
+  if (!img || e.pointerId !== activePointer) return;
+  activePointer = null;
+  if (!drawing) return;
+  drawing = false;
+  const p = toImageCoords(e);
+  commitStroke(currentTool, startPt, p);
+});
+
+function commitStroke(type, a, b) {
+  if (type === 'draw') {
+    strokes.push({ type, points: [a, b], color, width: 4 });
+    redraw();
+    return;
+  }
+  if (type === 'line' || type === 'arrow') {
+    const len = Math.hypot(b.x - a.x, b.y - a.y);
+    if (len < 10) { redraw(); return; }
+    openLabelPrompt(type === 'arrow' ? 'Etiqueta de flecha' : 'Etiqueta de línea', type, a, b);
+  } else if (type === 'rect') {
+    openLabelPrompt('Etiqueta de caja', type, a, b);
+  }
+}
+
+function openLabelPrompt(title, type, a, b, isText) {
+  textPromptOpen = true;
+  pendingText = { type, a, b, isText };
+  document.getElementById('label-title').textContent = title;
+  const chips = document.getElementById('quick-chips');
+  chips.innerHTML = '';
+  const labelInput = document.getElementById('label-input');
+  labelInput.value = '';
+  quickLabels.forEach(l => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = l;
+    b.onclick = () => { labelInput.value = l; };
+    chips.appendChild(b);
+  });
+  document.getElementById('label-modal').classList.add('open');
+  setTimeout(() => labelInput.focus(), 50);
+}
+
+document.getElementById('btn-label-ok').addEventListener('click', () => {
+  const val = document.getElementById('label-input').value.trim();
+  document.getElementById('label-modal').classList.remove('open');
+  if (!pendingText) return;
+  const pt = pendingText;
+  pendingText = null;
+  textPromptOpen = false;
+  if (!val) { redraw(); return; }
+  if (pt.isText) {
+    strokes.push({ type: 'text', x: pt.a.x, y: pt.a.y, label: val, color, width: 4 });
+  } else {
+    strokes.push({ ...pt, label: val, color, width: 4 });
+  }
+  redraw();
+});
+document.getElementById('btn-label-cancel').addEventListener('click', () => {
+  document.getElementById('label-modal').classList.remove('open');
+  pendingText = null;
+  textPromptOpen = false;
+  redraw();
+});
+
+// undo / clear
+document.getElementById('btn-undo').addEventListener('click', () => {
+  strokes.pop();
+  redraw();
+});
+document.getElementById('btn-clear').addEventListener('click', () => {
+  if (strokes.length && confirm('¿Borrar todas las anotaciones?')) {
+    strokes.length = 0;
+    redraw();
+  }
+});
+
+// tools
+document.querySelectorAll('.tool-btn[data-tool]').forEach(b => {
+  b.addEventListener('click', () => {
+    currentTool = b.dataset.tool;
+    document.querySelectorAll('.tool-btn[data-tool]').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    setHint({
+      line: 'Arrastra para dibujar una línea de medida',
+      arrow: 'Arrastra para dibujar una flecha',
+      rect: 'Arrastra para dibujar una caja',
+      text: 'Toca la foto para agregar texto',
+      draw: 'Arrastra para dibujar a mano libre'
+    }[currentTool]);
+  });
+});
+
+// colors
+document.querySelectorAll('.color-dot').forEach(d => {
+  d.addEventListener('click', () => {
+    color = d.dataset.color;
+    document.querySelectorAll('.color-dot').forEach(x => x.classList.remove('active'));
+    d.classList.add('active');
+  });
+});
+
+// done → build composite and send back
+btnDone.addEventListener('click', () => {
+  if (!img) return;
+  btnDone.disabled = true;
+  btnDone.textContent = 'Generando…';
+  const out = document.createElement('canvas');
+  out.width = baseW; out.height = baseH;
+  const octx = out.getContext('2d');
+  octx.drawImage(img, 0, 0, baseW, baseH);
+  for (const s of strokes) drawStrokeOnto(octx, s);
+  const dataUrl = out.toDataURL('image/jpeg', 0.85);
+  try {
+    if (window.opener) {
+      window.opener.postMessage({ type: 'NIVELATO_ANNOTATED_PHOTO', dataUrl }, '*');
+      window.close();
+    } else if (window.parent !== window) {
+      window.parent.postMessage({ type: 'NIVELATO_ANNOTATED_PHOTO', dataUrl }, '*');
+      window.close();
+    } else {
+      // standalone fallback: download
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'nivelato-medidas.jpg';
+      a.click();
+      btnDone.disabled = false;
+      btnDone.textContent = '✓ Usar esta foto';
+    }
+  } catch (e) {
+    btnDone.disabled = false;
+    btnDone.textContent = '✓ Usar esta foto';
+    alert('Error al enviar la foto: ' + e.message);
+  }
+});
+
+// draw a stroke on an arbitrary context
+function drawStrokeOnto(c, s) {
+  c.strokeStyle = s.color;
+  c.fillStyle = s.color;
+  c.lineWidth = s.width;
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
+  c.font = 'bold 28px Inter, system-ui, sans-serif';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  if (s.type === 'line' || s.type === 'arrow') {
+    c.beginPath(); c.moveTo(s.x1, s.y1); c.lineTo(s.x2, s.y2); c.stroke();
+    if (s.type === 'arrow') {
+      const ang = Math.atan2(s.y2 - s.y1, s.x2 - s.x1);
+      const head = 14;
+      c.beginPath();
+      c.moveTo(s.x2, s.y2);
+      c.lineTo(s.x2 - head * Math.cos(ang - 0.45), s.y2 - head * Math.sin(ang - 0.45));
+      c.moveTo(s.x2, s.y2);
+      c.lineTo(s.x2 - head * Math.cos(ang + 0.45), s.y2 - head * Math.sin(ang + 0.45));
+      c.stroke();
+    }
+    if (s.label) {
+      const t = measureTextOn(c, s.label);
+      c.fillStyle = 'rgba(0,0,0,0.65)';
+      c.fillRect((s.x1+s.x2)/2 - t.width/2 - 6, (s.y1+s.y2)/2 - t.actualH/2 - 3, t.width + 12, t.actualH + 6);
+      c.fillStyle = s.color;
+      c.fillText(s.label, (s.x1+s.x2)/2, (s.y1+s.y2)/2);
+    }
+  } else if (s.type === 'rect') {
+    c.strokeRect(Math.min(s.x1,s.x2), Math.min(s.y1,s.y2), Math.abs(s.x2-s.x1), Math.abs(s.y2-s.y1));
+    if (s.label) {
+      const t = measureTextOn(c, s.label);
+      c.fillStyle = 'rgba(0,0,0,0.65)';
+      c.fillRect((s.x1+s.x2)/2 - t.width/2 - 6, (s.y1+s.y2)/2 - t.actualH/2 - 3, t.width + 12, t.actualH + 6);
+      c.fillStyle = s.color;
+      c.fillText(s.label, (s.x1+s.x2)/2, (s.y1+s.y2)/2);
+    }
+  } else if (s.type === 'text') {
+    const t = measureTextOn(c, s.label);
+    c.fillStyle = 'rgba(0,0,0,0.65)';
+    c.fillRect(s.x - t.width/2 - 6, s.y - t.actualH/2 - 3, t.width + 12, t.actualH + 6);
+    c.fillStyle = s.color;
+    c.fillText(s.label, s.x, s.y);
+  } else if (s.type === 'draw') {
+    c.beginPath(); c.moveTo(s.points[0].x, s.points[0].y);
+    for (let i = 1; i < s.points.length; i++) c.lineTo(s.points[i].x, s.points[i].y);
+    c.stroke();
+  }
+}
+function measureTextOn(c, t) {
+  const m = c.measureText(t);
+  return { width: m.width, actualH: 26 };
+}
+
+// receive measurement values from opener for quick labels
+window.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'NIVELATO_MEASUREMENTS') {
+    const d = e.data;
+    quickLabels = [];
+    const push = (v) => { if (v) quickLabels.push(v); };
+    push(d.anchoBot ? fmtInches(d.anchoBot) + '"' : null);
+    push(d.anchoTop ? fmtInches(d.anchoTop) + '"' : null);
+    push(d.altoIzq ? fmtInches(d.altoIzq) + '"' : null);
+    push(d.altoDer ? fmtInches(d.altoDer) + '"' : null);
+    push(d.paredIzq);
+    push(d.paredDer);
+    push(d.techo);
+    push(d.piso);
+    if (d.customer) quickLabels.push(d.customer);
+    document.getElementById('header-sub').textContent = 'Medidas listas para marcar';
+  }
+});
+</script>
+</body>
+</html>

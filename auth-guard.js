@@ -1,7 +1,8 @@
 // auth-guard.js — protects index.html, injects user context, saves jobs to Firestore
-import { auth, db } from './firebase-config.js';
+import { auth, db, storage } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { doc, getDoc, collection, addDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
 import { makePermChecker } from './permissions.js';
 
 let currentUser = null;
@@ -55,8 +56,25 @@ window.saveJobToFirestore = async (jobData) => {
   if (!currentUser || !currentUserData) throw new Error('No autenticado');
   if (!_can('createMeasurements')) throw new Error('No tienes permiso para crear medidas');
   const orgId = currentUserData.orgId;
+
+  // If an annotated photo was attached, upload it to Storage first.
+  // Falls back to embedding the data URL directly if upload fails (e.g. rules not deployed yet).
+  let annotatedPhoto = jobData.annotatedPhoto || null;
+  if (annotatedPhoto && annotatedPhoto.startsWith('data:image')) {
+    try {
+      const jobRefDoc = doc(collection(db, 'orgs', orgId, 'jobs'));
+      const photoPath = `annotated/${orgId}/${jobRefDoc.id}.jpg`;
+      await uploadString(ref(storage, photoPath), annotatedPhoto, 'data_url');
+      annotatedPhoto = await getDownloadURL(ref(storage, photoPath));
+    } catch (e) {
+      console.warn('[Nivelato] Storage upload failed, embedding data URL:', e.message);
+      annotatedPhoto = jobData.annotatedPhoto; // keep data URL
+    }
+  }
+
   await addDoc(collection(db, 'orgs', orgId, 'jobs'), {
     ...jobData,
+    annotatedPhoto,
     installerUid:  currentUser.uid,
     installerName: currentUserData.name || currentUser.email,
     installerRole: currentUserData.role,

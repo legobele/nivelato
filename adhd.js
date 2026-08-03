@@ -62,7 +62,7 @@ function toFracStr(decimal) {
 
 // ─── STEP STATE ────────────────────────────────────────────────────────────
 let currentStep = 0;
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 let _historyPushed = 0;
 
 function getLingerView(leavingStep) {
@@ -395,7 +395,8 @@ function _saveCurrentJob(warnings) {
     project: project,
     location: location,
     warnings: warnings || [],
-    notas: notas
+    notas: notas,
+    annotatedPhoto: annotatedPhotoDataUrl || null
   };
   window.saveJobToFirestore(jobData).then(function() {
     const el = document.getElementById('save-status');
@@ -1186,4 +1187,51 @@ window.embedGraph = function(cvs, data) {
   }
   dctx.restore();
 };
+
+// ─── FOTO CON MEDIDAS (optional step 6) ───────────────────────────────────
+let annotatedPhotoDataUrl = null;
+
+window.openPhotoEditor = function() {
+  // pass current measurements to the editor for quick-label chips
+  const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
+  const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 0;
+  const anchoTop = results.anchoTop || 0;
+  const altoDer  = results.altoDer  || 0;
+  const payload = {
+    type: 'NIVELATO_MEASUREMENTS',
+    anchoBot, anchoTop, altoIzq, altoDer,
+    paredIzq: results.paredIzq?.label,
+    paredDer: results.paredDer?.label,
+    techo:    results.techo?.label,
+    piso:     results.piso?.label,
+    customer: document.getElementById('customer-name')?.value || ''
+  };
+  const w = window.open('photo.html', '_blank', 'width=420,height=760');
+  if (!w) {
+    alert('Permite ventanas emergentes para abrir el editor de fotos.');
+    return;
+  }
+  setTimeout(function() { w.postMessage(payload, '*'); }, 400);
+};
+
+window.skipPhoto = function() { nextStep(); };
+
+window.removePhoto = function() {
+  annotatedPhotoDataUrl = null;
+  document.getElementById('photo-preview').style.display = 'none';
+  document.getElementById('btn-open-photo').textContent = '📷 Agregar foto';
+};
+
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'NIVELATO_ANNOTATED_PHOTO' && e.data.dataUrl) {
+    annotatedPhotoDataUrl = e.data.dataUrl;
+    const prev = document.getElementById('photo-preview');
+    const img = document.getElementById('photo-preview-img');
+    if (prev && img) {
+      img.src = annotatedPhotoDataUrl;
+      prev.style.display = 'block';
+      document.getElementById('btn-open-photo').textContent = '📷 Cambiar foto';
+    }
+  }
+});
   

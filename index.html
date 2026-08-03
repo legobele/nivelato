@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 <title>Nivelato</title>
-<script>console.log('nivelato v1.0.0 — commit fe7f1ee')</script>
+<script>console.log('nivelato v1.0.0 — commit 13d347f')</script>
 <link rel="manifest" href="/nivelato/manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -23,7 +23,7 @@
 <!-- HEADER -->
 <header id="app-header">
 <span id="app-logo">Nivelato</span>
-<span id="step-indicator">Paso <span id="step-num">0</span> de 6</span>
+<span id="step-indicator">Paso <span id="step-num">0</span> de 7</span>
 <span id="estradiol-indicator">E2</span>
 </header>
 <!-- PROGRESS BAR -->
@@ -199,8 +199,31 @@
 </div>
 </section>
 
-<!-- ══ STEP 6 — RESUMEN ══ -->
+<!-- ══ STEP 6 — FOTO (optional) ══ -->
 <section class="step-panel" id="step-6">
+<div class="step-title">Foto con medidas</div>
+<p class="step-hint">Opcional: agrega una foto del hueco y márcala con las medidas para que el taller la vea.</p>
+<div id="photo-panel">
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn-primary" id="btn-open-photo" style="flex:1;min-width:140px;" onclick="openPhotoEditor()">📷 Agregar foto</button>
+    <button class="btn-secondary" style="flex:1;min-width:140px;" onclick="skipPhoto()">Omitir</button>
+  </div>
+  <div id="photo-preview" style="display:none;margin-top:14px;background:var(--white);border:1px solid var(--grey-200);border-radius:12px;padding:10px;box-shadow:var(--shadow);">
+    <img id="photo-preview-img" alt="Foto con medidas" style="width:100%;border-radius:8px;display:block;" />
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button class="btn-secondary" style="flex:1;" onclick="openPhotoEditor()">✏️ Editar</button>
+      <button class="btn-secondary" style="flex:1;" onclick="removePhoto()">🗑 Quitar</button>
+    </div>
+  </div>
+</div>
+<div class="btn-row">
+<button class="btn-secondary" onclick="prevStep()">← Atrás</button>
+<button class="btn-primary" onclick="nextStep()">Siguiente →</button>
+</div>
+</section>
+
+<!-- ══ STEP 7 — RESUMEN ══ -->
+<section class="step-panel" id="step-7">
 <div class="step-title">Resumen</div>
 <div id="validation-block" class="val-ok">✓ Medidas OK</div>
 <div class="verify-note" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;color:#e67700;font-weight:500;">

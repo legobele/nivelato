@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nivelato — Dashboard</title>
-<script>console.log('nivelato v1.0.0 — commit fe7f1ee')</script>
+<script>console.log('nivelato v1.0.0 — commit 13d347f')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
 <script src="bread.js"></script>
@@ -657,14 +657,35 @@ let currentUser;
     const sp = document.getElementById('share-panel');
     if (sp) sp.style.display = 'none';
     document.getElementById('modal-overlay').classList.add('open');
-    window.embedGraph(document.getElementById('modal-canvas'), {
-      anchoBot: job.hueco?.anchoBot || 36,
-      altoIzq: job.hueco?.altoIzq || 84,
-      pIL: job.desniveles?.paredIzq || 'Nivel',
-      pDL: job.desniveles?.paredDer || 'Nivel',
-      tL: job.desniveles?.techo || 'Nivel',
-      pL: job.desniveles?.piso || 'Nivel'
-    });
+    // show annotated photo if present, else the graph
+    const cw = document.querySelector('.modal-canvas-wrap');
+    const cvs = document.getElementById('modal-canvas');
+    let photoImg = document.getElementById('modal-photo-img');
+    if (!photoImg) {
+      photoImg = document.createElement('img');
+      photoImg.id = 'modal-photo-img';
+      photoImg.style.cssText = 'border-radius:10px;display:none;width:100%;';
+      photoImg.alt = 'Foto con medidas';
+      if (cw) cw.appendChild(photoImg);
+    }
+    if (job.annotatedPhoto) {
+      if (cw) cw.style.display = 'block';
+      if (cvs) cvs.style.display = 'none';
+      photoImg.style.display = 'block';
+      photoImg.src = job.annotatedPhoto;
+    } else {
+      if (cw) cw.style.display = 'block';
+      photoImg.style.display = 'none';
+      if (cvs) cvs.style.display = 'block';
+      window.embedGraph(cvs, {
+        anchoBot: job.hueco?.anchoBot || 36,
+        altoIzq: job.hueco?.altoIzq || 84,
+        pIL: job.desniveles?.paredIzq || 'Nivel',
+        pDL: job.desniveles?.paredDer || 'Nivel',
+        tL: job.desniveles?.techo || 'Nivel',
+        pL: job.desniveles?.piso || 'Nivel'
+      });
+    }
   };
 
   window.editCurrentJob = () => {
