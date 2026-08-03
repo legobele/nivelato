@@ -1192,7 +1192,7 @@ window.embedGraph = function(cvs, data) {
 let annotatedPhotoDataUrl = null;
 
 window.openPhotoEditor = function() {
-  // pass current measurements to the editor for quick-label chips
+  // pass current measurements to the editor via postMessage after iframe loads
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 0;
   const anchoTop = results.anchoTop || 0;
@@ -1206,12 +1206,25 @@ window.openPhotoEditor = function() {
     piso:     results.piso?.label,
     customer: document.getElementById('customer-name')?.value || ''
   };
-  const w = window.open('photo.html', '_blank', 'width=420,height=760');
-  if (!w) {
-    alert('Permite ventanas emergentes para abrir el editor de fotos.');
-    return;
+  // in-app iframe modal — no popup tab (mobile browsers kill popup tabs)
+  const overlay = document.getElementById('photo-editor-overlay');
+  if (!overlay) return;
+  const frame = document.getElementById('photo-editor-frame');
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  frame.onload = function() {
+    try { frame.contentWindow.postMessage(payload, '*'); } catch (e) {}
+  };
+  frame.src = 'photo.html';
+};
+
+window.closePhotoEditor = function() {
+  const overlay = document.getElementById('photo-editor-overlay');
+  if (overlay) {
+    overlay.style.display = 'none';
+    document.getElementById('photo-editor-frame').src = 'about:blank';
+    document.body.style.overflow = '';
   }
-  setTimeout(function() { w.postMessage(payload, '*'); }, 400);
 };
 
 window.skipPhoto = function() { nextStep(); };
@@ -1232,6 +1245,7 @@ window.addEventListener('message', function(e) {
       prev.style.display = 'block';
       document.getElementById('btn-open-photo').textContent = '📷 Cambiar foto';
     }
+    if (typeof window.closePhotoEditor === 'function') window.closePhotoEditor();
   }
 });
   

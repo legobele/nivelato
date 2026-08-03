@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 <title>Nivelato</title>
-<script>console.log('nivelato v1.0.0 — commit 41a3bd4')</script>
+<script>console.log('nivelato v1.0.0 — commit 985b184')</script>
 <link rel="manifest" href="/nivelato/manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -253,6 +253,15 @@
 </section>
 </div><!-- /bottom-panel -->
 </div><!-- /app-shell -->
+
+<!-- PHOTO EDITOR — in-app fullscreen modal (iframe, no popup tab) -->
+<div id="photo-editor-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#000;flex-direction:column;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#171b21;color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;flex-shrink:0;">
+    <span>📷 Foto con medidas</span>
+    <button onclick="window.closePhotoEditor()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 10px;">✕</button>
+  </div>
+  <iframe id="photo-editor-frame" src="about:blank" style="flex:1;width:100%;border:none;background:#0f1216;"></iframe>
+</div>
 <script src="adhd.js"></script>
 <script>
 // Populate fraction selects

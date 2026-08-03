@@ -96,53 +96,82 @@ def main():
         page.wait_for_timeout(400)
         check("step 6 (foto) active", page.locator("#step-6.active").is_visible())
 
-        # ── STEP 6: Foto con medidas (optional) — open editor, upload, align frame ──
+        # ── STEP 6: Foto con medidas (optional) — open in-app iframe editor ──
         check("foto step has Omitir", page.locator("#step-6 button:has-text('Omitir')").is_visible())
 
-        # open editor popup
-        with ctx.expect_page() as popup_info:
-            page.click("#btn-open-photo")
-        popup = popup_info.value
-        popup.wait_for_load_state()
-        popup.wait_for_selector("#btn-gallery", timeout=10000)
-        check("photo editor popup opened", True)
+        # open editor (iframe modal, not a popup)
+        page.click("#btn-open-photo")
+        page.wait_for_selector("#photo-editor-overlay", state="visible", timeout=5000)
+        check("photo editor overlay opened", True)
+        frame_el = page.locator("#photo-editor-frame")
+        frame_el.wait_for()
+        # switch to the iframe
+        frame = frame_el.content_frame
+        frame.wait_for_selector("#btn-gallery", timeout=10000)
+        check("photo editor iframe loaded", True)
 
-        # measurements handoff should have happened automatically (opener.postMessage)
-        popup.wait_for_timeout(600)
-        st = popup.evaluate("window.__photoTestState ? window.__photoTestState() : null")
+        # measurements handoff should have happened automatically
+        frame.wait_for_timeout(600)
+        st = frame.evaluate("window.__photoTestState ? window.__photoTestState() : null")
         check("editor received measurements", st and st["measurements"] and st["measurements"]["anchoBot"] > 0, str(st))
 
         # upload the actual glass door photo
-        popup.set_input_files("#file-input", PHOTO_PATH)
-        popup.wait_for_timeout(800)
-        check("photo loaded into editor canvas", popup.locator("#photo-canvas").is_visible())
+        frame.set_input_files("#file-input", PHOTO_PATH)
+        frame.wait_for_timeout(800)
+        check("photo loaded into editor canvas", frame.locator("#photo-canvas").is_visible())
 
-        # frame should appear automatically (auto-placed, handles visible)
-        popup.wait_for_timeout(400)
-        st2 = popup.evaluate("window.__photoTestState()")
+        # frame should appear automatically
+        frame.wait_for_timeout(400)
+        st2 = frame.evaluate("window.__photoTestState()")
         check("frame auto-placed", st2["hasFrame"] and st2["corners"] is not None, str(st2))
 
-        # drag the TL corner outward a bit to simulate alignment
-        canvas = popup.locator("#photo-canvas")
+        # drag the TL corner outward to simulate alignment
+        canvas = frame.locator("#photo-canvas")
         box = canvas.bounding_box()
         tl = st2["corners"]["TL"]
-        # convert image coords → screen: screen = rect.x + imgX/scale
         imgScale = box["width"] / st2["baseW"]
         sx = box["x"] + tl["x"] * imgScale
         sy = box["y"] + tl["y"] * imgScale
-        popup.mouse.move(sx, sy)
-        popup.mouse.down()
-        popup.mouse.move(sx - 20, sy - 20, steps=5)
-        popup.mouse.up()
-        popup.wait_for_timeout(400)
-        st3 = popup.evaluate("window.__photoTestState()")
+        frame.mouse.move(sx, sy)
+        frame.mouse.down()
+        # loupe should appear while dragging
+        frame.wait_for_timeout(150)
+        loupe_vis = frame.locator("#loupe-canvas").is_visible()
+        check("loupe appears during drag", loupe_vis)
+        frame.mouse.move(sx - 20, sy - 20, steps=5)
+        frame.mouse.up()
+        frame.wait_for_timeout(400)
+        # loupe should hide after drag
+        check("loupe hides after drag", not frame.locator("#loupe-canvas").is_visible())
+        st3 = frame.evaluate("window.__photoTestState()")
         moved = (st3["corners"]["TL"]["x"] < st2["corners"]["TL"]["x"] and st3["corners"]["TL"]["y"] < st2["corners"]["TL"]["y"])
         check("corner drag moves frame", moved, str(st2["corners"]) + " -> " + str(st3["corners"]))
 
-        # hit "Usar esta foto" → sends postMessage to opener → closes popup
-        popup.click("#btn-done")
-        # wait for opener to receive the message (async postMessage + handler)
+        # draw a custom line with the line tool
+        frame.click("#tool-line")
+        cb = canvas.bounding_box()
+        lx1 = cb["x"] + cb["width"] * 0.3
+        ly1 = cb["y"] + cb["height"] * 0.3
+        lx2 = cb["x"] + cb["width"] * 0.6
+        ly2 = cb["y"] + cb["height"] * 0.3
+        frame.mouse.move(lx1, ly1)
+        frame.mouse.down()
+        frame.mouse.move(lx2, ly2, steps=5)
+        frame.mouse.up()
+        frame.wait_for_selector("#label-modal.open", timeout=5000)
+        check("label modal opens for custom line", True)
+        frame.fill("#label-input", "Ancho extra")
+        frame.click("#btn-label-ok")
+        frame.wait_for_timeout(300)
+        st4 = frame.evaluate("window.__photoTestState()")
+        check("custom line committed", st4["customStrokes"] == 1, str(st4))
+
+        # hit "Usar esta foto" → sends postMessage to parent → closes overlay
+        frame.click("#btn-done")
+        # wait for the parent to receive the message and close the overlay
         page.wait_for_timeout(1500)
+        # overlay should close (iframe editor done)
+        check("overlay closes after done", not page.locator("#photo-editor-overlay").is_visible())
         # annotatedPhotoDataUrl is module-scoped in adhd.js; read the preview img src instead
         prev_img_src = page.evaluate("document.getElementById('photo-preview-img') ? document.getElementById('photo-preview-img').src : null") if page.locator("#photo-preview-img").count() else None
         check("opener received annotated photo", prev_img_src is not None and prev_img_src.startswith("data:image"), str(prev_img_src)[:60])

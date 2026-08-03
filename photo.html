@@ -11,7 +11,7 @@
   #app-shell { display: flex; flex-direction: column; height: 100dvh; }
 
   /* HEADER */
-  header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #171b21; border-bottom: 1px solid #262c35; flex-shrink: 0; gap: 10px; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #171b21; border-bottom: 1px solid #262c35; flex-shrink: 0; gap: 10px; }
   .header-titles { min-width: 0; }
   .header-title { font-size: 15px; font-weight: 700; }
   .header-sub { font-size: 11px; color: #8b93a1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -31,7 +31,32 @@
   .btn-photo { padding: 14px 22px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; background: #1971c2; color: #fff; }
   .btn-photo.ghost { background: #262c35; }
 
-  /* HINT BAR */
+  /* TOOLBAR */
+  #toolbar { display: flex; gap: 6px; align-items: center; padding: 8px 12px; background: #171b21; border-top: 1px solid #262c35; flex-shrink: 0; overflow-x: auto; flex-wrap: wrap; }
+  .tool-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px 9px; border: 1px solid #262c35; border-radius: 8px; background: transparent; color: #8b93a1; font-family: inherit; font-size: 10px; font-weight: 600; cursor: pointer; }
+  .tool-btn .ico { font-size: 15px; }
+  .tool-btn.active { background: #1d3a5c; border-color: #1971c2; color: #fff; }
+  .tool-sep { width: 1px; height: 26px; background: #262c35; flex-shrink: 0; }
+
+  /* LOUPE */
+  #loupe-canvas { display: none; position: absolute; width: 160px; height: 160px; border-radius: 50%; box-shadow: 0 4px 24px rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); pointer-events: none; z-index: 5; background:#000; }
+
+  /* LABEL MODAL */
+  #label-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 50; padding: 24px; }
+  #label-modal.open { display: flex; }
+  .label-card { background: #171b21; border: 1px solid #262c35; border-radius: 12px; padding: 20px; width: 100%; max-width: 340px; }
+  .label-card h3 { font-size: 15px; margin-bottom: 12px; }
+  .label-card input { width: 100%; padding: 10px 12px; border: 1px solid #3a4350; border-radius: 8px; background: #0f1216; color: #fff; font-size: 15px; font-family: inherit; margin-bottom: 12px; outline: none; }
+  .label-card input:focus { border-color: #1971c2; }
+  .label-actions { display: flex; gap: 8px; }
+  .label-actions button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .btn-ok { background: #1971c2; color: #fff; }
+  .btn-cancel { background: #262c35; color: #8b93a1; }
+  .quick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .quick-chips button { padding: 6px 10px; border: 1px solid #3a4350; border-radius: 6px; background: transparent; color: #c9ced6; font-size: 12px; font-family: inherit; cursor: pointer; }
+  .quick-chips button:hover { border-color: #1971c2; color: #fff; }
+
+  /* HINT */
   #hint-bar { font-size: 11px; color: #8b93a1; text-align: center; padding: 8px 16px; background: #171b21; border-top: 1px solid #262c35; flex-shrink: 0; }
 </style>
 </head>
@@ -58,10 +83,30 @@
       </div>
     </div>
     <canvas id="photo-canvas" style="display:none;touch-action:none;"></canvas>
-    <canvas id="loupe-canvas" style="display:none;position:absolute;width:150px;height:150px;border-radius:50%;box-shadow:0 4px 20px rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.6);pointer-events:none;z-index:5;"></canvas>
+    <canvas id="loupe-canvas"></canvas>
+  </div>
+
+  <div id="toolbar" style="display:none;">
+    <button class="tool-btn" id="tool-line" data-tool="line"><span class="ico">📏</span>Línea</button>
+    <button class="tool-btn" id="tool-arrow" data-tool="arrow"><span class="ico">↔️</span>Flecha</button>
+    <button class="tool-btn" id="tool-text" data-tool="text"><span class="ico">🔤</span>Texto</button>
+    <span class="tool-sep"></span>
+    <button class="tool-btn" id="btn-undo"><span class="ico">↩️</span>Deshacer</button>
   </div>
 
   <div id="hint-bar"></div>
+</div>
+
+<div id="label-modal">
+  <div class="label-card">
+    <h3 id="label-title">Texto</h3>
+    <div class="quick-chips" id="quick-chips"></div>
+    <input id="label-input" placeholder="Texto" maxlength="40" />
+    <div class="label-actions">
+      <button class="btn-cancel" id="btn-label-cancel">Cancelar</button>
+      <button class="btn-ok" id="btn-label-ok">Agregar</button>
+    </div>
+  </div>
 </div>
 
 <input type="file" id="file-input" accept="image/*" style="display:none" />
@@ -79,23 +124,28 @@ const btnReset = document.getElementById('btn-reset');
 const fileInput = document.getElementById('file-input');
 const loupeCanvas = document.getElementById('loupe-canvas');
 const loupeCtx = loupeCanvas.getContext('2d');
-const LOUPE = 150;          // css px diameter
-const LOUPE_ZOOM = 2.5;     // magnification
+const LOUPE = 160;
+const LOUPE_ZOOM = 3;
 
 let img = null;
 let baseW = 0, baseH = 0;
 let scale = 1;
-let corners = null;              // { TL, TR, BR, BL } in image px (draggable)
-let dragging = null;             // 'TL' | 'TR' | 'BR' | 'BL' | null
+let corners = null;
+let dragging = null;
 let activePointer = null;
-let measurements = {};           // anchoBot, anchoTop, altoIzq, altoDer, paredIzq, ...
+let measurements = {};
+let currentTool = 'none';        // 'none' | 'line' | 'arrow' | 'text'
+let drawingShape = null;         // { type, a } while drawing a line/arrow
+let customStrokes = [];          // custom line/arrow/text annotations (image px)
+let pendingLabel = null;         // { type, a, b } waiting on modal
+let quickLabels = [];
+let frameNorm = null;
 
 // ── helpers ──
 function setHint(t) { hintBar.textContent = t; }
 
 function toImageCoords(e) {
   const rect = canvas.getBoundingClientRect();
-  // ratio mapping handles any CSS scaling/centering (fixes offset bug)
   return {
     x: (e.clientX - rect.left) * (canvas.width / rect.width),
     y: (e.clientY - rect.top) * (canvas.height / rect.height)
@@ -116,9 +166,6 @@ function fmtInches(v) {
 }
 
 // ── frame geometry (normalized 0..1, mirrors the main graph) ──
-// Computed once from measurements; the corner quad is derived from it.
-let frameNorm = null;  // { TL, TR, BR, BL } in normalized 0..1
-
 function computeFrameNorm(m) {
   const pIv = m.paredIzq || 0, pDv = m.paredDer || 0, tcv = m.techo || 0, psv = m.piso || 0;
   const padX = 0.13, padY = 0.15;
@@ -143,11 +190,7 @@ function computeFrameNorm(m) {
   };
 }
 
-// corners (image px) = the 4 frame corner positions, scaled + centered.
-// The normalized frame is stretched to a large centered quad; each
-// corner maps 1:1, so hit-testing and dragging operate on the same points.
 function cornersFromNorm(g) {
-  // bounding box of the normalized frame
   const xs = [g.TL.x, g.TR.x, g.BR.x, g.BL.x];
   const ys = [g.TL.y, g.TR.y, g.BR.y, g.BL.y];
   const minX = Math.min(...xs), maxX = Math.max(...xs);
@@ -159,20 +202,17 @@ function cornersFromNorm(g) {
   if (h > baseH * 0.72) { h = baseH * 0.72; w = h / ratio; }
   const scaleX = w / nw, scaleY = h / nh;
   const cx = baseW / 2, cy = baseH / 2;
-  // center the normalized frame's bbox
   const offX = cx - (minX + maxX) / 2 * scaleX;
   const offY = cy - (minY + maxY) / 2 * scaleY;
   const map = (p) => ({ x: p.x * scaleX + offX, y: p.y * scaleY + offY });
-  return {
-    TL: map(g.TL), TR: map(g.TR), BR: map(g.BR), BL: map(g.BL)
-  };
+  return { TL: map(g.TL), TR: map(g.TR), BR: map(g.BR), BL: map(g.BL) };
 }
 
 // ── rendering ──
-const LINE_COLOR = '#f59f00';        // amber — high contrast on photos
-const LINE_WIDTH = 4;
+const LINE_COLOR = '#f59f00';
+const LINE_WIDTH = 5;
 const TEXT_COLOR = '#ffffff';
-const PILL_COLOR = 'rgba(0,0,0,0.72)';
+const PILL_COLOR = 'rgba(0,0,0,0.75)';
 const FILL_COLOR = 'rgba(255,255,255,0.08)';
 
 function pillPath(c, x, y, w, h, r) {
@@ -193,7 +233,7 @@ function drawLabel(c, text, x, y, angle, size) {
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   const w = c.measureText(text).width;
-  pillPath(c, -w/2 - 7, -size/2 - 5, w + 14, size + 10, 6);
+  pillPath(c, -w/2 - 8, -size/2 - 6, w + 16, size + 12, 7);
   c.fillStyle = PILL_COLOR;
   c.fill();
   c.fillStyle = TEXT_COLOR;
@@ -201,15 +241,19 @@ function drawLabel(c, text, x, y, angle, size) {
   c.restore();
 }
 
-// draw a dimension line between two image-px points, offset by `off`
-// (normalized fraction of the frame's diagonal) perpendicular to the line.
-function drawDimLinePx(c, a, b, off, diag, label, labelSize) {
+// LABEL SIZE: a readable fixed size in image px, scaled to the photo.
+// ~36px on a 1400px image, ~22px on a 700px image → always legible.
+function labelFontSize() {
+  return Math.max(22, baseW * 0.026);
+}
+
+// dimension line with offset, label parallel & centered
+function drawDimLinePx(c, a, b, off, label) {
   const ang = Math.atan2(b.y - a.y, b.x - a.x);
   const perp = { x: -Math.sin(ang), y: Math.cos(ang) };
-  const o = off * diag;
+  const o = off * Math.hypot(baseW, baseH) * 0.035;
   const a2 = { x: a.x + perp.x * o, y: a.y + perp.y * o };
   const b2 = { x: b.x + perp.x * o, y: b.y + perp.y * o };
-  // line
   c.strokeStyle = LINE_COLOR;
   c.lineWidth = LINE_WIDTH;
   c.lineCap = 'round';
@@ -218,32 +262,55 @@ function drawDimLinePx(c, a, b, off, diag, label, labelSize) {
   c.lineTo(b2.x, b2.y);
   c.stroke();
   // end ticks
-  const tlen = Math.max(7, labelSize * 0.55);
-  c.lineWidth = 2.5;
+  const tlen = Math.max(8, labelFontSize() * 0.4);
+  c.lineWidth = 3;
   for (const p of [a2, b2]) {
     c.beginPath();
     c.moveTo(p.x - tlen * Math.cos(ang - Math.PI/2), p.y - tlen * Math.sin(ang - Math.PI/2));
     c.lineTo(p.x + tlen * Math.cos(ang - Math.PI/2), p.y + tlen * Math.sin(ang - Math.PI/2));
     c.stroke();
   }
-  // label parallel to the line, centered — bigger font multiplier
   if (label) {
     const mid = { x: (a2.x + b2.x) / 2, y: (a2.y + b2.y) / 2 };
-    const size = labelSize * (Math.hypot(b.x - a.x, b.y - a.y) / (baseW * 0.5) * 40);
-    drawLabel(c, label, mid.x, mid.y, ang, size);
+    drawLabel(c, label, mid.x, mid.y, ang, labelFontSize());
   }
+}
+
+function drawArrowLine(c, a, b, label) {
+  const ang = Math.atan2(b.y - a.y, b.x - a.x);
+  c.strokeStyle = LINE_COLOR;
+  c.lineWidth = LINE_WIDTH;
+  c.lineCap = 'round';
+  c.beginPath();
+  c.moveTo(a.x, a.y);
+  c.lineTo(b.x, b.y);
+  c.stroke();
+  // arrowhead
+  const head = Math.max(14, labelFontSize() * 0.6);
+  c.beginPath();
+  c.moveTo(b.x, b.y);
+  c.lineTo(b.x - head * Math.cos(ang - 0.45), b.y - head * Math.sin(ang - 0.45));
+  c.moveTo(b.x, b.y);
+  c.lineTo(b.x - head * Math.cos(ang + 0.45), b.y - head * Math.sin(ang + 0.45));
+  c.stroke();
+  if (label) {
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    drawLabel(c, label, mid.x, mid.y, ang, labelFontSize());
+  }
+}
+
+function drawTextAnno(c, s) {
+  drawLabel(c, s.label, s.x, s.y, 0, labelFontSize());
 }
 
 function renderFrame(c, corners, opts) {
   const pts = [corners.TL, corners.TR, corners.BR, corners.BL];
-  // translucent fill over the frame region
   c.beginPath();
   c.moveTo(pts[0].x, pts[0].y);
   for (let i = 1; i < 4; i++) c.lineTo(pts[i].x, pts[i].y);
   c.closePath();
   c.fillStyle = FILL_COLOR;
   c.fill();
-  // frame edges
   c.strokeStyle = LINE_COLOR;
   c.lineWidth = LINE_WIDTH;
   c.lineJoin = 'round';
@@ -253,21 +320,18 @@ function renderFrame(c, corners, opts) {
   c.closePath();
   c.stroke();
 
-  const diag = Math.hypot(baseW, baseH);
-  const labelSize = 0.05;   // bigger labels
-  const o = 0.05;
   const g = frameNorm;
-  // dimension lines: bottom, top, left, right (offset outward)
-  drawDimLinePx(c, corners.BL, corners.BR,  o, diag, fmtInches(g.anchoBot) + '"', labelSize);
-  drawDimLinePx(c, corners.TL, corners.TR, -o, diag, fmtInches(g.anchoTop) + '"', labelSize);
-  drawDimLinePx(c, corners.TL, corners.BL, -o, diag, fmtInches(g.altoIzq) + '"', labelSize);
-  drawDimLinePx(c, corners.TR, corners.BR,  o, diag, fmtInches(g.altoDer) + '"', labelSize);
+  const o = 1;  // offset multiplier (sign: outward)
+  drawDimLinePx(c, corners.BL, corners.BR,  o, fmtInches(g.anchoBot) + '"');
+  drawDimLinePx(c, corners.TL, corners.TR, -o, fmtInches(g.anchoTop) + '"');
+  drawDimLinePx(c, corners.TL, corners.BL, -o, fmtInches(g.altoIzq) + '"');
+  drawDimLinePx(c, corners.TR, corners.BR,  o, fmtInches(g.altoDer) + '"');
 
   if (opts && opts.handles) drawHandles(c);
 }
 
 function drawHandles(c) {
-  const r = Math.max(9, baseW * 0.015);
+  const r = Math.max(10, baseW * 0.018);
   for (const k of ['TL', 'TR', 'BR', 'BL']) {
     const p = corners[k];
     c.beginPath();
@@ -281,7 +345,6 @@ function drawHandles(c) {
     c.lineWidth = 2.5;
     c.strokeStyle = LINE_COLOR;
     c.stroke();
-    // crosshair
     c.lineWidth = 1.5;
     c.beginPath();
     c.moveTo(p.x - r * 0.6, p.y); c.lineTo(p.x + r * 0.6, p.y);
@@ -293,8 +356,17 @@ function drawHandles(c) {
 function redraw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(img, 0, 0, baseW, baseH);
-  if (!corners) return;
-  renderFrame(ctx, corners, { handles: true });
+  if (corners) renderFrame(ctx, corners, { handles: true });
+  // custom strokes
+  for (const s of customStrokes) {
+    if (s.type === 'line') drawArrowLine(ctx, s.a, s.b, s.label);
+    else if (s.type === 'arrow') drawArrowLine(ctx, s.a, s.b, s.label);
+    else if (s.type === 'text') drawTextAnno(ctx, s);
+  }
+  // in-progress shape
+  if (drawingShape) {
+    drawArrowLine(ctx, drawingShape.a, drawingShape.b, null);
+  }
 }
 
 // ── corner init / reset ──
@@ -348,19 +420,20 @@ function loadImage(dataUrl) {
     canvas.style.height = (baseH * scale) + 'px';
     canvas.style.display = 'block';
     document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('toolbar').style.display = 'flex';
     btnDone.disabled = false;
     btnReset.disabled = false;
     resetCorners();
-    setHint('Arrastra los puntos de las esquinas para alinear el marco con la abertura');
+    setHint('Arrastra los puntos de las esquinas para alinear el marco. Usa las herramientas para añadir líneas o texto.');
   };
   im.src = dataUrl;
 }
 
-// ── corner dragging ──
+// ── hit testing / dragging ──
 function hitHandle(e) {
   if (!corners) return null;
   const p = toImageCoords(e);
-  const tol = 24 / scale;
+  const tol = 26 / scale;
   let best = null, bestD = tol;
   for (const k of ['TL', 'TR', 'BR', 'BL']) {
     const hp = corners[k];
@@ -370,44 +443,47 @@ function hitHandle(e) {
   return best;
 }
 
-// ── magnifier loupe (shown while dragging a corner) ──
+// ── loupe: sample the actual displayed canvas region ──
 function showLoupe(clientX, clientY) {
-  if (!img || !dragging) return;
+  if (!img) return;
   loupeCanvas.style.display = 'block';
   const p = toImageCoords({ clientX, clientY });
   const r = LOUPE / 2;
   loupeCanvas.width = LOUPE;
   loupeCanvas.height = LOUPE;
   loupeCtx.clearRect(0, 0, LOUPE, LOUPE);
-  // circular clip
   loupeCtx.save();
   loupeCtx.beginPath();
   loupeCtx.arc(r, r, r - 2, 0, Math.PI * 2);
   loupeCtx.clip();
-  // draw zoomed region of the image
-  const srcR = LOUPE / LOUPE_ZOOM / scale; // image-px radius
+  // draw zoomed region of the IMAGE (the actual pixels under the cursor)
+  const srcR = LOUPE / LOUPE_ZOOM / scale;  // image-px radius of the sampled region
   loupeCtx.drawImage(img,
     p.x - srcR, p.y - srcR, srcR * 2, srcR * 2,
     0, 0, LOUPE, LOUPE);
-  // redraw frame + handles zoomed into the loupe
+  // draw frame + handles on top, transformed to the loupe space
   loupeCtx.save();
   loupeCtx.translate(r, r);
   loupeCtx.scale(LOUPE_ZOOM * scale, LOUPE_ZOOM * scale);
   loupeCtx.translate(-p.x, -p.y);
-  renderFrame(loupeCtx, corners, { handles: true });
+  if (corners) renderFrame(loupeCtx, corners, { handles: true });
+  for (const s of customStrokes) {
+    if (s.type === 'line' || s.type === 'arrow') drawArrowLine(loupeCtx, s.a, s.b, s.label);
+    else if (s.type === 'text') drawTextAnno(loupeCtx, s);
+  }
   loupeCtx.restore();
   loupeCtx.restore();
-  // crosshair at center
+  // crosshair
   loupeCtx.strokeStyle = 'rgba(255,255,255,0.9)';
   loupeCtx.lineWidth = 1;
   loupeCtx.beginPath();
-  loupeCtx.moveTo(r, r - 8); loupeCtx.lineTo(r, r + 8);
-  loupeCtx.moveTo(r - 8, r); loupeCtx.lineTo(r + 8, r);
+  loupeCtx.moveTo(r, r - 9); loupeCtx.lineTo(r, r + 9);
+  loupeCtx.moveTo(r - 9, r); loupeCtx.lineTo(r + 9, r);
   loupeCtx.stroke();
-  // position: above-right of the cursor, keep on screen
-  let lx = clientX + 24, ly = clientY - LOUPE - 12;
-  if (lx + LOUPE > window.innerWidth) lx = clientX - LOUPE - 24;
-  if (ly < 0) ly = clientY + 24;
+  // position
+  let lx = clientX + 26, ly = clientY - LOUPE - 14;
+  if (lx + LOUPE > window.innerWidth) lx = clientX - LOUPE - 26;
+  if (ly < 0) ly = clientY + 26;
   loupeCanvas.style.left = lx + 'px';
   loupeCanvas.style.top = ly + 'px';
   loupeCanvas.style.width = LOUPE + 'px';
@@ -418,9 +494,23 @@ function hideLoupe() {
   loupeCanvas.style.display = 'none';
 }
 
+// ── pointer handlers ──
 canvas.addEventListener('pointerdown', (e) => {
-  if (!img || !corners) return;
+  if (!img) return;
   e.preventDefault();
+  const p = toImageCoords(e);
+  if (currentTool === 'line' || currentTool === 'arrow') {
+    drawingShape = { type: currentTool, a: p, b: p };
+    activePointer = e.pointerId;
+    canvas.setPointerCapture(e.pointerId);
+    return;
+  }
+  if (currentTool === 'text') {
+    pendingLabel = { type: 'text', a: p };
+    openLabelModal('Texto', []);
+    return;
+  }
+  // frame corner drag (default)
   const h = hitHandle(e);
   if (h) {
     dragging = h;
@@ -432,7 +522,14 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 
 canvas.addEventListener('pointermove', (e) => {
-  if (!img || !dragging || e.pointerId !== activePointer) return;
+  if (!img) return;
+  if (drawingShape && e.pointerId === activePointer) {
+    e.preventDefault();
+    drawingShape.b = toImageCoords(e);
+    redraw();
+    return;
+  }
+  if (!dragging || e.pointerId !== activePointer) return;
   e.preventDefault();
   const p = toImageCoords(e);
   corners[dragging] = { x: Math.max(0, Math.min(baseW, p.x)), y: Math.max(0, Math.min(baseH, p.y)) };
@@ -444,10 +541,74 @@ canvas.addEventListener('pointerup', (e) => {
   if (e.pointerId !== activePointer) return;
   activePointer = null;
   hideLoupe();
+  if (drawingShape) {
+    const len = Math.hypot(drawingShape.b.x - drawingShape.a.x, drawingShape.b.y - drawingShape.a.y);
+    if (len > 8) {
+      pendingLabel = { type: drawingShape.type, a: drawingShape.a, b: drawingShape.b };
+      openLabelModal(drawingShape.type === 'arrow' ? 'Etiqueta de flecha' : 'Etiqueta de línea', quickLabels);
+    }
+    drawingShape = null;
+    redraw();
+    return;
+  }
   if (dragging) {
     dragging = null;
-    setHint('Arrastra los puntos de las esquinas para alinear el marco con la abertura');
+    setHint('Arrastra los puntos de las esquinas para alinear el marco. Usa las herramientas para añadir líneas o texto.');
   }
+});
+
+// ── label modal ──
+function openLabelModal(title, chips) {
+  document.getElementById('label-title').textContent = title;
+  const chipBox = document.getElementById('quick-chips');
+  chipBox.innerHTML = '';
+  (chips || []).forEach(l => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = l;
+    b.onclick = () => { document.getElementById('label-input').value = l; };
+    chipBox.appendChild(b);
+  });
+  document.getElementById('label-input').value = '';
+  document.getElementById('label-modal').classList.add('open');
+  setTimeout(() => document.getElementById('label-input').focus(), 50);
+}
+
+document.getElementById('btn-label-ok').addEventListener('click', () => {
+  const val = document.getElementById('label-input').value.trim();
+  document.getElementById('label-modal').classList.remove('open');
+  if (!pendingLabel) return;
+  const pl = pendingLabel;
+  pendingLabel = null;
+  if (!val) { redraw(); return; }
+  if (pl.type === 'text') {
+    customStrokes.push({ type: 'text', x: pl.a.x, y: pl.a.y, label: val });
+  } else {
+    customStrokes.push({ type: pl.type, a: pl.a, b: pl.b, label: val });
+  }
+  redraw();
+});
+document.getElementById('btn-label-cancel').addEventListener('click', () => {
+  document.getElementById('label-modal').classList.remove('open');
+  pendingLabel = null;
+  redraw();
+});
+
+// ── toolbar ──
+document.querySelectorAll('.tool-btn[data-tool]').forEach(b => {
+  b.addEventListener('click', () => {
+    currentTool = b.dataset.tool;
+    document.querySelectorAll('.tool-btn[data-tool]').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    setHint({
+      line: 'Arrastra para dibujar una línea de medida',
+      arrow: 'Arrastra para dibujar una flecha',
+      text: 'Toca la foto para agregar texto'
+    }[currentTool]);
+  });
+});
+document.getElementById('btn-undo').addEventListener('click', () => {
+  if (customStrokes.length) { customStrokes.pop(); redraw(); }
 });
 
 btnReset.addEventListener('click', () => {
@@ -458,21 +619,24 @@ btnReset.addEventListener('click', () => {
 
 // ── done → composite + send back ──
 btnDone.addEventListener('click', () => {
-  if (!img || !corners) return;
+  if (!img) return;
   btnDone.disabled = true;
   btnDone.textContent = 'Generando…';
   const out = document.createElement('canvas');
   out.width = baseW; out.height = baseH;
   const octx = out.getContext('2d');
   octx.drawImage(img, 0, 0, baseW, baseH);
-  renderFrame(octx, corners, { handles: false });
+  if (corners) renderFrame(octx, corners, { handles: false });
+  for (const s of customStrokes) {
+    if (s.type === 'line' || s.type === 'arrow') drawArrowLine(octx, s.a, s.b, s.label);
+    else if (s.type === 'text') drawTextAnno(octx, s);
+  }
   const dataUrl = out.toDataURL('image/jpeg', 0.9);
   try {
-    if (window.opener) {
-      window.opener.postMessage({ type: 'NIVELATO_ANNOTATED_PHOTO', dataUrl }, '*');
-      window.close();
-    } else if (window.parent !== window) {
+    if (window.parent && window.parent !== window) {
       window.parent.postMessage({ type: 'NIVELATO_ANNOTATED_PHOTO', dataUrl }, '*');
+    } else if (window.opener) {
+      window.opener.postMessage({ type: 'NIVELATO_ANNOTATED_PHOTO', dataUrl }, '*');
       window.close();
     } else {
       const a = document.createElement('a');
@@ -502,13 +666,20 @@ window.addEventListener('message', (e) => {
       techo: parseLabel(e.data.techo),
       piso: parseLabel(e.data.piso)
     };
+    quickLabels = [];
+    const push = (v) => { if (v) quickLabels.push(v); };
+    push(e.data.anchoBot ? fmtInches(e.data.anchoBot) + '"' : null);
+    push(e.data.anchoTop ? fmtInches(e.data.anchoTop) + '"' : null);
+    push(e.data.altoIzq ? fmtInches(e.data.altoIzq) + '"' : null);
+    push(e.data.altoDer ? fmtInches(e.data.altoDer) + '"' : null);
+    push(e.data.paredIzq); push(e.data.paredDer); push(e.data.techo); push(e.data.piso);
+    if (e.data.customer) quickLabels.push(e.data.customer);
     document.getElementById('header-sub').textContent = 'Medidas cargadas — alinea el marco';
     frameNorm = computeFrameNorm(measurements);
-    if (img) { resetCorners(); setHint('Arrastra los puntos de las esquinas para alinear el marco con la abertura'); }
+    if (img) { resetCorners(); setHint('Arrastra los puntos de las esquinas para alinear el marco. Usa las herramientas para añadir líneas o texto.'); }
   }
 });
 
-// desnivel labels like "⟩ 1/2" or "↓ 3/4" → numeric inches
 function parseLabel(s) {
   if (!s) return 0;
   const m = s.match(/(\d+)(?:\s+(\d+)\/(\d+))?/);
@@ -522,10 +693,10 @@ window.__photoTestState = () => ({
   baseW, baseH,
   hasFrame: !!corners,
   measurements: Object.assign({}, measurements),
-  corners: corners ? Object.assign({}, corners) : null
+  corners: corners ? Object.assign({}, corners) : null,
+  customStrokes: customStrokes.length
 });
 
-// debug: expose hitHandle so tests can verify corner detection
 window.__hitTest = (clientX, clientY) => {
   const rect = canvas.getBoundingClientRect();
   const e = { clientX, clientY };
