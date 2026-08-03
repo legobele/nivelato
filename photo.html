@@ -152,10 +152,24 @@ function localScale(H, x, y) {
 }
 
 // ── frame geometry (normalized 0..1, mirrors the main graph) ──
-function frameGeometry(m) {
+// `aspect` = height/width of the placed corner quad, so the normalized
+// frame keeps the same proportions as the user's placed corners.
+function frameGeometry(m, aspect) {
   const pIv = m.paredIzq || 0, pDv = m.paredDer || 0, tcv = m.techo || 0, psv = m.piso || 0;
   const padX = 0.13, padY = 0.15;
   const bx = padX, by = padY, bw = 1 - 2*padX, bh = 1 - 2*padY;
+  // if the placed quad is wider/narrower than the default, stretch pads to match
+  if (aspect && aspect > 0) {
+    const defaultAspect = bh / bw;
+    const ratio = aspect / defaultAspect;
+    if (ratio > 1) { // quad is taller — reduce horizontal pads
+      const npadX = padX / ratio;
+      bx = npadX; bw = 1 - 2*npadX;
+    } else { // quad is wider — reduce vertical pads
+      const npadY = padY * ratio;
+      by = npadY; bh = 1 - 2*npadY;
+    }
+  }
   const EXAG = Math.min(bw, bh) * 0.15;
   const clamp = (v, lim) => Math.max(-lim, Math.min(lim, v));
   const pIMax = Math.max(pIv, 1), pDMax = Math.max(pDv, 1), tMax = Math.max(tcv, 1), pMax = Math.max(psv, 1);
@@ -172,6 +186,14 @@ function frameGeometry(m) {
   const anchoTop = m.anchoTop || Math.max(0, anchoBot - pIv - pDv);
   const altoDer  = m.altoDer  || Math.max(0, altoIzq - tcv - psv);
   return { TL, TR, BR, BL, anchoBot, anchoTop, altoIzq, altoDer };
+}
+
+// aspect of the placed corner quad (height/width)
+function cornersAspect() {
+  if (!corners) return 0;
+  const w = Math.hypot(corners.TR.x - corners.TL.x, corners.TR.y - corners.TL.y);
+  const h = Math.hypot(corners.BL.x - corners.TL.x, corners.BL.y - corners.TL.y);
+  return w > 0 ? h / w : 0;
 }
 
 // ── rendering ──
@@ -269,7 +291,7 @@ function renderFrame(c, H, g, opts) {
 }
 
 function drawHandles(c, H) {
-  const g = frameGeometry(measurements);
+  const g = frameGeometry(measurements, cornersAspect());
   const r = Math.max(9, baseW * 0.015);
   for (const k of ['TL', 'TR', 'BR', 'BL']) {
     const p = mapPoint(H, g[k].x, g[k].y);
@@ -299,7 +321,7 @@ function redraw() {
   if (!corners) return;
   const H = solveHomography(corners);
   if (!H) return;
-  const g = frameGeometry(measurements);
+  const g = frameGeometry(measurements, cornersAspect());
   renderFrame(ctx, H, g, { handles: true });
 }
 
@@ -377,7 +399,7 @@ function hitHandle(e) {
   if (!corners) return null;
   const H = solveHomography(corners);
   if (!H) return null;
-  const g = frameGeometry(measurements);
+  const g = frameGeometry(measurements, cornersAspect());
   const p = toImageCoords(e);
   const tol = 24 / scale;
   let best = null, bestD = tol;
@@ -434,7 +456,7 @@ btnDone.addEventListener('click', () => {
   const octx = out.getContext('2d');
   octx.drawImage(img, 0, 0, baseW, baseH);
   const H = solveHomography(corners);
-  if (H) renderFrame(octx, H, frameGeometry(measurements), { handles: false });
+  if (H) renderFrame(octx, H, frameGeometry(measurements, cornersAspect()), { handles: false });
   const dataUrl = out.toDataURL('image/jpeg', 0.9);
   try {
     if (window.opener) {
