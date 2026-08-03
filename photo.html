@@ -533,6 +533,14 @@ window.addEventListener('message', (e) => {
     document.getElementById('header-sub').textContent = 'Medidas listas para marcar';
   }
 });
+
+// ── test hook ──
+window.__photoTestState = () => ({
+  strokes: strokes.length,
+  quickLabels: quickLabels.slice(),
+  hasImage: !!img,
+  baseW, baseH
+});
 </script>
 </body>
 </html>
