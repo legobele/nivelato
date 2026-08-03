@@ -11,9 +11,11 @@
   #app-shell { display: flex; flex-direction: column; height: 100dvh; }
 
   /* HEADER */
-  header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #171b21; border-bottom: 1px solid #262c35; flex-shrink: 0; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #171b21; border-bottom: 1px solid #262c35; flex-shrink: 0; gap: 10px; }
+  .header-titles { min-width: 0; }
   .header-title { font-size: 15px; font-weight: 700; }
-  .header-sub { font-size: 11px; color: #8b93a1; }
+  .header-sub { font-size: 11px; color: #8b93a1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-btns { display: flex; gap: 8px; flex-shrink: 0; }
   .header-btn { padding: 8px 14px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; background: #262c35; color: #fff; }
   .header-btn.primary { background: #1971c2; }
   .header-btn:hover { filter: brightness(1.15); }
@@ -21,8 +23,7 @@
 
   /* STAGE */
   #stage { flex: 1; position: relative; overflow: hidden; background: #0f1216; display: flex; align-items: center; justify-content: center; touch-action: none; }
-  #stage img, #stage canvas { max-width: 100%; max-height: 100%; }
-  #photo-canvas { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #000; }
+  #photo-canvas { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #000; touch-action: none; }
 
   /* EMPTY STATE */
   #empty-state { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: #8b93a1; text-align: center; padding: 24px; }
@@ -30,44 +31,20 @@
   .btn-photo { padding: 14px 22px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; background: #1971c2; color: #fff; }
   .btn-photo.ghost { background: #262c35; }
 
-  /* TOOLBAR */
-  #toolbar { display: flex; gap: 8px; align-items: center; padding: 10px 12px; background: #171b21; border-top: 1px solid #262c35; overflow-x: auto; flex-shrink: 0; flex-wrap: wrap; }
-  .tool-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 10px; border: 1px solid #262c35; border-radius: 8px; background: transparent; color: #8b93a1; font-family: inherit; font-size: 10px; font-weight: 600; cursor: pointer; }
-  .tool-btn .ico { font-size: 16px; }
-  .tool-btn.active { background: #1d3a5c; border-color: #1971c2; color: #fff; }
-  .tool-btn:disabled { opacity: 0.35; cursor: default; }
-  .tool-sep { width: 1px; height: 28px; background: #262c35; flex-shrink: 0; }
-  .color-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #3a4350; cursor: pointer; flex-shrink: 0; }
-  .color-dot.active { border-color: #fff; }
-  .toolbar-label { font-size: 11px; color: #8b93a1; font-weight: 600; }
-
-  /* LABEL MODAL */
-  #label-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 50; padding: 24px; }
-  #label-modal.open { display: flex; }
-  .label-card { background: #171b21; border: 1px solid #262c35; border-radius: 12px; padding: 20px; width: 100%; max-width: 320px; }
-  .label-card h3 { font-size: 15px; margin-bottom: 12px; }
-  .label-card input { width: 100%; padding: 10px 12px; border: 1px solid #3a4350; border-radius: 8px; background: #0f1216; color: #fff; font-size: 14px; font-family: inherit; margin-bottom: 12px; outline: none; }
-  .label-card input:focus { border-color: #1971c2; }
-  .label-actions { display: flex; gap: 8px; }
-  .label-actions button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
-  .btn-ok { background: #1971c2; color: #fff; }
-  .btn-cancel { background: #262c35; color: #8b93a1; }
-  .quick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-  .quick-chips button { padding: 6px 10px; border: 1px solid #3a4350; border-radius: 6px; background: transparent; color: #c9ced6; font-size: 12px; font-family: inherit; cursor: pointer; }
-  .quick-chips button:hover { border-color: #1971c2; color: #fff; }
-
-  .hint { font-size: 11px; color: #5b6472; text-align: center; padding: 0 16px 6px; flex-shrink: 0; }
+  /* HINT BAR */
+  #hint-bar { font-size: 11px; color: #8b93a1; text-align: center; padding: 8px 16px; background: #171b21; border-top: 1px solid #262c35; flex-shrink: 0; }
 </style>
 </head>
 <body>
 <div id="app-shell">
   <header>
-    <div>
+    <div class="header-titles">
       <div class="header-title">Foto con medidas</div>
-      <div class="header-sub" id="header-sub">Agrega líneas y medidas a la foto</div>
+      <div class="header-sub" id="header-sub">Alinea el marco con la abertura</div>
     </div>
-    <div>
-      <button class="header-btn" id="btn-done" disabled>✓ Usar esta foto</button>
+    <div class="header-btns">
+      <button class="header-btn" id="btn-reset" disabled>↩️ Marco</button>
+      <button class="header-btn primary" id="btn-done" disabled>✓ Usar esta foto</button>
     </div>
   </header>
 
@@ -83,37 +60,7 @@
     <canvas id="photo-canvas" style="display:none;touch-action:none;"></canvas>
   </div>
 
-  <div class="hint" id="hint-bar"></div>
-
-  <div id="toolbar" style="display:none;">
-    <button class="tool-btn active" id="tool-line" data-tool="line"><span class="ico">📏</span>Línea</button>
-    <button class="tool-btn" id="tool-arrow" data-tool="arrow"><span class="ico">↔️</span>Flecha</button>
-    <button class="tool-btn" id="tool-rect" data-tool="rect"><span class="ico">▭</span>Caja</button>
-    <button class="tool-btn" id="tool-text" data-tool="text"><span class="ico">🔤</span>Texto</button>
-    <button class="tool-btn" id="tool-draw" data-tool="draw"><span class="ico">✏️</span>Lápiz</button>
-    <span class="tool-sep"></span>
-    <button class="tool-btn" id="btn-undo"><span class="ico">↩️</span>Deshacer</button>
-    <button class="tool-btn" id="btn-clear"><span class="ico">🗑️</span>Limpiar</button>
-    <span class="tool-sep"></span>
-    <span class="toolbar-label">Color</span>
-    <span class="color-dot active" data-color="#e03131" style="background:#e03131"></span>
-    <span class="color-dot" data-color="#1971c2" style="background:#1971c2"></span>
-    <span class="color-dot" data-color="#2f9e44" style="background:#2f9e44"></span>
-    <span class="color-dot" data-color="#f59f00" style="background:#f59f00"></span>
-    <span class="color-dot" data-color="#f8f9fa" style="background:#f8f9fa"></span>
-  </div>
-</div>
-
-<div id="label-modal">
-  <div class="label-card">
-    <h3 id="label-title">Texto de la línea</h3>
-    <div class="quick-chips" id="quick-chips"></div>
-    <input id="label-input" placeholder="Ej: 36\" × 84\"" maxlength="40" />
-    <div class="label-actions">
-      <button class="btn-cancel" id="btn-label-cancel">Cancelar</button>
-      <button class="btn-ok" id="btn-label-ok">Agregar</button>
-    </div>
-  </div>
+  <div id="hint-bar"></div>
 </div>
 
 <input type="file" id="file-input" accept="image/*" style="display:none" />
@@ -125,31 +72,31 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/f
 const canvas = document.getElementById('photo-canvas');
 const ctx = canvas.getContext('2d');
 const stage = document.getElementById('stage');
-const toolbar = document.getElementById('toolbar');
 const hintBar = document.getElementById('hint-bar');
 const btnDone = document.getElementById('btn-done');
+const btnReset = document.getElementById('btn-reset');
 const fileInput = document.getElementById('file-input');
 
-let img = null;                 // HTMLImageElement
-let baseW = 0, baseH = 0;       // natural photo size
-let scale = 1;                  // css px per image px
-let drawing = false;
-let startPt = null;
-let currentTool = 'line';
-let color = '#e03131';
-let quickLabels = [];
-const strokes = [];             // committed annotations (in image coords)
-let pendingText = null;         // { x, y } text anchor while waiting on modal
-let textPromptOpen = false;
+let img = null;
+let baseW = 0, baseH = 0;
+let scale = 1;
+let corners = null;              // { TL, TR, BR, BL } in image px (draggable)
+let dragging = null;             // 'TL' | 'TR' | 'BR' | 'BL' | null
+let activePointer = null;
+let measurements = {};           // anchoBot, anchoTop, altoIzq, altoDer, paredIzq, ...
 
 // ── helpers ──
+function setHint(t) { hintBar.textContent = t; }
+
 function toImageCoords(e) {
   const rect = canvas.getBoundingClientRect();
+  // ratio mapping handles any CSS scaling/centering (fixes offset bug)
   return {
-    x: (e.clientX - rect.left) / scale,
-    y: (e.clientY - rect.top) / scale
+    x: (e.clientX - rect.left) * (canvas.width / rect.width),
+    y: (e.clientY - rect.top) * (canvas.height / rect.height)
   };
 }
+
 function fmtInches(v) {
   if (!v && v !== 0) return null;
   const whole = Math.floor(v);
@@ -163,6 +110,216 @@ function fmtInches(v) {
   return (whole > 0 || !s) ? (whole + (s ? ' ' + s : '')) : s;
 }
 
+// ── homography: unit square → quad corners ──
+function solveHomography(c) {
+  const pts = [c.TL, c.TR, c.BR, c.BL];
+  const sq = [[0,0],[1,0],[1,1],[0,1]];
+  const A = [], b = [];
+  for (let i = 0; i < 4; i++) {
+    const [x, y] = sq[i], [u, v] = pts[i];
+    A.push([x, y, 1, 0, 0, 0, -u*x, -u*y]); b.push(u);
+    A.push([0, 0, 0, x, y, 1, -v*x, -v*y]); b.push(v);
+  }
+  const n = 8;
+  const M = A.map((row, i) => [...row, b[i]]);
+  for (let col = 0; col < n; col++) {
+    let piv = col;
+    for (let r = col + 1; r < n; r++) if (Math.abs(M[r][col]) > Math.abs(M[piv][col])) piv = r;
+    [M[col], M[piv]] = [M[piv], M[col]];
+    const pv = M[col][col];
+    if (Math.abs(pv) < 1e-9) return null;
+    for (let c2 = col; c2 <= n; c2++) M[col][c2] /= pv;
+    for (let r = 0; r < n; r++) {
+      if (r === col) continue;
+      const f = M[r][col];
+      for (let c2 = col; c2 <= n; c2++) M[r][c2] -= f * M[col][c2];
+    }
+  }
+  return M.map(row => row[n]); // [h11 h12 h13 h21 h22 h23 h31 h32]
+}
+
+function mapPoint(H, x, y) {
+  const w = H[6]*x + H[7]*y + 1;
+  return { x: (H[0]*x + H[1]*y + H[2]) / w, y: (H[3]*x + H[4]*y + H[5]) / w };
+}
+
+function localScale(H, x, y) {
+  const p = mapPoint(H, x, y);
+  const px = mapPoint(H, x + 0.02, y);
+  const py = mapPoint(H, x, y + 0.02);
+  return (Math.hypot(px.x - p.x, px.y - p.y) + Math.hypot(py.x - p.y, py.y - p.y)) / 0.04;
+}
+
+// ── frame geometry (normalized 0..1, mirrors the main graph) ──
+function frameGeometry(m) {
+  const pIv = m.paredIzq || 0, pDv = m.paredDer || 0, tcv = m.techo || 0, psv = m.piso || 0;
+  const padX = 0.13, padY = 0.15;
+  const bx = padX, by = padY, bw = 1 - 2*padX, bh = 1 - 2*padY;
+  const EXAG = Math.min(bw, bh) * 0.15;
+  const clamp = (v, lim) => Math.max(-lim, Math.min(lim, v));
+  const pIMax = Math.max(pIv, 1), pDMax = Math.max(pDv, 1), tMax = Math.max(tcv, 1), pMax = Math.max(psv, 1);
+  const leftOffsetTop   = clamp((pIv / pIMax) * EXAG, EXAG);
+  const rightOffsetTop  = -clamp((pDv / pDMax) * EXAG, EXAG);
+  const topOffsetRight  = clamp((tcv / tMax) * EXAG * (bh / bw), EXAG);
+  const bottomOffsetRight = clamp((psv / pMax) * EXAG * (bh / bw), EXAG);
+  const TL = { x: bx + leftOffsetTop, y: by };
+  const TR = { x: bx + bw + rightOffsetTop, y: by + topOffsetRight };
+  const BR = { x: bx + bw + rightOffsetTop, y: by + bh + bottomOffsetRight };
+  const BL = { x: bx + leftOffsetTop, y: by + bh };
+  const anchoBot = m.anchoBot || 36;
+  const altoIzq  = m.altoIzq  || 84;
+  const anchoTop = m.anchoTop || Math.max(0, anchoBot - pIv - pDv);
+  const altoDer  = m.altoDer  || Math.max(0, altoIzq - tcv - psv);
+  return { TL, TR, BR, BL, anchoBot, anchoTop, altoIzq, altoDer };
+}
+
+// ── rendering ──
+const LINE_COLOR = '#f59f00';        // amber — high contrast on photos
+const LINE_WIDTH = 4;
+const TEXT_COLOR = '#ffffff';
+const PILL_COLOR = 'rgba(0,0,0,0.72)';
+const FILL_COLOR = 'rgba(255,255,255,0.08)';
+const DIM_OFFSET = 0.05;             // normalized distance of dim lines from frame
+
+function pillPath(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r);
+  c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r);
+  c.arcTo(x, y, x + w, y, r);
+  c.closePath();
+}
+
+function drawLabel(c, text, x, y, angle, size) {
+  c.save();
+  c.translate(x, y);
+  c.rotate(angle);
+  c.font = 'bold ' + size + 'px Inter, system-ui, sans-serif';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  const w = c.measureText(text).width;
+  pillPath(c, -w/2 - 7, -size/2 - 5, w + 14, size + 10, 6);
+  c.fillStyle = PILL_COLOR;
+  c.fill();
+  c.fillStyle = TEXT_COLOR;
+  c.fillText(text, 0, 1);
+  c.restore();
+}
+
+function drawDimLine(c, H, p1n, p2n, label, labelSize) {
+  const a = mapPoint(H, p1n.x, p1n.y);
+  const b = mapPoint(H, p2n.x, p2n.y);
+  // line
+  c.strokeStyle = LINE_COLOR;
+  c.lineWidth = LINE_WIDTH;
+  c.lineCap = 'round';
+  c.beginPath();
+  c.moveTo(a.x, a.y);
+  c.lineTo(b.x, b.y);
+  c.stroke();
+  // end ticks (perpendicular)
+  const ang = Math.atan2(b.y - a.y, b.x - a.x);
+  const tlen = Math.max(7, labelSize * 0.55);
+  c.lineWidth = 2.5;
+  for (const p of [a, b]) {
+    c.beginPath();
+    c.moveTo(p.x - tlen * Math.cos(ang - Math.PI/2), p.y - tlen * Math.sin(ang - Math.PI/2));
+    c.lineTo(p.x + tlen * Math.cos(ang - Math.PI/2), p.y + tlen * Math.sin(ang - Math.PI/2));
+    c.stroke();
+  }
+  // label parallel to the line, centered
+  if (label) {
+    const mid = { x: (p1n.x + p2n.x) / 2, y: (p1n.y + p2n.y) / 2 };
+    const m = mapPoint(H, mid.x, mid.y);
+    const s = localScale(H, mid.x, mid.y);
+    drawLabel(c, label, m.x, m.y, ang, labelSize * s);
+  }
+}
+
+function renderFrame(c, H, g, opts) {
+  const pts = [g.TL, g.TR, g.BR, g.BL].map(p => mapPoint(H, p.x, p.y));
+  // translucent fill over the frame region
+  c.beginPath();
+  c.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < 4; i++) c.lineTo(pts[i].x, pts[i].y);
+  c.closePath();
+  c.fillStyle = FILL_COLOR;
+  c.fill();
+  // frame edges
+  c.strokeStyle = LINE_COLOR;
+  c.lineWidth = LINE_WIDTH;
+  c.lineJoin = 'round';
+  c.beginPath();
+  c.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < 4; i++) c.lineTo(pts[i].x, pts[i].y);
+  c.closePath();
+  c.stroke();
+
+  const labelSize = 0.034; // normalized font size (scaled by homography)
+  const o = DIM_OFFSET;
+  // dimension lines: bottom, top, left, right
+  drawDimLine(c, H, { x: g.BL.x, y: g.BL.y + o }, { x: g.BR.x, y: g.BR.y + o }, fmtInches(g.anchoBot) + '"', labelSize);
+  drawDimLine(c, H, { x: g.TL.x, y: g.TL.y - o }, { x: g.TR.x, y: g.TR.y - o }, fmtInches(g.anchoTop) + '"', labelSize);
+  drawDimLine(c, H, { x: g.TL.x - o, y: g.TL.y }, { x: g.BL.x - o, y: g.BL.y }, fmtInches(g.altoIzq) + '"', labelSize);
+  drawDimLine(c, H, { x: g.TR.x + o, y: g.TR.y }, { x: g.BR.x + o, y: g.BR.y }, fmtInches(g.altoDer) + '"', labelSize);
+
+  if (opts && opts.handles) drawHandles(c, H);
+}
+
+function drawHandles(c, H) {
+  const g = frameGeometry(measurements);
+  const r = Math.max(9, baseW * 0.015);
+  for (const k of ['TL', 'TR', 'BR', 'BL']) {
+    const p = mapPoint(H, g[k].x, g[k].y);
+    c.beginPath();
+    c.arc(p.x, p.y, r + 3, 0, Math.PI * 2);
+    c.fillStyle = 'rgba(0,0,0,0.4)';
+    c.fill();
+    c.beginPath();
+    c.arc(p.x, p.y, r, 0, Math.PI * 2);
+    c.fillStyle = '#fff';
+    c.fill();
+    c.lineWidth = 2.5;
+    c.strokeStyle = LINE_COLOR;
+    c.stroke();
+    // crosshair
+    c.lineWidth = 1.5;
+    c.beginPath();
+    c.moveTo(p.x - r * 0.6, p.y); c.lineTo(p.x + r * 0.6, p.y);
+    c.moveTo(p.x, p.y - r * 0.6); c.lineTo(p.x, p.y + r * 0.6);
+    c.stroke();
+  }
+}
+
+function redraw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, baseW, baseH);
+  if (!corners) return;
+  const H = solveHomography(corners);
+  if (!H) return;
+  const g = frameGeometry(measurements);
+  renderFrame(ctx, H, g, { handles: true });
+}
+
+// ── corner init / reset ──
+function resetCorners() {
+  const g = frameGeometry(measurements);
+  const ratio = g.altoIzq / g.anchoBot; // height : width
+  let w = baseW * 0.72;
+  let h = w * ratio;
+  if (h > baseH * 0.72) { h = baseH * 0.72; w = h / ratio; }
+  const cx = baseW / 2, cy = baseH / 2;
+  corners = {
+    TL: { x: cx - w/2, y: cy - h/2 },
+    TR: { x: cx + w/2, y: cy - h/2 },
+    BR: { x: cx + w/2, y: cy + h/2 },
+    BL: { x: cx - w/2, y: cy + h/2 }
+  };
+  redraw();
+}
+
+// ── image loading ──
 onAuthStateChanged(auth, (user) => {
   if (!user) { window.location.href = 'login.html'; return; }
 });
@@ -191,8 +348,7 @@ function loadImage(dataUrl) {
     img = im;
     baseW = im.naturalWidth;
     baseH = im.naturalHeight;
-    // cap long edge at 1400px to keep dataURLs sane
-    const maxEdge = 1400;
+    const maxEdge = 1600;
     if (Math.max(baseW, baseH) > maxEdge) {
       const r = maxEdge / Math.max(baseW, baseH);
       baseW = Math.round(baseW * r);
@@ -200,7 +356,6 @@ function loadImage(dataUrl) {
     }
     canvas.width = baseW;
     canvas.height = baseH;
-    // fit within stage
     const stageRect = stage.getBoundingClientRect();
     const pad = 8;
     scale = Math.min((stageRect.width - pad) / baseW, (stageRect.height - pad) / baseH);
@@ -208,235 +363,78 @@ function loadImage(dataUrl) {
     canvas.style.height = (baseH * scale) + 'px';
     canvas.style.display = 'block';
     document.getElementById('empty-state').style.display = 'none';
-    toolbar.style.display = 'flex';
     btnDone.disabled = false;
-    redraw();
-    setHint('Elige una herramienta y dibuja sobre la foto');
+    btnReset.disabled = false;
+    resetCorners();
+    setHint('Arrastra los puntos de las esquinas para alinear el marco con la abertura');
   };
   im.src = dataUrl;
 }
 
-// ── drawing ──
-function setHint(t) { hintBar.textContent = t; }
-
-function redraw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(img, 0, 0, baseW, baseH);
-  for (const s of strokes) drawStroke(s);
-  if (pendingText && textPromptOpen) { /* placeholder drawn on commit */ }
-}
-
-function drawStroke(s) {
-  ctx.strokeStyle = s.color;
-  ctx.fillStyle = s.color;
-  ctx.lineWidth = s.width;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.font = 'bold ' + Math.max(18, Math.round(28 * (s.width / 6))) + 'px Inter, system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  if (s.type === 'line' || s.type === 'arrow') {
-    ctx.beginPath();
-    ctx.moveTo(s.x1, s.y1);
-    ctx.lineTo(s.x2, s.y2);
-    ctx.stroke();
-    if (s.type === 'arrow') {
-      const ang = Math.atan2(s.y2 - s.y1, s.x2 - s.x1);
-      const head = 14 * (s.width / 4);
-      ctx.beginPath();
-      ctx.moveTo(s.x2, s.y2);
-      ctx.lineTo(s.x2 - head * Math.cos(ang - 0.45), s.y2 - head * Math.sin(ang - 0.45));
-      ctx.moveTo(s.x2, s.y2);
-      ctx.lineTo(s.x2 - head * Math.cos(ang + 0.45), s.y2 - head * Math.sin(ang + 0.45));
-      ctx.stroke();
-    }
-    if (s.label) {
-      ctx.lineWidth = 4 * (s.width / 4);
-      ctx.strokeStyle = 'rgba(0,0,0,0.65)';
-      ctx.beginPath();
-      ctx.moveTo((s.x1 + s.x2) / 2 - 1, (s.y1 + s.y2) / 2 - 1);
-      ctx.lineTo((s.x1 + s.x2) / 2 - 1, (s.y1 + s.y2) / 2 - 1);
-      ctx.stroke();
-      ctx.fillStyle = 'rgba(0,0,0,0.65)';
-      const t = measureText(s.label, ctx);
-      ctx.fillRect((s.x1 + s.x2) / 2 - t.width / 2 - 6, (s.y1 + s.y2) / 2 - t.actualH / 2 - 3, t.width + 12, t.actualH + 6);
-      ctx.fillStyle = s.color;
-      ctx.fillText(s.label, (s.x1 + s.x2) / 2, (s.y1 + s.y2) / 2);
-    }
-  } else if (s.type === 'rect') {
-    ctx.strokeRect(Math.min(s.x1, s.x2), Math.min(s.y1, s.y2), Math.abs(s.x2 - s.x1), Math.abs(s.y2 - s.y1));
-    if (s.label) {
-      const cx = (s.x1 + s.x2) / 2, cy = (s.y1 + s.y2) / 2;
-      ctx.fillStyle = 'rgba(0,0,0,0.65)';
-      const t = measureText(s.label, ctx);
-      ctx.fillRect(cx - t.width / 2 - 6, cy - t.actualH / 2 - 3, t.width + 12, t.actualH + 6);
-      ctx.fillStyle = s.color;
-      ctx.fillText(s.label, cx, cy);
-    }
-  } else if (s.type === 'text') {
-    ctx.fillStyle = 'rgba(0,0,0,0.65)';
-    const t = measureText(s.label, ctx);
-    ctx.fillRect(s.x - t.width / 2 - 6, s.y - t.actualH / 2 - 3, t.width + 12, t.actualH + 6);
-    ctx.fillStyle = s.color;
-    ctx.fillText(s.label, s.x, s.y);
-  } else if (s.type === 'draw') {
-    ctx.beginPath();
-    ctx.moveTo(s.points[0].x, s.points[0].y);
-    for (let i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i].x, s.points[i].y);
-    ctx.stroke();
+// ── corner dragging ──
+function hitHandle(e) {
+  if (!corners) return null;
+  const H = solveHomography(corners);
+  if (!H) return null;
+  const g = frameGeometry(measurements);
+  const p = toImageCoords(e);
+  const tol = 24 / scale;
+  let best = null, bestD = tol;
+  for (const k of ['TL', 'TR', 'BR', 'BL']) {
+    const hp = mapPoint(H, g[k].x, g[k].y);
+    const d = Math.hypot(hp.x - p.x, hp.y - p.y);
+    if (d < bestD) { bestD = d; best = k; }
   }
+  return best;
 }
 
-function measureText(t, c) {
-  const m = c.measureText(t);
-  return { width: m.width, actualH: 24 * (c.font.includes('28px') ? 1 : 1) };
-}
-
-// pointer events (mouse + touch)
-let activePointer = null;
 canvas.addEventListener('pointerdown', (e) => {
-  if (!img) return;
+  if (!img || !corners) return;
   e.preventDefault();
-  canvas.setPointerCapture(e.pointerId);
-  activePointer = e.pointerId;
-  const p = toImageCoords(e);
-  if (currentTool === 'text') {
-    openLabelPrompt('Texto', 'text', p.x, p.y);
-    return;
+  const h = hitHandle(e);
+  if (h) {
+    dragging = h;
+    activePointer = e.pointerId;
+    canvas.setPointerCapture(e.pointerId);
+    setHint('Arrastra para mover la esquina');
   }
-  drawing = true;
-  startPt = p;
-  pendingText = null;
 });
+
 canvas.addEventListener('pointermove', (e) => {
-  if (!img || !drawing || e.pointerId !== activePointer) return;
+  if (!img || !dragging || e.pointerId !== activePointer) return;
   e.preventDefault();
-  redraw();
   const p = toImageCoords(e);
-  // live preview
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 4;
-  ctx.globalAlpha = 0.7;
-  ctx.beginPath();
-  ctx.moveTo(startPt.x, startPt.y);
-  ctx.lineTo(p.x, p.y);
-  ctx.stroke();
-  ctx.restore();
+  corners[dragging] = { x: Math.max(0, Math.min(baseW, p.x)), y: Math.max(0, Math.min(baseH, p.y)) };
+  redraw();
 });
+
 canvas.addEventListener('pointerup', (e) => {
-  if (!img || e.pointerId !== activePointer) return;
+  if (e.pointerId !== activePointer) return;
   activePointer = null;
-  if (!drawing) return;
-  drawing = false;
-  const p = toImageCoords(e);
-  commitStroke(currentTool, startPt, p);
-});
-
-function commitStroke(type, a, b) {
-  if (type === 'draw') {
-    strokes.push({ type, points: [a, b], color, width: 4 });
-    redraw();
-    return;
-  }
-  if (type === 'line' || type === 'arrow') {
-    const len = Math.hypot(b.x - a.x, b.y - a.y);
-    if (len < 10) { redraw(); return; }
-    openLabelPrompt(type === 'arrow' ? 'Etiqueta de flecha' : 'Etiqueta de línea', type, a, b);
-  } else if (type === 'rect') {
-    openLabelPrompt('Etiqueta de caja', type, a, b);
-  }
-}
-
-function openLabelPrompt(title, type, a, b, isText) {
-  textPromptOpen = true;
-  pendingText = { type, a, b, isText };
-  document.getElementById('label-title').textContent = title;
-  const chips = document.getElementById('quick-chips');
-  chips.innerHTML = '';
-  const labelInput = document.getElementById('label-input');
-  labelInput.value = '';
-  quickLabels.forEach(l => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.textContent = l;
-    b.onclick = () => { labelInput.value = l; };
-    chips.appendChild(b);
-  });
-  document.getElementById('label-modal').classList.add('open');
-  setTimeout(() => labelInput.focus(), 50);
-}
-
-document.getElementById('btn-label-ok').addEventListener('click', () => {
-  const val = document.getElementById('label-input').value.trim();
-  document.getElementById('label-modal').classList.remove('open');
-  if (!pendingText) return;
-  const pt = pendingText;
-  pendingText = null;
-  textPromptOpen = false;
-  if (!val) { redraw(); return; }
-  if (pt.isText) {
-    strokes.push({ type: 'text', x: pt.a.x, y: pt.a.y, label: val, color, width: 4 });
-  } else {
-    strokes.push({ ...pt, label: val, color, width: 4 });
-  }
-  redraw();
-});
-document.getElementById('btn-label-cancel').addEventListener('click', () => {
-  document.getElementById('label-modal').classList.remove('open');
-  pendingText = null;
-  textPromptOpen = false;
-  redraw();
-});
-
-// undo / clear
-document.getElementById('btn-undo').addEventListener('click', () => {
-  strokes.pop();
-  redraw();
-});
-document.getElementById('btn-clear').addEventListener('click', () => {
-  if (strokes.length && confirm('¿Borrar todas las anotaciones?')) {
-    strokes.length = 0;
-    redraw();
+  if (dragging) {
+    dragging = null;
+    setHint('Arrastra los puntos de las esquinas para alinear el marco con la abertura');
   }
 });
 
-// tools
-document.querySelectorAll('.tool-btn[data-tool]').forEach(b => {
-  b.addEventListener('click', () => {
-    currentTool = b.dataset.tool;
-    document.querySelectorAll('.tool-btn[data-tool]').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-    setHint({
-      line: 'Arrastra para dibujar una línea de medida',
-      arrow: 'Arrastra para dibujar una flecha',
-      rect: 'Arrastra para dibujar una caja',
-      text: 'Toca la foto para agregar texto',
-      draw: 'Arrastra para dibujar a mano libre'
-    }[currentTool]);
-  });
-});
-
-// colors
-document.querySelectorAll('.color-dot').forEach(d => {
-  d.addEventListener('click', () => {
-    color = d.dataset.color;
-    document.querySelectorAll('.color-dot').forEach(x => x.classList.remove('active'));
-    d.classList.add('active');
-  });
-});
-
-// done → build composite and send back
-btnDone.addEventListener('click', () => {
+btnReset.addEventListener('click', () => {
   if (!img) return;
+  resetCorners();
+  setHint('Marco restablecido');
+});
+
+// ── done → composite + send back ──
+btnDone.addEventListener('click', () => {
+  if (!img || !corners) return;
   btnDone.disabled = true;
   btnDone.textContent = 'Generando…';
   const out = document.createElement('canvas');
   out.width = baseW; out.height = baseH;
   const octx = out.getContext('2d');
   octx.drawImage(img, 0, 0, baseW, baseH);
-  for (const s of strokes) drawStrokeOnto(octx, s);
-  const dataUrl = out.toDataURL('image/jpeg', 0.85);
+  const H = solveHomography(corners);
+  if (H) renderFrame(octx, H, frameGeometry(measurements), { handles: false });
+  const dataUrl = out.toDataURL('image/jpeg', 0.9);
   try {
     if (window.opener) {
       window.opener.postMessage({ type: 'NIVELATO_ANNOTATED_PHOTO', dataUrl }, '*');
@@ -445,7 +443,6 @@ btnDone.addEventListener('click', () => {
       window.parent.postMessage({ type: 'NIVELATO_ANNOTATED_PHOTO', dataUrl }, '*');
       window.close();
     } else {
-      // standalone fallback: download
       const a = document.createElement('a');
       a.href = dataUrl;
       a.download = 'nivelato-medidas.jpg';
@@ -460,86 +457,39 @@ btnDone.addEventListener('click', () => {
   }
 });
 
-// draw a stroke on an arbitrary context
-function drawStrokeOnto(c, s) {
-  c.strokeStyle = s.color;
-  c.fillStyle = s.color;
-  c.lineWidth = s.width;
-  c.lineCap = 'round';
-  c.lineJoin = 'round';
-  c.font = 'bold 28px Inter, system-ui, sans-serif';
-  c.textAlign = 'center';
-  c.textBaseline = 'middle';
-  if (s.type === 'line' || s.type === 'arrow') {
-    c.beginPath(); c.moveTo(s.x1, s.y1); c.lineTo(s.x2, s.y2); c.stroke();
-    if (s.type === 'arrow') {
-      const ang = Math.atan2(s.y2 - s.y1, s.x2 - s.x1);
-      const head = 14;
-      c.beginPath();
-      c.moveTo(s.x2, s.y2);
-      c.lineTo(s.x2 - head * Math.cos(ang - 0.45), s.y2 - head * Math.sin(ang - 0.45));
-      c.moveTo(s.x2, s.y2);
-      c.lineTo(s.x2 - head * Math.cos(ang + 0.45), s.y2 - head * Math.sin(ang + 0.45));
-      c.stroke();
-    }
-    if (s.label) {
-      const t = measureTextOn(c, s.label);
-      c.fillStyle = 'rgba(0,0,0,0.65)';
-      c.fillRect((s.x1+s.x2)/2 - t.width/2 - 6, (s.y1+s.y2)/2 - t.actualH/2 - 3, t.width + 12, t.actualH + 6);
-      c.fillStyle = s.color;
-      c.fillText(s.label, (s.x1+s.x2)/2, (s.y1+s.y2)/2);
-    }
-  } else if (s.type === 'rect') {
-    c.strokeRect(Math.min(s.x1,s.x2), Math.min(s.y1,s.y2), Math.abs(s.x2-s.x1), Math.abs(s.y2-s.y1));
-    if (s.label) {
-      const t = measureTextOn(c, s.label);
-      c.fillStyle = 'rgba(0,0,0,0.65)';
-      c.fillRect((s.x1+s.x2)/2 - t.width/2 - 6, (s.y1+s.y2)/2 - t.actualH/2 - 3, t.width + 12, t.actualH + 6);
-      c.fillStyle = s.color;
-      c.fillText(s.label, (s.x1+s.x2)/2, (s.y1+s.y2)/2);
-    }
-  } else if (s.type === 'text') {
-    const t = measureTextOn(c, s.label);
-    c.fillStyle = 'rgba(0,0,0,0.65)';
-    c.fillRect(s.x - t.width/2 - 6, s.y - t.actualH/2 - 3, t.width + 12, t.actualH + 6);
-    c.fillStyle = s.color;
-    c.fillText(s.label, s.x, s.y);
-  } else if (s.type === 'draw') {
-    c.beginPath(); c.moveTo(s.points[0].x, s.points[0].y);
-    for (let i = 1; i < s.points.length; i++) c.lineTo(s.points[i].x, s.points[i].y);
-    c.stroke();
-  }
-}
-function measureTextOn(c, t) {
-  const m = c.measureText(t);
-  return { width: m.width, actualH: 26 };
-}
-
-// receive measurement values from opener for quick labels
+// ── measurements handoff from the flow ──
 window.addEventListener('message', (e) => {
   if (e.data && e.data.type === 'NIVELATO_MEASUREMENTS') {
-    const d = e.data;
-    quickLabels = [];
-    const push = (v) => { if (v) quickLabels.push(v); };
-    push(d.anchoBot ? fmtInches(d.anchoBot) + '"' : null);
-    push(d.anchoTop ? fmtInches(d.anchoTop) + '"' : null);
-    push(d.altoIzq ? fmtInches(d.altoIzq) + '"' : null);
-    push(d.altoDer ? fmtInches(d.altoDer) + '"' : null);
-    push(d.paredIzq);
-    push(d.paredDer);
-    push(d.techo);
-    push(d.piso);
-    if (d.customer) quickLabels.push(d.customer);
-    document.getElementById('header-sub').textContent = 'Medidas listas para marcar';
+    measurements = {
+      anchoBot: e.data.anchoBot,
+      anchoTop: e.data.anchoTop,
+      altoIzq: e.data.altoIzq,
+      altoDer: e.data.altoDer,
+      paredIzq: parseLabel(e.data.paredIzq),
+      paredDer: parseLabel(e.data.paredDer),
+      techo: parseLabel(e.data.techo),
+      piso: parseLabel(e.data.piso)
+    };
+    document.getElementById('header-sub').textContent = 'Medidas cargadas — alinea el marco';
+    if (img) { resetCorners(); setHint('Arrastra los puntos de las esquinas para alinear el marco con la abertura'); }
   }
 });
 
+// desnivel labels like "⟩ 1/2" or "↓ 3/4" → numeric inches
+function parseLabel(s) {
+  if (!s) return 0;
+  const m = s.match(/(\d+)(?:\s+(\d+)\/(\d+))?/);
+  if (!m) return 0;
+  return (parseInt(m[1]) || 0) + ((parseInt(m[2]) || 0) / (parseInt(m[3]) || 1));
+}
+
 // ── test hook ──
 window.__photoTestState = () => ({
-  strokes: strokes.length,
-  quickLabels: quickLabels.slice(),
   hasImage: !!img,
-  baseW, baseH
+  baseW, baseH,
+  hasFrame: !!corners,
+  measurements: Object.assign({}, measurements),
+  corners: corners ? Object.assign({}, corners) : null
 });
 </script>
 </body>
