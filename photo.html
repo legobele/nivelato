@@ -157,7 +157,7 @@ function localScale(H, x, y) {
 function frameGeometry(m, aspect) {
   const pIv = m.paredIzq || 0, pDv = m.paredDer || 0, tcv = m.techo || 0, psv = m.piso || 0;
   const padX = 0.13, padY = 0.15;
-  const bx = padX, by = padY, bw = 1 - 2*padX, bh = 1 - 2*padY;
+  let bx = padX, by = padY, bw = 1 - 2*padX, bh = 1 - 2*padY;
   // if the placed quad is wider/narrower than the default, stretch pads to match
   if (aspect && aspect > 0) {
     const defaultAspect = bh / bw;
