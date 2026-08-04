@@ -105,8 +105,18 @@ def main():
         check("photo editor overlay opened", True)
         frame_el = page.locator("#photo-editor-frame")
         frame_el.wait_for()
-        # switch to the iframe
-        frame = frame_el.content_frame
+        # get the actual Frame object (for evaluate/wait)
+        def get_frame():
+            for f in page.frames:
+                if f.url and "photo.html" in f.url:
+                    return f
+            return None
+        frame = None
+        for _ in range(20):
+            frame = get_frame()
+            if frame: break
+            page.wait_for_timeout(300)
+        assert frame is not None, "photo.html iframe never appeared"
         frame.wait_for_selector("#btn-gallery", timeout=10000)
         check("photo editor iframe loaded", True)
 
@@ -115,8 +125,8 @@ def main():
         st = frame.evaluate("window.__photoTestState ? window.__photoTestState() : null")
         check("editor received measurements", st and st["measurements"] and st["measurements"]["anchoBot"] > 0, str(st))
 
-        # upload the actual glass door photo
-        frame.set_input_files("#file-input", PHOTO_PATH)
+        # upload the actual glass door photo (gallery input)
+        frame.locator("#file-input-gallery").set_input_files(PHOTO_PATH)
         frame.wait_for_timeout(800)
         check("photo loaded into editor canvas", frame.locator("#photo-canvas").is_visible())
 
@@ -132,14 +142,14 @@ def main():
         imgScale = box["width"] / st2["baseW"]
         sx = box["x"] + tl["x"] * imgScale
         sy = box["y"] + tl["y"] * imgScale
-        frame.mouse.move(sx, sy)
-        frame.mouse.down()
+        page.mouse.move(sx, sy)
+        page.mouse.down()
         # loupe should appear while dragging
         frame.wait_for_timeout(150)
         loupe_vis = frame.locator("#loupe-canvas").is_visible()
         check("loupe appears during drag", loupe_vis)
-        frame.mouse.move(sx - 20, sy - 20, steps=5)
-        frame.mouse.up()
+        page.mouse.move(sx - 20, sy - 20, steps=5)
+        page.mouse.up()
         frame.wait_for_timeout(400)
         # loupe should hide after drag
         check("loupe hides after drag", not frame.locator("#loupe-canvas").is_visible())
@@ -148,26 +158,26 @@ def main():
         check("corner drag moves frame", moved, str(st2["corners"]) + " -> " + str(st3["corners"]))
 
         # draw a custom line with the line tool
-        frame.click("#tool-line")
+        frame.locator("#tool-line").click()
         cb = canvas.bounding_box()
         lx1 = cb["x"] + cb["width"] * 0.3
         ly1 = cb["y"] + cb["height"] * 0.3
         lx2 = cb["x"] + cb["width"] * 0.6
         ly2 = cb["y"] + cb["height"] * 0.3
-        frame.mouse.move(lx1, ly1)
-        frame.mouse.down()
-        frame.mouse.move(lx2, ly2, steps=5)
-        frame.mouse.up()
+        page.mouse.move(lx1, ly1)
+        page.mouse.down()
+        page.mouse.move(lx2, ly2, steps=5)
+        page.mouse.up()
         frame.wait_for_selector("#label-modal.open", timeout=5000)
         check("label modal opens for custom line", True)
-        frame.fill("#label-input", "Ancho extra")
-        frame.click("#btn-label-ok")
+        frame.locator("#label-input").fill("Ancho extra")
+        frame.locator("#btn-label-ok").click()
         frame.wait_for_timeout(300)
         st4 = frame.evaluate("window.__photoTestState()")
         check("custom line committed", st4["customStrokes"] == 1, str(st4))
 
         # hit "Usar esta foto" → sends postMessage to parent → closes overlay
-        frame.click("#btn-done")
+        frame.locator("#btn-done").click()
         # wait for the parent to receive the message and close the overlay
         page.wait_for_timeout(1500)
         # overlay should close (iframe editor done)
