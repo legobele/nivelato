@@ -109,7 +109,8 @@
   </div>
 </div>
 
-<input type="file" id="file-input" accept="image/*" style="display:none" />
+<input type="file" id="file-input-camera" accept="image/*" capture="environment" style="display:none" />
+<input type="file" id="file-input-gallery" accept="image/*" style="display:none" />
 
 <script type="module">
 import { auth } from "./firebase-config.js";
@@ -121,7 +122,6 @@ const stage = document.getElementById('stage');
 const hintBar = document.getElementById('hint-bar');
 const btnDone = document.getElementById('btn-done');
 const btnReset = document.getElementById('btn-reset');
-const fileInput = document.getElementById('file-input');
 const loupeCanvas = document.getElementById('loupe-canvas');
 const loupeCtx = loupeCanvas.getContext('2d');
 const LOUPE = 160;
@@ -321,7 +321,7 @@ function renderFrame(c, corners, opts) {
   c.stroke();
 
   const g = frameNorm;
-  const o = 1;  // offset multiplier (sign: outward)
+  const o = 0;  // dimension lines exactly ON the frame borders
   drawDimLinePx(c, corners.BL, corners.BR,  o, fmtInches(g.anchoBot) + '"');
   drawDimLinePx(c, corners.TL, corners.TR, -o, fmtInches(g.anchoTop) + '"');
   drawDimLinePx(c, corners.TL, corners.BL, -o, fmtInches(g.altoIzq) + '"');
@@ -382,21 +382,22 @@ onAuthStateChanged(auth, (user) => {
 });
 
 document.getElementById('btn-camera').addEventListener('click', () => {
-  fileInput.setAttribute('capture', 'environment');
-  fileInput.click();
+  document.getElementById('file-input-camera').click();
 });
 document.getElementById('btn-gallery').addEventListener('click', () => {
-  fileInput.removeAttribute('capture');
-  fileInput.click();
+  document.getElementById('file-input-gallery').click();
 });
 
-fileInput.addEventListener('change', (e) => {
-  const f = e.target.files[0];
-  if (!f) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => loadImage(ev.target.result);
-  reader.readAsDataURL(f);
-  fileInput.value = '';
+['file-input-camera', 'file-input-gallery'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => loadImage(ev.target.result);
+    reader.readAsDataURL(f);
+    el.value = '';
+  });
 });
 
 function loadImage(dataUrl) {
@@ -461,19 +462,19 @@ function showLoupe(clientX, clientY) {
   loupeCtx.drawImage(img,
     p.x - srcR, p.y - srcR, srcR * 2, srcR * 2,
     0, 0, LOUPE, LOUPE);
-  // draw frame + handles on top, transformed to the loupe space
+  // draw frame + dims on top, transformed to the loupe space (no handle circles)
   loupeCtx.save();
   loupeCtx.translate(r, r);
   loupeCtx.scale(LOUPE_ZOOM * scale, LOUPE_ZOOM * scale);
   loupeCtx.translate(-p.x, -p.y);
-  if (corners) renderFrame(loupeCtx, corners, { handles: true });
+  if (corners) renderFrame(loupeCtx, corners, { handles: false });
   for (const s of customStrokes) {
     if (s.type === 'line' || s.type === 'arrow') drawArrowLine(loupeCtx, s.a, s.b, s.label);
     else if (s.type === 'text') drawTextAnno(loupeCtx, s);
   }
   loupeCtx.restore();
   loupeCtx.restore();
-  // crosshair
+  // crosshair (lines only — no circle)
   loupeCtx.strokeStyle = 'rgba(255,255,255,0.9)';
   loupeCtx.lineWidth = 1;
   loupeCtx.beginPath();
