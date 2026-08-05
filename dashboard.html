@@ -678,7 +678,7 @@ let currentUser;
     if (!photoImg) {
       photoImg = document.createElement('img');
       photoImg.id = 'modal-photo-img';
-      photoImg.style.cssText = 'border-radius:10px;display:none;width:100%;';
+      photoImg.style.cssText = 'border-radius:10px;display:none;width:100%;max-height:420px;object-fit:contain;background:#f0f4ff;';
       photoImg.alt = 'Foto con medidas';
       if (cw) cw.appendChild(photoImg);
     }

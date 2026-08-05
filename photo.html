@@ -458,7 +458,9 @@ function showLoupe(clientX, clientY) {
   loupeCtx.arc(r, r, r - 2, 0, Math.PI * 2);
   loupeCtx.clip();
   // draw zoomed region of the IMAGE (the actual pixels under the cursor)
-  const srcR = LOUPE / LOUPE_ZOOM / scale;  // image-px radius of the sampled region
+  // srcR: image-px radius such that 2*srcR maps to LOUPE at LOUPE_ZOOM*scale
+  // (must match the overlay transform below, or the frame/handles drift)
+  const srcR = LOUPE / (2 * LOUPE_ZOOM * scale);
   loupeCtx.drawImage(img,
     p.x - srcR, p.y - srcR, srcR * 2, srcR * 2,
     0, 0, LOUPE, LOUPE);
