@@ -39,7 +39,7 @@
   .tool-sep { width: 1px; height: 26px; background: #262c35; flex-shrink: 0; }
 
   /* LOUPE */
-  #loupe-canvas { display: none; position: absolute; width: 160px; height: 160px; border-radius: 50%; box-shadow: 0 4px 24px rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); pointer-events: none; z-index: 5; background:#000; }
+  #loupe-canvas { display: none; position: fixed; width: 160px; height: 160px; border-radius: 50%; box-shadow: 0 4px 24px rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); pointer-events: none; z-index: 5; background:#000; }
 
   /* LABEL MODAL */
   #label-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 50; padding: 24px; }
@@ -581,11 +581,13 @@ document.getElementById('btn-label-ok').addEventListener('click', () => {
   if (!pendingLabel) return;
   const pl = pendingLabel;
   pendingLabel = null;
-  if (!val) { redraw(); return; }
   if (pl.type === 'text') {
+    // text without content is pointless — drop it
+    if (!val) { redraw(); return; }
     customStrokes.push({ type: 'text', x: pl.a.x, y: pl.a.y, label: val });
   } else {
-    customStrokes.push({ type: pl.type, a: pl.a, b: pl.b, label: val });
+    // line/arrow persist even without a label
+    customStrokes.push({ type: pl.type, a: pl.a, b: pl.b, label: val || null });
   }
   redraw();
 });
