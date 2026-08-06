@@ -408,31 +408,6 @@ function _saveCurrentJob(warnings) {
   });
 }
 
-function buildShareText() {
-  const notas    = document.getElementById('notas-field')?.value?.trim();
-  const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
-  const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
-  const anchoTop = results.anchoTop || 0;
-  const altoDer  = results.altoDer  || 0;
-  const warnings = runValidation();
-  const lines = [
-    'NIVELATO — MEDIDAS',
-    'HUECO BASE: ' + (anchoBot > 0 ? toFracStr(anchoBot) : '—') + ' × ' + (altoIzq > 0 ? toFracStr(altoIzq) : '—'),
-    'HUECO CALC: ' + (anchoTop > 0 ? toFracStr(anchoTop) : '—') + ' × ' + (altoDer > 0 ? toFracStr(altoDer) : '—'),
-    '─────────────────',
-    'ARRIBA:    ' + (results.techo?.label    || '—'),
-    'ABAJO:     ' + (results.piso?.label     || '—'),
-    'PARED IZQ: ' + (results.paredIzq?.label || '—'),
-    'PARED DER: ' + (results.paredDer?.label || '—'),
-  ];
-  if (warnings.length > 0) { lines.push('─────────────────'); warnings.forEach(function(w) { lines.push('⚠ ' + w); }); }
-  if (notas) lines.push('NOTAS: ' + notas);
-  return lines.join('\n');
-}
-
-function shareViaSMS()      { window.location.href = 'sms:?body=' + encodeURIComponent(buildShareText()); }
-function shareViaWhatsApp() { window.open('https://wa.me/?text=' + encodeURIComponent(buildShareText()), '_blank'); }
-
 // ─── CANVAS ENGINE ─────────────────────────────────────────────────────────
 let canvas  = document.getElementById('drawing-canvas');
 let ctx     = canvas?.getContext('2d');
