@@ -307,26 +307,6 @@ html, body {
   font-weight: 500;
 }
 
-/* ─── DESNIVEL PILL ──────────────────────────────────────────────────────── */
-.desnivel-pill {
-  display: inline-block;
-  background: var(--grey-100);
-  border: 1px solid var(--grey-300);
-  border-radius: 20px;
-  padding: 5px 14px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--grey-700);
-  margin-bottom: 18px;
-  transition: all 0.2s ease;
-}
-
-.desnivel-pill.has-value {
-  background: var(--accent-light);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
 /* ─── BUTTONS ────────────────────────────────────────────────────────────── */
 .btn-row {
   display: flex;
@@ -491,6 +471,27 @@ html, body {
 .btn-share.whatsapp { background: #25d366; color: white; }
 .btn-share.sms      { background: var(--grey-700); color: white; }
 
+/* ─── STEP 6 — FOTO CON MEDIDAS ──────────────────────────────────────────── */
+/* A tall/tall door photo otherwise makes the bottom panel balloon and pushes
+   the Atrás/Siguiente menu out of reach. Cap the preview image so it can never
+   overflow the screen, then pin the button menu to the bottom of the scroll
+   panel so it stays horizontal and reachable while the photo scrolls. */
+#photo-preview img {
+  max-height: 60vh;
+}
+#step-6 .btn-row {
+  position: sticky;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--white);
+  z-index: 5;
+  padding: 8px 20px;
+  margin: 0;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+  border-top: 1px solid var(--grey-200);
+}
+
 /* ─── APP SHELL ──────────────────────────────────────────────────────────── */
 html, body {
   /* allow natural page height on mobile so nothing is clipped by the address bar */
@@ -565,12 +566,6 @@ html, body {
   background: #e64980;
 }
 
-.estradiol-mode .desnivel-pill.has-value {
-  background: #fce4ec;
-  border-color: #e64980;
-  color: #e64980;
-}
-
 .estradiol-mode .fraction-row input[type="number"]:focus {
   border-color: #e64980;
   box-shadow: 0 0 0 3px #fce4ec;
@@ -618,11 +613,6 @@ html, body {
 }
 .italiano-mode #progress-bar {
   background: linear-gradient(90deg, #008c45, #ffffff, #cd212a);
-}
-.italiano-mode .desnivel-pill.has-value {
-  background: #e6f4ea;
-  border-color: #008c45;
-  color: #008c45;
 }
 .italiano-mode .fraction-row input[type="number"]:focus,
 .italiano-mode .input-col input[type="text"]:focus,

@@ -216,21 +216,7 @@ function recalcAll() {
   results.anchoTop = anchoBot > 0 ? anchoBot - results.paredIzq.raw - results.paredDer.raw : 0;
   results.altoDer  = altoIzq > 0  ? altoIzq - results.techo.raw - results.piso.raw : 0;
 
-  updatePill('desn-pared-izq', results.paredIzq);
-  updatePill('desn-pared-der', results.paredDer);
-  updatePill('desn-techo',     results.techo);
-  updatePill('desn-piso',      results.piso);
-
-
   drawCanvas();
-}
-
-function updatePill(id, result) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = result.label;
-  if (result.val > 0) el.classList.add('has-value');
-  else el.classList.remove('has-value');
 }
 
 // ─── VALIDATION ────────────────────────────────────────────────────────────

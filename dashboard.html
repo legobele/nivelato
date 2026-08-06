@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nivelato — Dashboard</title>
-<script>console.log('nivelato v1.0.0 — commit 25f098f')</script>
+<script>console.log('nivelato v1.0.0 — commit 1bada6b')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
 <script src="bread.js"></script>
@@ -27,7 +27,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      position: sticky; top: 0; z-index: 10;
+      position: sticky; top: 0; z-index: 200;
     }
     .header-logo { font-size: 20px; font-weight: 700; color: #1971c2; }
     .header-right { display: flex; align-items: center; gap: 12px; }
@@ -193,14 +193,17 @@
       cursor: grab;
     }
     #modal-canvas:active { cursor: grabbing; }
-    @media (max-width: 640px) {
+    /* Stack the graph/photo under the details whenever the modal can't
+       comfortably fit the 320px column next to the text — this covers
+       phones, tablets and zoomed viewports uniformly. */
+    @media (max-width: 900px) {
       .modal-inner { flex-direction: column; }
-      .modal-canvas-wrap { flex: unset; width: 100%; }
+      .modal-canvas-wrap { flex: unset; width: 100%; max-width: 480px; }
     }
     .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #212529; }
-    .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f3f5; font-size: 14px; }
+    .detail-row { display: flex; align-items: baseline; gap: 12px; padding: 8px 0; border-bottom: 1px solid #f1f3f5; font-size: 14px; }
     .detail-row:last-child { border-bottom: none; }
-    .detail-label { color: #868e96; }
+    .detail-label { color: #868e96; flex-shrink: 0; min-width: 110px; }
     .detail-val { font-weight: 600; color: #212529; }
     .modal-notes { background: #f8f9fa; border-radius: 8px; padding: 12px; font-size: 13px; color: #495057; margin-top: 12px; }
     .detail-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #adb5bd; margin: 16px 0 4px; }
