@@ -113,9 +113,6 @@ html, body {
   #canvas-wrap {
     min-height: 40px;
   }
-  #bottom-panel {
-    max-height: 60vh;
-  }
 }
 #drawing-canvas {
   display: block;
@@ -207,13 +204,21 @@ html, body {
 }
 
 .input-col {
-  flex: 1 1 160px;
+  /* content-driven: stay side-by-side while each column keeps a usable
+     width; wrap to full width only when the row would otherwise overflow */
+  flex: 1 1 240px;
   min-width: 0;
   background: var(--white);
   border: 1px solid var(--grey-300);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
   box-shadow: var(--shadow);
+}
+
+/* step 0 has three text inputs — always stack them; 3-up is unusable
+   below ~740px and they read better full-width */
+#step-0 .input-col {
+  flex: 1 1 100%;
 }
 
 .input-col label {
@@ -493,12 +498,10 @@ html, body {
 }
 
 #bottom-panel {
-  flex: 0 1 auto;           /* allow the panel to shrink so the shell never overflows */
-  min-height: 0;
+  flex: 0 0 auto;           /* size to content — never internally scrollable */
   background: var(--white);
   border-top: 1px solid var(--grey-200);
-  overflow-y: auto;
-  max-height: 55vh;
+  overflow: hidden;
   -webkit-overflow-scrolling: touch;
   /* iOS safe area — keep buttons above home indicator / tab bar */
   padding-bottom: constant(safe-area-inset-bottom, 0px);
@@ -512,14 +515,8 @@ html, body {
     height: 100vh;
     height: 100dvh;
   }
-  #bottom-panel {
-    max-height: 60vh;
-  }
   .input-row {
     gap: 8px;
-  }
-  .input-col {
-    flex: 1 1 100%;
   }
   .step-panel {
     padding: 14px 14px 18px;
