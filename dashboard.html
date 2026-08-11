@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nivelato — Dashboard</title>
-<script>console.log('nivelato v1.0.0 — commit f33331a')</script>
+<script>console.log('nivelato v1.0.0 — commit b5006ef')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
 <script src="bread.js"></script>
@@ -332,119 +332,6 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { getDoc, doc, setDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { makePermChecker, canEditJob } from './permissions.js';
 
-// ── embedGraph — standalone copy to avoid loading adhd.js ──
-// Extract only the numeric value from a label, ignoring direction arrows.
-// The math convention in the graph already determines the sign:
-//   rightHeight = leftHeight - ceilingOffset - floorOffset
-// where ceilingOffset and floorOffset are always positive magnitudes.
-function extractValue(s) {
-  if (!s || s === 'Nivel' || s === '—') return 0;
-  var m = s.match(/(\d+)\s*(?:(\d+)\/(\d+))?/);
-  if (!m) return 0;
-  return (parseInt(m[1]) || 0) + ((parseInt(m[2])||0) / (parseInt(m[3])||1));
-}
-
-window.embedGraph = function(cvs, data) {
-  if (!cvs || !data) return;
-  var pIv = extractValue(data.pIL);
-  var pDv = extractValue(data.pDL);
-  var tcv = extractValue(data.tL);
-  var psv = extractValue(data.pL);
-  window._embedData = {
-    'hueco-ancho-bot-whole': data.anchoBot || 36,
-    'hueco-alto-izq-whole': data.altoIzq || 84,
-    'pI-a-whole': pIv, 'pI-b-whole': 0,
-    'pD-a-whole': pDv, 'pD-b-whole': 0,
-    't-a-whole': tcv, 't-b-whole': 0,
-    'p-a-whole': psv, 'p-b-whole': 0,
-  };
-  window.results = {
-    paredIzq: { raw: pIv, dir: "", label: data.pIL || "Nivel" },
-    paredDer: { raw: pDv, dir: "", label: data.pDL || "Nivel" },
-    techo: { raw: tcv, dir: "", label: data.tL || "Nivel" },
-    piso: { raw: psv, dir: "", label: data.pL || "Nivel" }
-  };
-  var dctx = cvs.getContext('2d');
-  var W = cvs.width, H = cvs.height;
-  dctx.clearRect(0,0,W,H);
-  dctx.fillStyle = '#f8faff';
-  dctx.fillRect(0,0,W,H);
-  var sc = 1, ox = 0, oy = 0;
-  dctx.save();
-  dctx.translate(W/2 + ox, H/2 + oy);
-  dctx.scale(sc, sc);
-  dctx.translate(-W/2, -H/2);
-  var pad = 72, bx = pad, by = pad, bw = W - pad*2, bh = H - pad*2;
-  var EXAG = Math.min(bw, bh) * 0.15;
-  var clamp = function(v, lim) { return Math.max(-lim, Math.min(lim, v)); };
-  var pIMax = Math.max(pIv, 1), pDMax = Math.max(pDv, 1);
-  var tMax = Math.max(tcv, 1), pMax = Math.max(psv, 1);
-  var leftOffsetTop = clamp(((pIv) / pIMax) * EXAG, EXAG);
-  var rightOffsetTop = -clamp(((pDv) / pDMax) * EXAG, EXAG);
-  var topOffsetRight = clamp(((tcv) / tMax) * EXAG * (bh / bw), EXAG);
-  var bottomOffsetRight = clamp(((psv) / pMax) * EXAG * (bh / bw), EXAG);
-  var roughTL = { x: bx + leftOffsetTop, y: by };
-  var roughTR = { x: bx + bw + rightOffsetTop, y: by + topOffsetRight };
-  var roughBR = { x: bx + bw + rightOffsetTop, y: by + bh + bottomOffsetRight };
-  var roughBL = { x: bx + leftOffsetTop, y: by + bh };
-  dctx.beginPath();
-  dctx.moveTo(roughTL.x, roughTL.y);
-  dctx.lineTo(roughTR.x, roughTR.y);
-  dctx.lineTo(roughBR.x, roughBR.y);
-  dctx.lineTo(roughBL.x, roughBL.y);
-  dctx.closePath();
-  dctx.fillStyle = 'rgba(144,194,255,0.25)';
-  dctx.fill();
-  dctx.strokeStyle = '#1971c2';
-  dctx.lineWidth = 2.5;
-  dctx.stroke();
-  dctx.strokeStyle = 'rgba(0,0,0,0.08)';
-  dctx.lineWidth = 1;
-  dctx.setLineDash([4,4]);
-  dctx.strokeRect(bx, by, bw, bh);
-  dctx.setLineDash([]);
-  var anchoBot = data.anchoBot || 36, altoIzq = data.altoIzq || 84;
-  var anchoTop = anchoBot - pIv - pDv, altoDer = altoIzq - tcv - psv;
-  if (anchoBot > 0) {
-    dctx.strokeStyle = '#adb5bd'; dctx.lineWidth = 1; dctx.setLineDash([3,3]);
-    dctx.beginPath(); dctx.moveTo(roughBL.x, roughBL.y + 24); dctx.lineTo(roughBR.x, roughBR.y + 24); dctx.stroke(); dctx.setLineDash([]);
-    dctx.beginPath(); dctx.moveTo(roughBL.x, roughBL.y + 24 - 6); dctx.lineTo(roughBL.x, roughBL.y + 24 + 6); dctx.stroke();
-    dctx.beginPath(); dctx.moveTo(roughBR.x, roughBR.y + 24 - 6); dctx.lineTo(roughBR.x, roughBR.y + 24 + 6); dctx.stroke();
-    dctx.fillStyle = '#495057'; dctx.font = 'bold 12px Inter, system-ui, sans-serif'; dctx.textAlign = 'center'; dctx.textBaseline = 'bottom';
-    dctx.fillText(anchoBot + '"', (roughBL.x + roughBR.x) / 2, roughBR.y + 24 - 2);
-  }
-  if (anchoBot > 0) {
-    dctx.strokeStyle = '#adb5bd'; dctx.lineWidth = 1; dctx.setLineDash([3,3]);
-    dctx.beginPath(); dctx.moveTo(roughTL.x, roughTL.y - 24); dctx.lineTo(roughTR.x, roughTR.y - 24); dctx.stroke(); dctx.setLineDash([]);
-    dctx.beginPath(); dctx.moveTo(roughTL.x, roughTL.y - 24 - 6); dctx.lineTo(roughTL.x, roughTL.y - 24 + 6); dctx.stroke();
-    dctx.beginPath(); dctx.moveTo(roughTR.x, roughTR.y - 24 - 6); dctx.lineTo(roughTR.x, roughTR.y - 24 + 6); dctx.stroke();
-    dctx.fillStyle = '#495057'; dctx.font = 'bold 12px Inter, system-ui, sans-serif'; dctx.textAlign = 'center'; dctx.textBaseline = 'bottom';
-    dctx.fillText(anchoTop + '"', (roughTL.x + roughTR.x) / 2, roughTR.y - 24 - 2);
-  }
-  if (altoIzq > 0) {
-    dctx.strokeStyle = '#adb5bd'; dctx.lineWidth = 1; dctx.setLineDash([3,3]);
-    dctx.beginPath(); dctx.moveTo(roughTL.x - 24, roughTL.y); dctx.lineTo(roughBL.x - 24, roughBL.y); dctx.stroke(); dctx.setLineDash([]);
-    dctx.beginPath(); dctx.moveTo(roughTL.x - 24 - 6, roughTL.y - 6); dctx.lineTo(roughTL.x - 24 + 6, roughTL.y + 6); dctx.stroke();
-    dctx.beginPath(); dctx.moveTo(roughBL.x - 24 - 6, roughBL.y - 6); dctx.lineTo(roughBL.x - 24 + 6, roughBL.y + 6); dctx.stroke();
-    dctx.fillStyle = '#495057'; dctx.font = 'bold 12px Inter, system-ui, sans-serif'; dctx.textAlign = 'center'; dctx.textBaseline = 'bottom';
-    dctx.fillText(altoIzq + '"', (roughTL.x + roughBL.x) / 2 - 24, roughBL.y - 2);
-  }
-  if (altoIzq > 0) {
-    dctx.strokeStyle = '#adb5bd'; dctx.lineWidth = 1; dctx.setLineDash([3,3]);
-    dctx.beginPath(); dctx.moveTo(roughTR.x + 24, roughTR.y); dctx.lineTo(roughBR.x + 24, roughBR.y); dctx.stroke(); dctx.setLineDash([]);
-    dctx.beginPath(); dctx.moveTo(roughTR.x + 24 - 6, roughTR.y - 6); dctx.lineTo(roughTR.x + 24 + 6, roughTR.y + 6); dctx.stroke();
-    dctx.beginPath(); dctx.moveTo(roughBR.x + 24 - 6, roughBR.y - 6); dctx.lineTo(roughBR.x + 24 + 6, roughBR.y + 6); dctx.stroke();
-    dctx.fillStyle = '#495057'; dctx.font = 'bold 12px Inter, system-ui, sans-serif'; dctx.textAlign = 'center'; dctx.textBaseline = 'bottom';
-    dctx.fillText(altoDer + '"', (roughTR.x + roughBR.x) / 2 + 24, roughBR.y - 2);
-  }
-  dctx.restore();
-
-  // 🍞 bread mode — cover the graph area with bread, cropped to shape
-  if (window.BREAD && window.BREAD.isOn()) {
-    window.BREAD.draw(dctx, W, H);
-  }
-};
-
 // redraw open modal graph when bread mode toggles
 document.addEventListener('breadchange', function () {
   const mc = document.getElementById('modal-canvas');
@@ -674,6 +561,8 @@ let currentUser;
     const sp = document.getElementById('share-panel');
     if (sp) sp.style.display = 'none';
     document.getElementById('modal-overlay').classList.add('open');
+    // lock page scroll while the modal is open so the header/backdrop stay put
+    document.body.style.overflow = 'hidden';
     // show annotated photo if present, else the graph
     const cw = document.querySelector('.modal-canvas-wrap');
     const cvs = document.getElementById('modal-canvas');
@@ -836,6 +725,7 @@ let currentUser;
   window.closeModal = (e) => {
     if (!e || e.target === document.getElementById('modal-overlay')) {
       document.getElementById('modal-overlay').classList.remove('open');
+      document.body.style.overflow = '';
     }
   };
 

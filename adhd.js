@@ -694,20 +694,20 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
   if (side === 'left') {
     // Left edge: offset at top = roughTL.x - levelTL.x
     offsetPx = roughP1.x - levelP1.x;
-    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.10; // arrow at mid
+    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.5; // arrow at mid
     arrowX = levelP1.x;
     labelX = Math.min(levelP1.x, roughP1.x) - PAD;
     labelY = arrowY;
   } else if (side === 'right') {
     // Right edge: offset at top = roughTR.x - levelTR.x
     offsetPx = roughP1.x - levelP1.x;
-    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.10;
+    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.5;
     arrowX = levelP1.x;
     labelX = Math.max(levelP1.x, roughP1.x) + PAD;
     labelY = arrowY;
-  } else { // top / bottom — offset at RIGHT end (P2)
+  } else { // top / bottom — offset at RIGHT end (P2), arrow at horizontal mid
     offsetPx = roughP2.y - levelP2.y;
-    arrowX = levelP2.x;
+    arrowX = levelP1.x + (levelP2.x - levelP1.x) * 0.5;
     arrowY = levelP2.y;
     labelX = arrowX;
     labelY = side === 'top'
@@ -1006,147 +1006,185 @@ window.embedGraph = function(cvs, data) {
     techo: { raw: tcv, dir: "", label: data.tL || "Nivel" },
     piso: { raw: psv, dir: "", label: data.pL || "Nivel" }
   };
-  // Draw directly on modal canvas
-  var dctx = cvs.getContext('2d');
+
+  // ── interactive embedded graph: same pan/zoom engine as the main app ──
   var W = cvs.width, H = cvs.height;
-  dctx.clearRect(0,0,W,H);
-  dctx.fillStyle = '#f8faff';
-  dctx.fillRect(0,0,W,H);
-  var sc = 1;
-  var ox = 0, oy = 0;
-  dctx.save();
-  dctx.translate(W/2 + ox, H/2 + oy);
-  dctx.scale(sc, sc);
-  dctx.translate(-W/2, -H/2);
-  var pad = 72;
-  var bx = pad, by = pad, bw = W - pad*2, bh = H - pad*2;
-  var EXAG = Math.min(bw, bh) * 0.15;
-  var clamp = function(v, lim) { return Math.max(-lim, Math.min(lim, v)); };
-  var pIMax = Math.max(pIv, 1);
-  var pDMax = Math.max(pDv, 1);
-  var tMax = Math.max(tcv, 1);
-  var pMax = Math.max(psv, 1);
-  var leftOffsetTop = clamp(((pIv) / pIMax) * EXAG, EXAG);
-  var rightOffsetTop = -clamp(((pDv) / pDMax) * EXAG, EXAG);
-  var topOffsetRight = clamp(((tcv) / tMax) * EXAG * (bh / bw), EXAG);
-  var bottomOffsetRight = clamp(((psv) / pMax) * EXAG * (bh / bw), EXAG);
-  var roughTL = { x: bx + leftOffsetTop, y: by };
-  var roughTR = { x: bx + bw + rightOffsetTop, y: by + topOffsetRight };
-  var roughBR = { x: bx + bw + rightOffsetTop, y: by + bh + bottomOffsetRight };
-  var roughBL = { x: bx + leftOffsetTop, y: by + bh };
-  dctx.beginPath();
-  dctx.moveTo(roughTL.x, roughTL.y);
-  dctx.lineTo(roughTR.x, roughTR.y);
-  dctx.lineTo(roughBR.x, roughBR.y);
-  dctx.lineTo(roughBL.x, roughBL.y);
-  dctx.closePath();
-  dctx.fillStyle = 'rgba(144,194,255,0.25)';
-  dctx.fill();
-  dctx.strokeStyle = '#1971c2';
-  dctx.lineWidth = 2.5;
-  dctx.stroke();
-  dctx.strokeStyle = 'rgba(0,0,0,0.08)';
-  dctx.lineWidth = 1;
-  dctx.setLineDash([4,4]);
-  dctx.strokeRect(bx, by, bw, bh);
-  dctx.setLineDash([]);
-  var anchoBot = data.anchoBot || 36;
-  var altoIzq = data.altoIzq || 84;
-  var anchoTop = anchoBot - pIv - pDv;
-  var altoDer = altoIzq - tcv - psv;
-  if (anchoBot > 0) {
+  var st = cvs.__nvState = (cvs.__nvState || { x: 0, y: 0, scale: 1 });
+
+  function drawEmbed() {
+    var dctx = cvs.getContext('2d');
+    dctx.clearRect(0,0,W,H);
+    dctx.save();
+    dctx.translate(st.x, st.y);
+    dctx.scale(st.scale, st.scale);
+
+    dctx.fillStyle = '#f8faff';
+    dctx.fillRect(0,0,W,H);
+
+    var pad = 72;
+    var bx = pad, by = pad, bw = W - pad*2, bh = H - pad*2;
+    var EXAG = Math.min(bw, bh) * 0.15;
+    var clamp = function(v, lim) { return Math.max(-lim, Math.min(lim, v)); };
+    var pIMax = Math.max(pIv, 1);
+    var pDMax = Math.max(pDv, 1);
+    var tMax = Math.max(tcv, 1);
+    var pMax = Math.max(psv, 1);
+    var leftOffsetTop = clamp(((pIv) / pIMax) * EXAG, EXAG);
+    var rightOffsetTop = -clamp(((pDv) / pDMax) * EXAG, EXAG);
+    var topOffsetRight = clamp(((tcv) / tMax) * EXAG * (bh / bw), EXAG);
+    var bottomOffsetRight = clamp(((psv) / pMax) * EXAG * (bh / bw), EXAG);
+    var roughTL = { x: bx + leftOffsetTop, y: by };
+    var roughTR = { x: bx + bw + rightOffsetTop, y: by + topOffsetRight };
+    var roughBR = { x: bx + bw + rightOffsetTop, y: by + bh + bottomOffsetRight };
+    var roughBL = { x: bx + leftOffsetTop, y: by + bh };
+
+    // level reference (dashed gray)
     dctx.strokeStyle = '#adb5bd';
-    dctx.lineWidth = 1;
-    dctx.setLineDash([3,3]);
-    dctx.beginPath();
-    dctx.moveTo(roughBL.x, roughBL.y + 24);
-    dctx.lineTo(roughBR.x, roughBR.y + 24);
-    dctx.stroke();
+    dctx.lineWidth = 1.5 / st.scale;
+    dctx.setLineDash([5 / st.scale, 5 / st.scale]);
+    dctx.strokeRect(bx, by, bw, bh);
     dctx.setLineDash([]);
+
+    // rough opening (solid blue)
     dctx.beginPath();
-    dctx.moveTo(roughBL.x, roughBL.y + 24 - 6);
-    dctx.lineTo(roughBL.x, roughBL.y + 24 + 6);
+    dctx.moveTo(roughTL.x, roughTL.y);
+    dctx.lineTo(roughTR.x, roughTR.y);
+    dctx.lineTo(roughBR.x, roughBR.y);
+    dctx.lineTo(roughBL.x, roughBL.y);
+    dctx.closePath();
+    dctx.fillStyle = 'rgba(25,113,194,0.08)';
+    dctx.fill();
+    dctx.strokeStyle = '#1971c2';
+    dctx.lineWidth = 2 / st.scale;
     dctx.stroke();
-    dctx.beginPath();
-    dctx.moveTo(roughBR.x, roughBR.y + 24 - 6);
-    dctx.lineTo(roughBR.x, roughBR.y + 24 + 6);
-    dctx.stroke();
-    dctx.fillStyle = '#495057';
-    dctx.font = 'bold 12px Inter, system-ui, sans-serif';
-    dctx.textAlign = 'center';
-    dctx.textBaseline = 'bottom';
-    dctx.fillText(anchoBot + '"', (roughBL.x + roughBR.x) / 2, roughBR.y + 24 - 2);
+
+    // desnivel arrows (gap between level and rough, at edge midpoints)
+    var drawArrow = function(p1, p2, off, horiz, label) {
+      if (!label || label === 'Nivel' || label === '—') return;
+      dctx.save();
+      dctx.strokeStyle = '#e67700';
+      dctx.fillStyle = '#e67700';
+      dctx.lineWidth = 1.8 / st.scale;
+      var x1 = horiz ? p1.x + off : p1.x;
+      var y1 = horiz ? p1.y : p1.y + off;
+      var x2 = horiz ? p2.x + off : p2.x;
+      var y2 = horiz ? p2.y : p2.y + off;
+      dctx.beginPath(); dctx.moveTo(x1, y1); dctx.lineTo(x2, y2); dctx.stroke();
+      dctx.font = 'bold ' + (11 / st.scale) + 'px Inter, system-ui, sans-serif';
+      dctx.textAlign = 'center';
+      dctx.textBaseline = 'middle';
+      dctx.fillText(label, (x1 + x2) / 2, (y1 + y2) / 2 - (horiz ? 10 / st.scale : -10 / st.scale));
+      dctx.restore();
+    };
+    // left/right edges: horizontal offset arrows at mid-height
+    if (data.pIL && data.pIL !== 'Nivel' && data.pIL !== '—') drawArrow({x: bx, y: by + bh/2}, {x: bx + leftOffsetTop, y: by + bh/2}, 0, true, data.pIL);
+    if (data.pDL && data.pDL !== 'Nivel' && data.pDL !== '—') drawArrow({x: bx + bw, y: by + bh/2}, {x: bx + bw + rightOffsetTop, y: by + bh/2}, 0, true, data.pDL);
+    // top/bottom edges: vertical offset arrows at horizontal mid
+    if (data.tL && data.tL !== 'Nivel' && data.tL !== '—') drawArrow({x: bx + bw/2, y: by}, {x: bx + bw/2, y: by + topOffsetRight}, 0, false, data.tL);
+    if (data.pL && data.pL !== 'Nivel' && data.pL !== '—') drawArrow({x: bx + bw/2, y: by + bh}, {x: bx + bw/2, y: by + bh + bottomOffsetRight}, 0, false, data.pL);
+
+    // dimension labels
+    var anchoBot = data.anchoBot || 36;
+    var altoIzq = data.altoIzq || 84;
+    var anchoTop = anchoBot - pIv - pDv;
+    var altoDer = altoIzq - tcv - psv;
+    var dim = function(x1, y1, x2, y2, label, vertical) {
+      dctx.save();
+      dctx.strokeStyle = '#adb5bd';
+      dctx.lineWidth = 1 / st.scale;
+      dctx.setLineDash([3 / st.scale, 3 / st.scale]);
+      dctx.beginPath(); dctx.moveTo(x1, y1); dctx.lineTo(x2, y2); dctx.stroke();
+      dctx.setLineDash([]);
+      var tl = 6 / st.scale;
+      if (!vertical) {
+        dctx.beginPath(); dctx.moveTo(x1, y1 - tl); dctx.lineTo(x1, y1 + tl); dctx.stroke();
+        dctx.beginPath(); dctx.moveTo(x2, y2 - tl); dctx.lineTo(x2, y2 + tl); dctx.stroke();
+      } else {
+        dctx.beginPath(); dctx.moveTo(x1 - tl, y1); dctx.lineTo(x1 + tl, y1); dctx.stroke();
+        dctx.beginPath(); dctx.moveTo(x2 - tl, y2); dctx.lineTo(x2 + tl, y2); dctx.stroke();
+      }
+      dctx.fillStyle = '#495057';
+      dctx.font = 'bold ' + (12 / st.scale) + 'px Inter, system-ui, sans-serif';
+      if (!vertical) { dctx.textAlign = 'center'; dctx.textBaseline = 'bottom'; dctx.fillText(label, (x1 + x2) / 2, y1 - 2 / st.scale); }
+      else { dctx.save(); dctx.translate((x1 + x2) / 2, (y1 + y2) / 2); dctx.rotate(-Math.PI / 2); dctx.textAlign = 'center'; dctx.textBaseline = 'bottom'; dctx.fillText(label, 0, -2 / st.scale); dctx.restore(); }
+      dctx.restore();
+    };
+    if (anchoBot > 0) dim(roughBL.x, roughBL.y + 24 / st.scale, roughBR.x, roughBR.y + 24 / st.scale, anchoBot + '"');
+    if (anchoBot > 0) dim(roughTL.x, roughTL.y - 24 / st.scale, roughTR.x, roughTR.y - 24 / st.scale, Math.max(0, anchoTop) + '"');
+    if (altoIzq > 0) dim(roughTL.x - 24 / st.scale, roughTL.y, roughBL.x - 24 / st.scale, roughBL.y, altoIzq + '"', true);
+    if (altoIzq > 0) dim(roughTR.x + 24 / st.scale, roughTR.y, roughBR.x + 24 / st.scale, roughBR.y, Math.max(0, altoDer) + '"', true);
+
+    // 🍞 bread mode — cover the graph area with bread, cropped to shape
+    if (window.BREAD && window.BREAD.isOn()) {
+      dctx.save();
+      dctx.scale(1 / st.scale, 1 / st.scale);
+      window.BREAD.draw(dctx, W, H);
+      dctx.restore();
+    }
+
+    dctx.restore();
   }
-  if (anchoBot > 0) {
-    dctx.strokeStyle = '#adb5bd';
-    dctx.lineWidth = 1;
-    dctx.setLineDash([3,3]);
-    dctx.beginPath();
-    dctx.moveTo(roughTL.x, roughTL.y - 24);
-    dctx.lineTo(roughTR.x, roughTR.y - 24);
-    dctx.stroke();
-    dctx.setLineDash([]);
-    dctx.beginPath();
-    dctx.moveTo(roughTL.x, roughTL.y - 24 - 6);
-    dctx.lineTo(roughTL.x, roughTL.y - 24 + 6);
-    dctx.stroke();
-    dctx.beginPath();
-    dctx.moveTo(roughTR.x, roughTR.y - 24 - 6);
-    dctx.lineTo(roughTR.x, roughTR.y - 24 + 6);
-    dctx.stroke();
-    dctx.fillStyle = '#495057';
-    dctx.font = 'bold 12px Inter, system-ui, sans-serif';
-    dctx.textAlign = 'center';
-    dctx.textBaseline = 'bottom';
-    dctx.fillText(anchoTop + '"', (roughTL.x + roughTR.x) / 2, roughTR.y - 24 - 2);
+
+  drawEmbed();
+
+  // wire pan/zoom once
+  if (!cvs.__nvWired) {
+    cvs.__nvWired = true;
+    var isDrag = false, dragStart = {x:0,y:0}, vpAtDrag = {x:0,y:0};
+    var touchDrag = null, lastPinch = null;
+    function applyZoom(cx, cy, factor) {
+      var ns = Math.max(0.3, Math.min(10, st.scale * Math.max(0.85, Math.min(1.18, factor))));
+      var sf = ns / st.scale;
+      st.x = cx - sf * (cx - st.x);
+      st.y = cy - sf * (cy - st.y);
+      st.scale = ns;
+      drawEmbed();
+    }
+    cvs.addEventListener('mousedown', function(e) {
+      if (e.button !== 0) return;
+      isDrag = true; dragStart = {x: e.clientX, y: e.clientY}; vpAtDrag = {x: st.x, y: st.y};
+      cvs.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', function(e) {
+      if (!isDrag) return;
+      st.x = vpAtDrag.x + (e.clientX - dragStart.x);
+      st.y = vpAtDrag.y + (e.clientY - dragStart.y);
+      drawEmbed();
+    });
+    window.addEventListener('mouseup', function() { isDrag = false; cvs.style.cursor = 'grab'; });
+    cvs.style.cursor = 'grab';
+    cvs.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      var r = cvs.getBoundingClientRect();
+      applyZoom(e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 1.03 : 0.97);
+    }, { passive: false });
+    cvs.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 1) touchDrag = {x: e.touches[0].clientX, y: e.touches[0].clientY, sx: st.x, sy: st.y};
+      else if (e.touches.length === 2) {
+        touchDrag = null;
+        var dx = e.touches[0].clientX - e.touches[1].clientX, dy = e.touches[0].clientY - e.touches[1].clientY;
+        lastPinch = Math.sqrt(dx*dx + dy*dy);
+      }
+    }, { passive: false });
+    cvs.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      if (e.touches.length === 1 && touchDrag) {
+        st.x = touchDrag.sx + (e.touches[0].clientX - touchDrag.x);
+        st.y = touchDrag.sy + (e.touches[0].clientY - touchDrag.y);
+        drawEmbed();
+      } else if (e.touches.length === 2 && lastPinch !== null) {
+        var dx = e.touches[0].clientX - e.touches[1].clientX, dy = e.touches[0].clientY - e.touches[1].clientY;
+        var dist = Math.sqrt(dx*dx + dy*dy);
+        var r = cvs.getBoundingClientRect();
+        var cx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left;
+        var cy = (e.touches[0].clientY + e.touches[1].clientY) / 2 - r.top;
+        applyZoom(cx, cy, 1 + (dist / lastPinch - 1) * 0.3);
+        lastPinch = dist;
+      }
+    }, { passive: false });
+    cvs.addEventListener('touchend', function() { touchDrag = null; lastPinch = null; });
   }
-  if (altoIzq > 0) {
-    dctx.strokeStyle = '#adb5bd';
-    dctx.lineWidth = 1;
-    dctx.setLineDash([3,3]);
-    dctx.beginPath();
-    dctx.moveTo(roughTL.x - 24, roughTL.y);
-    dctx.lineTo(roughBL.x - 24, roughBL.y);
-    dctx.stroke();
-    dctx.setLineDash([]);
-    dctx.beginPath();
-    dctx.moveTo(roughTL.x - 24 - 6, roughTL.y - 6);
-    dctx.lineTo(roughTL.x - 24 + 6, roughTL.y + 6);
-    dctx.stroke();
-    dctx.beginPath();
-    dctx.moveTo(roughBL.x - 24 - 6, roughBL.y - 6);
-    dctx.lineTo(roughBL.x - 24 + 6, roughBL.y + 6);
-    dctx.stroke();
-    dctx.fillStyle = '#495057';
-    dctx.font = 'bold 12px Inter, system-ui, sans-serif';
-    dctx.textAlign = 'center';
-    dctx.textBaseline = 'bottom';
-    dctx.fillText(altoIzq + '"', (roughTL.x + roughBL.x) / 2 - 24, roughBL.y - 2);
-  }
-  if (altoIzq > 0) {
-    dctx.strokeStyle = '#adb5bd';
-    dctx.lineWidth = 1;
-    dctx.setLineDash([3,3]);
-    dctx.beginPath();
-    dctx.moveTo(roughTR.x + 24, roughTR.y);
-    dctx.lineTo(roughBR.x + 24, roughBR.y);
-    dctx.stroke();
-    dctx.setLineDash([]);
-    dctx.beginPath();
-    dctx.moveTo(roughTR.x + 24 - 6, roughTR.y - 6);
-    dctx.lineTo(roughTR.x + 24 + 6, roughTR.y + 6);
-    dctx.stroke();
-    dctx.beginPath();
-    dctx.moveTo(roughBR.x + 24 - 6, roughBR.y - 6);
-    dctx.lineTo(roughBR.x + 24 + 6, roughBR.y + 6);
-    dctx.stroke();
-    dctx.fillStyle = '#495057';
-    dctx.font = 'bold 12px Inter, system-ui, sans-serif';
-    dctx.textAlign = 'center';
-    dctx.textBaseline = 'bottom';
-    dctx.fillText(altoDer + '"', (roughTR.x + roughBR.x) / 2 + 24, roughBR.y - 2);
-  }
-  dctx.restore();
 };
 
 // ─── FOTO CON MEDIDAS (optional step 6) ───────────────────────────────────
