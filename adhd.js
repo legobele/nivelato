@@ -692,22 +692,22 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
   let offsetPx, arrowX, arrowY, labelX, labelY;
 
   if (side === 'left') {
-    // Left edge: offset at top = roughTL.x - levelTL.x
+    // Left edge: offset at top = roughTL.x - levelTL.x → draw at TOP end
     offsetPx = roughP1.x - levelP1.x;
-    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.5; // arrow at mid
+    arrowY = levelP1.y;
     arrowX = levelP1.x;
     labelX = Math.min(levelP1.x, roughP1.x) - PAD;
     labelY = arrowY;
   } else if (side === 'right') {
-    // Right edge: offset at top = roughTR.x - levelTR.x
+    // Right edge: offset at top = roughTR.x - levelTR.x → draw at TOP end
     offsetPx = roughP1.x - levelP1.x;
-    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.5;
+    arrowY = levelP1.y;
     arrowX = levelP1.x;
     labelX = Math.max(levelP1.x, roughP1.x) + PAD;
     labelY = arrowY;
-  } else { // top / bottom — offset at RIGHT end (P2), arrow at horizontal mid
+  } else { // top / bottom — offset at RIGHT end (P2), arrow at RIGHT end
     offsetPx = roughP2.y - levelP2.y;
-    arrowX = levelP1.x + (levelP2.x - levelP1.x) * 0.5;
+    arrowX = levelP2.x;
     arrowY = levelP2.y;
     labelX = arrowX;
     labelY = side === 'top'
@@ -766,7 +766,7 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
 
 // ── step highlight: glow the active edge ──
 function drawStepHighlight(ctx, TL, TR, BL, BR, step, sc) {
-  if (step === 0 || step === 5) return;
+  if (step < 2 || step > 5) return;
   ctx.save();
   ctx.strokeStyle = '#f59f00';
   ctx.lineWidth = 4 / sc;
@@ -1032,11 +1032,11 @@ window.embedGraph = function(cvs, data) {
     var leftOffsetTop = clamp(((pIv) / pIMax) * EXAG, EXAG);
     var rightOffsetTop = -clamp(((pDv) / pDMax) * EXAG, EXAG);
     var topOffsetRight = clamp(((tcv) / tMax) * EXAG * (bh / bw), EXAG);
-    var bottomOffsetRight = clamp(((psv) / pMax) * EXAG * (bh / bw), EXAG);
+    var bottomOffsetRight = clamp(-((psv) / pMax) * EXAG * (bh / bw), EXAG);
     var roughTL = { x: bx + leftOffsetTop, y: by };
     var roughTR = { x: bx + bw + rightOffsetTop, y: by + topOffsetRight };
-    var roughBR = { x: bx + bw + rightOffsetTop, y: by + bh + bottomOffsetRight };
-    var roughBL = { x: bx + leftOffsetTop, y: by + bh };
+    var roughBR = { x: bx + bw, y: by + bh + bottomOffsetRight };
+    var roughBL = { x: bx, y: by + bh };
 
     // level reference (dashed gray)
     dctx.strokeStyle = '#adb5bd';
@@ -1058,7 +1058,8 @@ window.embedGraph = function(cvs, data) {
     dctx.lineWidth = 2 / st.scale;
     dctx.stroke();
 
-    // desnivel arrows (gap between level and rough, at edge midpoints)
+    // desnivel arrows (gap between level and rough, at the moving corner)
+    // vertical edges → TOP end; horizontal edges → RIGHT end (keeps clear of centered dim labels)
     var drawArrow = function(p1, p2, off, horiz, label) {
       if (!label || label === 'Nivel' || label === '—') return;
       dctx.save();
@@ -1076,12 +1077,12 @@ window.embedGraph = function(cvs, data) {
       dctx.fillText(label, (x1 + x2) / 2, (y1 + y2) / 2 - (horiz ? 10 / st.scale : -10 / st.scale));
       dctx.restore();
     };
-    // left/right edges: horizontal offset arrows at mid-height
-    if (data.pIL && data.pIL !== 'Nivel' && data.pIL !== '—') drawArrow({x: bx, y: by + bh/2}, {x: bx + leftOffsetTop, y: by + bh/2}, 0, true, data.pIL);
-    if (data.pDL && data.pDL !== 'Nivel' && data.pDL !== '—') drawArrow({x: bx + bw, y: by + bh/2}, {x: bx + bw + rightOffsetTop, y: by + bh/2}, 0, true, data.pDL);
-    // top/bottom edges: vertical offset arrows at horizontal mid
-    if (data.tL && data.tL !== 'Nivel' && data.tL !== '—') drawArrow({x: bx + bw/2, y: by}, {x: bx + bw/2, y: by + topOffsetRight}, 0, false, data.tL);
-    if (data.pL && data.pL !== 'Nivel' && data.pL !== '—') drawArrow({x: bx + bw/2, y: by + bh}, {x: bx + bw/2, y: by + bh + bottomOffsetRight}, 0, false, data.pL);
+    // left/right edges: horizontal offset arrows at TOP (where the lean is)
+    if (data.pIL && data.pIL !== 'Nivel' && data.pIL !== '—') drawArrow({x: bx, y: by}, {x: bx + leftOffsetTop, y: by}, 0, true, data.pIL);
+    if (data.pDL && data.pDL !== 'Nivel' && data.pDL !== '—') drawArrow({x: bx + bw, y: by}, {x: bx + bw + rightOffsetTop, y: by}, 0, true, data.pDL);
+    // top/bottom edges: vertical offset arrows at RIGHT end (where the tilt is)
+    if (data.tL && data.tL !== 'Nivel' && data.tL !== '—') drawArrow({x: bx + bw, y: by}, {x: bx + bw, y: by + topOffsetRight}, 0, false, data.tL);
+    if (data.pL && data.pL !== 'Nivel' && data.pL !== '—') drawArrow({x: bx + bw, y: by + bh}, {x: bx + bw, y: by + bh + bottomOffsetRight}, 0, false, data.pL);
 
     // dimension labels
     var anchoBot = data.anchoBot || 36;
