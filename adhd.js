@@ -979,13 +979,22 @@ function resetZoom() {
 
 window.embedGraph = function(cvs, data) {
   if (!cvs || !data) return;
-  // Extract numeric values from labels ignoring direction arrows.
-  // The offset math uses positive magnitudes: rightHeight = leftHeight - tcv - psv
+  // Extract numeric magnitudes from labels like '⟩ 1/4"' or '47 1/4"'.
+  // The fraction may have no whole part ("1/4"" = 0.25, NOT 1).
   function ev(s) {
     if (!s || s === 'Nivel' || s === '—') return 0;
-    var m = s.match(/(\d+)\s*(?:(\d+)\/(\d+))?/);
-    return m ? (parseInt(m[1])||0) + ((parseInt(m[2])||0)/(parseInt(m[3])||1)) : 0;
+    var m = s.match(/(?:(\d+)\s+)?(\d+)\/(\d+)|(\d+(?:\.\d+)?)/);
+    if (!m) return 0;
+    if (m[2] !== undefined) return (parseInt(m[1]) || 0) + (parseInt(m[2]) / parseInt(m[3]));
+    return parseFloat(m[4]) || 0;
   }
+  // Direction arrows give the sign (same convention as the main app):
+  // paredIzq '⟩'/paredDer '⟨'/techo '↓'/piso '↑' = raw>0, opposite = raw<0.
+  function neg(s, ch) { return !!s && s.indexOf(ch) !== -1; }
+  var pIs = neg(data.pIL, '⟨') ? -1 : 1;
+  var pDs = neg(data.pDL, '⟩') ? -1 : 1;
+  var tSs = neg(data.tL, '↑') ? -1 : 1;
+  var pSs = neg(data.pL, '↓') ? -1 : 1;
   var pIv = ev(data.pIL);
   var pDv = ev(data.pDL);
   var tcv = ev(data.tL);
@@ -1032,10 +1041,10 @@ window.embedGraph = function(cvs, data) {
     var pDMax = Math.max(pDv, 1);
     var tMax = Math.max(tcv, 1);
     var pMax = Math.max(psv, 1);
-    var leftOffsetTop = clamp(((pIv) / pIMax) * EXAG, EXAG);
-    var rightOffsetTop = -clamp(((pDv) / pDMax) * EXAG, EXAG);
-    var topOffsetRight = clamp(((tcv) / tMax) * EXAG * (bh / bw), EXAG);
-    var bottomOffsetRight = clamp(-((psv) / pMax) * EXAG * (bh / bw), EXAG);
+    var leftOffsetTop = pIs * clamp(((pIv) / pIMax) * EXAG, EXAG);
+    var rightOffsetTop = -pDs * clamp(((pDv) / pDMax) * EXAG, EXAG);
+    var topOffsetRight = tSs * clamp(((tcv) / tMax) * EXAG * (bh / bw), EXAG);
+    var bottomOffsetRight = -pSs * clamp(((psv) / pMax) * EXAG * (bh / bw), EXAG);
     var roughTL = { x: bx + leftOffsetTop, y: by };
     var roughTR = { x: bx + bw + rightOffsetTop, y: by + topOffsetRight };
     var roughBR = { x: bx + bw, y: by + bh + bottomOffsetRight };
@@ -1113,10 +1122,10 @@ window.embedGraph = function(cvs, data) {
       else { dctx.save(); dctx.translate((x1 + x2) / 2, (y1 + y2) / 2); dctx.rotate(-Math.PI / 2); dctx.textAlign = 'center'; dctx.textBaseline = 'bottom'; dctx.fillText(label, 0, -2 / st.scale); dctx.restore(); }
       dctx.restore();
     };
-    if (anchoBot > 0) dim(roughBL.x, roughBL.y + 24 / st.scale, roughBR.x, roughBR.y + 24 / st.scale, anchoBot + '"');
-    if (anchoBot > 0) dim(roughTL.x, roughTL.y - 24 / st.scale, roughTR.x, roughTR.y - 24 / st.scale, Math.max(0, anchoTop) + '"');
-    if (altoIzq > 0) dim(roughTL.x - 24 / st.scale, roughTL.y, roughBL.x - 24 / st.scale, roughBL.y, altoIzq + '"', true);
-    if (altoIzq > 0) dim(roughTR.x + 24 / st.scale, roughTR.y, roughBR.x + 24 / st.scale, roughBR.y, Math.max(0, altoDer) + '"', true);
+    if (anchoBot > 0) dim(roughBL.x, roughBL.y + 24 / st.scale, roughBR.x, roughBR.y + 24 / st.scale, toFracStr(anchoBot));
+    if (anchoBot > 0) dim(roughTL.x, roughTL.y - 24 / st.scale, roughTR.x, roughTR.y - 24 / st.scale, toFracStr(Math.max(0, anchoTop)));
+    if (altoIzq > 0) dim(roughTL.x - 24 / st.scale, roughTL.y, roughBL.x - 24 / st.scale, roughBL.y, toFracStr(altoIzq), true);
+    if (altoIzq > 0) dim(roughTR.x + 24 / st.scale, roughTR.y, roughBR.x + 24 / st.scale, roughBR.y, toFracStr(Math.max(0, altoDer)), true);
 
     // 🍞 bread mode — cover the graph area with bread, cropped to shape
     if (window.BREAD && window.BREAD.isOn()) {

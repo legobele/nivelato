@@ -172,15 +172,15 @@ function computeFrameNorm(m) {
   const bx = padX, by = padY, bw = 1 - 2*padX, bh = 1 - 2*padY;
   const EXAG = Math.min(bw, bh) * 0.15;
   const clamp = (v, lim) => Math.max(-lim, Math.min(lim, v));
-  const pIMax = Math.max(pIv, 1), pDMax = Math.max(pDv, 1), tMax = Math.max(tcv, 1), pMax = Math.max(psv, 1);
+  const pIMax = Math.max(Math.abs(pIv), 1), pDMax = Math.max(Math.abs(pDv), 1), tMax = Math.max(Math.abs(tcv), 1), pMax = Math.max(Math.abs(psv), 1);
   const leftOffsetTop   = clamp((pIv / pIMax) * EXAG, EXAG);
   const rightOffsetTop  = -clamp((pDv / pDMax) * EXAG, EXAG);
   const topOffsetRight  = clamp((tcv / tMax) * EXAG * (bh / bw), EXAG);
-  const bottomOffsetRight = clamp((psv / pMax) * EXAG * (bh / bw), EXAG);
+  const bottomOffsetRight = -clamp((psv / pMax) * EXAG * (bh / bw), EXAG);
   const anchoBot = m.anchoBot || 36;
   const altoIzq  = m.altoIzq  || 84;
-  const anchoTop = m.anchoTop || Math.max(0, anchoBot - pIv - pDv);
-  const altoDer  = m.altoDer  || Math.max(0, altoIzq - tcv - psv);
+  const anchoTop = m.anchoTop || Math.max(0, anchoBot - Math.abs(pIv) - Math.abs(pDv));
+  const altoDer  = m.altoDer  || Math.max(0, altoIzq - Math.abs(tcv) - Math.abs(psv));
   return {
     TL: { x: bx + leftOffsetTop, y: by },
     TR: { x: bx + bw + rightOffsetTop, y: by + topOffsetRight },
@@ -666,10 +666,10 @@ window.addEventListener('message', (e) => {
       anchoTop: e.data.anchoTop,
       altoIzq: e.data.altoIzq,
       altoDer: e.data.altoDer,
-      paredIzq: parseLabel(e.data.paredIzq),
-      paredDer: parseLabel(e.data.paredDer),
-      techo: parseLabel(e.data.techo),
-      piso: parseLabel(e.data.piso)
+      paredIzq: labelSign(e.data.paredIzq, '⟨') * parseLabel(e.data.paredIzq),
+      paredDer: labelSign(e.data.paredDer, '⟩') * parseLabel(e.data.paredDer),
+      techo: labelSign(e.data.techo, '↑') * parseLabel(e.data.techo),
+      piso: labelSign(e.data.piso, '↓') * parseLabel(e.data.piso)
     };
     quickLabels = [];
     const push = (v) => { if (v) quickLabels.push(v); };
@@ -687,10 +687,15 @@ window.addEventListener('message', (e) => {
 
 function parseLabel(s) {
   if (!s) return 0;
-  const m = s.match(/(\d+)(?:\s+(\d+)\/(\d+))?/);
+  // "47 1/4"" → 47.25 · "1/4"" → 0.25 (fraction may have no whole part)
+  const m = s.match(/(?:(\d+)\s+)?(\d+)\/(\d+)|(\d+(?:\.\d+)?)/);
   if (!m) return 0;
-  return (parseInt(m[1]) || 0) + ((parseInt(m[2]) || 0) / (parseInt(m[3]) || 1));
+  if (m[2] !== undefined) return (parseInt(m[1]) || 0) + (parseInt(m[2]) / parseInt(m[3]));
+  return parseFloat(m[4]) || 0;
 }
+
+// Direction arrows give the sign (same convention as the main app).
+function labelSign(s, negCh) { return (s && s.indexOf(negCh) !== -1) ? -1 : 1; }
 
 // ── test hook ──
 window.__photoTestState = () => ({
