@@ -757,8 +757,11 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
       ctx.moveTo(ax2 - tickLen, ay2);
       ctx.lineTo(ax2 + tickLen, ay2);
       ctx.stroke();
-      ctx.textBaseline = side === "top" ? "bottom" : "top";
-      ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2, ay2 + (side === "top" ? -14/scale : 14/scale));
+      // Roof/floor labels sit BELOW the clamped RIGHT-end point (mirrors the
+      // dashboard embed graph): keeps the roof label clear of the right-wall
+      // label sharing the top-right corner.
+      ctx.textBaseline = "top";
+      ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2, ay2 + 14/scale);
     }
   }
   ctx.restore();
