@@ -5,8 +5,24 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
+    function myUid() {
+      return request.auth.uid;
+    }
+    function hasUserDoc() {
+      return exists(/databases/$(database)/documents/users/$(myUid()));
+    }
     function myUser() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return get(/databases/$(database)/documents/users/$(myUid())).data;
+    }
+    // Active member: has a user doc and is not disabled (pending/rejected).
+    // Disabled users keep self-read (so the app can show the pending screen)
+    // but lose all org data access — enforced here, not just in the UI.
+    function isActive() {
+      return hasUserDoc()
+          && (!('disabled' in myUser()) || myUser().disabled == false);
+    }
+    function myOrgId() {
+      return myUser().orgId;
     }
     // True when a field is identical before/after the write, treating
     // "absent on both sides" as unchanged. Real user docs often lack
@@ -18,59 +34,68 @@ service cloud.firestore {
               && request.resource.data[field] == resource.data[field]);
     }
 
-    // Users: own read/write, or same-org read (for permission manager).
-    // role / orgId / permissions / disabled are immutable on self-update:
-    // no self-promotion, no cross-org poaching, no self-approval.
+    // Users.
+    // - get: own doc, or same-org (single reads need no per-doc get()).
+    // - list: same-org only, via resource.data (NOT get(users/{id}) — a
+    //   per-document get() makes every list query fail).
+    // - update: self may edit profile fields only (role/orgId/permissions/
+    //   disabled immutable — no self-promotion, no self-approval); owners
+    //   may manage same-org members (approve/reject/roles/permissions).
+    // - create/delete: self-create only (signup); NO client deletes —
+    //   delete+recreate was a full privilege-escalation bypass. Doc removal
+    //   happens in the Firebase Console, which bypasses rules.
     match /users/{userId} {
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow read: if isSignedIn() && (
-        request.auth.uid == userId ||
-        myUser().orgId ==
-          get(/databases/$(database)/documents/users/$(userId)).data.orgId
+      allow create: if isSignedIn() && myUid() == userId;
+      allow get: if isSignedIn() && (
+        myUid() == userId ||
+        (isActive() && myOrgId() == resource.data.orgId)
       );
+      allow list: if isSignedIn() && isActive()
+        && myOrgId() == resource.data.orgId;
       allow update: if isSignedIn() && (
-        // self-update: profile fields only (e.g. name); role/orgId/
-        // permissions/disabled immutable
-        (request.auth.uid == userId
+        (myUid() == userId
           && unchanged('role')
           && unchanged('orgId')
           && unchanged('permissions')
           && unchanged('disabled'))
-        // owner managing same-org members (approve/reject/roles/permissions);
-        // orgId immutable so members can't be poached across orgs
-        || (myUser().role == 'owner'
-          && myUser().orgId == resource.data.orgId
+        || (isActive()
+          && myUser().role == 'owner'
+          && myOrgId() == resource.data.orgId
           && request.resource.data.orgId == resource.data.orgId)
       );
-      // No client-side deletes, period. Deleting your own doc and recreating
-      // it was a full privilege-escalation bypass (recreate as owner), and
-      // `create` can't tell a legit signup from a recreate. Account/doc
-      // removal happens in the Firebase Console, which bypasses rules.
       allow delete: if false;
     }
 
-    // Orgs: anyone signed in can CREATE (signup bootstrap — the user doc
-    // doesn't exist yet when the org doc is written). Owner can update/delete,
-    // members can read.
+    // Orgs.
+    // - create: anyone signed in (signup bootstrap).
+    // - read: active members, PLUS users with no user doc yet — they are
+    //   mid-signup validating a join code (the user doc is created after).
+    //   Org docs only carry name/joinCode/ownerId, safe to expose there.
+    // - update/delete: owner of the org.
     match /orgs/{orgId} {
       allow create: if isSignedIn();
-      allow read: if isSignedIn() && myUser().orgId == orgId;
-      allow update, delete: if isSignedIn()
-        && myUser().role == 'owner' && myUser().orgId == orgId;
+      allow read: if isSignedIn() && (
+        !hasUserDoc() ||
+        (isActive() && myOrgId() == orgId)
+      );
+      allow update, delete: if isActive()
+        && myUser().role == 'owner' && myOrgId() == orgId;
 
-      // Jobs: org members can create + read; shared users can read.
-      // Update/delete: owner/supervisor can touch any org job; anyone can
-      // edit or delete measurements they created themselves (matches
-      // canEditJob() in permissions.js).
+      // Jobs.
+      // - create/read: active org members; read also for shared users.
+      // - update/delete: owner/supervisor any org job; anyone own jobs
+      //   they created (matches canEditJob() in permissions.js).
+      // - orgId comes from the path wildcard: no per-doc get(), so lists
+      //   scale.
       match /jobs/{jobId} {
-        allow create: if isSignedIn() && myUser().orgId == orgId;
-        allow read: if isSignedIn() && (
-          myUser().orgId == orgId ||
-          resource.data.sharedWith.hasAny([request.auth.uid])
+        allow create: if isActive() && myOrgId() == orgId;
+        allow read: if isActive() && (
+          myOrgId() == orgId ||
+          resource.data.sharedWith.hasAny([myUid()])
         );
-        allow update, delete: if isSignedIn() && myUser().orgId == orgId && (
+        allow update, delete: if isActive() && myOrgId() == orgId && (
           myUser().role in ['owner', 'supervisor'] ||
-          request.auth.uid == resource.data.installerUid
+          myUid() == resource.data.installerUid
         );
       }
     }
