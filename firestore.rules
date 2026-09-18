@@ -2,35 +2,52 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users: own read/write, or same-org read (for permission manager)
-    match /users/{userId} {
-      allow read: if request.auth != null && (
-        request.auth.uid == userId ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId ==
-          get(/databases/$(database)/documents/users/$(userId)).data.orgId
-      );
-      allow write: if request.auth != null && request.auth.uid == userId;
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function myUser() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    // Orgs: owner can write, members can read
-    match /orgs/{orgId} {
-      allow read: if request.auth != null &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId == orgId;
-      allow write: if request.auth != null &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner' &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId == orgId;
+    // Users: own read/write, or same-org read (for permission manager).
+    // role / orgId / permissions are immutable on self-update: no self-promotion.
+    match /users/{userId} {
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId ||
+        myUser().orgId ==
+          get(/databases/$(database)/documents/users/$(userId)).data.orgId
+      );
+      allow update: if isSignedIn() && request.auth.uid == userId
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.orgId == resource.data.orgId
+        && request.resource.data.permissions == resource.data.permissions;
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
 
-      // Jobs: org members can create + read; shared users can read; owner can update/delete
+    // Orgs: anyone signed in can CREATE (signup bootstrap — the user doc
+    // doesn't exist yet when the org doc is written). Owner can update/delete,
+    // members can read.
+    match /orgs/{orgId} {
+      allow create: if isSignedIn();
+      allow read: if isSignedIn() && myUser().orgId == orgId;
+      allow update, delete: if isSignedIn()
+        && myUser().role == 'owner' && myUser().orgId == orgId;
+
+      // Jobs: org members can create + read; shared users can read.
+      // Update/delete: owner/supervisor can touch any org job; anyone can
+      // edit or delete measurements they created themselves (matches
+      // canEditJob() in permissions.js).
       match /jobs/{jobId} {
-        allow create: if request.auth != null &&
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId == orgId;
-        allow read: if request.auth != null && (
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId == orgId ||
+        allow create: if isSignedIn() && myUser().orgId == orgId;
+        allow read: if isSignedIn() && (
+          myUser().orgId == orgId ||
           resource.data.sharedWith.hasAny([request.auth.uid])
         );
-        allow update, delete: if request.auth != null &&
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner' &&
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId == orgId;
+        allow update, delete: if isSignedIn() && myUser().orgId == orgId && (
+          myUser().role in ['owner', 'supervisor'] ||
+          request.auth.uid == resource.data.installerUid
+        );
       }
     }
   }
