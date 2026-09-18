@@ -137,8 +137,99 @@ function goStep(n, skipHistory) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function nextStep() { if (currentStep < TOTAL_STEPS) goStep(currentStep + 1); }
-function prevStep() { if (currentStep > -1)          goStep(currentStep - 1); }
+function nextStep() {
+  if (currentStep < TOTAL_STEPS) {
+    const err = validateStep(currentStep);
+    if (err) { showStepError(currentStep, err); return; }
+    hideStepError(currentStep);
+    goStep(currentStep + 1);
+  }
+}
+function prevStep() { if (currentStep > -1)          { hideStepError(currentStep); goStep(currentStep - 1); } }
+
+// ─── STEP VALIDATION — blocks advancing (QA fix 2026-09-18) ────────────────
+const MAX_MEASURE_IN = 20000;
+
+function _checkMeasure(prefix, label) {
+  const v = readVal(prefix + '-whole', prefix + '-frac');
+  if (!(v > 0)) return '⚠️ ' + label + ': escribe una medida mayor que 0 pa\' poder seguir.';
+  if (v > MAX_MEASURE_IN) return '⚠️ ' + label + ': ese número está bien loco 😅 — revisa que sean pulgadas (máx 20,000").';
+  return null;
+}
+
+function _checkPair(prefixA, prefixB, labelA, labelB) {
+  return _checkMeasure(prefixA, labelA) || _checkMeasure(prefixB, labelB);
+}
+
+function validateStep(n) {
+  if (n === 0) {
+    const c = (document.getElementById('customer-name')?.value || '').trim();
+    const p = (document.getElementById('project-name')?.value || '').trim();
+    if (!c) return '⚠️ Falta el nombre del cliente — escríbelo pa\' poder guardar la medida. 🙏';
+    if (!p) return '⚠️ Ponle nombre al proyecto pa\' identificar el trabajo.';
+    return null;
+  }
+  if (n === 1) return _checkPair('hueco-ancho-bot', 'hueco-alto-izq', 'Ancho abajo', 'Alto izquierda');
+  if (n === 2) return _checkPair('pI-a', 'pI-b', 'Pared izq. A', 'Pared izq. B');
+  if (n === 3) return _checkPair('pD-a', 'pD-b', 'Pared der. A', 'Pared der. B');
+  if (n === 4) return _checkPair('t-a', 't-b', 'Arriba A', 'Arriba B');
+  if (n === 5) return _checkPair('p-a', 'p-b', 'Abajo A', 'Abajo B');
+  return null; // paso 6 (foto opcional) y 7 (resumen) siempre pasan
+}
+
+function _stepErrorEl(n) {
+  const panel = document.getElementById('step-' + n);
+  return panel ? panel.querySelector('.step-error') : null;
+}
+
+function showStepError(n, msg) {
+  const el = _stepErrorEl(n);
+  if (el) { el.textContent = msg; el.classList.add('show'); }
+}
+
+function hideStepError(n) {
+  const el = _stepErrorEl(n);
+  if (el) { el.classList.remove('show'); el.textContent = ''; }
+}
+
+// ─── DRAFT PERSISTENCE — localStorage (QA fix 2026-09-18) ──────────────────
+const DRAFT_KEY = 'nivelato_wizard_draft_v1';
+const DRAFT_IDS = ['customer-name','project-name','location-name','notas-field',
+  'hueco-ancho-bot-whole','hueco-ancho-bot-frac','hueco-alto-izq-whole','hueco-alto-izq-frac',
+  'pI-a-whole','pI-a-frac','pI-b-whole','pI-b-frac',
+  'pD-a-whole','pD-a-frac','pD-b-whole','pD-b-frac',
+  't-a-whole','t-a-frac','t-b-whole','t-b-frac',
+  'p-a-whole','p-a-frac','p-b-whole','p-b-frac'];
+
+function saveDraft() {
+  try {
+    const values = {};
+    for (const id of DRAFT_IDS) {
+      const el = document.getElementById(id);
+      if (el) values[id] = el.value;
+    }
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ v: 1, ts: Date.now(), step: currentStep, values }));
+  } catch (e) { /* storage lleno o bloqueado: el wizard sigue funcionando */ }
+}
+
+function restoreDraft() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch (e) { return false; }
+  if (!d || !d.values) return false;
+  if (Date.now() - (d.ts || 0) > 7 * 24 * 3600 * 1000) { clearDraft(); return false; } // borrador viejo
+  for (const id of Object.keys(d.values)) {
+    const el = document.getElementById(id);
+    if (el) el.value = d.values[id];
+  }
+  const step = Math.max(0, Math.min(TOTAL_STEPS, d.step | 0));
+  if (step !== currentStep) goStep(step, true);
+  else { recalcAll(); if (step === TOTAL_STEPS) renderSummary(); }
+  return true;
+}
+
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+}
 
 window.addEventListener('popstate', function(e) {
   if (e.state && typeof e.state.step === 'number') {
@@ -296,11 +387,11 @@ function autoFix(warningText) {
     return;
   }
   if (warningText.includes('Faltan niveles de arriba')) {
-    goStep(3);
+    goStep(4);
     return;
   }
   if (warningText.includes('Falta medida base')) {
-    goStep(0);
+    goStep(1);
     return;
   }
 }
@@ -327,27 +418,47 @@ function renderValidation() {
 }
 
 // ─── SUMMARY ───────────────────────────────────────────────────────────────
+function _fmtPared(a, b, d) {
+  const has = (a > 0 || b > 0);
+  const lbl = (d && d.label) ? d.label : '—';
+  if (!has) return '—';
+  return toFracStr(a) + ' / ' + toFracStr(b) + ' → ' + lbl;
+}
+
 function renderSummary() {
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
-  const anchoTop = results.anchoTop || 0;
-  const altoDer  = results.altoDer  || 0;
   const set = function(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; };
   set('res-area', (anchoBot > 0 ? toFracStr(anchoBot) : '—') + ' × ' + (altoIzq > 0 ? toFracStr(altoIzq) : '—') + ' (base)');
-  set('res-pared-izq', results.paredIzq?.label || '—');
-  set('res-pared-der', results.paredDer?.label || '—');
-  set('res-techo',     results.techo?.label    || '—');
-  set('res-piso',      results.piso?.label     || '—');
+  set('res-pared-izq', _fmtPared(readVal('pI-a-whole','pI-a-frac'), readVal('pI-b-whole','pI-b-frac'), results.paredIzq));
+  set('res-pared-der', _fmtPared(readVal('pD-a-whole','pD-a-frac'), readVal('pD-b-whole','pD-b-frac'), results.paredDer));
+  set('res-techo',     _fmtPared(readVal('t-a-whole','t-a-frac'),  readVal('t-b-whole','t-b-frac'),  results.techo));
+  set('res-piso',      _fmtPared(readVal('p-a-whole','p-a-frac'),  readVal('p-b-whole','p-b-frac'),  results.piso));
   renderValidation();
 }
 
 // ─── SHARE ─────────────────────────────────────────────────────────────────
+let _saveState = 'idle'; // idle | saving | saved
+
+function _setSaveBtn(disabled, label) {
+  const btn = document.getElementById('btn-guardar');
+  if (btn) { btn.disabled = disabled; btn.textContent = label; }
+}
+
+// Si el usuario edita algo después de guardar, el botón vuelve a activarse.
+function _dirtyResetSaveButton() {
+  if (_saveState === 'saved') { _saveState = 'idle'; _setSaveBtn(false, '💾 Guardar medida'); }
+}
+
 function showShare() {
+  if (_saveState === 'saving') return; // ya se está guardando: no doble-submit
   const warnings = runValidation();
   if (warnings.length > 0) {
     const ok = confirm('Hay advertencias en las medidas:\n\n' + warnings.join('\n') + '\n\n¿Continuar de todas formas?');
     if (!ok) return;
   }
+  _saveState = 'saving';
+  _setSaveBtn(true, '⏳ Guardando…');
   const block = document.getElementById('share-block');
   if (block) block.classList.remove('hidden');
   setTimeout(function() {
@@ -359,12 +470,19 @@ function showShare() {
 function _saveCurrentJob(warnings) {
   if (typeof window.saveJobToFirestore !== 'function') {
     console.error('[Nivelato] saveJobToFirestore no está disponible — ¿se cargó auth-guard.js?');
+    _saveState = 'idle';
+    _setSaveBtn(false, '💾 Guardar medida');
     return;
   }
+  recalcAll(); // leer valores frescos del DOM — nunca guardar results viejos
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
   const anchoTop = results.anchoTop || 0;
   const altoDer  = results.altoDer  || 0;
+  const pI_A = readVal('pI-a-whole','pI-a-frac'), pI_B = readVal('pI-b-whole','pI-b-frac');
+  const pD_A = readVal('pD-a-whole','pD-a-frac'), pD_B = readVal('pD-b-whole','pD-b-frac');
+  const t_A  = readVal('t-a-whole','t-a-frac'),   t_B  = readVal('t-b-whole','t-b-frac');
+  const p_A  = readVal('p-a-whole','p-a-frac'),   p_B  = readVal('p-b-whole','p-b-frac');
   const notas = document.getElementById('notas-field')?.value || '';
   const customer = document.getElementById('customer-name')?.value || '';
   const project = document.getElementById('project-name')?.value || '';
@@ -377,6 +495,13 @@ function _saveCurrentJob(warnings) {
       techo:    results.techo?.label    || null,
       piso:     results.piso?.label     || null,
     },
+    // medidas crudas por pared + desnivel numérico en pulgadas (QA 2026-09-18)
+    paredes: {
+      izq:   { a: pI_A, b: pI_B, desnivel: results.paredIzq?.raw ?? null },
+      der:   { a: pD_A, b: pD_B, desnivel: results.paredDer?.raw ?? null },
+      techo: { a: t_A,  b: t_B,  desnivel: results.techo?.raw    ?? null },
+      piso:  { a: p_A,  b: p_B,  desnivel: results.piso?.raw     ?? null },
+    },
     customer: customer,
     project: project,
     location: location,
@@ -385,6 +510,9 @@ function _saveCurrentJob(warnings) {
     annotatedPhoto: annotatedPhotoDataUrl || null
   };
   window.saveJobToFirestore(jobData).then(function() {
+    _saveState = 'saved';
+    _setSaveBtn(true, '✓ Guardado');
+    clearDraft();
     const el = document.getElementById('save-status');
     if (el) { el.style.display = 'block'; setTimeout(function() { el.style.display = 'none'; }, 4000); }
     const overlay = document.createElement('div');
@@ -400,6 +528,8 @@ function _saveCurrentJob(warnings) {
     setTimeout(function() { overlay.remove(); }, 2200);
   }).catch(function(e) {
     console.error('[Nivelato] save failed:', e);
+    _saveState = 'idle';
+    _setSaveBtn(false, '💾 Guardar medida');
     const overlay = document.createElement('div');
     overlay.innerHTML = '⚠️ Error al guardar';
     overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; background:rgba(220,53,69,0.92); color:#fff; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; animation: fadeInOut 2.2s ease forwards;';
@@ -836,8 +966,16 @@ function blurField() {
 }
 
 // ─── WIRE UP INPUTS ────────────────────────────────────────────────────────
-document.addEventListener('input',  function(e) { if (['input','select'].includes(e.target.tagName.toLowerCase())) recalcAll(); });
-document.addEventListener('change', function(e) { if (['input','select'].includes(e.target.tagName.toLowerCase())) recalcAll(); });
+function _onWizardInput(e) {
+  const tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
+  if (!['input','select','textarea'].includes(tag)) return;
+  recalcAll();
+  hideStepError(currentStep);
+  saveDraft();
+  _dirtyResetSaveButton();
+}
+document.addEventListener('input',  _onWizardInput);
+document.addEventListener('change', _onWizardInput);
 
 document.addEventListener('focusin', function(e) {
   const id = e.target.id;
@@ -964,6 +1102,7 @@ if (canvas) {
   resizeCanvas();
   history.replaceState({ step: 0 }, '', '#step-0');
   goStep(0, true);
+  restoreDraft(); // reanuda el borrador si existe (los selects se restauran de nuevo abajo, ya con fracciones)
 }
 
 function resetZoom() {
