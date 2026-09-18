@@ -18,10 +18,18 @@ service cloud.firestore {
         myUser().orgId ==
           get(/databases/$(database)/documents/users/$(userId)).data.orgId
       );
-      allow update: if isSignedIn() && request.auth.uid == userId
-        && request.resource.data.role == resource.data.role
-        && request.resource.data.orgId == resource.data.orgId
-        && request.resource.data.permissions == resource.data.permissions;
+      allow update: if isSignedIn() && (
+        // self-update: profile fields only, role/orgId/permissions immutable
+        (request.auth.uid == userId
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.orgId == resource.data.orgId
+          && request.resource.data.permissions == resource.data.permissions)
+        // owner managing same-org members (approve/reject/permissions);
+        // orgId immutable so members can't be poached across orgs
+        || (myUser().role == 'owner'
+          && myUser().orgId == resource.data.orgId
+          && request.resource.data.orgId == resource.data.orgId)
+      );
       allow delete: if isSignedIn() && request.auth.uid == userId;
     }
 
