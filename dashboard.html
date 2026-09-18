@@ -423,10 +423,13 @@ let currentUser;
 
     // load jobs
     window._db = db; window._orgId = orgId;
+    // clean up temp drafts orphaned by tabs that died mid-share
+    if (typeof window.sweepStaleDrafts === 'function') window.sweepStaleDrafts(db, orgId, user.uid);
     const jobsRef = collection(db, 'orgs', orgId, 'jobs');
     const q = query(jobsRef, orderBy('createdAt', 'desc'));
     const applyJobsSnap = (snap) => {
-      let jobs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // drafts are temp jobs mid-share — never show them
+      let jobs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(j => j.status !== 'draft');
 
       // filter jobs by permissions
       const canViewOwn = _can('viewOwnMeasurements');
