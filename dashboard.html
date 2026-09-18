@@ -326,7 +326,7 @@
 <script type="module">
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getDoc, doc, setDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getDoc, doc, setDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { makePermChecker, canEditJob } from './permissions.js';
 
 // ─── Central helpers ───
@@ -425,21 +425,33 @@ let currentUser;
     window._db = db; window._orgId = orgId;
     const jobsRef = collection(db, 'orgs', orgId, 'jobs');
     const q = query(jobsRef, orderBy('createdAt', 'desc'));
-    const snap = await getDocs(q);
-    allJobs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const applyJobsSnap = (snap) => {
+      let jobs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // filter jobs by permissions
-    const canViewOwn = _can('viewOwnMeasurements');
-    const canViewOthers = _can('viewOthersMeasurements');
-    allJobs = allJobs.filter(j => {
-      const isOwn = j.installerUid === user.uid;
-      const isShared = j.sharedWith && Array.isArray(j.sharedWith) && j.sharedWith.includes(user.uid);
-      if (isShared) return true;
-      if (isOwn) return canViewOwn;
-      return canViewOthers;
+      // filter jobs by permissions
+      const canViewOwn = _can('viewOwnMeasurements');
+      const canViewOthers = _can('viewOthersMeasurements');
+      allJobs = jobs.filter(j => {
+        const isOwn = j.installerUid === user.uid;
+        const isShared = j.sharedWith && Array.isArray(j.sharedWith) && j.sharedWith.includes(user.uid);
+        if (isShared) return true;
+        if (isOwn) return canViewOwn;
+        return canViewOthers;
+      });
+      refreshJobFiltersAndRender();
+    };
+
+    // realtime subscription — the list live-updates on add/edit/delete
+    if (window._jobsUnsub) window._jobsUnsub();
+    window._jobsUnsub = onSnapshot(q, applyJobsSnap, (err) => {
+      console.error('[Nivelato] jobs listener error:', err);
+      const dl = document.querySelector('.loading');
+      if (dl) dl.textContent = 'No se pudieron cargar las medidas. Revisa tu conexión.';
     });
+    window.addEventListener('pagehide', () => { if (window._jobsUnsub) { window._jobsUnsub(); window._jobsUnsub = null; } });
 
     // populate installer filter (clear stale options first — keep the default "Todos…" entry)
+    const refreshJobFiltersAndRender = () => {
     const installers = [...new Set(allJobs.map(j => j.installerName).filter(Boolean))];
     const sel = document.getElementById('filter-installer');
     const prevInst = sel.value;
@@ -463,6 +475,7 @@ let currentUser;
     if ([...custSel.options].some(o => o.value === prevCust)) custSel.value = prevCust;
 
     renderJobs(allJobs);
+    };
   });
   }
 
