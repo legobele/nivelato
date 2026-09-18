@@ -6,6 +6,34 @@ import { auth } from "./firebase-config.js";
 
 let _menuOpen = false;
 
+// Best-effort purge of leftover Firebase Auth persistence keys, so a logout
+// can never leave a session behind even if signOut() itself fails.
+function purgeAuthRemnants() {
+  for (const storeName of ['localStorage', 'sessionStorage']) {
+    try {
+      const store = window[storeName];
+      const doomed = [];
+      for (let i = 0; i < store.length; i++) {
+        const k = store.key(i);
+        if (k && k.indexOf('firebase:authUser') === 0) doomed.push(k);
+      }
+      doomed.forEach((k) => store.removeItem(k));
+    } catch (_) { /* storage unavailable — nothing to purge */ }
+  }
+}
+
+// Sign out BEFORE navigating. The timeout race guarantees a hanging signOut()
+// can never wedge the logout flow; remnants are purged regardless.
+async function hardSignOut() {
+  try {
+    await Promise.race([
+      signOut(auth),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('signOut timeout')), 4000)),
+    ]);
+  } catch (_) { /* fall through to purge + navigate */ }
+  purgeAuthRemnants();
+}
+
 function injectStyles() {
   if (document.getElementById("account-selector-styles")) return;
   const s = document.createElement("style");
@@ -76,7 +104,7 @@ function roleLabel(role) {
     owner: "Dueño / Admin",
     cotizador: "Cotizador",
     supervisor: "Supervisor",
-    measurer: "Técnico medidor",
+    medidor: "Técnico medidor",
   };
   return map[role] || role || "";
 }
@@ -139,7 +167,7 @@ function buildMenu({ user, userData }) {
 
   dropdown.querySelector("#acct-signout").addEventListener("click", async () => {
     closeMenu();
-    try { await signOut(auth); } catch (_) {}
+    await hardSignOut();
     window.location.href = "login.html";
   });
 

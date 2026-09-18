@@ -129,56 +129,60 @@
 
   <!-- LOGIN FORM -->
   <div id="form-login">
-    <div class="field">
-      <label>Correo electrónico</label>
-      <input type="email" id="login-email" placeholder="correo@taller.com" autocomplete="email" />
-    </div>
-    <div class="field">
-      <label>Contraseña</label>
-      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" />
-    </div>
-    <button class="btn-primary" id="btn-login" onclick="doLogin()">Entrar</button>
+    <form id="login-form" autocomplete="on">
+      <div class="field">
+        <label>Correo electrónico</label>
+        <input type="email" id="login-email" name="email" placeholder="correo@taller.com" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="login-pass" name="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <button class="btn-primary" id="btn-login" type="submit">Entrar</button>
+    </form>
     <div class="error-msg" id="login-error"></div>
   </div>
 
   <!-- SIGNUP FORM -->
   <div id="form-signup" style="display:none">
-    <div class="field">
-      <label>Nombre completo</label>
-      <input type="text" id="signup-name" placeholder="Juan Pérez" autocomplete="name" />
-    </div>
-    <div class="field">
-      <label>Correo electrónico</label>
-      <input type="email" id="signup-email" placeholder="correo@taller.com" autocomplete="email" />
-    </div>
-    <div class="field">
-      <label>Contraseña</label>
-      <input type="password" id="signup-pass" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
-    </div>
-    <div class="field">
-      <label>Rol</label>
-      <select id="signup-role" onchange="onRoleChange()">
-        <option value="medidor">Técnico medidor</option>
-        <option value="supervisor">Supervisor de campo</option>
-        <option value="cotizador">Cotizaciones</option>
-        <option value="owner">Dueño / Administrador</option>
-      </select>
-    </div>
-    <!-- Owner-only: org name + join code -->
-    <div id="owner-fields" style="display:block">
+    <form id="signup-form" autocomplete="on">
       <div class="field">
-        <label>Nombre del taller</label>
-        <input type="text" id="signup-orgname" placeholder="Vidrios Lebron" />
+        <label>Nombre completo</label>
+        <input type="text" id="signup-name" name="name" placeholder="Juan Pérez" autocomplete="name" />
       </div>
-    </div>
-    <!-- Non-owner: join code -->
-    <div id="user-fields" style="display:none">
       <div class="field">
-        <label>Código del taller <span style="color:#868e96;font-weight:400">(te lo da el dueño)</span></label>
-        <input type="text" id="signup-orgcode" placeholder="ABC123" autocomplete="off" style="text-transform:uppercase" />
+        <label>Correo electrónico</label>
+        <input type="email" id="signup-email" name="email" placeholder="correo@taller.com" autocomplete="email" />
       </div>
-    </div>
-    <button class="btn-primary" id="btn-signup" onclick="doSignup()">Crear cuenta</button>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="signup-pass" name="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+      </div>
+      <div class="field">
+        <label>Rol</label>
+        <select id="signup-role" onchange="onRoleChange()">
+          <option value="medidor">Técnico medidor</option>
+          <option value="supervisor">Supervisor de campo</option>
+          <option value="cotizador">Cotizaciones</option>
+          <option value="owner">Dueño / Administrador</option>
+        </select>
+      </div>
+      <!-- Owner-only: org name + join code -->
+      <div id="owner-fields" style="display:block">
+        <div class="field">
+          <label>Nombre del taller</label>
+          <input type="text" id="signup-orgname" name="organization" placeholder="Vidrios Lebron" autocomplete="organization" />
+        </div>
+      </div>
+      <!-- Non-owner: join code -->
+      <div id="user-fields" style="display:none">
+        <div class="field">
+          <label>Código del taller <span style="color:#868e96;font-weight:400">(te lo da el dueño)</span></label>
+          <input type="text" id="signup-orgcode" placeholder="ABC123" autocomplete="off" style="text-transform:uppercase" />
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-signup" type="submit">Crear cuenta</button>
+    </form>
     <div class="error-msg" id="signup-error"></div>
     <div class="signup-note">Al registrarte como dueño, se crea una organización nueva.<br>Los empleados usan el código que tú les des.</div>
   </div>
@@ -315,11 +319,27 @@
     }
   };
 
+  // Real <form> submit handlers (not inline onclick): this is what makes
+  // browser password managers / autofill reliably fill the fields, and also
+  // enables Enter-to-submit. doLogin/doSignup read field values directly on
+  // submit, so autofilled values are picked up even without input events.
+  document.getElementById('login-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    window.doLogin();
+  });
+  document.getElementById('signup-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    window.doSignup();
+  });
+
   function friendlyError(code) {
     const map = {
       'auth/invalid-email':          'Correo electrónico inválido.',
       'auth/user-not-found':         'No existe una cuenta con ese correo.',
       'auth/wrong-password':         'Contraseña incorrecta.',
+      'auth/invalid-credential':     'Correo o contraseña incorrectos.',
+      'auth/missing-password':       'Ingresa tu contraseña. Si usaste autocompletado, escríbela manualmente.',
+      'auth/missing-email':          'Ingresa tu correo electrónico.',
       'auth/email-already-in-use':   'Ya existe una cuenta con ese correo.',
       'auth/weak-password':          'La contraseña debe tener al menos 6 caracteres.',
       'auth/too-many-requests':      'Demasiados intentos. Intenta más tarde.',

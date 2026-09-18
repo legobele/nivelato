@@ -13,10 +13,10 @@ export const PERM_DEFS = [
 
 const ROLE_FALLBACK = {
   viewDashboard:          true,
-  createMeasurements:     ['owner', 'supervisor', 'measurer'],
+  createMeasurements:     ['owner', 'supervisor', 'medidor'],
   viewOwnMeasurements:    true,
-  editOwnMeasurements:    ['owner', 'supervisor', 'measurer'],
-  viewOthersMeasurements: ['owner', 'supervisor', 'measurer', 'cotizador'],
+  editOwnMeasurements:    ['owner', 'supervisor', 'medidor'],
+  viewOthersMeasurements: ['owner', 'supervisor', 'medidor', 'cotizador'],
   editOthersMeasurements: ['owner', 'supervisor'],
   userManagement:         ['owner'],
 };

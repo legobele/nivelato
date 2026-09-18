@@ -69,6 +69,7 @@
       <div class="info-row"><span class="info-label">Código</span><span class="info-value" id="info-joincode">—</span></div>
       <div id="delete-request-status" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;color:#e67700;display:none;">⏳ Tu solicitud de eliminación está pendiente.</div>
       <button class="btn-delete-account" id="btn-delete-account" onclick="requestDeleteAccount()">🗑 Solicitar eliminación de cuenta</button>
+      <button class="btn-delete-account" id="btn-logout" onclick="doLogout()" style="border-color:#dee2e6;color:#495057;">⏻ Cerrar sesión</button>
     </div>
   </div>
 
@@ -119,10 +120,19 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById('info-name').textContent = currentUserData.name || '—';
   document.getElementById('info-email').textContent = user.email || '—';
   document.getElementById('info-role').textContent = {
-    owner: 'Dueño / Admin', cotizador: 'Cotizador', supervisor: 'Supervisor', measurer: 'Técnico medidor'
+    owner: 'Dueño / Admin', cotizador: 'Cotizador', supervisor: 'Supervisor', medidor: 'Técnico medidor'
   }[currentUserData.role] || currentUserData.role || '—';
   document.getElementById('info-org').textContent = orgId;
-  document.getElementById('info-joincode').textContent = orgId;
+  // Invite code: always read the stable code stored on the org doc (set once
+  // at org creation), never regenerate client-side.
+  document.getElementById('info-joincode').textContent = orgId; // placeholder until org doc loads
+  getDoc(doc(db, 'orgs', orgId)).then(
+    (orgSnap) => {
+      const code = orgSnap.data()?.joinCode || orgId;
+      document.getElementById('info-joincode').textContent = code;
+    },
+    () => { /* keep orgId fallback */ }
+  );
 
   // check for pending deletion request
   const drBtn = document.getElementById('btn-delete-account');
@@ -152,7 +162,7 @@ function renderPermissions() {
   const container = document.getElementById('permissions-list');
   container.innerHTML = orgMembers.map(m => {
     const perms = m.permissions || {};
-    const roleLabel = { owner: 'Dueño', cotizador: 'Cotizador', supervisor: 'Supervisor', measurer: 'Técnico' }[m.role] || m.role || '—';
+    const roleLabel = { owner: 'Dueño', cotizador: 'Cotizador', supervisor: 'Supervisor', medidor: 'Técnico' }[m.role] || m.role || '—';
     return `
       <div class="perm-member" data-uid="${m.uid}">
         <div class="perm-member-header">${m.name || 'Sin nombre'} <span class="perm-member-role">${roleLabel}</span></div>
@@ -293,6 +303,29 @@ window.requestDeleteAccount = async () => {
   } catch(e) {
     alert('Error al solicitar eliminación: ' + e.message);
   }
+};
+
+window.doLogout = async () => {
+  // Sign out BEFORE navigating; a hanging signOut() can never wedge logout,
+  // and any leftover Firebase Auth persistence keys are purged regardless.
+  try {
+    await Promise.race([
+      signOut(auth),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('signOut timeout')), 4000)),
+    ]);
+  } catch (_) { /* fall through to purge + navigate */ }
+  try {
+    for (const storeName of ['localStorage', 'sessionStorage']) {
+      const store = window[storeName];
+      const doomed = [];
+      for (let i = 0; i < store.length; i++) {
+        const k = store.key(i);
+        if (k && k.indexOf('firebase:authUser') === 0) doomed.push(k);
+      }
+      doomed.forEach((k) => store.removeItem(k));
+    }
+  } catch (_) { /* storage unavailable — nothing to purge */ }
+  window.location.href = 'login.html';
 };
 
 window.switchTab = (name) => {
