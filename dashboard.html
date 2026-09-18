@@ -121,7 +121,7 @@
       z-index: 1;
     }
     .date-input-wrap input[type="date"]:focus + .date-placeholder,
-    .date-input-wrap input[type="date"]:valid + .date-placeholder { display: none; }
+    .date-input-wrap.has-value .date-placeholder { display: none; }
     .date-input-wrap input[type="date"]::-webkit-calendar-picker-indicator {
       cursor: pointer; opacity: 0.5;
     }
@@ -281,7 +281,7 @@
   <div class="filter-row">
     <div class="date-input-wrap">
       <input type="date" id="filter-date" onchange="applyFilters()" />
-      <span class="date-placeholder">📅 Filtrar por fecha</span>
+      <span class="date-placeholder">📅 Filtrar por fecha · dd/mm/aaaa</span>
     </div>
     <select id="filter-installer" onchange="applyFilters()">
       <option value="">Todos los técnicos</option>
@@ -331,6 +331,27 @@ import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getDoc, doc, setDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { makePermChecker, canEditJob } from './permissions.js';
+
+// ─── Central helpers ───
+// Escape ALL user-controlled strings before innerHTML interpolation (XSS).
+const escapeHtml = (s) => String(s ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
+// PR-local calendar day as YYYY-MM-DD (en-CA) for the "Hoy" stat and date filter.
+const prDay = (d) => new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Puerto_Rico', year: 'numeric', month: '2-digit', day: '2-digit'
+}).format(d);
+
+// Custom date placeholder (dd/mm/aaaa): hide it only once a date is picked.
+const syncDatePlaceholder = () => {
+  const inp = document.getElementById('filter-date');
+  const wrap = inp && inp.closest('.date-input-wrap');
+  if (wrap) wrap.classList.toggle('has-value', !!inp.value);
+};
 
 // redraw open modal graph when bread mode toggles
 document.addEventListener('breadchange', function () {
@@ -421,28 +442,35 @@ let currentUser;
       return canViewOthers;
     });
 
-    // populate installer filter
+    // populate installer filter (clear stale options first — keep the default "Todos…" entry)
     const installers = [...new Set(allJobs.map(j => j.installerName).filter(Boolean))];
     const sel = document.getElementById('filter-installer');
+    const prevInst = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
     installers.forEach(name => {
       const opt = document.createElement('option');
       opt.value = name; opt.textContent = name;
       sel.appendChild(opt);
     });
-    // populate customer filter
+    if ([...sel.options].some(o => o.value === prevInst)) sel.value = prevInst;
+    // populate customer filter (clear stale options first)
     const customers = [...new Set(allJobs.map(j => j.customer).filter(Boolean))];
     const custSel = document.getElementById('filter-customer');
+    const prevCust = custSel.value;
+    while (custSel.options.length > 1) custSel.remove(1);
     customers.forEach(name => {
       const opt = document.createElement('option');
       opt.value = name; opt.textContent = name;
       custSel.appendChild(opt);
     });
+    if ([...custSel.options].some(o => o.value === prevCust)) custSel.value = prevCust;
 
     renderJobs(allJobs);
   });
   }
 
   window.applyFilters = () => {
+    syncDatePlaceholder();
     const date = document.getElementById('filter-date').value;
     const installer = document.getElementById('filter-installer').value;
     const customer = document.getElementById('filter-customer').value;
@@ -451,7 +479,7 @@ let currentUser;
       filtered = filtered.filter(j => {
         if (!j.createdAt) return false;
         const d = j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt);
-        return d.toISOString().slice(0,10) === date;
+        return prDay(d) === date;
       });
     }
     if (installer) filtered = filtered.filter(j => j.installerName === installer);
@@ -461,12 +489,12 @@ let currentUser;
 
   function renderJobs(jobs) {
     const list = document.getElementById('job-list');
-    // stats
-    const today = new Date().toISOString().slice(0,10);
+    // stats (dates evaluated in America/Puerto_Rico)
+    const today = prDay(new Date());
     const todayCount = allJobs.filter(j => {
       if (!j.createdAt) return false;
       const d = j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt);
-      return d.toISOString().slice(0,10) === today;
+      return prDay(d) === today;
     }).length;
     const warnCount = allJobs.filter(j => j.warnings && j.warnings.length > 0).length;
     document.getElementById('stat-total').textContent = allJobs.length;
@@ -479,23 +507,24 @@ let currentUser;
     }
     list.innerHTML = jobs.map((job, i) => {
       const date = job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now());
-      const dateStr = date.toLocaleDateString('es-PR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      const dateStr = date.toLocaleDateString('es-PR', { timeZone: 'America/Puerto_Rico', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
       const hasWarn = job.warnings && job.warnings.length > 0;
       const tag = hasWarn
         ? `<span class="job-tag tag-warn">⚠ Advertencias</span>`
         : `<span class="job-tag tag-ok">✓ OK</span>`;
       const hueco = job.hueco ? `${(job.hueco.anchoBot||job.hueco.anchoBottom||job.hueco.ancho||'?')}" × ${(job.hueco.altoIzq||job.hueco.altoLeft||job.hueco.alto||'?')}"` : '—';
+      const notasPreview = job.notas ? (job.notas.length > 30 ? job.notas.slice(0,30) + '…' : job.notas) : '';
       return `
         <div class="job-card" onclick="openJob(${i})">
           <div class="job-card-top">
-            <div class="job-title">${job.installerName || 'Técnico'} ${tag}</div>
-            <div class="job-date">${dateStr}</div>
+            <div class="job-title">${escapeHtml(job.installerName) || 'Técnico'} ${tag}</div>
+            <div class="job-date">${escapeHtml(dateStr)}</div>
           </div>
           <div class="job-meta">
-            <span>📐 ${hueco}</span>
-            <span>👤 ${job.installerName || '—'}</span>
-            ${job.customer ? `<span>🏢 ${job.customer}</span>` : ''}
-            ${job.notas ? `<span>📝 ${job.notas.slice(0,30)}${job.notas.length>30?'…':''}</span>` : ''}
+            <span>📐 ${escapeHtml(hueco)}</span>
+            <span>👤 ${escapeHtml(job.installerName) || '—'}</span>
+            ${job.customer ? `<span>🏢 ${escapeHtml(job.customer)}</span>` : ''}
+            ${notasPreview ? `<span>📝 ${escapeHtml(notasPreview)}</span>` : ''}
           </div>
         </div>`;
     }).join('');
@@ -507,9 +536,9 @@ let currentUser;
     window._currentJobIdx = i;
     const job = window._jobs[i];
     const date = job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now());
-    const dateStr = date.toLocaleDateString('es-PR', { day:'2-digit', month:'short', year:'numeric' }) + ' ' + date.toLocaleTimeString('es-PR', { hour:'2-digit', minute:'2-digit' });
+    const dateStr = date.toLocaleDateString('es-PR', { timeZone: 'America/Puerto_Rico', day:'2-digit', month:'short', year:'numeric' }) + ' ' + date.toLocaleTimeString('es-PR', { timeZone: 'America/Puerto_Rico', hour:'2-digit', minute:'2-digit' });
     document.getElementById('modal-title').textContent = `Medida — ${job.installerName || 'Técnico'}`;
-    const row = (l,v) => `<div class="detail-row"><span class="detail-label">${l}</span><span class="detail-val">${v}</span></div>`;
+    const row = (l,v) => `<div class="detail-row"><span class="detail-label">${escapeHtml(l)}</span><span class="detail-val">${escapeHtml(v)}</span></div>`;
     const sec = (t) => `<div class="detail-section-title">${t}</div>`;
     let html = '';
     html += sec('General');
@@ -520,20 +549,31 @@ let currentUser;
     html += row('Ubicación', job.location || '—');
     html += sec('Hueco (Abertura)');
     if (job.hueco) {
-      html += row('Ancho superior', (job.hueco.anchoTop||job.hueco.anchoSuperior) ? (job.hueco.anchoTop||job.hueco.anchoSuperior) + '"' : (job.hueco.ancho ? job.hueco.ancho + '"' : '—'));
-      html += row('Ancho inferior', (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) ? (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) + '"' : '—');
+      // Step-1 value is the base (bottom) width — label it exactly like the wizard.
+      html += row('Ancho abajo (base)', (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) ? (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) + '"' : (job.hueco.ancho ? job.hueco.ancho + '"' : '—'));
+      html += row('Ancho superior', (job.hueco.anchoTop||job.hueco.anchoSuperior) ? (job.hueco.anchoTop||job.hueco.anchoSuperior) + '"' : '—');
       html += row('Alto izquierdo', (job.hueco.altoIzq||job.hueco.altoIzquierda) ? (job.hueco.altoIzq||job.hueco.altoIzquierda) + '"' : (job.hueco.alto ? job.hueco.alto + '"' : '—'));
       html += row('Alto derecho',   (job.hueco.altoDer||job.hueco.altoDerecha) ? (job.hueco.altoDer||job.hueco.altoDerecha) + '"' : '—');
     } else { html += row('Hueco', '—'); }
     html += sec('Desniveles');
-    html += row('Pared Izq.', job.desniveles?.paredIzq || '—');
-    html += row('Pared Der.', job.desniveles?.paredDer || '—');
-    html += row('Techo',      job.desniveles?.techo    || '—');
-    html += row('Piso',       job.desniveles?.piso     || '—');
+    // Tolerate records where desniveles is missing or values are {label} objects / nulls.
+    const desn = job.desniveles || job.desnivel || {};
+    const dval = (v) => {
+      if (v === null || v === undefined) return '—';
+      if (typeof v === 'object') {
+        const l = v.label ?? v.value ?? v.text;
+        return (l === null || l === undefined || String(l) === '') ? '—' : l;
+      }
+      return String(v) === '' ? '—' : v;
+    };
+    html += row('Pared Izq.', dval(desn.paredIzq));
+    html += row('Pared Der.', dval(desn.paredDer));
+    html += row('Techo',      dval(desn.techo));
+    html += row('Piso',       dval(desn.piso));
     if (job.warnings && job.warnings.length > 0) {
-      html += `<div style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;color:#e67700">${job.warnings.map(w=>`⚠ ${w}`).join('<br>')}</div>`;
+      html += `<div style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;color:#e67700">${job.warnings.map(w=>`⚠ ${escapeHtml(w)}`).join('<br>')}</div>`;
     }
-    if (job.notas) html += `<div class="modal-notes">📝 ${job.notas}</div>`;
+    if (job.notas) html += `<div class="modal-notes">📝 ${escapeHtml(job.notas)}</div>`;
     document.getElementById('modal-body').innerHTML = html;
     // gate delete button by edit permission
     const delBtn = document.getElementById('modal-delete-btn');
@@ -604,8 +644,8 @@ let currentUser;
     document.getElementById('share-panel').style.display = 'none';
     document.getElementById('modal-edit-actions').style.display = 'block';
 
-    const l = (text, key, val) => `<label class="modal-edit-label">${text}</label><input class="modal-edit-input" id="edit-${key}" value="${val || ''}" />`;
-    const ta = (text, key, val) => `<label class="modal-edit-label">${text}</label><textarea class="modal-edit-input" id="edit-${key}" style="min-height:60px;resize:vertical;">${val || ''}</textarea>`;
+    const l = (text, key, val) => `<label class="modal-edit-label">${escapeHtml(text)}</label><input class="modal-edit-input" id="edit-${key}" value="${escapeHtml(val || '')}" />`;
+    const ta = (text, key, val) => `<label class="modal-edit-label">${escapeHtml(text)}</label><textarea class="modal-edit-input" id="edit-${key}" style="min-height:60px;resize:vertical;">${escapeHtml(val || '')}</textarea>`;
     let html = '';
     html += l('Cliente', 'customer', job.customer || '');
     html += l('Proyecto', 'project', job.project || '');
@@ -699,8 +739,8 @@ let currentUser;
         .map(m => {
           const checked = shared.includes(m.uid);
           return `<label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:4px;cursor:pointer;">
-            <input type="checkbox" class="share-check" data-uid="${m.uid}" ${checked ? 'checked' : ''} />
-            ${m.name || m.email || 'Usuario'}
+            <input type="checkbox" class="share-check" data-uid="${escapeHtml(m.uid)}" ${checked ? 'checked' : ''} />
+            ${escapeHtml(m.name || m.email || 'Usuario')}
           </label>`;
         }).join('');
     }
@@ -729,14 +769,37 @@ let currentUser;
     }
   };
 
-  window.copyJoinCode = () => {
-    const code = document.getElementById('join-code-display').textContent;
-    navigator.clipboard.writeText(code).then(() => {
-      const btn = document.getElementById('copy-btn');
-      btn.textContent = '✓ Copiado';
-      setTimeout(() => btn.textContent = '📋 Copiar', 2000);
-    });
+  window.copyJoinCode = async () => {
+    const btn = document.getElementById('copy-btn');
+    const show = (txt) => {
+      if (!btn) return;
+      btn.textContent = txt;
+      setTimeout(() => { btn.textContent = '📋 Copiar'; }, 2000);
+    };
+    const code = (document.getElementById('join-code-display')?.textContent || '').trim();
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(code);
+      } else {
+        // fallback for non-secure contexts where navigator.clipboard is unavailable
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        ta.remove();
+        if (!ok) throw new Error('copy failed');
+      }
+      show('✓ Copiado');
+    } catch (e) {
+      show('✗ Error');
+    }
   };
+
+  // initial state for the custom date placeholder (dd/mm/aaaa)
+  syncDatePlaceholder();
 </script>
 </body>
 </html>
