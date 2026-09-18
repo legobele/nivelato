@@ -7,10 +7,7 @@
 <script>console.log('nivelato v1.0.0 — commit 68fe412')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
-<script src="bread.js"></script>
 <script type="module" src="account-selector.js"></script>
-<script type="module" src="estradiol.js"></script>
-<script src="italiano.js"></script>
 <script type="module" src="grass.js"></script>
 <script src="testing.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -416,7 +413,7 @@ let currentUser;
     if (_can('userManagement')) {
       const jcs = document.getElementById('join-code-section');
       jcs.style.display = 'flex';
-      document.getElementById('join-code-display').textContent = orgId;
+      document.getElementById('join-code-display').textContent = orgDoc.data()?.joinCode || orgId;
     }
 
     // load all org members for share panel
