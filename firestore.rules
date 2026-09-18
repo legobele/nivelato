@@ -91,7 +91,7 @@ service cloud.firestore {
         allow create: if isActive() && myOrgId() == orgId;
         allow read: if isActive() && (
           myOrgId() == orgId ||
-          resource.data.sharedWith.hasAny([myUid()])
+          resource.data.get('sharedWith', []).hasAny([myUid()])
         );
         allow update, delete: if isActive() && myOrgId() == orgId && (
           myUser().role in ['owner', 'supervisor'] ||

@@ -2,12 +2,11 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Nivelato — Foto con medidas</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; font-family: 'Inter', system-ui, sans-serif; background: #0f1216; color: #fff; overflow: hidden; }
+  html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: #0f1216; color: #fff; overflow: hidden; }
   #app-shell { display: flex; flex-direction: column; height: 100dvh; }
 
   /* HEADER */
@@ -33,7 +32,7 @@
 
   /* TOOLBAR */
   #toolbar { display: flex; gap: 6px; align-items: center; padding: 8px 12px; background: #171b21; border-top: 1px solid #262c35; flex-shrink: 0; overflow-x: auto; flex-wrap: wrap; }
-  .tool-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px 9px; border: 1px solid #262c35; border-radius: 8px; background: transparent; color: #8b93a1; font-family: inherit; font-size: 10px; font-weight: 600; cursor: pointer; }
+  .tool-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 44px; padding: 6px 10px; border: 1px solid #262c35; border-radius: 8px; background: transparent; color: #8b93a1; font-family: inherit; font-size: 10px; font-weight: 600; cursor: pointer; }
   .tool-btn .ico { font-size: 15px; }
   .tool-btn.active { background: #1d3a5c; border-color: #1971c2; color: #fff; }
   .tool-sep { width: 1px; height: 26px; background: #262c35; flex-shrink: 0; }
@@ -48,12 +47,13 @@
   .label-card h3 { font-size: 15px; margin-bottom: 12px; }
   .label-card input { width: 100%; padding: 10px 12px; border: 1px solid #3a4350; border-radius: 8px; background: #0f1216; color: #fff; font-size: 15px; font-family: inherit; margin-bottom: 12px; outline: none; }
   .label-card input:focus { border-color: #1971c2; }
+  button:focus-visible { outline: 2px solid #1971c2; outline-offset: 2px; }
   .label-actions { display: flex; gap: 8px; }
   .label-actions button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
   .btn-ok { background: #1971c2; color: #fff; }
   .btn-cancel { background: #262c35; color: #8b93a1; }
   .quick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-  .quick-chips button { padding: 6px 10px; border: 1px solid #3a4350; border-radius: 6px; background: transparent; color: #c9ced6; font-size: 12px; font-family: inherit; cursor: pointer; }
+  .quick-chips button { min-height: 44px; padding: 6px 12px; border: 1px solid #3a4350; border-radius: 6px; background: transparent; color: #c9ced6; font-size: 12px; font-family: inherit; cursor: pointer; }
   .quick-chips button:hover { border-color: #1971c2; color: #fff; }
 
   /* HINT */
@@ -229,7 +229,7 @@ function drawLabel(c, text, x, y, angle, size) {
   c.save();
   c.translate(x, y);
   c.rotate(angle);
-  c.font = 'bold ' + size + 'px Inter, system-ui, sans-serif';
+  c.font = 'bold ' + size + 'px system-ui, sans-serif';
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   const w = c.measureText(text).width;
@@ -504,6 +504,7 @@ canvas.addEventListener('pointerdown', (e) => {
     drawingShape = { type: currentTool, a: p, b: p };
     activePointer = e.pointerId;
     canvas.setPointerCapture(e.pointerId);
+    showLoupe(e.clientX, e.clientY);
     return;
   }
   if (currentTool === 'text') {
@@ -528,6 +529,7 @@ canvas.addEventListener('pointermove', (e) => {
     e.preventDefault();
     drawingShape.b = toImageCoords(e);
     redraw();
+    showLoupe(e.clientX, e.clientY);
     return;
   }
   if (!dragging || e.pointerId !== activePointer) return;

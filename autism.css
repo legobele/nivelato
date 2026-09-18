@@ -10,7 +10,7 @@
   --grey-300: #dee2e6;
   --grey-400: #ced4da;
   --grey-500: #adb5bd;
-  --grey-600: #868e96;
+  --grey-600: #495057;
   --grey-700: #495057;
   --grey-800: #343a40;
   --grey-900: #212529;
@@ -159,7 +159,7 @@ html, body {
 
 /* ─── DERIVED / CALCULATED FIELDS ─── */
 .input-col.derived label {
-  color: #868e96;
+  color: #495057;
 }
 .input-col.derived input,
 .input-col.derived select {
@@ -191,7 +191,7 @@ html, body {
   background: #fff3bf;
   border-radius: 8px;
   font-size: 13px;
-  color: #e67700;
+  color: #b25e00;
   font-weight: 500;
 }
 
@@ -290,10 +290,11 @@ html, body {
 .frac-select {
   width: 70px;
   flex: 0 0 70px;
+  min-height: 44px;
   padding: 4px 2px;
   border: 1px solid var(--grey-300);
   border-radius: 6px;
-  font-size: 0.78rem;
+  font-size: 1rem;
   font-family: inherit;
   background: var(--grey-50);
   color: var(--grey-700);

@@ -350,6 +350,16 @@ const syncDatePlaceholder = () => {
   if (wrap) wrap.classList.toggle('has-value', !!inp.value);
 };
 
+// Pantalla de "cuenta pendiente": se muestra al entrar si la cuenta está
+// desactivada, y también si un admin la desactiva mid-session (el re-read
+// periódico de abajo) — en vez de confusos errores de permiso.
+const showPendingScreen = () => {
+  if (window._pendingShown) return;
+  window._pendingShown = true;
+  window._pendingSignOut = async () => { await signOut(auth); window.location.href = 'login.html'; };
+  document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2 style="color:#212529">Cuenta pendiente de aprobación</h2><p style="color:#868e96;max-width:320px">Tu cuenta está siendo revisada. El administrador del taller te dará acceso en breve.</p><button onclick="window._pendingSignOut()" style="padding:12px 28px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div>';
+};
+
 // redraw open modal graph when bread mode toggles
 document.addEventListener('breadchange', function () {
   const mc = document.getElementById('modal-canvas');
@@ -379,8 +389,7 @@ let currentUser;
     // check if account is pending approval
     const userSnap = await getDoc(doc(db, 'users', user.uid));
     if (userSnap.exists() && userSnap.data().disabled === true) {
-      window._pendingSignOut = async () => { await signOut(auth); window.location.href = 'login.html'; };
-      document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2 style="color:#212529">Cuenta pendiente de aprobación</h2><p style="color:#868e96;max-width:320px">Tu cuenta está siendo revisada. El administrador del taller te dará acceso en breve.</p><button onclick="window._pendingSignOut()" style="padding:12px 28px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div>';
+      showPendingScreen();
       return;
     }
     currentUser = user;
@@ -451,7 +460,28 @@ let currentUser;
       const dl = document.querySelector('.loading');
       if (dl) dl.textContent = 'No se pudieron cargar las medidas. Revisa tu conexión.';
     });
-    window.addEventListener('pagehide', () => { if (window._jobsUnsub) { window._jobsUnsub(); window._jobsUnsub = null; } });
+    window.addEventListener('pagehide', () => { if (window._jobsUnsub) { window._jobsUnsub(); window._jobsUnsub = null; } if (window._userRefreshTimer) { clearInterval(window._userRefreshTimer); window._userRefreshTimer = null; } });
+
+    // Releer el doc del usuario cada 5 min: si un admin desactiva la cuenta
+    // mid-session, mostrar la pantalla de pendiente en vez de errores raros.
+    if (window._userRefreshTimer) clearInterval(window._userRefreshTimer);
+    window._userRefreshTimer = setInterval(async () => {
+      try {
+        const s = await getDoc(doc(db, 'users', user.uid));
+        if (!s.exists()) return;
+        const d = s.data();
+        if (d.disabled === true) {
+          clearInterval(window._userRefreshTimer);
+          window._userRefreshTimer = null;
+          showPendingScreen();
+        } else {
+          // refrescar permisos en caliente por si el rol cambió
+          const nc = makePermChecker(d);
+          window._can = nc;
+          window._currentUserData = d;
+        }
+      } catch (_) { /* sin conexión — reintentar en el próximo ciclo */ }
+    }, 5 * 60 * 1000);
 
     // populate installer filter (clear stale options first — keep the default "Todos…" entry)
     const refreshJobFiltersAndRender = () => {
@@ -527,16 +557,18 @@ let currentUser;
         : `<span class="job-tag tag-ok">✓ OK</span>`;
       const hueco = job.hueco ? `${(job.hueco.anchoBot||job.hueco.anchoBottom||job.hueco.ancho||'?')}" × ${(job.hueco.altoIzq||job.hueco.altoLeft||job.hueco.alto||'?')}"` : '—';
       const notasPreview = job.notas ? (job.notas.length > 30 ? job.notas.slice(0,30) + '…' : job.notas) : '';
+      // Título = cliente — proyecto (el técnico va en la meta, no en el título).
+      const titleCustomer = job.customer || 'Sin cliente';
+      const titleText = job.project ? `${titleCustomer} — ${job.project}` : titleCustomer;
       return `
         <div class="job-card" onclick="openJob(${i})">
           <div class="job-card-top">
-            <div class="job-title">${escapeHtml(job.installerName) || 'Técnico'} ${tag}</div>
+            <div class="job-title">${escapeHtml(titleText)} ${tag}</div>
             <div class="job-date">${escapeHtml(dateStr)}</div>
           </div>
           <div class="job-meta">
             <span>📐 ${escapeHtml(hueco)}</span>
             <span>👤 ${escapeHtml(job.installerName) || '—'}</span>
-            ${job.customer ? `<span>🏢 ${escapeHtml(job.customer)}</span>` : ''}
             ${notasPreview ? `<span>📝 ${escapeHtml(notasPreview)}</span>` : ''}
           </div>
         </div>`;
@@ -663,6 +695,21 @@ let currentUser;
     html += l('Cliente', 'customer', job.customer || '');
     html += l('Proyecto', 'project', job.project || '');
     html += l('Ubicación', 'location', job.location || '');
+    // Medidas crudas editables — los valores derivados se recalculan al guardar.
+    const num = (text, key, val) => `<label class="modal-edit-label">${escapeHtml(text)}</label><input class="modal-edit-input" id="edit-m-${key}" type="number" min="0" max="20000" step="0.0625" inputmode="decimal" value="${escapeHtml(val ?? '')}" />`;
+    const hb0 = job.hueco || {};
+    const par0 = job.paredes || {};
+    html += `<div class="detail-section-title" style="margin-top:16px">Medidas (pulgadas)</div>`;
+    html += num('Ancho abajo (base)', 'anchoBot', hb0.anchoBot ?? hb0.anchoAbajo ?? hb0.anchoBottom ?? hb0.ancho ?? '');
+    html += num('Alto izquierdo (base)', 'altoIzq', hb0.altoIzq ?? hb0.altoIzquierda ?? hb0.altoLeft ?? hb0.alto ?? '');
+    html += num('Pared izq. — A', 'pI-a', par0.izq?.a ?? '');
+    html += num('Pared izq. — B', 'pI-b', par0.izq?.b ?? '');
+    html += num('Pared der. — A', 'pD-a', par0.der?.a ?? '');
+    html += num('Pared der. — B', 'pD-b', par0.der?.b ?? '');
+    html += num('Techo — A', 't-a', par0.techo?.a ?? '');
+    html += num('Techo — B', 't-b', par0.techo?.b ?? '');
+    html += num('Piso — A', 'p-a', par0.piso?.a ?? '');
+    html += num('Piso — B', 'p-b', par0.piso?.b ?? '');
     html += ta('Notas', 'notas', job.notas || '');
     document.getElementById('modal-edit-fields').innerHTML = html;
     document.getElementById('modal-edit-fields').style.display = 'block';
@@ -684,6 +731,47 @@ let currentUser;
     }
   };
 
+  // Claves de medida cruda → id del input en el modal de edición.
+  const MKEYS = [
+    ['anchoBot', 'edit-m-anchoBot'], ['altoIzq', 'edit-m-altoIzq'],
+    ['pI_A', 'edit-m-pI-a'], ['pI_B', 'edit-m-pI-b'],
+    ['pD_A', 'edit-m-pD-a'], ['pD_B', 'edit-m-pD-b'],
+    ['t_A', 'edit-m-t-a'],   ['t_B', 'edit-m-t-b'],
+    ['p_A', 'edit-m-p-a'],   ['p_B', 'edit-m-p-b'],
+  ];
+
+  // Recalcula hueco/desniveles/paredes EXACTO como el wizard (adhd.js
+  // recalcAll): usa las propias funciones del wizard, ya cargadas en esta
+  // página como script clásico. Nunca inventa valores: solo deriva de lo
+  // que el usuario midió.
+  function recalcDerived(v) {
+    const pI = window.calcDesnivel_wall(v.pI_A, v.pI_B);
+    const pD = window.calcDesnivel_wall(v.pD_A, v.pD_B);
+    // Fix dirección flecha pared derecha (igual que el wizard)
+    if (pD.raw > 0)      { pD.dir = '⟨'; pD.label = '⟨ ' + window.toFracStr(pD.val); }
+    else if (pD.raw < 0) { pD.dir = '⟩'; pD.label = '⟩ ' + window.toFracStr(pD.val); }
+    const tc = window.calcDesnivel_horiz(v.t_A, v.t_B);
+    const ps = window.calcDesnivel_horiz(v.p_A, v.p_B);
+    // Dirección del piso es opuesta a la del techo (igual que el wizard)
+    if (ps.raw > 0)      { ps.dir = '↑'; ps.label = '↑ ' + window.toFracStr(ps.val); }
+    else if (ps.raw < 0) { ps.dir = '↓'; ps.label = '↓ ' + window.toFracStr(ps.val); }
+    return {
+      hueco: {
+        anchoBot: v.anchoBot,
+        altoIzq: v.altoIzq,
+        anchoTop: v.anchoBot > 0 ? v.anchoBot - pI.raw - pD.raw : 0,
+        altoDer:  v.altoIzq  > 0 ? v.altoIzq  - tc.raw - ps.raw : 0,
+      },
+      desniveles: { paredIzq: pI.label, paredDer: pD.label, techo: tc.label, piso: ps.label },
+      paredes: {
+        izq:   { a: v.pI_A, b: v.pI_B, desnivel: pI.raw },
+        der:   { a: v.pD_A, b: v.pD_B, desnivel: pD.raw },
+        techo: { a: v.t_A,  b: v.t_B,  desnivel: tc.raw },
+        piso:  { a: v.p_A,  b: v.p_B,  desnivel: ps.raw },
+      },
+    };
+  }
+
   window.saveEdit = async () => {
     const job = window._currentJobIdx != null ? window._jobs[window._currentJobIdx] : null;
     if (!job) return;
@@ -696,6 +784,45 @@ let currentUser;
     if (project !== (job.project || '')) updates.project = project;
     if (location !== (job.location || '')) updates.location = location;
     if (notas !== (job.notas || '')) updates.notas = notas;
+    // Medidas crudas: campo vacío = sin cambio; si algo cambió, recalcular
+    // los derivados igual que el wizard.
+    const par = job.paredes || {};
+    const oldRaw = {
+      anchoBot: job.hueco?.anchoBot ?? job.hueco?.ancho ?? 0,
+      altoIzq:  job.hueco?.altoIzq  ?? job.hueco?.alto  ?? 0,
+      pI_A: par.izq?.a ?? 0, pI_B: par.izq?.b ?? 0,
+      pD_A: par.der?.a ?? 0, pD_B: par.der?.b ?? 0,
+      t_A: par.techo?.a ?? 0, t_B: par.techo?.b ?? 0,
+      p_A: par.piso?.a ?? 0,  p_B: par.piso?.b ?? 0,
+    };
+    const newRaw = { ...oldRaw };
+    let mTouched = false;
+    for (const [k, id] of MKEYS) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      const t = el.value.trim();
+      if (t === '') continue; // vacío = sin cambio
+      const v = parseFloat(t);
+      if (!Number.isFinite(v) || v < 0 || v > 20000) {
+        alert('Revisa las medidas: usa números entre 0 y 20000.');
+        return;
+      }
+      if (v !== oldRaw[k]) { newRaw[k] = v; mTouched = true; }
+    }
+    if (mTouched) {
+      if (newRaw.anchoBot <= 0 || newRaw.altoIzq <= 0) {
+        alert('El ancho y alto base deben ser mayores a 0.');
+        return;
+      }
+      if (typeof window.calcDesnivel_wall !== 'function') {
+        alert('No se pudo recalcular: recarga la página e intenta de nuevo.');
+        return;
+      }
+      const derived = recalcDerived(newRaw);
+      updates.hueco = derived.hueco;
+      updates.desniveles = derived.desniveles;
+      updates.paredes = derived.paredes;
+    }
     if (Object.keys(updates).length === 0) { cancelEdit(); return; }
     try {
       await updateDoc(doc(db, 'orgs', window._orgId, 'jobs', job.id), updates);

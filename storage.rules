@@ -3,11 +3,15 @@ service firebase.storage {
   match /b/{bucket}/o {
     // Annotated measurement photos
     // Path: annotated/{orgId}/{jobId}.jpg
-    // Access is gated at the app level: the download URL is stored on the
-    // job doc, which Firestore rules already restrict to org members.
-    // Only require a signed-in user here.
+    // Scoped to org members: the caller's orgId comes from their user doc.
+    // (The old rule let ANY signed-in user of ANY org list/read/overwrite/
+    // delete any org's photos — "gated at the app level" is not gating.)
+    function myOrgId() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.orgId;
+    }
+
     match /annotated/{orgId}/{file} {
-      allow read, write: if request.auth != null;
+      allow read, write: if request.auth != null && myOrgId() == orgId;
     }
 
     match /{allPaths=**} {

@@ -2,7 +2,7 @@
 import { auth, db, storage } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { doc, getDoc, collection, addDoc, setDoc, updateDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-import { ref, uploadString, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
 import { makePermChecker } from './permissions.js';
 
 let currentUser = null;
@@ -94,7 +94,29 @@ onAuthStateChanged(auth, async (user) => {
   if (typeof window.initAccountSelector === 'function') {
     window.initAccountSelector({ user, userData: currentUserData });
   }
+
+  // Releer el doc del usuario cada 5 min: si un admin desactiva la cuenta
+  // mid-session, mostrar la pantalla de pendiente en vez de errores raros.
+  if (window._userRefreshTimer) clearInterval(window._userRefreshTimer);
+  window._userRefreshTimer = setInterval(async () => {
+    try {
+      const s = await getDoc(doc(db, 'users', user.uid));
+      if (!s.exists()) return;
+      const d = s.data();
+      if (d.disabled === true) {
+        clearInterval(window._userRefreshTimer);
+        showPendingScreen();
+      } else {
+        // refrescar permisos en caliente por si el rol cambió
+        currentUserData = d;
+        _can = makePermChecker(currentUserData);
+        window._can = _can;
+        window._currentUserData = currentUserData;
+      }
+    } catch (_) { /* sin conexión — reintentar en el próximo ciclo */ }
+  }, 5 * 60 * 1000);
 });
+window.addEventListener('pagehide', () => { if (window._userRefreshTimer) clearInterval(window._userRefreshTimer); });
 
 window._doLogout = async () => {
   // Sign out BEFORE navigating. The timeout race guarantees a hanging
@@ -109,6 +131,28 @@ window._doLogout = async () => {
   window.location.href = 'login.html';
 };
 
+// data URL → Blob: evita el ~33% de sobrecarga base64 de uploadString en
+// fotos anotadas de varios MB (subidas más rápidas, menos superficie para
+// que el sweep de drafts coma un share en curso).
+function dataUrlToBlob(dataUrl) {
+  const comma = dataUrl.indexOf(',');
+  const header = dataUrl.slice(0, comma);
+  const base64 = dataUrl.slice(comma + 1);
+  const mime = (header.match(/data:([^;]+)/) || [])[1] || 'image/jpeg';
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+// Pantalla de "cuenta pendiente": si un admin desactiva la cuenta
+// mid-session, esto reemplaza a los confusos errores de permiso.
+function showPendingScreen() {
+  if (document.getElementById('nivelato-pending-screen')) return;
+  window._pendingSignOut = () => window._doLogout();
+  document.body.innerHTML = '<div id="nivelato-pending-screen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2 style="color:#212529">Cuenta pendiente de aprobación</h2><p style="color:#868e96;max-width:320px">Tu cuenta está siendo revisada. El administrador del taller te dará acceso en breve.</p><button onclick="window._pendingSignOut()" style="padding:12px 28px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div>';
+}
+
 // saveJob — called from adhd.js on share
 //
 // Ordering: the temp (draft) job doc is created FIRST, then the photo is
@@ -116,17 +160,21 @@ window._doLogout = async () => {
 // A 5s heartbeat keeps the draft alive while this tab lives; if the tab
 // dies mid-flow the heartbeat stops and the next dashboard load sweeps the
 // stale draft (doc + photo) — so a photo can never exist without its job.
+// The draft carries finalizing:true from birth: the sweep respects it, so
+// a slow upload on a bad connection (heartbeat throttled in a background
+// tab) can't be mistaken for a dead tab.
 window.saveJobToFirestore = async (jobData) => {
   if (!currentUser || !currentUserData) throw new Error('No autenticado');
   if (!_can('createMeasurements')) throw new Error('No tienes permiso para crear medidas');
   const orgId = currentUserData.orgId;
   const jobsCol = collection(db, 'orgs', orgId, 'jobs');
 
-  // 1. temp job first
+  // 1. temp job first (finalizing:true desde el nacimiento — ver sweep)
   const jobRef = await addDoc(jobsCol, {
     ...jobData,
     annotatedPhoto: null,
     status: 'draft',
+    finalizing: true,
     draftHeartbeat: serverTimestamp(),
     installerUid:  currentUser.uid,
     installerName: currentUserData.name || currentUser.email,
@@ -144,7 +192,8 @@ window.saveJobToFirestore = async (jobData) => {
   try {
     let annotatedPhoto = jobData.annotatedPhoto || null;
     if (annotatedPhoto && annotatedPhoto.startsWith('data:image')) {
-      await uploadString(ref(storage, photoPath), annotatedPhoto, 'data_url');
+      const blob = dataUrlToBlob(annotatedPhoto);
+      await uploadBytes(ref(storage, photoPath), blob, { contentType: blob.type || 'image/jpeg' });
       annotatedPhoto = await getDownloadURL(ref(storage, photoPath));
     }
     // 3. finalize — no longer a draft
@@ -152,6 +201,7 @@ window.saveJobToFirestore = async (jobData) => {
       ...(annotatedPhoto ? { annotatedPhoto } : {}),
       status: 'complete',
       draftHeartbeat: deleteField(),
+      finalizing: deleteField(),
     });
   } catch (e) {
     // flow died: remove the temp job + any partial upload, no orphans
@@ -164,21 +214,31 @@ window.saveJobToFirestore = async (jobData) => {
   console.log('[Nivelato] Job saved to Firestore');
 };
 
-// Sweep stale drafts left behind by tabs that died mid-share (heartbeat
-// stopped >30s ago). Runs on dashboard init; scoped to my own drafts.
+// Sweep stale drafts left behind by tabs that died mid-share.
+// - Umbral de 10 min sin heartbeat (30s era demasiado agresivo: una subida
+//   de varios MB con mala señal supera los 30s fácil, y el móvil congela
+//   el setInterval del heartbeat en pestañas en segundo plano).
+// - finalizing == true: la subida sigue en curso aunque el heartbeat esté
+//   congelado — se respeta con una gracia extra de 30 min; pasado eso se
+//   barre igual (era una pestaña muerta, no una subida lenta).
+// - Filtrado por installerUid en el servidor, no en el cliente.
+// Runs on dashboard init; scoped to my own drafts.
+const SWEEP_STALE_MS = 10 * 60 * 1000;
+const SWEEP_FINALIZING_GRACE_MS = 30 * 60 * 1000;
 window.sweepStaleDrafts = async (db, orgId, uid) => {
   try {
     const { query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js");
     const snap = await getDocs(query(
       collection(db, 'orgs', orgId, 'jobs'),
-      where('status', '==', 'draft')
+      where('status', '==', 'draft'),
+      where('installerUid', '==', uid)
     ));
-    const cutoff = Date.now() - 30000;
+    const now = Date.now();
     for (const d of snap.docs) {
       const j = d.data();
-      if (j.installerUid !== uid) continue;
       const hb = j.draftHeartbeat && j.draftHeartbeat.toDate ? j.draftHeartbeat.toDate().getTime() : 0;
-      if (hb > cutoff) continue; // still being heartbeated — not stale
+      const grace = j.finalizing === true ? SWEEP_FINALIZING_GRACE_MS : SWEEP_STALE_MS;
+      if (now - hb < grace) continue; // vivo, o subida en curso — no tocar
       try { await deleteDoc(d.ref); } catch (_) {}
       try { await deleteObject(ref(storage, `annotated/${orgId}/${d.id}.jpg`)); } catch (_) {}
       console.log('[Nivelato] swept stale draft', d.id);

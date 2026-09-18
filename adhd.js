@@ -103,8 +103,8 @@ function goStep(n, skipHistory) {
   document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('step-' + n)?.classList.add('active');
   currentStep = n;
-  document.getElementById('step-num').textContent = n;
-  const pct = Math.max(0, ((n + 1) / TOTAL_STEPS) * 100);
+  document.getElementById('step-num').textContent = n + 1;
+  const pct = Math.max(0, Math.min(100, ((n + 1) / (TOTAL_STEPS + 1)) * 100));
   document.getElementById('progress-bar').style.width = pct + '%';
   recalcAll();
   if (n === TOTAL_STEPS) renderSummary();
@@ -145,7 +145,7 @@ function nextStep() {
     goStep(currentStep + 1);
   }
 }
-function prevStep() { if (currentStep > -1)          { hideStepError(currentStep); goStep(currentStep - 1); } }
+function prevStep() { if (currentStep > 0) { hideStepError(currentStep); goStep(currentStep - 1); } }
 
 // ─── STEP VALIDATION — blocks advancing (QA fix 2026-09-18) ────────────────
 const MAX_MEASURE_IN = 20000;
@@ -224,6 +224,7 @@ function restoreDraft() {
   const step = Math.max(0, Math.min(TOTAL_STEPS, d.step | 0));
   if (step !== currentStep) goStep(step, true);
   else { recalcAll(); if (step === TOTAL_STEPS) renderSummary(); }
+  showToast('📝 Borrador restaurado');
   return true;
 }
 
@@ -238,8 +239,8 @@ window.addEventListener('popstate', function(e) {
       document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
       document.getElementById('step-' + targetStep)?.classList.add('active');
       currentStep = targetStep;
-      document.getElementById('step-num').textContent = targetStep;
-      const pct = (targetStep / TOTAL_STEPS) * 100;
+      document.getElementById('step-num').textContent = targetStep + 1;
+      const pct = Math.max(0, Math.min(100, ((targetStep + 1) / (TOTAL_STEPS + 1)) * 100));
       document.getElementById('progress-bar').style.width = pct + '%';
       recalcAll();
       if (targetStep === TOTAL_STEPS) renderSummary();
@@ -327,11 +328,14 @@ function runValidation() {
   if ((pI_A > 0||pI_B > 0) && (pD_A > 0||pD_B > 0)) {
     const offsetIzq = pI_A - pI_B;
     const offsetDer = pD_A - pD_B;
-    if (Math.abs(offsetIzq - offsetDer) > TOLERANCE) {}
+    if (Math.abs(offsetIzq - offsetDer) > TOLERANCE)
+      warnings.push('⚠ Paredes no cuadran — el desnivel izq. (' + toFracStr(Math.abs(offsetIzq)) + ') no coincide con el der. (' + toFracStr(Math.abs(offsetDer)) + '). Revisa las medidas.');
   }
   if ((t_A > 0||t_B > 0) && (p_A > 0||p_B > 0)) {
     const offsetTecho = t_A - t_B;
     const offsetPiso  = p_A - p_B;
+    if (Math.abs(offsetTecho - offsetPiso) > TOLERANCE)
+      warnings.push('⚠ Arriba/Abajo no cuadran — el desnivel de arriba (' + toFracStr(Math.abs(offsetTecho)) + ') no coincide con el de abajo (' + toFracStr(Math.abs(offsetPiso)) + '). Revisa las medidas.');
   }
   if ((pI_A||pI_B||pD_A||pD_B||p_A||p_B) && t_A === 0 && t_B === 0)
     warnings.push('⚠ Faltan niveles de arriba — mide del láser arriba en punto A (izq) y punto B (der)');
@@ -341,51 +345,12 @@ function runValidation() {
 }
 
 // ─── AUTO-FIX ACTIONS ──────────────────────────────────────────────────────
+// "Revisar" NUNCA reescribe medidas — solo lleva al trabajador al paso
+// correspondiente para que mida de nuevo. (QA 2026-09-18: el autoFix
+// anterior inventaba datos copiando una pared sobre la otra.)
 function autoFix(warningText) {
-  if (warningText.includes('Paredes no cuadran')) {
-    const pI_A = readVal('pI-a-whole','pI-a-frac');
-    const pI_B = readVal('pI-b-whole','pI-b-frac');
-    const raw   = pI_A - pI_B;
-    const pD_A  = document.getElementById('pD-a-whole');
-    const pD_B  = document.getElementById('pD-b-whole');
-    if (pD_A && pD_B) {
-      const absRaw = Math.abs(raw);
-      const whole  = Math.floor(absRaw);
-      const frac   = absRaw - whole;
-      const fracStr = frac < 0.001 ? '0' : frac < 0.14 ? '1/8' : frac < 0.2 ? '3/16' :
-                      frac < 0.27 ? '1/4' : frac < 0.39 ? '3/8' : frac < 0.52 ? '1/2' :
-                      frac < 0.64 ? '5/8' : frac < 0.77 ? '3/4' : frac < 0.89 ? '7/8' : '0';
-      pD_A.value = whole || '';
-      pD_B.value = '';
-      document.getElementById('pD-a-frac').value = fracStr;
-      document.getElementById('pD-b-frac').value = '0';
-      recalcAll();
-      goStep(2);
-    }
-    return;
-  }
-  if (warningText.includes('Arriba/Abajo no cuadran')) {
-    const t_A = readVal('t-a-whole','t-a-frac');
-    const t_B = readVal('t-b-whole','t-b-frac');
-    const raw  = t_A - t_B;
-    const pA   = document.getElementById('p-a-whole');
-    const pB   = document.getElementById('p-b-whole');
-    if (pA && pB) {
-      const absRaw = Math.abs(raw);
-      const whole  = Math.floor(absRaw);
-      const frac   = absRaw - whole;
-      const fracStr = frac < 0.001 ? '0' : frac < 0.14 ? '1/8' : frac < 0.2 ? '3/16' :
-                      frac < 0.27 ? '1/4' : frac < 0.39 ? '3/8' : frac < 0.52 ? '1/2' :
-                      frac < 0.64 ? '5/8' : frac < 0.77 ? '3/4' : frac < 0.89 ? '7/8' : '0';
-      pA.value = whole || '';
-      pB.value = '';
-      document.getElementById('p-a-frac').value = fracStr;
-      document.getElementById('p-b-frac').value = '0';
-      recalcAll();
-      goStep(4);
-    }
-    return;
-  }
+  if (warningText.includes('Paredes no cuadran')) { goStep(2); return; }
+  if (warningText.includes('Arriba/Abajo no cuadran')) { goStep(4); return; }
   if (warningText.includes('Faltan niveles de arriba')) {
     goStep(4);
     return;
@@ -408,7 +373,7 @@ function renderValidation() {
     el.className = 'val-ok';
   } else {
     el.innerHTML = warnings.map(function(w, i) {
-      return '<div style="margin-bottom:6px">' + w + ' <button data-widx="' + i + '" class="arreglar-btn" style="margin-left:8px;padding:2px 10px;border-radius:12px;border:none;background:#e07b00;color:#fff;font-size:12px;cursor:pointer;font-weight:600">Arreglar →</button></div>';
+      return '<div style="margin-bottom:6px">' + w + ' <button data-widx="' + i + '" class="arreglar-btn" style="margin-left:8px;padding:2px 10px;border-radius:12px;border:none;background:#e07b00;color:#fff;font-size:12px;cursor:pointer;font-weight:600">Revisar →</button></div>';
     }).join('');
     el.className = 'val-warn';
     el.querySelectorAll('.arreglar-btn').forEach(function(btn) {
@@ -447,23 +412,103 @@ function _setSaveBtn(disabled, label) {
 
 // Si el usuario edita algo después de guardar, el botón vuelve a activarse.
 function _dirtyResetSaveButton() {
-  if (_saveState === 'saved') { _saveState = 'idle'; _setSaveBtn(false, '💾 Guardar medida'); }
+  if (_saveState === 'saved') { _saveState = 'idle'; _setSaveBtn(false, '💾 Guardar medida'); _hidePostSaveActions(); }
 }
 
-function showShare() {
+// ─── POST-SAVE ACTIONS (QA 2026-09-18: antes el flujo moría en "✓ Guardado") ─
+function _showPostSaveActions() {
+  const box = document.getElementById('post-save-actions');
+  if (!box) return;
+  box.style.display = 'block';
+  const dashBtn = document.getElementById('btn-ver-dashboard');
+  if (dashBtn) {
+    // respeta el permiso viewDashboard, igual que el link del header (auth-guard.js)
+    const canView = (typeof window._can === 'function') && window._can('viewDashboard');
+    dashBtn.style.display = canView ? '' : 'none';
+  }
+  setTimeout(function() { box.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 2300);
+}
+
+function _hidePostSaveActions() {
+  const box = document.getElementById('post-save-actions');
+  if (box) box.style.display = 'none';
+}
+
+window.goToDashboard = function() { window.location.href = 'dashboard.html'; };
+
+window.newMeasurement = function() {
+  // Limpia el formulario y vuelve al paso 0 para empezar una medida nueva
+  for (const id of DRAFT_IDS) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.value = (el.tagName === 'SELECT') ? '0' : '';
+  }
+  clearDraft();
+  annotatedPhotoDataUrl = null;
+  const prev = document.getElementById('photo-preview');
+  if (prev) prev.style.display = 'none';
+  const btnOpen = document.getElementById('btn-open-photo');
+  if (btnOpen) btnOpen.textContent = '📷 Agregar foto';
+  _saveState = 'idle';
+  _setSaveBtn(false, '💾 Guardar medida');
+  _hidePostSaveActions();
+  goStep(0, true);
+};
+
+// ─── TOAST — avisos livianos, ej. "Borrador restaurado" ─────────────────────
+let _toastTimer = null;
+function showToast(msg) {
+  let t = document.getElementById('nv-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'nv-toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2800);
+}
+
+// ─── INLINE WARNING MODAL — reemplaza el confirm() nativo (QA 2026-09-18) ──
+function _closeWarnModal() {
+  const el = document.getElementById('nv-modal-overlay');
+  if (el) el.remove();
+}
+
+function _showWarnModal(warnings, onContinue) {
+  _closeWarnModal();
+  const overlay = document.createElement('div');
+  overlay.id = 'nv-modal-overlay';
+  overlay.innerHTML =
+    '<div id="nv-modal" role="alertdialog" aria-modal="true" aria-labelledby="nv-modal-title">' +
+      '<div id="nv-modal-title">⚠️ Revisa las medidas</div>' +
+      '<div id="nv-modal-body"></div>' +
+      '<div id="nv-modal-actions">' +
+        '<button class="btn-secondary" id="nv-modal-cancel">← Volver a revisar</button>' +
+        '<button class="btn-primary" id="nv-modal-ok">Guardar de todas formas</button>' +
+      '</div>' +
+    '</div>';
+  overlay.querySelector('#nv-modal-body').textContent = warnings.join('\n');
+  document.body.appendChild(overlay);
+  overlay.querySelector('#nv-modal-cancel').addEventListener('click', _closeWarnModal);
+  overlay.querySelector('#nv-modal-ok').addEventListener('click', function() { _closeWarnModal(); onContinue(); });
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) _closeWarnModal(); });
+}
+
+function saveJob() {
   if (_saveState === 'saving') return; // ya se está guardando: no doble-submit
   const warnings = runValidation();
   if (warnings.length > 0) {
-    const ok = confirm('Hay advertencias en las medidas:\n\n' + warnings.join('\n') + '\n\n¿Continuar de todas formas?');
-    if (!ok) return;
+    _showWarnModal(warnings, function() { _doSaveJob(warnings); });
+    return;
   }
+  _doSaveJob(warnings);
+}
+
+function _doSaveJob(warnings) {
   _saveState = 'saving';
   _setSaveBtn(true, '⏳ Guardando…');
-  const block = document.getElementById('share-block');
-  if (block) block.classList.remove('hidden');
-  setTimeout(function() {
-    if (block) block.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, 50);
   _saveCurrentJob(warnings);
 }
 
@@ -509,10 +554,18 @@ function _saveCurrentJob(warnings) {
     notas: notas,
     annotatedPhoto: annotatedPhotoDataUrl || null
   };
-  window.saveJobToFirestore(jobData).then(function() {
+  // Timeout: un addDoc colgado no puede dejar el "⏳ Guardando…" eterno (QA 2026-09-18)
+  const _saveWithTimeout = Promise.race([
+    window.saveJobToFirestore(jobData),
+    new Promise(function(_, reject) {
+      setTimeout(function() { reject(new Error('Se acabó el tiempo esperando la nube — revisa tu conexión e inténtalo de nuevo.')); }, 45000);
+    })
+  ]);
+  _saveWithTimeout.then(function() {
     _saveState = 'saved';
     _setSaveBtn(true, '✓ Guardado');
     clearDraft();
+    _showPostSaveActions();
     const el = document.getElementById('save-status');
     if (el) { el.style.display = 'block'; setTimeout(function() { el.style.display = 'none'; }, 4000); }
     const overlay = document.createElement('div');
@@ -530,11 +583,21 @@ function _saveCurrentJob(warnings) {
     console.error('[Nivelato] save failed:', e);
     _saveState = 'idle';
     _setSaveBtn(false, '💾 Guardar medida');
+    const reason = (e && e.message) ? e.message : String(e);
     const overlay = document.createElement('div');
-    overlay.innerHTML = '⚠️ Error al guardar';
-    overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; background:rgba(220,53,69,0.92); color:#fff; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; animation: fadeInOut 2.2s ease forwards;';
+    overlay.id = 'nv-save-error';
+    overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; background:rgba(220,53,69,0.94); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center;';
+    overlay.innerHTML =
+      '<div style="font-size:28px;font-weight:700;margin-bottom:10px">⚠️ Error al guardar</div>' +
+      '<div id="nv-save-error-reason" style="font-size:14px;font-weight:500;opacity:.92;max-width:80vw;margin-bottom:20px;line-height:1.5"></div>' +
+      '<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">' +
+        '<button class="btn-secondary" id="nv-save-error-close">Cerrar</button>' +
+        '<button class="btn-primary" id="nv-save-error-retry">🔄 Reintentar</button>' +
+      '</div>';
+    overlay.querySelector('#nv-save-error-reason').textContent = reason;
     document.body.appendChild(overlay);
-    setTimeout(function() { overlay.remove(); }, 2200);
+    overlay.querySelector('#nv-save-error-close').addEventListener('click', function() { overlay.remove(); });
+    overlay.querySelector('#nv-save-error-retry').addEventListener('click', function() { overlay.remove(); saveJob(); });
   });
 }
 
@@ -650,6 +713,10 @@ function drawCanvas() {
   // ── read values ──
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 48;
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 36;
+  // Sin medidas base no hay nada real que dibujar: el rectángulo 48×36
+  // anterior se leía como datos. Solo se pinta la referencia punteada.
+  const hasBase = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') > 0 &&
+                  readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  > 0;
   const pI_A   = readVal('pI-a-whole','pI-a-frac');
   const pI_B   = readVal('pI-b-whole','pI-b-frac');
   const pD_A   = readVal('pD-a-whole','pD-a-frac');
@@ -714,6 +781,7 @@ function drawCanvas() {
   ctx.stroke();
   ctx.restore();
 
+  if (hasBase) {
   // Draw rough opening (solid blue shape)
   ctx.save();
   ctx.beginPath();
@@ -754,6 +822,16 @@ function drawCanvas() {
   if (altoIzq > 0) drawDimLine(ctx, roughTL.x - 24/sc, roughTL.y, roughBL.x - 24/sc, roughBL.y, toFracStr(altoIzq), sc, true);
   // Right height (calculated)
   if (altoIzq > 0) drawDimLine(ctx, roughTR.x + 24/sc, roughTR.y, roughBR.x + 24/sc, roughBR.y, toFracStr(altoDer), sc, true);
+  } else {
+    // Estado vacío: solo la referencia punteada + pista (nunca inventar datos)
+    ctx.save();
+    ctx.fillStyle = '#868e96';
+    ctx.font = '600 ' + (14 / sc) + 'px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Ingresa las medidas del hueco', gr.x + gr.w / 2, gr.y + gr.h / 2);
+    ctx.restore();
+  }
 
   ctx.restore();
   ctx.restore();

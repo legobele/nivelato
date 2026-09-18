@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Nivelato</title>
 <script>console.log('nivelato v1.0.0 — commit 68fe412')</script>
 <link rel="manifest" href="/nivelato/manifest.json" />
@@ -15,6 +15,15 @@
 /* Wizard validation errors (QA fix 2026-09-18) */
 .step-error{display:none;margin:10px 0 2px;padding:10px 12px;background:#ffe3e3;color:#c92a2a;border:1px solid #ffa8a8;border-radius:8px;font-size:13px;font-weight:600;line-height:1.4}
 .step-error.show{display:block}
+/* Toast liviano (QA fix 2026-09-18) */
+#nv-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#171b21;color:#fff;padding:10px 18px;border-radius:24px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;z-index:10002;box-shadow:0 4px 16px rgba(0,0,0,.25);max-width:86vw;text-align:center}
+#nv-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* Modal de advertencias inline — reemplaza el confirm() nativo (QA fix 2026-09-18) */
+#nv-modal-overlay{position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px}
+#nv-modal{background:#fff;border-radius:14px;max-width:420px;width:100%;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+#nv-modal-title{font-size:16px;font-weight:700;margin-bottom:8px;color:#171b21}
+#nv-modal-body{font-size:14px;line-height:1.6;color:#495057;margin-bottom:18px;white-space:pre-line}
+#nv-modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
 </style>
 <script type="module" src="auth-guard.js"></script>
 <script type="module" src="account-selector.js"></script>
@@ -26,7 +35,7 @@
 <!-- HEADER -->
 <header id="app-header">
 <span id="app-logo">Nivelato</span>
-<span id="step-indicator">Paso <span id="step-num">0</span> de 7</span>
+<span id="step-indicator">Paso <span id="step-num">1</span> de 8</span>
 <span id="estradiol-indicator">E2</span>
 </header>
 <!-- PROGRESS BAR -->
@@ -34,7 +43,7 @@
 <!-- CANVAS — grows to fill remaining space -->
 <div id="canvas-wrap">
 <canvas id="drawing-canvas"></canvas>
-<button onclick="resetZoom()" id="reset-zoom-btn" title="Restablecer zoom" style="display:none">Reset</button>
+<button onclick="resetZoom()" id="reset-zoom-btn" title="Restablecer zoom" style="display:none">Restablecer</button>
 </div>
 <!-- BOTTOM PANEL — fixed height, all steps live here -->
 <div id="bottom-panel">
@@ -45,15 +54,15 @@
 <p class="step-hint">Ingresa el nombre del cliente, proyecto y ubicación antes de empezar a medir.</p>
 <div class="input-row">
 <div class="input-col">
-<label>Cliente</label>
+<label for="customer-name">Cliente</label>
 <input type="text" id="customer-name" placeholder="Nombre del cliente" />
 </div>
 <div class="input-col">
-<label>Proyecto</label>
+<label for="project-name">Proyecto</label>
 <input type="text" id="project-name" placeholder="Nombre del proyecto" />
 </div>
 <div class="input-col">
-<label>Ubicación</label>
+<label for="location-name">Ubicación</label>
 <input type="text" id="location-name" placeholder="Ubicación / dirección" />
 </div>
 </div>
@@ -67,7 +76,7 @@
 <p class="step-hint">Ingresa las 2 medidas base: ancho abajo y alto izquierda. Las otras 2 se calculan automáticamente con los desniveles.</p>
 <div class="input-row">
 <div class="input-col">
-<label>Ancho — Abajo (base)</label>
+<label for="hueco-ancho-bot-whole">Ancho — Abajo (base)</label>
 <div class="fraction-row">
 <input type="number" id="hueco-ancho-bot-whole" placeholder="0" min="0" step="1" />
 <select id="hueco-ancho-bot-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -75,7 +84,7 @@
 </div>
 </div>
 <div class="input-col">
-<label>Alto — Izquierda (base)</label>
+<label for="hueco-alto-izq-whole">Alto — Izquierda (base)</label>
 <div class="fraction-row">
 <input type="number" id="hueco-alto-izq-whole" placeholder="0" min="0" step="1" />
 <select id="hueco-alto-izq-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -93,7 +102,7 @@
 <p class="step-hint">Mide del láser a la pared izquierda: punto A (abajo) y punto B (arriba).</p>
 <div class="input-row">
 <div class="input-col">
-<label>A — Abajo</label>
+<label for="pI-a-whole">A — Abajo</label>
 <div class="fraction-row">
 <input type="number" id="pI-a-whole" placeholder="0" min="0" step="1" />
 <select id="pI-a-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -101,7 +110,7 @@
 </div>
 </div>
 <div class="input-col">
-<label>B — Arriba</label>
+<label for="pI-b-whole">B — Arriba</label>
 <div class="fraction-row">
 <input type="number" id="pI-b-whole" placeholder="0" min="0" step="1" />
 <select id="pI-b-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -109,11 +118,11 @@
 </div>
 </div>
 </div>
+<div class="step-error" role="alert"></div>
 <div class="btn-row">
 <button class="btn-secondary" onclick="prevStep()">← Atrás</button>
 <button class="btn-primary" onclick="nextStep()">Siguiente →</button>
 </div>
-<div class="step-error" role="alert"></div>
 </section>
 
 <!-- ══ STEP 3 — PARED DERECHA ══ -->
@@ -122,7 +131,7 @@
 <p class="step-hint">Mide del láser a la pared derecha: punto A (abajo) y punto B (arriba).</p>
 <div class="input-row">
 <div class="input-col">
-<label>A — Abajo</label>
+<label for="pD-a-whole">A — Abajo</label>
 <div class="fraction-row">
 <input type="number" id="pD-a-whole" placeholder="0" min="0" step="1" />
 <select id="pD-a-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -130,7 +139,7 @@
 </div>
 </div>
 <div class="input-col">
-<label>B — Arriba</label>
+<label for="pD-b-whole">B — Arriba</label>
 <div class="fraction-row">
 <input type="number" id="pD-b-whole" placeholder="0" min="0" step="1" />
 <select id="pD-b-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -138,11 +147,11 @@
 </div>
 </div>
 </div>
+<div class="step-error" role="alert"></div>
 <div class="btn-row">
 <button class="btn-secondary" onclick="prevStep()">← Atrás</button>
 <button class="btn-primary" onclick="nextStep()">Siguiente →</button>
 </div>
-<div class="step-error" role="alert"></div>
 </section>
 
 <!-- ══ STEP 4 — ARRIBA (was TECHO) ══ -->
@@ -151,7 +160,7 @@
 <p class="step-hint">Mide del láser arriba: punto A (izquierda) y punto B (derecha).</p>
 <div class="input-row">
 <div class="input-col">
-<label>A — Izquierda</label>
+<label for="t-a-whole">A — Izquierda</label>
 <div class="fraction-row">
 <input type="number" id="t-a-whole" placeholder="0" min="0" step="1" />
 <select id="t-a-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -159,7 +168,7 @@
 </div>
 </div>
 <div class="input-col">
-<label>B — Derecha</label>
+<label for="t-b-whole">B — Derecha</label>
 <div class="fraction-row">
 <input type="number" id="t-b-whole" placeholder="0" min="0" step="1" />
 <select id="t-b-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -167,11 +176,11 @@
 </div>
 </div>
 </div>
+<div class="step-error" role="alert"></div>
 <div class="btn-row">
 <button class="btn-secondary" onclick="prevStep()">← Atrás</button>
 <button class="btn-primary" onclick="nextStep()">Siguiente →</button>
 </div>
-<div class="step-error" role="alert"></div>
 </section>
 <!-- 🏳️‍⚧️ trans rights — built with love by benj & deepseek v4 flash -->
 
@@ -181,7 +190,7 @@
 <p class="step-hint">Mide del láser abajo: punto A (izquierda) y punto B (derecha).</p>
 <div class="input-row">
 <div class="input-col">
-<label>A — Izquierda</label>
+<label for="p-a-whole">A — Izquierda</label>
 <div class="fraction-row">
 <input type="number" id="p-a-whole" placeholder="0" min="0" step="1" />
 <select id="p-a-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -189,7 +198,7 @@
 </div>
 </div>
 <div class="input-col">
-<label>B — Derecha</label>
+<label for="p-b-whole">B — Derecha</label>
 <div class="fraction-row">
 <input type="number" id="p-b-whole" placeholder="0" min="0" step="1" />
 <select id="p-b-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -197,11 +206,11 @@
 </div>
 </div>
 </div>
+<div class="step-error" role="alert"></div>
 <div class="btn-row">
 <button class="btn-secondary" onclick="prevStep()">← Atrás</button>
 <button class="btn-primary" onclick="nextStep()">Siguiente →</button>
 </div>
-<div class="step-error" role="alert"></div>
 </section>
 
 <!-- ══ STEP 6 — FOTO (optional) ══ -->
@@ -221,11 +230,11 @@
     </div>
   </div>
 </div>
+<div class="step-error" role="alert"></div>
 <div class="btn-row">
 <button class="btn-secondary" onclick="prevStep()">← Atrás</button>
 <button class="btn-primary" onclick="nextStep()">Siguiente →</button>
 </div>
-<div class="step-error" role="alert"></div>
 </section>
 
 <!-- ══ STEP 7 — RESUMEN ══ -->
@@ -243,14 +252,18 @@
 <div class="summary-row"><span class="summary-label">Abajo</span><span class="summary-val" id="res-piso">—</span></div>
 </div>
 <div class="notas-block">
-<label>Notas</label>
+<label for="notas-field">Notas</label>
 <textarea id="notas-field" placeholder="Observaciones adicionales..."></textarea>
 </div>
 <div class="btn-row">
 <button class="btn-secondary" onclick="prevStep()">← Atrás</button>
-<button class="btn-primary" id="btn-guardar" onclick="showShare()">💾 Guardar medida</button>
+<button class="btn-primary" id="btn-guardar" onclick="saveJob()">💾 Guardar medida</button>
 </div>
-<div id="share-block" class="share-block hidden">
+<div id="post-save-actions" style="display:none;margin-top:10px;">
+<div class="btn-row">
+<button class="btn-secondary" id="btn-ver-dashboard" onclick="goToDashboard()">📊 Ver en dashboard</button>
+<button class="btn-primary" onclick="newMeasurement()">＋ Nueva medida</button>
+</div>
 </div>
 <div id="save-status" style="text-align:center;font-size:12px;color:#2f9e44;margin-top:8px;display:none;">✓ Guardado en la nube</div>
 </section>
@@ -261,7 +274,7 @@
 <div id="photo-editor-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#000;flex-direction:column;">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#171b21;color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;flex-shrink:0;">
     <span>📷 Foto con medidas</span>
-    <button onclick="window.closePhotoEditor()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 10px;">✕</button>
+    <button onclick="window.closePhotoEditor()" aria-label="Cerrar" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 10px;">✕</button>
   </div>
   <iframe id="photo-editor-frame" src="about:blank" style="flex:1;width:100%;border:none;background:#0f1216;"></iframe>
 </div>
@@ -288,7 +301,7 @@ const FRAC_OPTIONS = `
 `;
 // Idempotent: always rewrite the full option list so fractions can never
 // appear twice (QA: dropdowns listed every fraction twice).
-document.querySelectorAll('.frac-select').forEach(sel => { sel.innerHTML = FRAC_OPTIONS; });
+document.querySelectorAll('.frac-select').forEach(sel => { sel.innerHTML = FRAC_OPTIONS; sel.setAttribute('aria-label', 'Fracción de pulgada'); });
 // Restore any in-progress wizard draft now that the selects are populated.
 if (typeof restoreDraft === 'function') { try { restoreDraft(); } catch (e) {} }
 </script>
