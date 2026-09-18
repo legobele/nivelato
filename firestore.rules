@@ -8,9 +8,19 @@ service cloud.firestore {
     function myUser() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
+    // True when a field is identical before/after the write, treating
+    // "absent on both sides" as unchanged. Real user docs often lack
+    // optional fields (e.g. permissions), so a naive == comparison would
+    // wrongly deny legitimate self-edits.
+    function unchanged(field) {
+      return (!(field in resource.data) && !(field in request.resource.data))
+          || (field in resource.data && field in request.resource.data
+              && request.resource.data[field] == resource.data[field]);
+    }
 
     // Users: own read/write, or same-org read (for permission manager).
-    // role / orgId / permissions are immutable on self-update: no self-promotion.
+    // role / orgId / permissions / disabled are immutable on self-update:
+    // no self-promotion, no cross-org poaching, no self-approval.
     match /users/{userId} {
       allow create: if isSignedIn() && request.auth.uid == userId;
       allow read: if isSignedIn() && (
@@ -19,18 +29,24 @@ service cloud.firestore {
           get(/databases/$(database)/documents/users/$(userId)).data.orgId
       );
       allow update: if isSignedIn() && (
-        // self-update: profile fields only, role/orgId/permissions immutable
+        // self-update: profile fields only (e.g. name); role/orgId/
+        // permissions/disabled immutable
         (request.auth.uid == userId
-          && request.resource.data.role == resource.data.role
-          && request.resource.data.orgId == resource.data.orgId
-          && request.resource.data.permissions == resource.data.permissions)
-        // owner managing same-org members (approve/reject/permissions);
+          && unchanged('role')
+          && unchanged('orgId')
+          && unchanged('permissions')
+          && unchanged('disabled'))
+        // owner managing same-org members (approve/reject/roles/permissions);
         // orgId immutable so members can't be poached across orgs
         || (myUser().role == 'owner'
           && myUser().orgId == resource.data.orgId
           && request.resource.data.orgId == resource.data.orgId)
       );
-      allow delete: if isSignedIn() && request.auth.uid == userId;
+      // No client-side deletes, period. Deleting your own doc and recreating
+      // it was a full privilege-escalation bypass (recreate as owner), and
+      // `create` can't tell a legit signup from a recreate. Account/doc
+      // removal happens in the Firebase Console, which bypasses rules.
+      allow delete: if false;
     }
 
     // Orgs: anyone signed in can CREATE (signup bootstrap — the user doc
