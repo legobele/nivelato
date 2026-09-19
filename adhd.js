@@ -1,5 +1,15 @@
 ﻿// adhd.js — Nivelato logic + canvas engine
 
+// Escape ALL user-controlled strings before innerHTML interpolation (stored XSS).
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ─── FRACTION HELPERS ──────────────────────────────────────────────────────
 function readVal(wholeId, fracId) {
   // Allow override via _embedData for embedded graphs (dashboard)
@@ -373,7 +383,7 @@ function renderValidation() {
     el.className = 'val-ok';
   } else {
     el.innerHTML = warnings.map(function(w, i) {
-      return '<div style="margin-bottom:6px">' + w + ' <button data-widx="' + i + '" class="arreglar-btn" style="margin-left:8px;padding:2px 10px;border-radius:12px;border:none;background:#e07b00;color:#fff;font-size:12px;cursor:pointer;font-weight:600">Revisar →</button></div>';
+      return '<div style="margin-bottom:6px">' + escapeHtml(w) + ' <button data-widx="' + i + '" class="arreglar-btn" style="margin-left:8px;padding:2px 10px;border-radius:12px;border:none;background:#e07b00;color:#fff;font-size:12px;cursor:pointer;font-weight:600">Revisar →</button></div>';
     }).join('');
     el.className = 'val-warn';
     el.querySelectorAll('.arreglar-btn').forEach(function(btn) {

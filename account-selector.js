@@ -6,6 +6,17 @@ import { auth } from "./firebase-config.js";
 
 let _menuOpen = false;
 
+// Escape ALL user-controlled strings before innerHTML interpolation (stored XSS).
+// displayName/email come from Firebase Auth / Firestore and the user controls them.
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Best-effort purge of leftover Firebase Auth persistence keys, so a logout
 // can never leave a session behind even if signOut() itself fails.
 function purgeAuthRemnants() {
@@ -132,15 +143,15 @@ function buildMenu({ user, userData }) {
 
   wrap.innerHTML = `
     <button class="acct-trigger" id="acct-trigger" aria-haspopup="true" aria-expanded="false">
-      <span class="acct-avatar">${initials(displayName, email)}</span>
-      <span class="acct-name">${displayName.split(" ")[0]}</span>
+      <span class="acct-avatar">${escapeHtml(initials(displayName, email))}</span>
+      <span class="acct-name">${escapeHtml(displayName.split(" ")[0])}</span>
       <span class="acct-caret">▼</span>
     </button>
     <div class="acct-dropdown" id="acct-dropdown" role="menu">
       <div class="acct-info">
-        <div class="nm">${displayName}</div>
-        ${email ? `<div class="em">${email}</div>` : ""}
-        <div class="rl">${roleLabel(userData?.role)}</div>
+        <div class="nm">${escapeHtml(displayName)}</div>
+        ${email ? `<div class="em">${escapeHtml(email)}</div>` : ""}
+        <div class="rl">${escapeHtml(roleLabel(userData?.role))}</div>
       </div>
       <button class="acct-item" id="acct-settings" role="menuitem" onclick="window.location.href='settings.html'">⚙️ Ajustes</button>
       <button class="acct-item danger" id="acct-signout" role="menuitem">Salir / Cerrar sesión</button>

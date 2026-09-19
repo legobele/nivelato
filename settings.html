@@ -108,6 +108,15 @@ let currentUserData = null;
 let orgMembers = [];
 let _can = () => false;
 
+// Escape ALL user-controlled strings before innerHTML interpolation (stored XSS).
+// Member names/emails/roles come from Firestore and any org member can set their own.
+const escapeHtml = (s) => String(s ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = 'login.html'; return; }
   currentUser = user;
@@ -164,8 +173,8 @@ function renderPermissions() {
     const perms = m.permissions || {};
     const roleLabel = { owner: 'Dueño', cotizador: 'Cotizador', supervisor: 'Supervisor', medidor: 'Técnico' }[m.role] || m.role || '—';
     return `
-      <div class="perm-member" data-uid="${m.uid}">
-        <div class="perm-member-header">${m.name || 'Sin nombre'} <span class="perm-member-role">${roleLabel}</span></div>
+      <div class="perm-member" data-uid="${escapeHtml(m.uid)}">
+        <div class="perm-member-header">${escapeHtml(m.name) || 'Sin nombre'} <span class="perm-member-role">${escapeHtml(roleLabel)}</span></div>
         <div class="perm-grid">
           ${PERM_DEFS.map(p => `
             <label>
@@ -206,14 +215,14 @@ async function loadRequests(orgId) {
     return;
   }
   container.innerHTML = pending.map(m => `
-    <div class="request-card" data-uid="${m.uid}">
+    <div class="request-card" data-uid="${escapeHtml(m.uid)}">
       <div>
-        <div class="request-name">${m.name || 'Sin nombre'}</div>
-        <div class="request-email">${m.email || ''}</div>
+        <div class="request-name">${escapeHtml(m.name) || 'Sin nombre'}</div>
+        <div class="request-email">${escapeHtml(m.email) || ''}</div>
       </div>
       <div class="request-actions">
-        <button class="btn-sm approve" onclick="approveRequest('${m.uid}')">Aprobar</button>
-        <button class="btn-sm reject" onclick="rejectRequest('${m.uid}')">Rechazar</button>
+        <button class="btn-sm approve" onclick="approveRequest('${escapeHtml(m.uid)}')">Aprobar</button>
+        <button class="btn-sm reject" onclick="rejectRequest('${escapeHtml(m.uid)}')">Rechazar</button>
       </div>
     </div>
   `).join('');
@@ -254,14 +263,14 @@ async function loadDeleteRequests() {
     return;
   }
   container.innerHTML = drs.map(m => `
-    <div class="request-card" data-uid="${m.uid}">
+    <div class="request-card" data-uid="${escapeHtml(m.uid)}">
       <div>
-        <div class="request-name">${m.name || 'Sin nombre'}</div>
-        <div class="request-email">${m.email || ''} · Solicitado ${new Date(m.deleteRequestedAt).toLocaleDateString('es-PR')}</div>
+        <div class="request-name">${escapeHtml(m.name) || 'Sin nombre'}</div>
+        <div class="request-email">${escapeHtml(m.email) || ''} · Solicitado ${escapeHtml(new Date(m.deleteRequestedAt).toLocaleDateString('es-PR'))}</div>
       </div>
       <div class="request-actions">
-        <button class="btn-sm approve" onclick="processDeleteRequest('${m.uid}', true)">Eliminar cuenta</button>
-        <button class="btn-sm reject" onclick="processDeleteRequest('${m.uid}', false)">Rechazar</button>
+        <button class="btn-sm approve" onclick="processDeleteRequest('${escapeHtml(m.uid)}', true)">Eliminar cuenta</button>
+        <button class="btn-sm reject" onclick="processDeleteRequest('${escapeHtml(m.uid)}', false)">Rechazar</button>
       </div>
     </div>
   `).join('');
