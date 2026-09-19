@@ -3,15 +3,42 @@ service firebase.storage {
   match /b/{bucket}/o {
     // Annotated measurement photos
     // Path: annotated/{orgId}/{jobId}.jpg
-    // Scoped to org members: the caller's orgId comes from their user doc.
-    // (The old rule let ANY signed-in user of ANY org list/read/overwrite/
-    // delete any org's photos — "gated at the app level" is not gating.)
+    // Scoped to org members via their user doc, PLUS the flowGate claim
+    // layer (nivelato-geo-flows-spec §4.4): QGI needs geoOk, external needs
+    // a billable licenseStatus. past_due keeps read (30-day grace), loses
+    // write — matches the firestore read-only rule.
     function myOrgId() {
       return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.orgId;
     }
+    function hasFlowClaims() {
+      return request.auth.token.keys().hasAll(['flow', 'geoOk', 'licenseStatus']);
+    }
+    function orgFlow(orgId) {
+      return firestore.get(/databases/(default)/documents/orgs/$(orgId)).data.get('flow', '');
+    }
+    function flowMatches(orgId) {
+      return hasFlowClaims()
+          && request.auth.token.flow in ['qgi', 'external']
+          && request.auth.token.flow == orgFlow(orgId);
+    }
+    function canRead(orgId) {
+      return request.auth != null && myOrgId() == orgId && flowMatches(orgId) && (
+        (request.auth.token.flow == 'qgi' && request.auth.token.geoOk == true) ||
+        (request.auth.token.flow == 'external'
+          && request.auth.token.licenseStatus in ['active', 'trialing', 'past_due'])
+      );
+    }
+    function canWrite(orgId) {
+      return request.auth != null && myOrgId() == orgId && flowMatches(orgId) && (
+        (request.auth.token.flow == 'qgi' && request.auth.token.geoOk == true) ||
+        (request.auth.token.flow == 'external'
+          && request.auth.token.licenseStatus in ['active', 'trialing'])
+      );
+    }
 
     match /annotated/{orgId}/{file} {
-      allow read, write: if request.auth != null && myOrgId() == orgId;
+      allow read: if canRead(orgId);
+      allow write: if canWrite(orgId);
     }
 
     match /{allPaths=**} {

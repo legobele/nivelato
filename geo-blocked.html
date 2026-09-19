@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Nivelato — Acceso restringido</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #f8f9fa;
+    color: #212529;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    text-align: center;
+    gap: 14px;
+  }
+  .icon { font-size: 56px; }
+  h2 { font-size: 20px; font-weight: 700; }
+  p { font-size: 14px; color: #495057; max-width: 360px; line-height: 1.6; }
+  p.en { color: #868e96; font-size: 13px; }
+  .btn {
+    display: inline-block;
+    padding: 12px 28px;
+    background: #0c6b3c;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    text-decoration: none;
+    margin-top: 8px;
+  }
+  .btn:active { background: #095c33; }
+</style>
+</head>
+<body>
+  <!-- PR-ONLY surface (spec §6, §14). Never linked from the external flow. -->
+  <div class="icon" id="icon">🚫</div>
+  <h2 id="title"></h2>
+  <p id="body-es"></p>
+  <p class="en" id="body-en"></p>
+  <a href="login.html" class="btn" id="back-btn">Volver</a>
+
+<script>
+  // Copy is FINAL per spec §14 (Spanish-first). These screens must not leak
+  // *why* beyond the obvious — no wording that teaches evasion.
+  const VARIANTS = {
+    // QGI hard block (VPN/proxy/relay/datacenter/Tor detected)
+    vpn: {
+      icon: '🚫',
+      title: 'Acceso restringido',
+      es: 'Nivelato es de uso exclusivo de Quality Glass en Puerto Rico. Si crees que esto es un error, escríbenos.',
+      en: 'Nivelato is exclusively for Quality Glass in Puerto Rico. If you think this is a mistake, contact us.',
+      back: 'Volver',
+    },
+    // PR user attempting the external flow directly
+    'pr-external': {
+      icon: '📍',
+      title: 'No disponible en Puerto Rico',
+      es: 'En PR, Nivelato es exclusivo de Quality Glass. Usa el acceso de QGI.',
+      en: 'In PR, Nivelato is exclusive to Quality Glass. Use the QGI login.',
+      back: 'Ir al acceso de QGI',
+    },
+    // Affiliation / geo under review — lands in Daniel's / Giulia's queue
+    review: {
+      icon: '⏳',
+      title: 'Cuenta en revisión',
+      es: 'Estamos verificando tu acceso. Te avisaremos pronto.',
+      en: "We're verifying your access. We'll notify you soon.",
+      back: 'Volver',
+    },
+    // INTERIM: billing suspension UX (Phase 3 replaces with dedicated copy)
+    billing: {
+      icon: '💳',
+      title: 'Suscripción vencida',
+      es: 'Tu suscripción está vencida. Habla con el dueño del taller para reactivarla.',
+      en: 'Your subscription has lapsed. Ask the shop owner to reactivate it.',
+      back: 'Volver',
+    },
+  };
+  const params = new URLSearchParams(window.location.search);
+  const v = VARIANTS[params.get('reason')] || VARIANTS.vpn;
+  document.getElementById('icon').textContent = v.icon;
+  document.getElementById('title').textContent = v.title;
+  // textContent (not innerHTML) — reason comes from the query string.
+  document.getElementById('body-es').textContent = v.es;
+  document.getElementById('body-en').textContent = v.en;
+  document.getElementById('back-btn').textContent = v.back;
+</script>
+</body>
+</html>

@@ -34,13 +34,57 @@ service cloud.firestore {
               && request.resource.data[field] == resource.data[field]);
     }
 
+    // ---- Geo-flow claim layer (nivelato-geo-flows-spec §4.4) ----
+    // Minted server-side by the flowGate callable; the client can lie, the
+    // token can't. Tokens minted before flowGate existed carry none of these
+    // fields — org data access requires them (fail closed); users keep
+    // self-read so the app can show pending/blocked screens.
+    function hasFlowClaims() {
+      return request.auth.token.keys().hasAll(['flow', 'geoOk', 'licenseStatus']);
+    }
+    function orgFlow(orgId) {
+      return get(/databases/$(database)/documents/orgs/$(orgId)).data.get('flow', '');
+    }
+    // The caller's minted flow must match the org's actual flow, and be a
+    // known flow. Prevents a stale/foreign claim from opening another org.
+    function flowMatches(orgId) {
+      return hasFlowClaims()
+          && request.auth.token.flow in ['qgi', 'external']
+          && request.auth.token.flow == orgFlow(orgId);
+    }
+    // QGI: geoOk minted only on flowGate `allow` (hard VPN/proxy/relay block
+    // otherwise — no exceptions).
+    function qgiOk() {
+      return request.auth.token.flow == 'qgi'
+          && request.auth.token.geoOk == true;
+    }
+    // External: active or trialing (30d / 200-save trial) may read+write;
+    // past_due gets read-only (30-day grace, owner banner handled in UI).
+    function externalReadable() {
+      return request.auth.token.flow == 'external'
+          && request.auth.token.licenseStatus in ['active', 'trialing', 'past_due'];
+    }
+    function externalWritable() {
+      return request.auth.token.flow == 'external'
+          && request.auth.token.licenseStatus in ['active', 'trialing'];
+    }
+    function canReadOrgData(orgId) {
+      return isActive() && flowMatches(orgId)
+          && (qgiOk() || externalReadable());
+    }
+    function canWriteOrgData(orgId) {
+      return isActive() && flowMatches(orgId)
+          && (qgiOk() || externalWritable());
+    }
+
     // Users.
     // - get: own doc, or same-org (single reads need no per-doc get()).
     // - list: same-org only, via resource.data (NOT get(users/{id}) — a
     //   per-document get() makes every list query fail).
     // - update: self may edit profile fields only (role/orgId/permissions/
-    //   disabled immutable — no self-promotion, no self-approval); owners
-    //   may manage same-org members (approve/reject/roles/permissions).
+    //   disabled/geo fields immutable — no self-promotion, no self-approval,
+    //   no geo-spoofing); owners may manage same-org members
+    //   (approve/reject/roles/permissions).
     // - create/delete: self-create only (signup); NO client deletes —
     //   delete+recreate was a full privilege-escalation bypass. Doc removal
     //   happens in the Firebase Console, which bypasses rules.
@@ -57,7 +101,10 @@ service cloud.firestore {
           && unchanged('role')
           && unchanged('orgId')
           && unchanged('permissions')
-          && unchanged('disabled'))
+          && unchanged('disabled')
+          && unchanged('geoStatus')
+          && unchanged('lastGeoCheck')
+          && unchanged('lastSeenRegion'))
         || (isActive()
           && myUser().role == 'owner'
           && myOrgId() == resource.data.orgId
@@ -67,37 +114,68 @@ service cloud.firestore {
     }
 
     // Orgs.
-    // - create: anyone signed in (signup bootstrap).
-    // - read: active members, PLUS users with no user doc yet — they are
-    //   mid-signup validating a join code (the user doc is created after).
-    //   Org docs only carry name/joinCode/ownerId, safe to expose there.
-    // - update/delete: owner of the org.
+    // - create: signed-in users may ONLY create external-flow trial orgs
+    //   (Phase 3 Stripe checkout replaces this with server provisioning).
+    //   QGI orgs are never client-created — console/Giulia only. Trial
+    //   fields are pinned so a client can't mint itself a paid org.
+    // - read: active members with valid flow claims, PLUS users with no user
+    //   doc yet — they are mid-signup validating a join code (the user doc
+    //   is created after). Org docs only carry name/joinCode/ownerId/flow,
+    //   safe to expose there.
+    // - update/delete: owner of the org, with flow claims valid. `flow`,
+    //   `versionPolicy`, `licenseStatus` are console/function-only — clients
+    //   can never change them (same discipline as NextInv's versionPolicy).
     match /orgs/{orgId} {
-      allow create: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.flow == 'external'
+        && request.resource.data.licenseStatus == 'trialing'
+        && request.resource.data.versionPolicy == 'external-hybrid'
+        && request.resource.data.ownerId == myUid()
+        && request.resource.data.trialSavesUsed == 0
+        && request.resource.data.keys().hasAll(
+             ['name', 'ownerId', 'joinCode', 'flow', 'versionPolicy',
+              'licenseStatus', 'trialSavesUsed', 'createdAt']);
       allow read: if isSignedIn() && (
         !hasUserDoc() ||
-        (isActive() && myOrgId() == orgId)
+        (canReadOrgData(orgId) && myOrgId() == orgId)
       );
-      allow update, delete: if isActive()
-        && myUser().role == 'owner' && myOrgId() == orgId;
+      allow update, delete: if canWriteOrgData(orgId)
+        && myUser().role == 'owner' && myOrgId() == orgId
+        && request.resource.data.flow == resource.data.flow
+        && request.resource.data.versionPolicy == resource.data.versionPolicy
+        && request.resource.data.licenseStatus == resource.data.licenseStatus;
 
       // Jobs.
-      // - create/read: active org members; read also for shared users.
+      // - create/read: active org members with valid flow claims; read also
+      //   for shared users.
       // - update/delete: owner/supervisor any org job; anyone own jobs
       //   they created (matches canEditJob() in permissions.js).
       // - orgId comes from the path wildcard: no per-doc get(), so lists
       //   scale.
       match /jobs/{jobId} {
-        allow create: if isActive() && myOrgId() == orgId;
-        allow read: if isActive() && (
+        allow create: if canWriteOrgData(orgId) && myOrgId() == orgId;
+        allow read: if canReadOrgData(orgId) && (
           myOrgId() == orgId ||
           resource.data.get('sharedWith', []).hasAny([myUid()])
         );
-        allow update, delete: if isActive() && myOrgId() == orgId && (
+        allow update, delete: if canWriteOrgData(orgId) && myOrgId() == orgId && (
           myUser().role in ['owner', 'supervisor'] ||
           myUid() == resource.data.installerUid
         );
       }
+    }
+
+    // Geo review queue — console/function-only. Clients never read or write
+    // (dashboard triage UI is future work; Giulia triages in console).
+    match /geoReviews/{reviewId} {
+      allow read, write: if false;
+    }
+
+    // Version config — public read (lets the app check force-update floors
+    // without auth); console/function-only write.
+    match /nivelato_config/version {
+      allow read: if true;
+      allow write: if false;
     }
   }
 }

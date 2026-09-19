@@ -4,12 +4,17 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { doc, getDoc, collection, addDoc, setDoc, updateDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
 import { makePermChecker } from './permissions.js';
+import { ensureFlowClaims, routeAfterGate } from './geo.js';
 
 let currentUser = null;
 let currentUserData = null;
 let _can = () => false;
 // UID seen on the last auth callback — used to detect silent identity switches.
 let _prevUid = null;
+// flowGate runs once per page-load for returning sessions (login.html already
+// gates fresh logins). Guarded + non-breaking: if functions aren't deployed
+// yet, ensureFlowClaims resolves { ok:false } and we continue as before.
+let _flowGateDone = false;
 
 // Loud, XSS-safe banner shown when the ambient Firebase identity changes
 // mid-session (shared device / another tab signed in or out). Records must
@@ -71,6 +76,15 @@ onAuthStateChanged(auth, async (user) => {
   window._can = _can;
   window._currentUser = currentUser;
   window._currentUserData = currentUserData;
+
+  // Geo-flow gate for returning sessions: mint/refresh claims, route
+  // block/review verdicts to the PR-only blocked screens. Runs once.
+  if (!_flowGateDone) {
+    _flowGateDone = true;
+    ensureFlowClaims().then((gate) => {
+      if (gate.ok && !gate.cached && routeAfterGate(gate.verdict, gate.reason)) return;
+    });
+  }
 
   // inject user info into header
   const logo = document.getElementById('app-logo');

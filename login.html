@@ -32,11 +32,33 @@
       letter-spacing: -0.5px;
       margin-bottom: 6px;
     }
+    .logo.qgi { color: #0c6b3c; }
     .tagline {
       font-size: 13px;
       color: #868e96;
       margin-bottom: 32px;
     }
+    .exclusivity-note {
+      font-size: 12px;
+      color: #0c6b3c;
+      background: #ebfbee;
+      border: 1px solid #b2d8b2;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .pricing-note {
+      font-size: 12px;
+      color: #495057;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    .pricing-note b { color: #1971c2; }
     .tab-row {
       display: flex;
       border-bottom: 2px solid #e9ecef;
@@ -55,6 +77,7 @@
       transition: color 0.15s, border-color 0.15s;
     }
     .tab.active { color: #1971c2; border-bottom-color: #1971c2; }
+    .tab.active.qgi-tab { color: #0c6b3c; border-bottom-color: #0c6b3c; }
     .field { margin-bottom: 16px; }
     .field label { display: block; font-size: 12px; font-weight: 600; color: #495057; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
     .field input {
@@ -68,18 +91,6 @@
       transition: border-color 0.15s;
     }
     .field input:focus { border-color: #1971c2; }
-    .field select {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1.5px solid #dee2e6;
-      border-radius: 8px;
-      font-size: 15px;
-      font-family: inherit;
-      outline: none;
-      background: #fff;
-      transition: border-color 0.15s;
-    }
-    .field select:focus { border-color: #1971c2; }
     .btn-primary {
       width: 100%;
       padding: 14px;
@@ -96,6 +107,9 @@
     }
     .btn-primary:hover { background: #1864ab; }
     .btn-primary:disabled { background: #a5d8ff; cursor: not-allowed; }
+    .btn-primary.qgi-btn { background: #0c6b3c; }
+    .btn-primary.qgi-btn:hover { background: #095c33; }
+    .btn-primary.qgi-btn:disabled { background: #a9d3b8; }
     .error-msg {
       background: #fff5f5;
       border: 1px solid #ffc9c9;
@@ -114,78 +128,12 @@
       text-align: center;
       line-height: 1.5;
     }
-
+    .geo-loading { text-align: center; color: #868e96; font-size: 13px; padding: 24px 0; }
   </style>
 </head>
 <body>
-<div class="card">
-  <div class="logo">Nivelato</div>
-  <div class="tagline">Medidas de campo para instaladores de vidrio</div>
-
-  <div class="tab-row">
-    <div class="tab active" id="tab-login" onclick="switchTab('login')">Iniciar sesión</div>
-    <div class="tab" id="tab-signup" onclick="switchTab('signup')">Registrarse</div>
-  </div>
-
-  <!-- LOGIN FORM -->
-  <div id="form-login">
-    <form id="login-form" autocomplete="on">
-      <div class="field">
-        <label>Correo electrónico</label>
-        <input type="email" id="login-email" name="email" placeholder="correo@taller.com" autocomplete="email" />
-      </div>
-      <div class="field">
-        <label>Contraseña</label>
-        <input type="password" id="login-pass" name="password" placeholder="••••••••" autocomplete="current-password" />
-      </div>
-      <button class="btn-primary" id="btn-login" type="submit">Entrar</button>
-    </form>
-    <div class="error-msg" id="login-error"></div>
-  </div>
-
-  <!-- SIGNUP FORM -->
-  <div id="form-signup" style="display:none">
-    <form id="signup-form" autocomplete="on">
-      <div class="field">
-        <label>Nombre completo</label>
-        <input type="text" id="signup-name" name="name" placeholder="Juan Pérez" autocomplete="name" />
-      </div>
-      <div class="field">
-        <label>Correo electrónico</label>
-        <input type="email" id="signup-email" name="email" placeholder="correo@taller.com" autocomplete="email" />
-      </div>
-      <div class="field">
-        <label>Contraseña</label>
-        <input type="password" id="signup-pass" name="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
-      </div>
-      <div class="field">
-        <label>Rol</label>
-        <select id="signup-role" onchange="onRoleChange()">
-          <option value="medidor">Técnico medidor</option>
-          <option value="supervisor">Supervisor de campo</option>
-          <option value="cotizador">Cotizaciones</option>
-          <option value="owner">Dueño / Administrador</option>
-        </select>
-      </div>
-      <!-- Owner-only: org name + join code -->
-      <div id="owner-fields" style="display:block">
-        <div class="field">
-          <label>Nombre del taller</label>
-          <input type="text" id="signup-orgname" name="organization" placeholder="Vidrios Lebron" autocomplete="organization" />
-        </div>
-      </div>
-      <!-- Non-owner: join code -->
-      <div id="user-fields" style="display:none">
-        <div class="field">
-          <label>Código del taller <span style="color:#868e96;font-weight:400">(te lo da el dueño)</span></label>
-          <input type="text" id="signup-orgcode" placeholder="ABC123" autocomplete="off" style="text-transform:uppercase" />
-        </div>
-      </div>
-      <button class="btn-primary" id="btn-signup" type="submit">Crear cuenta</button>
-    </form>
-    <div class="error-msg" id="signup-error"></div>
-    <div class="signup-note">Al registrarte como dueño, se crea una organización nueva.<br>Los empleados usan el código que tú les des.</div>
-  </div>
+<div class="card" id="app-card">
+  <div class="geo-loading" id="geo-loading">Detectando ubicación…</div>
 </div>
 
 <script type="module">
@@ -196,27 +144,106 @@
     updateProfile
   } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
   import {
-    doc, setDoc, getDoc, collection, query, where, getDocs, serverTimestamp
+    doc, setDoc, getDoc, serverTimestamp, Timestamp
   } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+  import { detectCountry, flowModeForCountry, ensureFlowClaims, routeAfterGate } from './geo.js';
 
-  // expose to inline handlers
-  window.switchTab = (tab) => {
+  // ---- Geo-gated UI (spec §6): the other flow's UI is NEVER rendered ----
+  // Prefer the edge cookie (Cloudflare Worker, Phase 2) when present;
+  // fall back to client-side lookup. Unknown geo → external (§6.3).
+  function flowFromCookie() {
+    const m = document.cookie.match(/(?:^|;\s*)nl_flow=(qgi|external)/);
+    return m ? m[1] : null;
+  }
+  const country = await detectCountry();
+  const MODE = flowFromCookie() || flowModeForCountry(country); // 'qgi' | 'external'
+  const QGI = MODE === 'qgi';
+
+  const card = document.getElementById('app-card');
+  card.innerHTML = `
+    <div class="logo${QGI ? ' qgi' : ''}">${QGI ? 'Quality Glass' : 'Nivelato'}</div>
+    <div class="tagline">${QGI
+      ? 'Nivelato — exclusivo de Quality Glass en Puerto Rico'
+      : 'Medidas de campo para instaladores de vidrio'}</div>
+    ${QGI ? `<div class="exclusivity-note">En Puerto Rico, Nivelato es de uso <b>exclusivo de Quality Glass</b>. El registro es solo para empleados.</div>` : ''}
+    ${!QGI ? `<div class="pricing-note"><b>$29</b> por versión mayor por taller + <b>$4</b>/usuario/mes.<br>Prueba gratis: 30 días o 200 guardados.</div>` : ''}
+
+    <div class="tab-row">
+      <div class="tab active${QGI ? ' qgi-tab' : ''}" id="tab-login">Iniciar sesión</div>
+      <div class="tab${QGI ? ' qgi-tab' : ''}" id="tab-signup">${QGI ? 'Soy empleado' : 'Crear cuenta'}</div>
+    </div>
+
+    <div id="form-login">
+      <form id="login-form" autocomplete="on">
+        <div class="field">
+          <label>Correo electrónico</label>
+          <input type="email" id="login-email" name="email" placeholder="correo@taller.com" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="login-pass" name="password" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <button class="btn-primary${QGI ? ' qgi-btn' : ''}" id="btn-login" type="submit">Entrar</button>
+      </form>
+      <div class="error-msg" id="login-error"></div>
+    </div>
+
+    <div id="form-signup" style="display:none">
+      <form id="signup-form" autocomplete="on">
+        <div class="field">
+          <label>Nombre completo</label>
+          <input type="text" id="signup-name" name="name" placeholder="Juan Pérez" autocomplete="name" />
+        </div>
+        <div class="field">
+          <label>Correo electrónico</label>
+          <input type="email" id="signup-email" name="email" placeholder="correo@taller.com" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="signup-pass" name="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+        </div>
+        ${QGI ? `
+        <div class="field">
+          <label>Código de empleado <span style="color:#868e96;font-weight:400">(te lo da tu supervisor)</span></label>
+          <input type="text" id="signup-orgcode" placeholder="ABC123" autocomplete="off" style="text-transform:uppercase" />
+        </div>` : `
+        <div class="field">
+          <label>Nombre del taller</label>
+          <input type="text" id="signup-orgname" name="organization" placeholder="Vidriería Ejemplo" autocomplete="organization" />
+        </div>`}
+        <button class="btn-primary${QGI ? ' qgi-btn' : ''}" id="btn-signup" type="submit">${QGI ? 'Solicitar acceso' : 'Empezar prueba gratis'}</button>
+      </form>
+      <div class="error-msg" id="signup-error"></div>
+      <div class="signup-note">${QGI
+        ? 'Las cuentas nuevas las aprueba <b>Daniel Lebrón</b>. Te avisaremos cuando tengas acceso.'
+        : 'Al registrarte se crea tu taller con 30 días / 200 guardados de prueba.'}</div>
+    </div>`;
+
+  document.getElementById('tab-login').addEventListener('click', () => switchTab('login'));
+  document.getElementById('tab-signup').addEventListener('click', () => switchTab('signup'));
+
+  function switchTab(tab) {
     document.getElementById('form-login').style.display  = tab === 'login'  ? '' : 'none';
     document.getElementById('form-signup').style.display = tab === 'signup' ? '' : 'none';
     document.getElementById('tab-login').classList.toggle('active', tab === 'login');
     document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
-  };
+  }
 
-  window.onRoleChange = () => {
-    const role = document.getElementById('signup-role').value;
-    document.getElementById('owner-fields').style.display = role === 'owner' ? '' : 'none';
-    document.getElementById('user-fields').style.display  = role !== 'owner' ? '' : 'none';
-  };
-  // init visibility — run after DOM fully parsed
-  document.addEventListener('DOMContentLoaded', () => window.onRoleChange());
-  window.onRoleChange(); // also run immediately in case DOMContentLoaded already fired
+  function showPendingApproval() {
+    document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2>Cuenta creada</h2><p style="color:#868e96;max-width:320px">Tu cuenta está pendiente de aprobación por el dueño del taller. Te avisarán cuando tengas acceso.</p></div>';
+  }
 
-  window.doLogin = async () => {
+  async function postAuthRedirect() {
+    // flowGate → claims → verdict routing, then legacy role redirect.
+    const gate = await ensureFlowClaims();
+    if (gate.ok && !gate.cached && routeAfterGate(gate.verdict, gate.reason)) return;
+    const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+    const role = userDoc.data()?.role;
+    window.location.href = (role === 'owner' || role === 'cotizador') ? 'dashboard.html' : 'index.html';
+  }
+
+  async function doLogin(e) {
+    e.preventDefault();
     const btn = document.getElementById('btn-login');
     const errEl = document.getElementById('login-error');
     btn.disabled = true;
@@ -226,19 +253,17 @@
       const email = document.getElementById('login-email').value.trim();
       const pass  = document.getElementById('login-pass').value;
       await signInWithEmailAndPassword(auth, email, pass);
-      // get user role → redirect
-      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
-      const role = userDoc.data()?.role;
-      window.location.href = (role === 'owner' || role === 'cotizador') ? 'dashboard.html' : 'index.html';
-    } catch(e) {
-      errEl.textContent = friendlyError(e.code);
+      await postAuthRedirect();
+    } catch(err) {
+      errEl.textContent = friendlyError(err.code);
       errEl.classList.add('visible');
       btn.disabled = false;
       btn.textContent = 'Entrar';
     }
-  };
+  }
 
-  window.doSignup = async () => {
+  async function doSignup(e) {
+    e.preventDefault();
     const btn = document.getElementById('btn-signup');
     const errEl = document.getElementById('signup-error');
     btn.disabled = true;
@@ -248,88 +273,77 @@
       const name  = document.getElementById('signup-name').value.trim();
       const email = document.getElementById('signup-email').value.trim();
       const pass  = document.getElementById('signup-pass').value;
-      const role  = document.getElementById('signup-role').value;
-
       if (!name) throw { code: 'missing-name' };
 
-      let orgId;
-
-      if (role === 'owner') {
-        const orgName = document.getElementById('signup-orgname').value.trim();
-        if (!orgName) throw { code: 'missing-orgname' };
-        // create user account
-        const cred = await createUserWithEmailAndPassword(auth, email, pass);
-        await updateProfile(cred.user, { displayName: name });
-        // generate a short org code
-        orgId = cred.user.uid.slice(0, 6).toUpperCase();
-        // create org + user docs — separate try so Firestore errors surface clearly
-        try {
-          await setDoc(doc(db, 'orgs', orgId), {
-            name: orgName,
-            ownerId: cred.user.uid,
-            joinCode: orgId,
-            createdAt: serverTimestamp(),
-            userCount: 1
-          });
-          await setDoc(doc(db, 'users', cred.user.uid), {
-            name, email, role, orgId,
-            createdAt: serverTimestamp()
-          });
-        } catch(fsErr) {
-          console.error('Firestore write failed:', fsErr.code, fsErr.message);
-          // still show the code even if Firestore failed
-          alert(`¡Auth OK pero Firestore falló!\n\nError: ${fsErr.code}\n\nTu UID: ${cred.user.uid}\nTu código: ${orgId}\n\nRevisa las Rules en Firebase Console.`);
-          window.location.href = 'dashboard.html';
-          return;
-        }
-        // show join code before redirect
-        alert(`¡Cuenta creada!\n\nCódigo de tu taller: ${orgId}\n\nDáselo a tus empleados para que puedan registrarse.`);
-        window.location.href = 'dashboard.html';
-
-      } else {
+      if (QGI) {
+        // ---- QGI employee join: invite code → Daniel's approval queue ----
         const joinCode = document.getElementById('signup-orgcode').value.trim().toUpperCase();
         if (!joinCode) throw { code: 'missing-code' };
-        // create auth FIRST so request.auth != null for Firestore reads
         const cred = await createUserWithEmailAndPassword(auth, email, pass);
         await updateProfile(cred.user, { displayName: name });
-        // NOW look up org by join code (auth is live)
-        const orgRef = doc(db, 'orgs', joinCode);
-        const orgSnap = await getDoc(orgRef);
-        if (!orgSnap.exists()) {
-          // delete the created auth account so they can retry
+        // Auth is live, so the mid-signup org read is allowed by the rules.
+        const orgSnap = await getDoc(doc(db, 'orgs', joinCode));
+        if (!orgSnap.exists() || orgSnap.data().flow !== 'qgi') {
           await cred.user.delete();
           throw { code: 'invalid-code' };
         }
-        orgId = joinCode;
         await setDoc(doc(db, 'users', cred.user.uid), {
-          name, email, role, orgId,
-          disabled: true,
+          name, email, role: 'medidor', orgId: joinCode,
+          disabled: true, geoStatus: 'pending',
           createdAt: serverTimestamp()
         });
-        // show pending screen instead of redirecting
-        document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2>Cuenta creada</h2><p style="color:#868e96;max-width:320px">Tu cuenta está pendiente de aprobación por el dueño del taller. Te avisarán cuando tengas acceso.</p></div>';
+        const gate = await ensureFlowClaims();
+        if (gate.ok && routeAfterGate(gate.verdict, gate.reason)) return;
+        showPendingApproval();
         return;
       }
-    } catch(e) {
-      errEl.textContent = friendlyError(e.code);
+
+      // ---- External trial signup: 30 days / 200 saves, no card (Phase 3:
+      // Stripe Checkout replaces this with server-side provisioning) ----
+      const orgName = document.getElementById('signup-orgname').value.trim();
+      if (!orgName) throw { code: 'missing-orgname' };
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      await updateProfile(cred.user, { displayName: name });
+      const orgId = cred.user.uid.slice(0, 6).toUpperCase();
+      try {
+        await setDoc(doc(db, 'orgs', orgId), {
+          name: orgName,
+          ownerId: cred.user.uid,
+          joinCode: orgId,
+          flow: 'external',
+          versionPolicy: 'external-hybrid',
+          licenseStatus: 'trialing',
+          trialEndsAt: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 3600 * 1000)),
+          trialSavesUsed: 0,
+          seats: 1,
+          homeRegion: country || 'unknown',
+          createdAt: serverTimestamp(),
+          userCount: 1
+        });
+        await setDoc(doc(db, 'users', cred.user.uid), {
+          name, email, role: 'owner', orgId,
+          createdAt: serverTimestamp()
+        });
+      } catch(fsErr) {
+        console.error('Firestore write failed:', fsErr.code, fsErr.message);
+        alert(`¡Auth OK pero Firestore falló!\n\nError: ${fsErr.code}\n\nTu UID: ${cred.user.uid}\nTu código: ${orgId}\n\nRevisa las Rules en Firebase Console.`);
+        window.location.href = 'dashboard.html';
+        return;
+      }
+      const gate = await ensureFlowClaims();
+      if (gate.ok && routeAfterGate(gate.verdict, gate.reason)) return;
+      alert(`¡Cuenta creada!\n\nCódigo de tu taller: ${orgId}\n\nDáselo a tus empleados para que puedan registrarse.\n\nPrueba: 30 días o 200 guardados.`);
+      window.location.href = 'dashboard.html';
+    } catch(err) {
+      errEl.textContent = friendlyError(err.code);
       errEl.classList.add('visible');
       btn.disabled = false;
-      btn.textContent = 'Crear cuenta';
+      btn.textContent = QGI ? 'Solicitar acceso' : 'Empezar prueba gratis';
     }
-  };
+  }
 
-  // Real <form> submit handlers (not inline onclick): this is what makes
-  // browser password managers / autofill reliably fill the fields, and also
-  // enables Enter-to-submit. doLogin/doSignup read field values directly on
-  // submit, so autofilled values are picked up even without input events.
-  document.getElementById('login-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    window.doLogin();
-  });
-  document.getElementById('signup-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    window.doSignup();
-  });
+  document.getElementById('login-form').addEventListener('submit', doLogin);
+  document.getElementById('signup-form').addEventListener('submit', doSignup);
 
   function friendlyError(code) {
     const map = {
@@ -344,8 +358,8 @@
       'auth/too-many-requests':      'Demasiados intentos. Intenta más tarde.',
       'missing-name':                'Ingresa tu nombre completo.',
       'missing-orgname':             'Ingresa el nombre del taller.',
-      'missing-code':                'Ingresa el código del taller.',
-      'invalid-code':                'Código de taller inválido. Verifica con el dueño.',
+      'missing-code':                'Ingresa el código de empleado.',
+      'invalid-code':                'Código inválido. Verifica con tu supervisor.',
     };
     return map[code] || `Error: ${code}`;
   }
