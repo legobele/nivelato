@@ -223,11 +223,15 @@ exports.homeRegionMonitor = onSchedule(
 // qgcLogin — Quality Glazing Contractors company login.
 // The QGC tier is NEVER sold via Play. An employee signs in with their own
 // account (email verified), calls this callable, and the server stamps
-// company claims iff their email sits on the qgc-roster.
+// company claims.
+//
+// QGC = inside Puerto Rico (per Giulia 2026-09-26): callers whose geo
+// resolves outside PR are rejected — Ultra is their path. Callers in PR
+// are AUTO-ADDED to the qgc-roster on first login; the roster is the
+// registry, geo is the gate.
 //
 // Roster: collection `qgc-roster`, doc id = lowercase email, e.g.
 //   qgc-roster/maria@qualityglazingpr.com  { name: "María", addedAt: <ts> }
-// Add/remove members in the Firebase console — no deploy needed.
 // Merges with existing claims (flowGate's org/geo claims survive).
 // ---------------------------------------------------------------------------
 exports.qgcLogin = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
@@ -244,12 +248,27 @@ exports.qgcLogin = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
   if (!verified) {
     throw new HttpsError('failed-precondition', 'Verify your email first.');
   }
-  const rosterSnap = await db.doc(`qgc-roster/${email}`).get();
+  // Geo gate: QGC is the Puerto Rico path. Outside PR → Ultra, not QGC.
+  const callerIp = request.rawRequest ? request.rawRequest.ip : null;
+  const intel = await ipIntel(callerIp);
+  if (!intel.ok) {
+    throw new HttpsError('failed-precondition',
+      "Couldn't verify you're in Puerto Rico right now — try again in a bit.");
+  }
+  if (intel.country !== 'PR') {
+    throw new HttpsError('failed-precondition',
+      'QGC is Puerto Rico only. Ultra is the path outside PR.');
+  }
+  // Auto-enroll: anyone in PR who enters via QGC login lands on the roster.
+  const data = request.data || {};
+  const ref = db.doc(`qgc-roster/${email}`);
+  const rosterSnap = await ref.get();
   if (!rosterSnap.exists) {
-    throw new HttpsError(
-      'permission-denied',
-      'Not on the Quality Glazing Contractors roster. Ask for an invite.'
-    );
+    await ref.set({
+      name: String(data.name || '').trim() || null,
+      addedAt: admin.firestore.FieldValue.serverTimestamp(),
+      autoAdded: true,
+    });
   }
   const uid = request.auth.uid;
   const existing = (await admin.auth().getUser(uid)).customClaims || {};
