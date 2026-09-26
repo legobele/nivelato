@@ -171,6 +171,18 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Easter-egg odometer — public read (the gay-button press count lives
+    // here); signed-in users may only increment the counter by exactly 1.
+    match /stats/easter-eggs {
+      allow read: if true;
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly(['gay'])
+        && request.resource.data.gay == 1;
+      allow update: if isSignedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gay'])
+        && request.resource.data.gay == resource.data.gay + 1;
+    }
+
     // Version config — public read (lets the app check force-update floors
     // without auth); console/function-only write.
     match /nivelato_config/version {
