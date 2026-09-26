@@ -1,0 +1,101 @@
+/* Nivelato Design Tokens — web entry point.
+   Mirrors design-tokens/tokens.json exactly. Do NOT hand-edit values here;
+   update tokens.json (the single source) and regenerate. */
+:root {
+  /* Brand */
+  --brand: #1971C2;
+  --brand-pressed: #1864AB;
+  --brand-container: #E7F5FF;
+  --brand-container-hover: #D0EBFF;
+  --brand-disabled: #A5D8FF;
+  --on-brand: #FFFFFF;
+
+  /* Neutrals */
+  --white: #FFFFFF;
+  --grey-50: #F8F9FA;
+  --grey-100: #F1F3F5;
+  --grey-200: #E9ECEF;
+  --grey-300: #DEE2E6;
+  --grey-400: #CED4DA;
+  --grey-500: #ADB5BD;
+  --grey-600: #868E96;
+  --grey-700: #495057;
+  --grey-800: #343A40;
+  --grey-900: #212529;
+  --background: #F0F2F5;
+
+  /* Semantic */
+  --success: #2F9E44;
+  --success-container: #EBFBEE;
+  --success-border: #B2F2BB;
+  --error: #C92A2A;
+  --error-container: #FFF5F5;
+  --error-border: #FFC9C9;
+  --error-strong-bg: #FFE3E3;
+  --error-strong-border: #FFA8A8;
+  --destructive: #E03131;
+  --warning-container: #FFF3BF;
+  --on-warning-container: #E67700;
+
+  /* QGI geo-brand (PR-only Quality Glass theme) */
+  --qgi-brand: #0C6B3C;
+  --qgi-brand-pressed: #095C33;
+  --qgi-brand-border: #B2D8B2;
+  --qgi-brand-disabled: #A9D3B8;
+
+  /* QGC (Quality Glass Company) login accent */
+  --qgc-grey: #878787;
+
+  /* Dark mode */
+  --dark-background: #0F1216;
+  --dark-surface: #171B21;
+  --dark-surface-border: #262C35;
+  --dark-input-border: #3A4350;
+  --dark-on-surface: #FFFFFF;
+  --dark-on-surface-variant: #8B93A1;
+  --dark-chip-text: #C9CED6;
+  --dark-brand: #4DABF7;
+  --dark-brand-container: #1D3A5C;
+  --dark-danger: #FF6B6B;
+  --dark-warning: #FFA500;
+  --dark-link: #8AB4F8;
+  --canvas-bg: #F0F4FF;
+  --annotation-accent: #F59F00;
+
+  /* Typography */
+  --font-family: 'Inter', system-ui, sans-serif;
+  --font-display: 28px;
+  --font-h1: 22px;
+  --font-title: 18px;
+  --font-step-title: 1.1rem;
+  --font-body: 15px;
+  --font-body-sm: 14px;
+  --font-small: 13px;
+  --font-label: 12px;
+  --font-tiny: 11px;
+  --font-code: 24px;
+  --font-fraction: 1.6rem;
+
+  /* Spacing / radius / shadow */
+  --radius-tag: 4px;
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-card: 12px;
+  --radius-modal: 16px;
+  --radius-pill: 9999px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+  --shadow-modal: 0 8px 32px rgba(0,0,0,0.3);
+
+  /* Focus ring (sacred): accent border + ring on every input, every page */
+  --focus-ring: 0 0 0 3px var(--brand-container);
+
+  /* Motion */
+  --motion-fade-up: 0.25s;
+  --motion-progress-width: 0.4s;
+  --motion-button-active-scale: 0.98;
+  --motion-sheet-slide-up: 0.22s;
+  --motion-toast-slide-fade: 0.25s;
+  --motion-warn-pulse: 1.6s;
+}
