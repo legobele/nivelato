@@ -17,7 +17,9 @@
 
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { defineSecret } = require('firebase-functions/v2/params');
 const admin = require('firebase-admin');
+const crypto = require('crypto');
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -280,3 +282,92 @@ exports.qgcLogin = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
   });
   return { ok: true, tier: 'QGC', company: 'Quality Glazing Contractors', email };
 });
+
+// ---------------------------------------------------------------------------
+// provisionBundleKey — server-side bundle decryption key broker.
+//
+// The Android APK ships the webapp ONLY as AES-256-GCM ciphertext and holds
+// NO key material. At boot, the app's KeyBroker calls this callable; the
+// server verifies App Check (Play Integrity) + Firebase Auth, looks up the
+// per-version salt that push-salt.js published to nivelato_config/config,
+// derives the bundle key from the master secret (Secret Manager — never in
+// the repo, never in the APK), and returns it for this session only.
+//
+// Key derivation MUST match tools/gen-bundle.js exactly:
+//   bundleKey = SHA-256(HMAC-SHA256(master, "nivelato-bundle-v<vc><salt>"))
+//   davKey    = SHA-256(HMAC-SHA256(master, "nivelato-dav-v<vc><salt>"))
+// (davKey keeps the legacy formula so existing encrypted WebDAV stores keep
+// working after the master moves server-side.)
+//
+// Rate limit: 30 grants/uid/day (fail closed past the cap). Grants are
+// counted, never logged with the key.
+// ---------------------------------------------------------------------------
+const BUNDLE_MASTER_SECRET = defineSecret('BUNDLE_MASTER_SECRET');
+const KEY_GRANTS_PER_DAY = 30;
+
+function deriveBundleKeys(master, versionCode, salt) {
+  const h = (label) => {
+    const mac = crypto.createHmac('sha256', master);
+    mac.update(label);
+    return crypto.createHash('sha256').update(mac.digest()).digest();
+  };
+  return {
+    bundleKey: h(`nivelato-bundle-v${versionCode}${salt}`).toString('base64'),
+    davKey: h(`nivelato-dav-v${versionCode}${salt}`).toString('base64'),
+  };
+}
+
+exports.provisionBundleKey = onCall(
+  {
+    region: 'us-central1',
+    memory: '256MiB',
+    enforceAppCheck: true, // Play Integrity token required — no token, no key
+    secrets: [BUNDLE_MASTER_SECRET],
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Sign in first.');
+    }
+    const uid = request.auth.uid;
+    const data = request.data || {};
+    const versionCode = Number.isInteger(data.versionCode) ? data.versionCode : 0;
+    const versionName = typeof data.versionName === 'string' ? data.versionName : '';
+    if (!versionCode || !versionName || !/^[A-Za-z0-9._-]{1,32}$/.test(versionName)) {
+      throw new HttpsError('invalid-argument', 'versionCode + versionName required.');
+    }
+
+    // The salt must be the one push-salt.js published at build time for this
+    // versionName — the client can't just invent one.
+    const cfgSnap = await db.doc('nivelato_config/config').get();
+    const cfg = cfgSnap.exists ? cfgSnap.data() : {};
+    const salt = cfg[`v-key-${versionName}`];
+    if (typeof salt !== 'string' || !salt) {
+      throw new HttpsError('failed-precondition', 'Unknown app version.');
+    }
+
+    // Daily per-uid grant cap (transactional).
+    const today = new Date().toISOString().slice(0, 10);
+    const grantRef = db.doc(`keyGrants/${uid}`);
+    const granted = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(grantRef);
+      const d = snap.exists ? snap.data() : {};
+      if (d.date === today && (d.count || 0) >= KEY_GRANTS_PER_DAY) return false;
+      tx.set(grantRef, {
+        date: today,
+        count: d.date === today ? (d.count || 0) + 1 : 1,
+        lastGrantAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+      return true;
+    });
+    if (!granted) {
+      throw new HttpsError('resource-exhausted', 'Too many key requests today.');
+    }
+
+    const master = BUNDLE_MASTER_SECRET.value();
+    if (!master) {
+      throw new HttpsError('internal', 'Key service misconfigured.');
+    }
+    const keys = deriveBundleKeys(master, versionCode, salt);
+    return { bundleKey: keys.bundleKey, davKey: keys.davKey, versionCode, versionName };
+  }
+);
