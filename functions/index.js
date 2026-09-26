@@ -218,3 +218,46 @@ exports.homeRegionMonitor = onSchedule(
     return { casesOpened, orgsScanned: orgsSnap.size };
   }
 );
+
+// ---------------------------------------------------------------------------
+// qgcLogin — Quality Glazing Contractors company login.
+// The QGC tier is NEVER sold via Play. An employee signs in with their own
+// account (email verified), calls this callable, and the server stamps
+// company claims iff their email sits on the qgc-roster.
+//
+// Roster: collection `qgc-roster`, doc id = lowercase email, e.g.
+//   qgc-roster/maria@qualityglazingpr.com  { name: "María", addedAt: <ts> }
+// Add/remove members in the Firebase console — no deploy needed.
+// Merges with existing claims (flowGate's org/geo claims survive).
+// ---------------------------------------------------------------------------
+exports.qgcLogin = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Sign in first.');
+  }
+  const token = request.auth.token || {};
+  const email = String(token.email || '').trim().toLowerCase();
+  if (!email) {
+    throw new HttpsError('failed-precondition', 'This account has no email address.');
+  }
+  const provider = token.firebase ? token.firebase.sign_in_provider : null;
+  const verified = token.email_verified === true || provider === 'google.com';
+  if (!verified) {
+    throw new HttpsError('failed-precondition', 'Verify your email first.');
+  }
+  const rosterSnap = await db.doc(`qgc-roster/${email}`).get();
+  if (!rosterSnap.exists) {
+    throw new HttpsError(
+      'permission-denied',
+      'Not on the Quality Glazing Contractors roster. Ask for an invite.'
+    );
+  }
+  const uid = request.auth.uid;
+  const existing = (await admin.auth().getUser(uid)).customClaims || {};
+  await admin.auth().setCustomUserClaims(uid, {
+    ...existing,
+    qgc: true,
+    tier: 'QGC',
+    company: 'Quality Glazing Contractors',
+  });
+  return { ok: true, tier: 'QGC', company: 'Quality Glazing Contractors', email };
+});
