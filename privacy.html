@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nivelato — Política de Privacidad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', system-ui, sans-serif; margin: 0; background: #f4f6f4; color: #1c2420; line-height: 1.65; }
+  header { background: #2f9e44; color: #fff; padding: 28px 20px; }
+  header h1 { margin: 0; font-size: 24px; }
+  header p { margin: 6px 0 0; opacity: .9; font-size: 14px; }
+  main { max-width: 760px; margin: 0 auto; padding: 28px 20px 60px; }
+  h2 { font-size: 18px; margin: 32px 0 10px; color: #2f9e44; }
+  ul { padding-left: 22px; }
+  li { margin-bottom: 8px; }
+  .updated { font-size: 13px; color: #6b7a70; margin-top: 40px; }
+  a { color: #2f9e44; }
+  .card { background: #fff; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Nivelato — Política de Privacidad</h1>
+  <p>Qué datos recopila la app, por qué y cómo se manejan.</p>
+</header>
+<main>
+  <div class="card">
+    <p>Nivelato es una herramienta de medición móvil. Este documento describe qué datos recopila la app, por qué y cómo se manejan.</p>
+
+    <h2>1. Datos recopilados</h2>
+    <ul>
+      <li><strong>Mediciones (trabajos):</strong> sí — función principal: guardar mediciones de campo. Almacenadas en Firebase, vinculadas a tu cuenta.</li>
+      <li><strong>Correo electrónico:</strong> sí (al crear cuenta) — identidad de cuenta, vinculación de dispositivo.</li>
+      <li><strong>Identificador de dispositivo (UUID derivado):</strong> sí — restauración de suscripción, límites de dispositivo. Almacenado como hash.</li>
+      <li><strong>Región aproximada:</strong> sí (geolocalización IP, zona horaria, país SIM) — disponibilidad de planes.</li>
+      <li><strong>Postura del dispositivo</strong> (estado VPN, verificación de integridad, puntuación anti-emulador): sí — verificación periódica de integridad de licencia.</li>
+      <li><strong>Versión de la app, modelo de dispositivo, SO:</strong> sí — diagnóstico.</li>
+      <li><strong>Estadísticas de uso</strong> (conteo de guardados): sí — control de cuota por nivel.</li>
+    </ul>
+
+    <h2>2. Cómo se usan los datos</h2>
+    <ul>
+      <li><strong>Servicio principal:</strong> las mediciones se guardan en tu dispositivo + respaldo en Firebase (gratis para todos los niveles). Puedes eliminar cualquier medición o toda tu cuenta desde la app.</li>
+      <li><strong>Verificación periódica de integridad:</strong> la app realiza una verificación cada 5 minutos mientras está en uso (servicio "Respaldo y verificación de seguridad"). Envía el UUID del dispositivo y la postura del dispositivo (estado VPN, verificación de integridad, detección de emulador). Propósitos: (a) respaldar tus mediciones y (b) verificar la integridad de la licencia. Los datos no se comparten con terceros ni se venden.</li>
+    </ul>
+    <p>Los datos se transmiten cifrados (TLS). No se comparten con terceros. No se venden.</p>
+
+    <h2>3. Eliminación de datos</h2>
+    <ul>
+      <li>Puedes eliminar cualquier medición individual desde la app.</li>
+      <li>Puedes eliminar tu cuenta completa desde la app (pantalla "Privacidad y datos"): esto elimina tu correo, la vinculación de dispositivo y tus datos en la nube.</li>
+      <li>Para solicitudes de datos o eliminación también puedes escribir a <a href="mailto:legobele@gmail.com">legobele@gmail.com</a>.</li>
+    </ul>
+
+    <h2>4. Retención de datos</h2>
+    <ul>
+      <li><strong>Mediciones:</strong> según tu nivel (7 días sin cuenta, 90 días con cuenta, ilimitado en Pro/QGC/Ultra).</li>
+      <li><strong>Eliminación de cuenta</strong> (en la app): elimina tu correo, vinculación de dispositivo y datos en la nube.</li>
+    </ul>
+
+    <h2>5. Privacidad de menores</h2>
+    <p>Nivelato no está dirigida a menores de 13 años. No recopilamos datos de niños a sabiendas.</p>
+
+    <h2>6. Contacto</h2>
+    <p>Para solicitudes de datos, eliminación o preguntas: <a href="mailto:legobele@gmail.com">legobele@gmail.com</a></p>
+
+    <h2>7. Cambios</h2>
+    <p>Esta política puede actualizarse; la pantalla "Privacidad y datos" de la app siempre refleja la versión actual.</p>
+
+    <p class="updated">Última actualización: 30 de septiembre de 2026.</p>
+  </div>
+</main>
+</body>
+</html>
