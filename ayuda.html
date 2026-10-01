@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nivelato — Centro de ayuda</title>
+<style>
+:root {
+  --brand: #1971C2;
+  --brand-pressed: #1864AB;
+  --bg: #F0F2F5;
+  --card: #FFFFFF;
+  --text: #212529;
+  --muted: #868E96;
+  --border: #DEE2E6;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0F1216;
+    --card: #1A1E24;
+    --text: #F1F3F5;
+    --muted: #ADB5BD;
+    --border: #343A40;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg); color: var(--text);
+  line-height: 1.6; padding: 0 0 60px;
+}
+header {
+  background: var(--brand); color: #fff;
+  padding: 40px 20px 32px; text-align: center;
+}
+header h1 { font-size: 28px; margin-bottom: 6px; }
+header p { opacity: 0.85; font-size: 15px; max-width: 560px; margin: 0 auto; }
+main { max-width: 720px; margin: -0 auto; padding: 24px 16px 0; }
+.notice {
+  background: var(--card); border: 1px solid var(--border);
+  border-left: 4px solid var(--brand);
+  border-radius: var(--radius); padding: 16px 18px; margin-bottom: 20px;
+  font-size: 14px;
+}
+.notice b { display: block; margin-bottom: 4px; font-size: 15px; }
+section {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+  margin-bottom: 16px;
+}
+section h2 { font-size: 19px; margin-bottom: 10px; }
+section h3 { font-size: 15px; margin: 14px 0 6px; }
+section p, section li { font-size: 14.5px; }
+section ul, section ol { padding-left: 22px; margin: 8px 0; }
+section li { margin-bottom: 6px; }
+a { color: var(--brand); }
+table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+th { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.price { font-weight: 700; white-space: nowrap; }
+.faq details {
+  border-bottom: 1px solid var(--border); padding: 12px 0;
+}
+.faq details:last-child { border-bottom: none; }
+.faq summary { font-weight: 600; font-size: 14.5px; cursor: pointer; }
+.faq summary::-webkit-details-marker { color: var(--brand); }
+.faq .a { font-size: 14px; color: var(--muted); margin-top: 6px; padding-right: 8px; }
+.step-flow { counter-reset: step; list-style: none; padding: 0; }
+.step-flow li {
+  counter-increment: step; padding: 10px 0 10px 44px; position: relative;
+  border-bottom: 1px solid var(--border); font-size: 14px;
+}
+.step-flow li:last-child { border-bottom: none; }
+.step-flow li::before {
+  content: counter(step);
+  position: absolute; left: 0; top: 10px;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--brand); color: #fff;
+  font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.step-flow li b { display: block; font-size: 14.5px; }
+footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 28px; padding: 0 20px; }
+.toc { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.toc a {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 999px; padding: 8px 14px;
+  font-size: 13px; text-decoration: none; color: var(--text);
+}
+.toc a:hover { border-color: var(--brand); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📐 Nivelato — Centro de ayuda</h1>
+  <p>Guías, planes y solución de problemas para medir huecos como un profesional.</p>
+</header>
+
+<main>
+
+<div class="notice">
+  <b>🌎 ¿Estás fuera de Puerto Rico?</b>
+  El acceso empresarial de Quality Glass (botón "QGC") es solo para el equipo en Puerto Rico.
+  Si estás en otro lugar, usas <b>Nivelato Pro</b> o <b>Nivelato Ultra</b> con tu cuenta de Google Play —
+  todo lo demás en esta página aplica igual para ti.
+</div>
+
+<nav class="toc">
+  <a href="#empezar">Primeros pasos</a>
+  <a href="#medir">Cómo medir</a>
+  <a href="#planes">Planes y pagos</a>
+  <a href="#cuenta">Cuenta y datos</a>
+  <a href="#problemas">Problemas comunes</a>
+  <a href="#contacto">Contacto</a>
+</nav>
+
+<section id="empezar">
+  <h2>🚀 Primeros pasos</h2>
+  <ol>
+    <li><b>Instala Nivelato</b> desde Google Play Store en tu Android.</li>
+    <li><b>Crea tu cuenta</b> — puedes entrar con Google o con email y contraseña.</li>
+    <li><b>Empieza a medir.</b> La cuenta gratuita incluye <b>3 guardados</b> para que pruebes el flujo completo antes de pagar.</li>
+  </ol>
+  <h3>Requisitos</h3>
+  <ul>
+    <li>Android con Google Play Store y Google Play Billing.</li>
+    <li>Un metro láser (recomendado) o cinta métrica para tomar las medidas.</li>
+    <li>Conexión a internet para iniciar sesión y sincronizar; la medición funciona sin conexión una vez dentro.</li>
+  </ul>
+</section>
+
+<section id="medir">
+  <h2>📏 Cómo medir un hueco</h2>
+  <p>Cada trabajo sigue los mismos 7 pasos. Las medidas se entran en <b>pulgadas con fracciones</b> (ej. 36 ½").</p>
+  <ol class="step-flow">
+    <li><b>Cliente / Proyecto</b>Nombre del cliente, proyecto y ubicación antes de empezar.</li>
+    <li><b>Medidas del hueco</b>Ancho abajo y alto a la izquierda. Las otras dos medidas se calculan solas con los desniveles.</li>
+    <li><b>Pared izquierda</b>Del láser a la pared: punto A (abajo) y punto B (arriba).</li>
+    <li><b>Pared derecha</b>Lo mismo del otro lado: punto A (abajo) y punto B (arriba).</li>
+    <li><b>Arriba</b>Desnivel del techo / parte superior.</li>
+    <li><b>Abajo</b>Desnivel del piso / parte inferior.</li>
+    <li><b>Foto con medidas</b>Toma una foto del hueco con las medidas visibles (requiere plan Pro o superior).</li>
+    <li><b>Resumen</b>Revisa todo, guarda el trabajo y compártelo si tu plan lo permite.</li>
+  </ol>
+  <h3>Consejos</h3>
+  <ul>
+    <li>Mide siempre en el mismo orden para no confundir los puntos A y B.</li>
+    <li>Si un desnivel te da cero en ambos puntos, la pared está a plomo — perfecto.</li>
+    <li>La foto del paso 7 te salva de discusiones: siempre tómala antes de irte del sitio.</li>
+  </ul>
+</section>
+
+<section id="planes">
+  <h2>💳 Planes y pagos</h2>
+  <table>
+    <tr><th>Plan</th><th>Precio</th><th>Incluye</th></tr>
+    <tr><td><b>Gratis</b></td><td class="price">$0</td><td>3 guardados · sin compartir · sin capturas</td></tr>
+    <tr><td><b>Pro Mensual</b></td><td class="price">$5.99/mes</td><td rowspan="5">Guardados ilimitados · compartir trabajos · capturas de pantalla · foto con medidas</td></tr>
+    <tr><td><b>Pro Semestral</b></td><td class="price">$34.99/6 meses</td></tr>
+    <tr><td><b>Pro Anual</b></td><td class="price">$59.99/año</td></tr>
+    <tr><td><b>Pro 5 años</b></td><td class="price">$199.99</td></tr>
+    <tr><td><b>Pro Perpetuo</b></td><td class="price">$299.99 único</td></tr>
+    <tr><td><b>Ultra Mensual</b></td><td class="price">$10.99/mes</td><td rowspan="2">Todo lo de Pro · hasta 30 usuarios · enlaces únicos por trabajo · fotos del equipo</td></tr>
+    <tr><td><b>Ultra Anual</b></td><td class="price">$109.99/año</td></tr>
+  </table>
+  <h3>Suscripciones y cancelación</h3>
+  <ul>
+    <li>Las suscripciones se compran con <b>Google Play Billing</b> y se renuevan automáticamente.</li>
+    <li>Para cancelar o cambiar tu plan: abre <b>Play Store → tu perfil → Pagos y suscripciones → Suscripciones</b> → Nivelato → Cancelar.</li>
+    <li>Al cancelar, mantienes el acceso hasta el fin del período pagado.</li>
+    <li><b>Pro Perpetuo</b> es un pago único, no se renueva.</li>
+    <li>Los reembolsos los procesa Google Play según su política.</li>
+  </ul>
+  <h3>¿Pro o Ultra?</h3>
+  <ul>
+    <li><b>Pro</b> es para ti solo: tus medidas, tus trabajos, tu teléfono.</li>
+    <li><b>Ultra</b> es para equipos: hasta 30 usuarios bajo una sola suscripción, con enlaces únicos para compartir trabajos con el resto del crew.</li>
+  </ul>
+</section>
+
+<section id="cuenta">
+  <h2>👤 Cuenta y datos</h2>
+  <ul>
+    <li><b>Cambiar de teléfono:</b> inicia sesión con la misma cuenta (Google o email) en el nuevo equipo. Tu suscripción de Google Play viaja contigo.</li>
+    <li><b>Borrar tu cuenta:</b> dentro de la app, en la pantalla "Privacidad y datos", puedes eliminar tu cuenta — esto borra tu email, el vínculo con tu equipo y tus datos en la nube.</li>
+    <li><b>Qué guardamos:</b> tu email (identidad de cuenta), el vínculo con tu dispositivo y tus trabajos guardados. Detalles completos en la <a href="privacy.html">política de privacidad</a>.</li>
+    <li><b>¿Olvidaste tu contraseña?</b> Usa "¿Olvidaste tu contraseña?" en la pantalla de login con email.</li>
+  </ul>
+</section>
+
+<section id="problemas" class="faq">
+  <h2>🔧 Problemas comunes</h2>
+  <details>
+    <summary>No puedo iniciar sesión con Google</summary>
+    <div class="a">Verifica que el teléfono tenga conexión a internet y que la fecha/hora estén en automático. Si el error persiste, borra el caché de Google Play Services y reintenta.</div>
+  </details>
+  <details>
+    <summary>Compré Pro pero la app sigue en modo gratis</summary>
+    <div class="a">Cierra la app por completo y vuelve a abrirla con internet — la app verifica tu suscripción al iniciar. Si sigue sin activarse, confirma en Play Store → Suscripciones que el pago se procesó, y escríbenos con tu email de cuenta.</div>
+  </details>
+  <details>
+    <summary>Mis trabajos no aparecen / no sincronizan</summary>
+    <div class="a">La sincronización requiere internet. Abre la app conectado y espera unos segundos. Si un trabajo se guardó sin conexión, aparece al reconectarte.</div>
+  </details>
+  <details>
+    <summary>La cámara no abre en el paso de foto</summary>
+    <div class="a">Nivelato necesita permiso de cámara: ve a Ajustes de Android → Apps → Nivelato → Permisos → Cámara → Permitir.</div>
+  </details>
+  <details>
+    <summary>Las fracciones no me cuadran</summary>
+    <div class="a">La app trabaja en fracciones de pulgada (½, ¼, ⅛, 1/16). Entra el número entero y elige la fracción del menú — no escribas decimales en el campo de fracción.</div>
+  </details>
+  <details>
+    <summary>La app se cierra al abrirla</summary>
+    <div class="a">Asegúrate de tener la última versión desde Play Store. Si el problema sigue, reinicia el teléfono. Como último recurso, reinstala (tus trabajos en la nube no se pierden).</div>
+  </details>
+  <details>
+    <summary>¿Funciona sin internet?</summary>
+    <div class="a">Sí para medir: una vez iniciada la sesión, puedes completar trabajos sin conexión. Necesitas internet para iniciar sesión, sincronizar y verificar tu suscripción.</div>
+  </details>
+</section>
+
+<section id="contacto">
+  <h2>✉️ Contacto</h2>
+  <p>¿No encontraste tu respuesta? Escríbenos a <a href="mailto:legobele@gmail.com"><b>legobele@gmail.com</b></a></p>
+  <p style="margin-top:8px; font-size:13.5px; color: var(--muted);">Incluye tu email de cuenta, modelo de teléfono y versión de Android para ayudarte más rápido.</p>
+</section>
+
+</main>
+
+<footer>
+  Nivelato · Centro de ayuda<br>
+  <a href="privacy.html">Política de privacidad</a>
+</footer>
+
+</body>
+</html>
