@@ -4,24 +4,24 @@
 <meta charset="UTF-8" />
 <script src="./company-theme.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="theme-color" content="#0b0b0e" />
+<meta name="theme-color" content="#0d0d0f" />
+<link rel="manifest" href="manifest.json" />
 <title>Nivelato - Updates</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg: #0b0b0e;
-    --card: #16161c;
-    --line: #232329;
-    --line-soft: #1c1c21;
-    --text: #f2f1ec;
-    --muted: #a7a7b3;
-    --faint: #6d6d75;
-    --amber: #f5a524;
-    --amber-dark: #cf8a1a;
-    --amber-dim: rgba(245, 165, 36, 0.12);
-    --radius-lg: 20px;
-    --radius-md: 14px;
-    --radius-sm: 10px;
+    --bg: #0d0d0f;
+    --card: #101013;
+    --line: #2a2a2e;
+    --line-soft: #1f1f23;
+    --text: #f1f1f2;
+    --muted: #9a9aa0;
+    --faint: #6d6d74;
+    --blue: #1e9df0;
+    --blue-dark: #1478bd;
+    --radius-lg: 28px;
+    --radius-md: 18px;
+    --radius-sm: 12px;
   }
   * { box-sizing: border-box; }
   body {
@@ -31,8 +31,10 @@
     font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
     min-height: 100vh;
   }
-  .shell { display: flex; min-height: 100vh; }
-
+  .shell {
+    display: flex;
+    min-height: 100vh;
+  }
   /* ---------- sidebar ---------- */
   .sidebar {
     width: 300px;
@@ -41,14 +43,14 @@
     padding: 24px 18px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    background: #0d0d10;
+    gap: 12px;
+    background: #0b0b0d;
   }
   .org-head {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 4px 6px 18px;
+    padding: 4px 6px 16px;
   }
   .org-avatar {
     width: 64px;
@@ -59,7 +61,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Space Grotesk', sans-serif;
     font-size: 20px;
     font-weight: 600;
     color: var(--text);
@@ -72,22 +73,12 @@
     line-height: 1.3;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 180px;
   }
-  .org-version-link {
-    background: none;
-    border: none;
-    padding: 0;
-    margin-top: 6px;
+  .org-version {
     font-size: 13px;
-    font-family: inherit;
-    color: var(--amber);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    cursor: pointer;
+    color: var(--muted);
+    margin-top: 6px;
   }
-  .org-version-link:hover { color: #ffb84d; }
   .nav-btn {
     display: block;
     width: 100%;
@@ -104,7 +95,7 @@
     text-align: center;
     text-decoration: none;
   }
-  .nav-btn.soon { color: var(--muted); cursor: default; }
+  .nav-btn.soon { color: var(--muted); }
   .nav-btn .soon-badge {
     position: absolute;
     top: 6px;
@@ -139,16 +130,14 @@
     border: 1.5px solid var(--muted);
     background: transparent;
   }
-  .nav-btn.active .dot.on { background: var(--amber); border-color: var(--amber); }
-
+  .nav-btn.active .dot.on { background: var(--blue); border-color: var(--blue); }
   /* ---------- main ---------- */
   .main {
     flex: 1;
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    justify-content: center;
+    align-items: flex-start;
     padding: 48px 32px;
-    gap: 24px;
   }
   .update-card {
     width: 100%;
@@ -162,7 +151,7 @@
     display: flex;
     align-items: center;
     gap: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   }
   .mini-logo {
     width: 76px;
@@ -173,43 +162,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Space Grotesk', sans-serif;
     font-size: 26px;
     font-weight: 700;
     color: var(--text);
     background: var(--bg);
   }
   .card-title {
-    font-family: 'Space Grotesk', sans-serif;
     font-size: clamp(30px, 5vw, 44px);
     font-weight: 700;
     margin: 0;
     letter-spacing: -0.5px;
   }
-  .card-title .adot { color: var(--amber); }
-  .dl-row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 20px;
-  }
-  .dl-label { font-size: 14px; color: var(--text); white-space: nowrap; }
-  .progress-track {
-    flex: 1;
-    height: 14px;
-    border: 1.5px solid var(--line);
-    border-radius: 9999px;
-    background: var(--bg);
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    width: 0%;
-    background: var(--amber);
-    border-radius: 9999px;
-    transition: width 0.5s ease;
-  }
-  .progress-step { font-size: 13px; color: var(--muted); margin-bottom: 12px; min-height: 20px; }
   .notes-box {
     border: 1.5px solid var(--line);
     border-radius: var(--radius-md);
@@ -221,17 +184,7 @@
   }
   .notes-box p { margin: 0 0 12px; }
   .notes-box p:last-child { margin-bottom: 0; }
-  .notes-box .change-item { margin-bottom: 8px; }
-  .notes-box .change-ver {
-    display: inline-block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--amber);
-    border: 1px solid var(--line);
-    border-radius: 9999px;
-    padding: 1px 10px;
-    margin-right: 8px;
-  }
+  .notes-box a { color: var(--text); text-decoration: underline; word-break: break-all; }
   .btn {
     display: block;
     width: 100%;
@@ -243,23 +196,23 @@
     font-family: inherit;
     cursor: pointer;
     margin-bottom: 12px;
-    transition: transform 0.12s, background 0.15s, border-color 0.15s;
+    transition: transform 0.12s, background 0.15s;
   }
   .btn:last-child { margin-bottom: 0; }
   .btn:active { transform: scale(0.99); }
   .btn:disabled { opacity: 0.55; cursor: default; }
   .btn-primary {
-    background: var(--amber);
-    color: #1a1206;
-    border: 1.5px solid var(--amber);
+    background: var(--blue);
+    color: #fff;
+    border: 1.5px solid var(--blue);
   }
-  .btn-primary:hover:not(:disabled) { background: #ffb84d; border-color: #ffb84d; }
+  .btn-primary:hover:not(:disabled) { background: #25a8f7; }
   .btn-outline {
     background: transparent;
     color: var(--text);
     border: 1.5px solid var(--line);
   }
-  .btn-outline:hover:not(:disabled) { border-color: var(--amber); background: var(--amber-dim); }
+  .btn-outline:hover:not(:disabled) { border-color: #3a3a40; background: #141417; }
   .caption {
     text-align: center;
     font-size: 13px;
@@ -273,51 +226,25 @@
     color: var(--faint);
     margin: 14px 0 0;
   }
-
-  /* other options */
-  .other-options {
-    width: 100%;
-    max-width: 720px;
-  }
-  .other-options h3 {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--faint);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin: 0 0 12px 4px;
-  }
-  .opt-row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    background: var(--card);
+  /* progress */
+  .progress-label { font-size: 14px; color: var(--text); margin-bottom: 10px; }
+  .progress-step { font-size: 13px; color: var(--muted); margin-bottom: 10px; min-height: 20px; }
+  .progress-track {
+    height: 14px;
     border: 1.5px solid var(--line);
     border-radius: 9999px;
-    padding: 12px 24px 12px 12px;
-    margin-bottom: 10px;
-  }
-  .opt-row:last-child { margin-bottom: 0; }
-  .opt-img {
-    width: 52px;
-    height: 52px;
-    flex: none;
-    border-radius: 50%;
-    border: 1.5px solid var(--line);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--muted);
     background: var(--bg);
+    overflow: hidden;
+    margin-bottom: 24px;
   }
-  .opt-label { font-size: 15px; font-weight: 600; }
-  .opt-sub { font-size: 12px; color: var(--faint); margin-top: 2px; }
-  .opt-row.future { opacity: 0.6; }
-
-  /* tonight */
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--blue);
+    border-radius: 9999px;
+    transition: width 0.5s ease;
+  }
+  /* tonight list */
   .tonight-text {
     text-align: center;
     font-size: 14px;
@@ -325,27 +252,36 @@
     color: var(--text);
     margin: 6px 0 24px;
   }
-  .online-list { list-style: none; padding: 0; margin: 10px 0 0; }
-  .online-list li { font-size: 14px; color: var(--muted); padding: 4px 0; }
+  .online-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0;
+  }
+  .online-list li {
+    font-size: 14px;
+    color: var(--muted);
+    padding: 4px 0;
+  }
   .online-list li .you { color: var(--text); }
-
   /* up to date */
-  .uptodate { text-align: center; padding: 48px 20px; }
+  .uptodate {
+    text-align: center;
+    padding: 48px 20px;
+  }
   .uptodate .check {
     width: 64px;
     height: 64px;
     margin: 0 auto 18px;
     border-radius: 50%;
-    border: 1.5px solid var(--amber);
+    border: 1.5px solid var(--line);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 28px;
-    color: var(--amber);
+    color: var(--blue);
   }
   .uptodate h2 { font-size: 20px; font-weight: 700; margin: 0 0 8px; }
   .uptodate p { font-size: 14px; color: var(--muted); margin: 0; }
-
   .state-loading { text-align: center; color: var(--faint); font-size: 14px; padding: 40px 0; }
   .state-error {
     border: 1.5px solid #5c2121;
@@ -356,34 +292,11 @@
     font-size: 14px;
     text-align: center;
   }
-
-  /* version detail popover */
-  .ver-pop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 50;
-    padding: 20px;
-  }
-  .ver-pop-card {
-    background: var(--card);
-    border: 1.5px solid var(--line);
-    border-radius: var(--radius-lg);
-    padding: 28px 32px;
-    max-width: 420px;
-    width: 100%;
-  }
-  .ver-pop-card h3 { margin: 0 0 12px; font-size: 18px; }
-  .ver-pop-card p { font-size: 14px; color: var(--muted); line-height: 1.6; margin: 0 0 20px; }
-
   @media (max-width: 768px) {
     .sidebar { display: none; }
     .main { padding: 20px 16px; }
-    .update-card { padding: 24px 20px; }
-    .card-top { gap: 14px; margin-bottom: 16px; }
+    .update-card { padding: 24px 20px; border-radius: var(--radius-lg); }
+    .card-top { gap: 14px; margin-bottom: 18px; }
     .mini-logo { width: 60px; height: 78px; font-size: 22px; }
   }
 </style>
@@ -396,13 +309,13 @@
       <div class="org-avatar" id="org-avatar">--</div>
       <div>
         <div class="org-name" id="org-name">Loading...</div>
-        <button class="org-version-link" id="org-version" type="button">Nivelato</button>
+        <div class="org-version" id="org-version">Nivelato</div>
       </div>
     </div>
     <a class="nav-btn" href="/company/users"><span class="nav-label">Users</span></a>
-    <button class="nav-btn soon" disabled type="button">Projects<span class="soon-badge">soon</span></button>
-    <button class="nav-btn soon" disabled type="button">Billing<span class="soon-badge">soon</span></button>
-    <button class="nav-btn active" type="button" aria-current="page">
+    <button class="nav-btn soon" disabled>Project management<span class="soon-badge">soon</span></button>
+    <button class="nav-btn soon" disabled>Billing<span class="soon-badge">soon</span></button>
+    <button class="nav-btn active" aria-current="page">
       <span class="nav-label">Updates</span>
       <span class="nav-sub" id="updates-sub">Checking...</span>
       <span class="dot" id="updates-dot"></span>
@@ -411,10 +324,6 @@
   <main class="main">
     <div class="update-card" id="update-card">
       <div class="state-loading" id="loading-state">Loading update status...</div>
-    </div>
-    <div class="other-options" id="other-options" style="display:none">
-      <h3>Other options</h3>
-      <div id="other-options-list"></div>
     </div>
   </main>
 </div>
@@ -428,71 +337,24 @@ import {
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
 import { startPresence, getOnlineUsers } from './presence.js';
 
-// ---------------------------------------------------------------------------
-// UI version heuristics (mirrors webapp/ui-version.js).
-// The tag (e.g. v1.1.1-darkmode-qgc) is INTERNAL ONLY and never rendered.
-// Only user-friendly labels like "Nivelato 1.1" reach the DOM.
-// ---------------------------------------------------------------------------
-function parseUiTag(tag) {
-  const m = String(tag || '').trim().match(/^v([^-]+)-([^-]+)-(.+)$/);
-  if (!m) return null;
-  return { semver: m[1], theme: m[2], orgId: m[3] };
-}
-function compareSemver(a, b) {
-  const pa = String(a || '').split('.'), pb = String(b || '').split('.');
-  for (let i = 0; i < 3; i++) {
-    const x = Number(pa[i]) || 0, y = Number(pb[i]) || 0;
-    if (x > y) return 1;
-    if (x < y) return -1;
-  }
-  return 0;
-}
-// Friendly label: "1.1.1" -> "Nivelato 1.1" (major.minor, no patch, no tag).
-function friendlyVersion(semver) {
-  const parts = String(semver || '').split('.');
-  const mm = parts.length >= 2 ? parts[0] + '.' + parts[1] : String(semver || '');
-  return 'Nivelato ' + mm;
-}
-function getUpdatesForUser(currentTag, latestInfo) {
-  const latestSemver = latestInfo && latestInfo.latestSemver;
-  const changelog = (latestInfo && latestInfo.changelog) || {};
-  const empty = { hasUpdate: false, fromSemver: null, toSemver: latestSemver || null, changes: [] };
-  if (!latestSemver) return empty;
-  const parsed = parseUiTag(currentTag);
-  if (!parsed) return { hasUpdate: false, fromSemver: null, toSemver: latestSemver, changes: [] };
-  if (compareSemver(latestSemver, parsed.semver) <= 0) {
-    empty.fromSemver = parsed.semver;
-    return empty;
-  }
-  const versions = Object.keys(changelog)
-    .filter((v) => compareSemver(v, parsed.semver) > 0 && compareSemver(v, latestSemver) <= 0)
-    .sort(compareSemver)
-    .reverse();
-  const changes = [];
-  versions.forEach((v) => {
-    (Array.isArray(changelog[v]) ? changelog[v] : []).forEach((e) => {
-      changes.push({ version: v, text: String(e) });
-    });
-  });
-  return { hasUpdate: true, fromSemver: parsed.semver, toSemver: latestSemver, changes };
-}
-
-// Escape ALL user-controlled strings before innerHTML (stored XSS).
+// Escape ALL user-controlled strings before innerHTML interpolation (stored XSS).
+// Names, roles, and update notes come from Firestore and members can set their own.
 const escapeHtml = (s) => String(s ?? '')
-  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
 
 const card = document.getElementById('update-card');
-const otherBox = document.getElementById('other-options');
-const otherList = document.getElementById('other-options-list');
+const SECURITY_URL = 'faq.nivelatolabs.com/company/updates#about-security';
 
 let currentUser = null;
 let currentUserData = null;
 let orgId = null;
-let orgData = null;
-let latestInfo = null;   // config/ui_versions
-let orgTagDoc = null;    // config/ui_versions/orgs/{orgId}
-let updateState = null;  // getUpdatesForUser() result
+let orgData = null;      // orgs/{orgId}
+let latestDoc = null;    // app_updates/latest
+let updateDocData = null; // app_updates/{latest version}
 let applying = false;
 let unsubOrg = null;
 let onlineRefreshTimer = null;
@@ -507,9 +369,13 @@ function initialsOf(name) {
   return (first + second).toUpperCase();
 }
 
-function currentSemver() {
-  const parsed = parseUiTag(orgTagDoc && orgTagDoc.tag);
-  return parsed ? parsed.semver : null;
+function dataVersion() {
+  return (orgData && orgData.dataVersion) ? String(orgData.dataVersion) : '0.9';
+}
+
+function updateAvailable() {
+  if (!latestDoc || !latestDoc.version) return false;
+  return dataVersion() !== String(latestDoc.version);
 }
 
 function pendingScheduled() {
@@ -520,100 +386,66 @@ function renderSidebar() {
   const name = orgData && orgData.name ? orgData.name : 'Company';
   document.getElementById('org-avatar').textContent = initialsOf(name);
   document.getElementById('org-name').textContent = name;
-  const sem = currentSemver();
-  document.getElementById('org-version').textContent = sem ? 'Nivelato v' + sem : 'Nivelato';
-  const pending = (updateState && updateState.hasUpdate) || pendingScheduled();
+  document.getElementById('org-version').textContent = 'Nivelato v' + dataVersion();
+  const pending = updateAvailable() || pendingScheduled();
   document.getElementById('updates-sub').textContent = pending ? 'New version available' : 'Up to date';
-  document.getElementById('updates-dot').classList.toggle('on', !!pending);
+  document.getElementById('updates-dot').classList.toggle('on', pending);
 }
 
 function render() {
   renderSidebar();
-  if (applying) return;
+  if (applying) return; // (b) owns the card while applying
   if (pendingScheduled()) return renderScheduled();
-  if (updateState && updateState.hasUpdate) return renderAvailable();
+  if (updateAvailable()) return renderAvailable();
   return renderUpToDate();
 }
 
 function ownerButtons(html) {
-  return isOwner()
-    ? html
-    : '<p class="note-owner">Only org owners can apply updates. Ask an owner to update.</p>';
-}
-
-function changeListHtml(changes) {
-  if (!changes || !changes.length) {
-    return '<p>This update includes improvements and fixes.</p>';
-  }
-  return changes.map((c) =>
-    '<p class="change-item"><span class="change-ver">v' + escapeHtml(c.version) +
-    '</span>' + escapeHtml(c.text) + '</p>'
-  ).join('');
+  return isOwner() ? html : '<p class="note-owner">Only org owners can apply updates. Contact an owner to update.</p>';
 }
 
 // ---- state (a): update available ----
 function renderAvailable() {
-  const to = updateState.toSemver;
-  const title = friendlyVersion(to);
+  const u = updateDocData || {};
+  const version = escapeHtml(u.version || (latestDoc && latestDoc.version) || '');
+  const title = escapeHtml(u.title || ('Nivelato v' + version));
+  const notes = escapeHtml(u.notes || 'This update includes new features and improvements.');
   card.innerHTML = `
     <div class="card-top">
-      <div class="mini-logo">N<span class="adot" style="color:var(--amber)">.</span></div>
-      <h1 class="card-title">${escapeHtml(title)}</h1>
+      <div class="mini-logo">N</div>
+      <h1 class="card-title">${title}</h1>
     </div>
-    <div class="notes-box">${changeListHtml(updateState.changes)}</div>
+    <div class="notes-box">
+      <p>${notes}</p>
+      <p>For information about the security of updates see <a href="https://${SECURITY_URL}" target="_blank" rel="noopener">${SECURITY_URL}</a>.</p>
+    </div>
     ${ownerButtons(`
       <button class="btn btn-primary" id="btn-update-now">Update Now</button>
       <button class="btn btn-outline" id="btn-update-tonight">Update Tonight</button>
-      <p class="caption">Selecting &quot;Update Tonight&quot; will update once all users have exited the app.</p>
+      <p class="caption">Selecting "Update Tonight" will update once all users have exited the app.</p>
     `)}
   `;
   const btnNow = document.getElementById('btn-update-now');
   const btnTonight = document.getElementById('btn-update-tonight');
   if (btnNow) btnNow.addEventListener('click', onUpdateNow);
   if (btnTonight) btnTonight.addEventListener('click', onUpdateTonight);
-  renderOtherOptions();
 }
 
-// ---- other options: extra versions newer than current, beyond the latest ----
-function renderOtherOptions() {
-  const latest = latestInfo || {};
-  const changelog = latest.changelog || {};
-  const sem = currentSemver();
-  const extra = Object.keys(changelog)
-    .filter((v) => sem && compareSemver(v, sem) > 0 && compareSemver(v, updateState.toSemver) > 0)
-    .sort(compareSemver);
-  if (!extra.length) {
-    // Mockup shows a "Nivelato 2" future row; show it as a coming-soon placeholder
-    // only when the changelog hints at a next major line.
-    otherBox.style.display = 'none';
-    return;
-  }
-  otherBox.style.display = '';
-  otherList.innerHTML = extra.map((v) => `
-    <div class="opt-row future">
-      <div class="opt-img">N</div>
-      <div>
-        <div class="opt-label">${escapeHtml(friendlyVersion(v))}</div>
-        <div class="opt-sub">Available after updating to ${escapeHtml(friendlyVersion(updateState.toSemver))}</div>
-      </div>
-    </div>
-  `).join('');
-}
-
-// ---- state (b): applying / downloading ----
+// ---- state (b): applying ----
 function renderApplying(stepLabel, pct) {
-  const title = updateState ? friendlyVersion(updateState.toSemver) : 'Nivelato';
+  const u = updateDocData || {};
+  const version = escapeHtml(u.version || (latestDoc && latestDoc.version) || '');
+  const title = escapeHtml(u.title || ('Nivelato v' + version));
+  const notes = escapeHtml(u.notes || '');
   card.innerHTML = `
     <div class="card-top">
-      <div class="mini-logo">N<span style="color:var(--amber)">.</span></div>
-      <h1 class="card-title">${escapeHtml(title)}</h1>
+      <div class="mini-logo">N</div>
+      <h1 class="card-title">${title}</h1>
     </div>
-    <div class="dl-row">
-      <span class="dl-label">Downloading (${pct}%)</span>
-      <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
-    </div>
+    <div class="progress-label">Applying update (${pct}%)</div>
     <div class="progress-step">${escapeHtml(stepLabel || 'Starting...')}</div>
-    <div class="notes-box">${changeListHtml(updateState ? updateState.changes : [])}</div>
+    <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+    ${notes ? `<div class="notes-box"><p>${notes}</p></div>` : ''}
     ${isOwner() ? '<button class="btn btn-outline" id="btn-cancel">Cancel update</button>' : ''}
   `;
   const btn = document.getElementById('btn-cancel');
@@ -622,19 +454,21 @@ function renderApplying(stepLabel, pct) {
 
 async function onUpdateNow() {
   if (!isOwner()) return;
-  const to = updateState ? updateState.toSemver : '';
-  if (!confirm('Apply update to v' + to + ' now? This may take a few minutes.')) return;
+  const version = (latestDoc && latestDoc.version) || '';
+  if (!confirm('Apply update to v' + version + ' now? The backend will be updated and this may take a few minutes.')) return;
   applying = true;
-  renderApplying('Downloading update package...', 5);
+  renderApplying('Starting...', 0);
+  const btnCancel = document.getElementById('btn-cancel');
+  if (btnCancel) btnCancel.addEventListener('click', onCancelUpdate);
   try {
     const functions = getFunctions(undefined, 'us-central1');
     const applyCompanyUpdate = httpsCallable(functions, 'applyCompanyUpdate');
-    const result = await applyCompanyUpdate({ targetSemver: to });
+    const result = await applyCompanyUpdate({});
     const steps = (result && result.data && Array.isArray(result.data.steps))
       ? result.data.steps.map(String)
       : ['Applying update'];
     for (let i = 0; i < steps.length; i++) {
-      if (!applying) return;
+      if (!applying) return; // cancelled
       const pct = Math.round(((i + 1) / steps.length) * 100);
       renderApplying(steps[i], pct);
       const b = document.getElementById('btn-cancel');
@@ -648,24 +482,29 @@ async function onUpdateNow() {
     await new Promise((r) => setTimeout(r, 2500));
   }
   applying = false;
-  await refreshVersionDocs();
+  // refresh org data (dataVersion should now equal latest)
+  try {
+    const snap = await getDoc(doc(db, 'orgs', orgId));
+    orgData = snap.data() || {};
+  } catch (_) { /* render with what we have */ }
   render();
 }
 
 // ---- state (c): scheduled for tonight ----
 function renderScheduled() {
+  const u = updateDocData || {};
+  const version = escapeHtml(u.version || (latestDoc && latestDoc.version) || '');
+  const title = escapeHtml(u.title || ('Nivelato v' + version));
+  const notes = escapeHtml(u.notes || '');
   const pend = orgData.pendingUpdate || {};
-  const ver = pend.version || (updateState ? updateState.toSemver : '');
-  const title = ver ? friendlyVersion(ver) : 'Nivelato';
+  const scheduledVer = escapeHtml(pend.version || version);
   card.innerHTML = `
     <div class="card-top">
-      <div class="mini-logo">N<span style="color:var(--amber)">.</span></div>
-      <h1 class="card-title">${escapeHtml(title)}</h1>
+      <div class="mini-logo">N</div>
+      <h1 class="card-title">${title}</h1>
     </div>
-    <div class="dl-row">
-      <span class="dl-label">Update scheduled</span>
-      <div class="progress-track"><div class="progress-fill" style="width:100%"></div></div>
-    </div>
+    <div class="progress-label">Update v${scheduledVer} scheduled</div>
+    ${notes ? `<div class="notes-box"><p>${notes}</p></div>` : ''}
     <div class="tonight-text">
       <span id="tonight-line">Checking who is still online...</span>
       <ul class="online-list" id="online-list"></ul>
@@ -687,12 +526,12 @@ async function refreshOnlineList() {
     const users = await getOnlineUsers(orgId);
     const n = users.length;
     if (n === 0) {
-      line.textContent = 'No users are online, so the update will start soon.';
+      line.textContent = 'Updating tonight. No users are online, so the update will start soon.';
       list.innerHTML = '';
       return;
     }
-    line.textContent = n + (n === 1 ? ' user is' : ' users are') +
-      ' still online. The update starts once everyone has exited the app:';
+    line.textContent = 'Updating tonight. ' + n + (n === 1 ? ' user is' : ' users are') +
+      ' still online, so the update will not start until those users leave:';
     list.innerHTML = users.map((u) => {
       const name = escapeHtml(u.name || 'Unknown user');
       const role = escapeHtml(u.role || '');
@@ -700,29 +539,27 @@ async function refreshOnlineList() {
       return `<li>- ${name}${role ? ' (' + role + ')' : ''}${you}</li>`;
     }).join('');
   } catch (e) {
-    line.textContent = 'Could not load the list of online users.';
+    line.textContent = 'Updating tonight. Could not load the list of online users.';
   }
 }
 
 // ---- state (d): up to date ----
 function renderUpToDate() {
-  const sem = currentSemver();
   card.innerHTML = `
     <div class="uptodate">
       <div class="check">&#10003;</div>
       <h2>You&apos;re on the latest version.</h2>
-      <p>${sem ? escapeHtml('Nivelato v' + sem) : 'Nivelato'}</p>
+      <p>Nivelato v${escapeHtml(dataVersion())}</p>
     </div>
   `;
-  otherBox.style.display = 'none';
 }
 
 async function onUpdateTonight() {
   if (!isOwner()) return;
-  const to = updateState ? updateState.toSemver : '';
+  const version = String((latestDoc && latestDoc.version) || '');
   try {
     await updateDoc(doc(db, 'orgs', orgId), {
-      pendingUpdate: { version: to, scheduledBy: currentUser.uid, scheduledAt: serverTimestamp() }
+      pendingUpdate: { version, scheduledBy: currentUser.uid, scheduledAt: serverTimestamp() }
     });
   } catch (e) {
     alert('Could not schedule the update: ' + (e.message || 'unknown error'));
@@ -736,53 +573,16 @@ async function onCancelUpdate() {
   } catch (e) {
     alert('Could not cancel the update: ' + (e.message || 'unknown error'));
   }
-  applying = false;
-}
-
-async function refreshVersionDocs() {
-  try {
-    const latestSnap = await getDoc(doc(db, 'config', 'ui_versions'));
-    latestInfo = latestSnap.exists() ? latestSnap.data() : null;
-    const tagSnap = await getDoc(doc(db, 'config', 'ui_versions', 'orgs', orgId));
-    orgTagDoc = tagSnap.exists() ? tagSnap.data() : null;
-    updateState = getUpdatesForUser(orgTagDoc && orgTagDoc.tag, latestInfo);
-  } catch (e) {
-    console.warn('[Nivelato] could not read ui_versions:', e.message);
+  if (applying) {
+    // The callable may still be running server-side; stop animating and go back to (a).
+    applying = false;
   }
 }
-
-// ---- version detail popover (underlined version link) ----
-document.getElementById('org-version').addEventListener('click', () => {
-  const sem = currentSemver();
-  const pop = document.createElement('div');
-  pop.className = 'ver-pop';
-  pop.innerHTML = `
-    <div class="ver-pop-card">
-      <h3>Version details</h3>
-      <p>${sem
-        ? 'This company is running <b>' + escapeHtml('Nivelato v' + sem) + '</b>.' +
-          (latestInfo && latestInfo.latestSemver && compareSemver(latestInfo.latestSemver, sem) > 0
-            ? ' A newer release (<b>' + escapeHtml('Nivelato v' + latestInfo.latestSemver) + '</b>) is available in Updates.'
-            : ' This is the latest release.')
-        : 'Version information is not available yet.'}</p>
-      <button class="btn btn-outline" id="ver-pop-close">Close</button>
-    </div>
-  `;
-  // NOTE: internal tag is intentionally never shown here.
-  document.body.appendChild(pop);
-  document.getElementById('ver-pop-close').addEventListener('click', () => pop.remove());
-  pop.addEventListener('click', (e) => { if (e.target === pop) pop.remove(); });
-});
 
 // ---- auth + data ----
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href);
-    return;
-  }
+  if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
   currentUser = user;
-
-  // Backup theme pass: in case the fast path or doc-based check could not run.
   if (window.applyCompanyThemeFromAuth) { try { window.applyCompanyThemeFromAuth(auth); } catch (_) {} }
 
   const userSnap = await getDoc(doc(db, 'users', user.uid));
@@ -799,8 +599,19 @@ onAuthStateChanged(auth, async (user) => {
     console.warn('[Nivelato] presence start failed:', e.message);
   }
 
-  await refreshVersionDocs();
+  // latest + update doc (public read)
+  try {
+    const latestSnap = await getDoc(doc(db, 'app_updates', 'latest'));
+    latestDoc = latestSnap.exists() ? latestSnap.data() : null;
+    if (latestDoc && latestDoc.version) {
+      const updSnap = await getDoc(doc(db, 'app_updates', String(latestDoc.version)));
+      updateDocData = updSnap.exists() ? updSnap.data() : null;
+    }
+  } catch (e) {
+    console.warn('[Nivelato] could not read app_updates:', e.message);
+  }
 
+  // live org doc so scheduling/cancel/apply reflect for everyone
   if (unsubOrg) unsubOrg();
   unsubOrg = onSnapshot(doc(db, 'orgs', orgId),
     (snap) => {
