@@ -15,6 +15,7 @@
 <script type="module" src="grass.js"></script>
 <script src="testing.js" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="niv-dark.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Inter', sans-serif; background: #f0f2f5; min-height: 100dvh; }
@@ -365,21 +366,115 @@
       .qpdf-foot { margin-top: 14pt; padding-top: 6pt; border-top: 1px solid #dee2e6; font-size: 9pt; color: #666; text-align: center; }
     }
   </style>
+  <style>
+  /* ============ NIVELATO DARK THEME (mockup) ============ */
+  body { background: #0e0e10; color: #f5f5f7; }
+  main { max-width: none; padding: 0; }
+  h1 { color: #f5f5f7; }
+  .subtitle { color: #a7a7ad; }
+
+  /* stats */
+  .stat-card { background: #17171a; border: 1px solid rgba(255,255,255,0.14); box-shadow: none; border-radius: 18px; }
+  .stat-num { color: #f5f5f7; }
+  .stat-label { color: #a7a7ad; }
+
+  /* filters */
+  .filter-row input, .filter-row select, .date-input-wrap input[type="date"] {
+    background: #1e1e22; border: 1.5px solid rgba(255,255,255,0.14); color: #f5f5f7; color-scheme: dark;
+  }
+  .filter-row input:focus, .filter-row select:focus, .date-input-wrap input[type="date"]:focus {
+    border-color: #1971c2; box-shadow: 0 0 0 3px rgba(25,113,194,0.25);
+  }
+  .filter-row select:disabled { color: #6c757d; background-color: #17171a; }
+  .date-input-wrap .date-placeholder { color: #a7a7ad; }
+
+  /* join code section */
+  #join-code-section { background: #17171a !important; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; }
+
+  /* job cards */
+  .job-card { background: #17171a; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; box-shadow: none; }
+  .job-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+  .job-title { color: #f5f5f7; }
+  .job-date { color: #a7a7ad; }
+  .job-meta { color: #c9c9cf; }
+  .tag-ok { background: rgba(47,158,68,0.2); color: #4ade80; }
+  .tag-warn { background: rgba(230,119,0,0.2); color: #fbbf24; }
+
+  /* modals */
+  .modal { background: #17171a; border: 1px solid rgba(255,255,255,0.28); }
+  .modal::before { background: rgba(255,255,255,0.3); }
+  .modal-title { color: #f5f5f7; }
+  .detail-row { border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .detail-label { color: #a7a7ad; }
+  .detail-val { color: #f5f5f7; }
+  .modal-notes { background: #1e1e22; color: #c9c9cf; }
+  .detail-section-title { color: #6c757d; }
+  .btn-close, .btn-cancel { background: #1e1e22; color: #f5f5f7; border: 1px solid rgba(255,255,255,0.14); }
+  .btn-delete { background: rgba(229,72,77,0.12); border-color: rgba(229,72,77,0.5); color: #f87171; }
+  .btn-delete:hover { background: rgba(229,72,77,0.2); }
+  .btn-edit { background: rgba(25,113,194,0.15); border-color: #1971c2; color: #60a5fa; }
+  .btn-edit:hover { background: rgba(25,113,194,0.25); }
+  .btn-save { background: #1971c2; }
+  .btn-save:hover { background: #1864ab; }
+  .modal-edit-input { background: #1e1e22; border-color: rgba(255,255,255,0.14); color: #f5f5f7; }
+  .modal-edit-input:focus { border-color: #1971c2; box-shadow: 0 0 0 3px rgba(25,113,194,0.25); }
+  .modal-edit-label { color: #6c757d; }
+  /* GRAPH CANVAS: untouched by design. background stays as the graph system renders it. */
+  .empty-state, .loading { color: #a7a7ad; }
+
+  /* pricelist / quotes */
+  .pl-toolbar, .qt-toolbar { color: #f5f5f7; }
+  .btn-save.pl-add, .btn-save.qt-add { width: auto; }
+  #pl-list .job-card, #qt-list .job-card { background: #17171a; }
+
+  /* org badge in sidebar */
+  .niv-sidebar .org-badge { background: rgba(25,113,194,0.2); color: #60a5fa; border: 1px solid rgba(25,113,194,0.5); }
+
+  /* sidebar nav active state sync */
+  .niv-nav-btn.active { background: linear-gradient(135deg, #0ea5a5, #1971c2); }
+
+  /* easter egg modes on dark */
+  .estradiol-mode .niv-company-name { color: #e64980; }
+  .estradiol-mode #estradiol-indicator { display: inline-block; }
+  .italiano-mode .stat-num { color: #4ade80; }
+  .italiano-mode .niv-company-name {
+    background: linear-gradient(90deg, #22c55e 0%, #22c55e 33%, #ffffff 33%, #ffffff 66%, #ef4444 66%, #ef4444 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  </style>
   <link rel="stylesheet" href="./qgc-theme.css" />
 </head>
 <body>
 <canvas id="drawing-canvas" style="display:none;width:340px;height:420px"></canvas>
 
-<header>
-  <div class="header-logo">Nivelato<span id="estradiol-indicator">E2</span></div>
-  <div class="header-right">
-    <div class="org-badge" id="org-name-badge">…</div>
-    <div class="org-badge" id="tier-badge" style="display:none;background:#e7f5ff;color:#1971c2;">Pro</div>
-    <button id="btn-pricelist" onclick="togglePriceListView()" style="display:none;background:#fff;color:#1971c2;border:1.5px solid #1971c2;border-radius:8px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">📋 Precios</button>
-    <button id="btn-quotes" onclick="toggleQuotesView()" style="display:none;background:#fff;color:#1971c2;border:1.5px solid #1971c2;border-radius:8px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">💲 Cotizaciones</button>
-    <button id="btn-new-measure" onclick="window.location.href='index.html'" style="display:none;background:#1971c2;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Nueva medida</button>
+<div class="niv-shell">
+<aside class="niv-sidebar">
+  <div class="niv-company-card">
+    <div class="niv-company-top">
+      <div class="niv-company-avatar" id="sidebar-avatar">N</div>
+      <div>
+        <div class="niv-company-name" id="org-name-badge">…</div>
+        <div class="niv-company-ver">Nivelato v1.0<span id="estradiol-indicator">E2</span></div>
+      </div>
+    </div>
+    <div class="org-badge" id="tier-badge" style="display:none;">Pro</div>
   </div>
-</header>
+  <nav class="niv-nav">
+    <button class="niv-nav-btn active" id="nav-measures" onclick="window.showDashView('measures')">Medidas</button>
+    <button class="niv-nav-btn" id="btn-pricelist" onclick="togglePriceListView()" style="display:none">Precios</button>
+    <button class="niv-nav-btn" id="btn-quotes" onclick="toggleQuotesView()" style="display:none">Cotizaciones</button>
+    <button class="niv-nav-btn niv-btn-primary" id="btn-new-measure" onclick="window.location.href='index.html'" style="display:none">Nueva medida</button>
+    <a class="niv-nav-btn" id="nav-users" href="company/settings.html" style="display:none">Users</a>
+    <a class="niv-nav-btn" href="account/settings.html">Mi cuenta</a>
+    <a class="niv-nav-btn linklike" href="#" onclick="return false;">Billing</a>
+    <div class="niv-card" style="margin:0;">
+      <div class="niv-card-title">Updates</div>
+      <div class="niv-card-desc" style="margin:0;"><u>New version available</u> ○</div>
+    </div>
+  </nav>
+</aside>
+<div class="niv-main">
 
 <main>
  <div id="view-measures">
@@ -498,6 +593,8 @@
   <button class="btn-save" onclick="saveQuote()">💾 Guardar borrador</button>
  </div>
 </main>
+</div><!-- /niv-main -->
+</div><!-- /niv-shell -->
 
 <!-- JOB DETAIL MODAL -->
 <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" onclick="closeModal(event)">
@@ -869,6 +966,13 @@ let currentUser;
     const orgDoc = await getDoc(doc(db, 'orgs', orgId));
     const orgName = orgDoc.data()?.name || orgId;
     document.getElementById('org-name-badge').textContent = orgName;
+    // sidebar: company avatar initials + Users link for managers
+    const _av = document.getElementById('sidebar-avatar');
+    if (_av) _av.textContent = (orgName || 'N').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    if (_can('userManagement')) {
+      const _nu = document.getElementById('nav-users');
+      if (_nu) _nu.style.display = 'block';
+    }
     document.getElementById('dash-subtitle').textContent = `${orgName} · ${_can('userManagement') ? 'Administrador' : (hasQuotes ? 'Cotizaciones' : 'Medidas')}`;
     // show join code only for user management
     if (_can('userManagement')) {
@@ -1759,6 +1863,11 @@ let currentUser;
     const btnQ = document.getElementById('btn-quotes');
     if (btnPl) btnPl.textContent = name === 'pricelist' ? '📊 Medidas' : '📋 Precios';
     if (btnQ) btnQ.textContent = (name === 'quotes' || name === 'builder') ? '📊 Medidas' : '💲 Cotizaciones';
+    // sidebar nav active state
+    const _nm = document.getElementById('nav-measures');
+    if (_nm) _nm.classList.toggle('active', name === 'measures');
+    if (btnPl) btnPl.classList.toggle('active', name === 'pricelist');
+    if (btnQ) btnQ.classList.toggle('active', name === 'quotes' || name === 'builder');
     if (name === 'pricelist') ensurePriceList();
     if (name === 'quotes') ensureQuotes();
     window.scrollTo(0, 0);

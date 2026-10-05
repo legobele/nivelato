@@ -9,6 +9,7 @@
 <title>Nivelato — Ajustes de la compañía</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="../autism.css" />
+<link rel="stylesheet" href="../niv-dark.css" />
 <script src="../testing.js" defer></script>
 <style>
   .settings-shell { max-width: 640px; margin: 0 auto; padding: 24px 20px; }
@@ -76,62 +77,83 @@
   .backend-current b { color: #212529; }
 </style></head>
 <body>
-<div class="settings-shell">
-  <a class="btn-back" href="dashboard.html" onclick="if (history.length > 1) { history.back(); return false; }">← Volver</a>
-  <h1>Ajustes de la compañía</h1>
-  <div class="sub">Configuración del taller. Solo usuarios con permiso de gestión.</div>
+<div class="niv-shell">
+<aside class="niv-sidebar">
+  <div class="niv-company-card">
+    <div class="niv-company-top">
+      <div class="niv-company-avatar" id="co-company-avatar">N</div>
+      <div>
+        <div class="niv-company-name" id="co-company-name">…</div>
+        <div class="niv-company-ver">Nivelato v1.0</div>
+      </div>
+    </div>
+  </div>
+  <nav class="niv-nav">
+    <a class="niv-nav-btn" href="../account/settings.html">Mi cuenta</a>
+    <a class="niv-nav-btn active" href="../company/settings.html">Users</a>
+    <a class="niv-nav-btn linklike" href="#" onclick="return false;">Billing</a>
+    <div class="niv-card" style="margin:0;">
+      <div class="niv-card-title">Updates</div>
+      <div class="niv-card-desc" style="margin:0;"><u>New version available</u> ○</div>
+    </div>
+  </nav>
+</aside>
+<div class="niv-main">
+  <a class="btn-back" href="../dashboard.html" onclick="if (history.length > 1) { history.back(); return false; }">← Volver</a>
+  <h1 class="niv-page-title">Ajustes de la compañía</h1>
+  <div class="niv-page-sub">Configuración del taller. Solo usuarios con permiso de gestión.</div>
   <div id="company-denied" style="display:none;" class="card">
-    <div class="card-title">Sin acceso</div>
-    <div class="card-desc">No tienes permiso para ver los ajustes de la compañía.</div>
+    <div class="niv-card-title">Sin acceso</div>
+    <div class="niv-card-desc">No tienes permiso para ver los ajustes de la compañía.</div>
   </div>
   <div id="company-area">
 
-  <div class="card" id="card-company-profile">
-    <div class="card-title">Perfil de la compañía</div>
-    <div class="card-desc">Nombre de la compañía como aparece en la app.</div>
-    <div class="backend-field"><label>Nombre de la compañía</label><input id="co-name" type="text" autocomplete="off" /></div>
+  <div class="niv-card" id="card-company-profile">
+    <div class="niv-card-title">Perfil de la compañía</div>
+    <div class="niv-card-desc">Nombre de la compañía como aparece en la app.</div>
+    <div class="niv-field"><label>Nombre de la compañía</label><input id="co-name" type="text" autocomplete="off" /></div>
     <p id="co-profile-note" style="font-size:12px;color:#868e96;display:none;margin:0 0 12px;">Solo el dueño puede editar el perfil.</p>
-    <button class="btn-primary" id="btn-co-profile-save" onclick="saveCompanyProfile()">Guardar perfil</button>
+    <button class="niv-btn-pill niv-btn-primary" style="width:100%" id="btn-co-profile-save" onclick="saveCompanyProfile()">Guardar perfil</button>
     <div class="status-line" id="co-profile-status"></div>
   </div>
-  <div class="card" id="card-quote-settings">
-    <div class="card-title">Ajustes de cotización</div>
-    <div class="card-desc">Valores por defecto al crear cotizaciones nuevas.</div>
-    <div class="backend-field"><label>Prefijo de folio</label><input id="co-prefijo" type="text" placeholder="NIV" autocomplete="off" /></div>
-    <div class="backend-field"><label>Tasa de IVU (0.115 = 11.5%)</label><input id="co-tasaivu" type="number" step="0.001" min="0" /></div>
-    <div class="backend-field"><label>Validez (días)</label><input id="co-validez" type="number" step="1" min="1" /></div>
+  <div class="niv-card" id="card-quote-settings">
+    <div class="niv-card-title">Ajustes de cotización</div>
+    <div class="niv-card-desc">Valores por defecto al crear cotizaciones nuevas.</div>
+    <div class="niv-field"><label>Prefijo de folio</label><input id="co-prefijo" type="text" placeholder="NIV" autocomplete="off" /></div>
+    <div class="niv-field"><label>Tasa de IVU (0.115 = 11.5%)</label><input id="co-tasaivu" type="number" step="0.001" min="0" /></div>
+    <div class="niv-field"><label>Validez (días)</label><input id="co-validez" type="number" step="1" min="1" /></div>
     <p id="co-quote-note" style="font-size:12px;color:#868e96;display:none;margin:0 0 12px;">Solo el dueño puede editar los ajustes.</p>
-    <button class="btn-primary" id="btn-co-quote-save" onclick="saveQuoteSettings()">Guardar ajustes</button>
+    <button class="niv-btn-pill niv-btn-primary" style="width:100%" id="btn-co-quote-save" onclick="saveQuoteSettings()">Guardar ajustes</button>
     <div class="status-line" id="co-quote-status"></div>
   </div>
-<div class="card company-member-card">
-      <div class="card-title">API de 2FA</div>
-      <div class="card-desc">Dominio o URL del API que el taller usa para el segundo factor de autenticación. Nivel de compañía, no por usuario.</div>
-      <div class="backend-field"><label>URL del API de 2FA</label><input id="tfa-url" type="url" placeholder="https://taller.example.com/api/2fa" autocomplete="off" /></div>
-      <button class="btn-primary" id="btn-tfa-save" onclick="saveTfaApi()">Guardar</button>
+<div class="niv-card">
+      <div class="niv-card-title">API de 2FA</div>
+      <div class="niv-card-desc">Dominio o URL del API que el taller usa para el segundo factor de autenticación. Nivel de compañía, no por usuario.</div>
+      <div class="niv-field"><label>URL del API de 2FA</label><input id="tfa-url" type="url" placeholder="https://taller.example.com/api/2fa" autocomplete="off" /></div>
+      <button class="niv-btn-pill niv-btn-primary" style="width:100%" id="btn-tfa-save" onclick="saveTfaApi()">Guardar</button>
       <div class="status-line" id="tfa-status"></div>
     </div>
-    <div class="card company-member-card">
-      <div class="card-title">Permisos de miembros</div>
-      <div class="card-desc">Gestiona las capacidades de cada miembro del taller.</div>
+    <div class="niv-card">
+      <div class="niv-card-title">Permisos de miembros</div>
+      <div class="niv-card-desc">Gestiona las capacidades de cada miembro del taller.</div>
       <div id="permissions-list"><p style="color:#868e96;font-size:13px;">Cargando miembros…</p></div>
       <div class="saved-msg" id="perm-saved">✓ Cambios guardados</div>
     </div>
 
-    <div class="card company-member-card">
-      <div class="card-title">Solicitudes de acceso</div>
-      <div class="card-desc">Cuentas pendientes de aprobación para unirse al taller.</div>
+    <div class="niv-card">
+      <div class="niv-card-title">Solicitudes de acceso</div>
+      <div class="niv-card-desc">Cuentas pendientes de aprobación para unirse al taller.</div>
       <div id="requests-list"><p style="color:#868e96;font-size:13px;">Cargando solicitudes…</p></div>
     </div>
 
     <div class="card company-member-card" id="delete-requests-card" style="display:none;">
-      <div class="card-title">🗑 Solicitudes de eliminación</div>
-      <div class="card-desc">Usuarios que han solicitado eliminar su cuenta.</div>
+      <div class="niv-card-title">🗑 Solicitudes de eliminación</div>
+      <div class="niv-card-desc">Usuarios que han solicitado eliminar su cuenta.</div>
       <div id="delete-requests-list"><p style="color:#868e96;font-size:13px;">Cargando…</p></div>
     </div>
 
-  </div>
-</div>
+  </div><!-- /niv-main -->
+</div><!-- /niv-shell -->
 <script type="module">
 import { auth, db } from '../firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
@@ -443,6 +465,14 @@ onAuthStateChanged(auth, async (user) => {
   await loadTfaApi(orgId);
   await loadCompanyProfile();
   await loadQuoteSettings();
+  // sidebar company card
+  try {
+    const _cs = await getDoc(doc(db, 'orgs', orgId));
+    const _cn = _cs.data()?.name || orgId;
+    document.getElementById('co-company-name').textContent = _cn;
+    document.getElementById('co-company-avatar').textContent =
+      _cn.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  } catch (_) { /* keep placeholder */ }
 });
 
 </script>

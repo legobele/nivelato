@@ -1,0 +1,226 @@
+/* Nivelato dark UI — design system from the company settings mockup.
+   Near-black surfaces, thin light borders, pill buttons, rounded cards.
+   This file only reskins chrome; graph/canvas systems are untouched. */
+
+:root {
+  --niv-bg: #0e0e10;
+  --niv-surface: #17171a;
+  --niv-surface-2: #1e1e22;
+  --niv-border: rgba(255, 255, 255, 0.28);
+  --niv-border-soft: rgba(255, 255, 255, 0.14);
+  --niv-text: #f5f5f7;
+  --niv-text-dim: #a7a7ad;
+  --niv-accent: #1971c2;
+  --niv-green: #22c55e;
+  --niv-red: #e5484d;
+  --niv-radius: 18px;
+  --niv-pill: 999px;
+}
+
+/* ---- app shell: sidebar + main ---- */
+.niv-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--niv-bg);
+  color: var(--niv-text);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.niv-sidebar {
+  width: 300px;
+  flex: none;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-right: 1px solid var(--niv-border-soft);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.niv-main {
+  flex: 1;
+  min-width: 0;
+  padding: 28px 32px;
+  max-width: 1100px;
+}
+
+/* ---- company card ---- */
+.niv-company-card {
+  border: 1px solid var(--niv-border);
+  border-radius: var(--niv-radius);
+  padding: 20px 16px;
+  text-align: center;
+  background: var(--niv-surface);
+}
+.niv-company-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 6px;
+  text-align: left;
+}
+.niv-company-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid var(--niv-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  flex: none;
+  background: var(--niv-surface-2);
+  overflow: hidden;
+}
+.niv-company-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.niv-company-name { font-weight: 700; font-size: 16px; }
+.niv-company-ver { font-size: 13px; color: var(--niv-text-dim); text-decoration: underline; margin-top: 2px; }
+
+/* ---- nav pills ---- */
+.niv-nav { display: flex; flex-direction: column; gap: 12px; }
+.niv-nav-btn {
+  display: block;
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid var(--niv-border);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--niv-text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+.niv-nav-btn:hover { background: var(--niv-surface-2); }
+.niv-nav-btn.active {
+  background: linear-gradient(135deg, #0ea5a5, #1971c2);
+  border-color: transparent;
+  font-weight: 700;
+}
+.niv-nav-btn.linklike { text-decoration: underline; }
+
+/* ---- cards ---- */
+.niv-card {
+  border: 1px solid var(--niv-border);
+  border-radius: var(--niv-radius);
+  background: var(--niv-surface);
+  padding: 22px;
+  margin-bottom: 16px;
+}
+.niv-card-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.niv-card-desc { font-size: 13px; color: var(--niv-text-dim); margin-bottom: 16px; }
+
+/* ---- pill buttons ---- */
+.niv-btn-pill {
+  display: inline-block;
+  padding: 12px 28px;
+  border: 1px solid var(--niv-border);
+  border-radius: var(--niv-pill);
+  background: var(--niv-surface-2);
+  color: var(--niv-text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  text-decoration: none;
+}
+.niv-btn-pill:hover { background: #2a2a2f; }
+.niv-btn-primary {
+  background: var(--niv-accent);
+  border-color: transparent;
+}
+.niv-btn-danger {
+  background: var(--niv-red);
+  border-color: transparent;
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+}
+
+/* ---- form fields ---- */
+.niv-field { margin-bottom: 12px; }
+.niv-field label { display: block; font-size: 12px; font-weight: 600; color: var(--niv-text-dim); margin-bottom: 6px; }
+.niv-field input, .niv-field select, .niv-field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--niv-text);
+  background: var(--niv-surface-2);
+  border: 1px solid var(--niv-border-soft);
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+.niv-field input:focus, .niv-field select:focus, .niv-field textarea:focus {
+  outline: none;
+  border-color: var(--niv-accent);
+}
+
+/* ---- toggle switches (iOS style, green) ---- */
+.niv-switch { position: relative; width: 52px; height: 30px; flex: none; cursor: pointer; }
+.niv-switch input { opacity: 0; width: 0; height: 0; }
+.niv-switch .track {
+  position: absolute; inset: 0;
+  background: #3a3a3e;
+  border-radius: var(--niv-pill);
+  transition: background 0.2s;
+}
+.niv-switch .track::after {
+  content: ""; position: absolute;
+  top: 3px; left: 3px; width: 24px; height: 24px;
+  background: #fff; border-radius: 50%;
+  transition: transform 0.2s;
+}
+.niv-switch input:checked + .track { background: var(--niv-green); }
+.niv-switch input:checked + .track::after { transform: translateX(22px); }
+
+/* ---- user list rows ---- */
+.niv-user-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--niv-border);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  background: var(--niv-surface);
+}
+.niv-user-row.selected {
+  background: linear-gradient(135deg, #0ea5a5, #1971c2);
+  border-color: transparent;
+}
+.niv-user-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  flex: none;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px; color: #fff;
+  overflow: hidden;
+}
+.niv-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.niv-user-name { font-weight: 600; font-size: 14px; }
+.niv-user-email { font-size: 12px; color: var(--niv-text-dim); }
+.niv-user-row.selected .niv-user-email { color: rgba(255,255,255,0.85); }
+
+/* ---- misc ---- */
+.niv-page-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+.niv-page-sub { font-size: 14px; color: var(--niv-text-dim); margin-bottom: 24px; }
+.niv-status { font-size: 13px; padding: 10px 14px; border-radius: 12px; margin-top: 12px; display: none; }
+.niv-status.ok { display: block; background: rgba(34,197,94,0.15); color: #4ade80; }
+.niv-status.err { display: block; background: rgba(229,72,77,0.15); color: #f87171; }
+
+@media (max-width: 900px) {
+  .niv-shell { flex-direction: column; }
+  .niv-sidebar {
+    width: auto; height: auto; position: static;
+    border-right: none; border-bottom: 1px solid var(--niv-border-soft);
+  }
+  .niv-main { padding: 20px 16px; }
+}

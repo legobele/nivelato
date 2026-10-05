@@ -9,6 +9,7 @@
 <title>Nivelato — Ajustes</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="autism.css" />
+<link rel="stylesheet" href="niv-dark.css" />
 <script src="testing.js" defer></script>
 <style>
   .settings-shell { max-width: 640px; margin: 0 auto; padding: 24px 20px; }
@@ -75,19 +76,62 @@
   .backend-current { font-size: 13px; color: #495057; background: #f8f9fa; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
   .backend-current b { color: #212529; }
 </style>
+
+  <style>
+  /* settings dark theme */
+  body { background: #0e0e10; color: #f5f5f7; }
+  .settings-shell { max-width: none; padding: 0; }
+  .btn-back { color: #60a5fa; }
+  .info-row { border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .info-label { color: #a7a7ad; }
+  .info-value { color: #f5f5f7; }
+  .notif-row { border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .notif-label { color: #f5f5f7; }
+  .notif-desc { color: #a7a7ad; }
+  .switch .track { background: #3a3a3e; }
+  .switch input:checked + .track { background: #22c55e; }
+  .btn-secondary { background: #1e1e22; border: 1.5px solid rgba(255,255,255,0.14); color: #f5f5f7; }
+  .btn-secondary.lang-active { border-color: #1971c2; color: #60a5fa; background: rgba(25,113,194,0.15); }
+  .btn-delete-account { background: transparent; border-color: rgba(229,72,77,0.5); color: #f87171; }
+  .btn-delete-account:hover { background: rgba(229,72,77,0.1); }
+  .saved-msg { color: #4ade80; }
+  #profile-pic-fallback { background: #1971c2; }
+  #delete-request-status { background: rgba(230,119,0,0.15) !important; color: #fbbf24 !important; }
+  </style>
 <link rel="stylesheet" href="./qgc-theme.css" />
 </head>
 <body>
-<div class="settings-shell">
+<div class="niv-shell">
+<aside class="niv-sidebar">
+  <div class="niv-company-card">
+    <div class="niv-company-top">
+      <div class="niv-company-avatar" id="set-company-avatar">N</div>
+      <div>
+        <div class="niv-company-name" id="set-company-name">…</div>
+        <div class="niv-company-ver">Nivelato v1.0</div>
+      </div>
+    </div>
+  </div>
+  <nav class="niv-nav">
+    <a class="niv-nav-btn active" href="account/settings.html">Mi cuenta</a>
+    <a class="niv-nav-btn" id="set-nav-users" href="company/settings.html" style="display:none">Users</a>
+    <a class="niv-nav-btn linklike" href="#" onclick="return false;">Billing</a>
+    <div class="niv-card" style="margin:0;">
+      <div class="niv-card-title">Updates</div>
+      <div class="niv-card-desc" style="margin:0;"><u>New version available</u> ○</div>
+    </div>
+  </nav>
+</aside>
+<div class="niv-main">
   <a class="btn-back" href="dashboard.html" onclick="if (history.length > 1) { history.back(); return false; }">← Volver</a>
-  <h1>Ajustes</h1>
-  <div class="sub">Configuración de tu cuenta</div>
+  <h1 class="niv-page-title">Ajustes</h1>
+  <div class="niv-page-sub">Configuración de tu cuenta</div>
 
   <!-- MI CUENTA -->
   <div id="tab-cuenta">
-    <div class="card">
-      <div class="card-title">Información de la cuenta</div>
-      <div class="card-desc">Datos de tu perfil en Nivelato.</div>
+    <div class="niv-card">
+      <div class="niv-card-title">Información de la cuenta</div>
+      <div class="niv-card-desc">Datos de tu perfil en Nivelato.</div>
       <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
         <img id="profile-pic" alt="Foto de perfil" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:#e9ecef;display:none;" />
         <div id="profile-pic-fallback" style="width:64px;height:64px;border-radius:50%;background:#1971c2;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;"></div>
@@ -109,9 +153,9 @@
     <div style="margin-top:16px;text-align:center;"><a href="privacy.html" style="font-size:13px;color:#1971c2;">Política de privacidad</a></div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Notificaciones por correo</div>
-      <div class="card-desc">Elige qué avisos quieres recibir en tu correo. Salen de noreply@nivelatolabs.com.</div>
+    <div class="niv-card">
+      <div class="niv-card-title">Notificaciones por correo</div>
+      <div class="niv-card-desc">Elige qué avisos quieres recibir en tu correo. Salen de noreply@nivelatolabs.com.</div>
       <div class="notif-row">
         <div><div class="notif-label">Correo de bienvenida</div><div class="notif-desc">Un saludo cuando creas tu cuenta.</div></div>
         <label class="switch"><input type="checkbox" id="ntf-welcomeEmail" checked /><span class="track"></span></label>
@@ -131,9 +175,9 @@
       <div class="saved-msg" id="ntf-saved">✓ Preferencias guardadas</div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Idioma</div>
-      <div class="card-desc">Idioma de la pantalla de inicio de sesión. Se guarda en tu cuenta y aplica en tus dispositivos.</div>
+    <div class="niv-card">
+      <div class="niv-card-title">Idioma</div>
+      <div class="niv-card-desc">Idioma de la pantalla de inicio de sesión. Se guarda en tu cuenta y aplica en tus dispositivos.</div>
       <div style="display:flex;gap:10px;margin-top:4px;">
         <button class="btn-secondary" id="lang-btn-es" style="margin-top:0">Español</button>
         <button class="btn-secondary" id="lang-btn-en" style="margin-top:0">English</button>
@@ -143,7 +187,8 @@
 
   </div>
 
-</div>
+</div><!-- /niv-main -->
+</div><!-- /niv-shell -->
 
 <script type="module">
 import { auth, db } from './firebase-config.js';
@@ -253,7 +298,17 @@ onAuthStateChanged(auth, async (user) => {
   // company settings live at company/settings.html; link it for managers
   if (_can('userManagement')) {
     document.getElementById('company-link').style.display = 'block';
+    const _snu = document.getElementById('set-nav-users');
+    if (_snu) _snu.style.display = 'block';
   }
+  // sidebar company card
+  try {
+    const _os = await getDoc(doc(db, 'orgs', orgId));
+    const _on = _os.data()?.name || orgId;
+    document.getElementById('set-company-name').textContent = _on;
+    document.getElementById('set-company-avatar').textContent =
+      _on.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  } catch (_) { /* keep placeholder */ }
 
   // notification prefs + backend status (propio backend o default)
   await loadNotifPrefs();
