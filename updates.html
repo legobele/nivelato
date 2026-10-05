@@ -89,9 +89,10 @@
     font-size: 14px;
     font-weight: 500;
     font-family: inherit;
-    cursor: default;
+    cursor: pointer;
     position: relative;
     text-align: center;
+    text-decoration: none;
   }
   .nav-btn.soon { color: var(--muted); }
   .nav-btn .soon-badge {
@@ -309,7 +310,7 @@
         <div class="org-version" id="org-version">Nivelato</div>
       </div>
     </div>
-    <button class="nav-btn soon" disabled>Users<span class="soon-badge">soon</span></button>
+    <a class="nav-btn" href="/company/users"><span class="nav-label">Users</span></a>
     <button class="nav-btn soon" disabled>Project management<span class="soon-badge">soon</span></button>
     <button class="nav-btn soon" disabled>Billing<span class="soon-badge">soon</span></button>
     <button class="nav-btn active" aria-current="page">
