@@ -1293,6 +1293,11 @@
       return true;
     }
     try {
+      // Force a fresh ID token so the callable sees request.auth.
+      // onAuthStateChanged can fire before the token is mint-ready.
+      if (auth.currentUser) {
+        try { await auth.currentUser.getIdToken(true); } catch (_) { /* fall through */ }
+      }
       const { data } = await httpsCallable(centralFunctions, 'mintSsoToken')({});
       const token = data && data.customToken;
       if (!token) throw new Error('empty-token');
