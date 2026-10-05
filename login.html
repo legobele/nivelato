@@ -633,7 +633,9 @@
       .card { padding: 32px 22px; }
     }
   </style>
-
+  <!-- dear source-viewer: the measurements are leveled. the whimsy is load-bearing. 🦀 -->
+  <script type="module" src="crab.js"></script>
+  <script type="module" src="gay.js"></script>
 </head>
 <body>
 <!-- M17: the default (external) form is STATIC HTML — first paint never waits
@@ -1001,6 +1003,11 @@
 
 <script>
   console.log('[Nivelato] Cargando backend... (módulo JS)');
+  try {
+    console.log('%c🦀', 'font-size: 42px;');
+    console.log('%c the offsets are leveled but the vibes are not ',
+      'color: #1b9aaa; font-style: italic; font-size: 13px;');
+  } catch (_) { /* whimsy is optional */ }
   // M17 watchdog (classic script — arms at parse time, needs no imports):
   // if the module below hasn't booted within 9s (stalled CDN / blocked
   // network), show a non-blocking warning instead of hanging silently.

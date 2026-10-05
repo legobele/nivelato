@@ -259,11 +259,19 @@ service cloud.firestore {
     match /stats/easter-eggs {
       allow read: if true;
       allow create: if isSignedIn()
-        && request.resource.data.keys().hasOnly(['gay'])
-        && request.resource.data.gay == 1;
+        && request.resource.data.keys().hasOnly(['gay', 'crab'])
+        && request.resource.data.keys().size() == 1
+        && (request.resource.data.get('gay', 0) == 1 || request.resource.data.get('crab', 0) == 1);
       allow update: if isSignedIn()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gay'])
-        && request.resource.data.gay == resource.data.gay + 1;
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gay', 'crab'])
+        && request.resource.data.diff(resource.data).affectedKeys().size() == 1
+        && (
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gay'])
+            && request.resource.data.gay == resource.data.get('gay', 0) + 1)
+          ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['crab'])
+            && request.resource.data.crab == resource.data.get('crab', 0) + 1)
+        );
     }
 
     // App updates feed — public read (lets the app show update banners
