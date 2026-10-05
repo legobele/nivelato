@@ -1921,6 +1921,7 @@
       const destOrigin = next.indexOf('https://dashboard.nivelatolabs.com') === 0
         ? 'https://dashboard.nivelatolabs.com' : APP_ORIGIN;
       const destNext = destOrigin === APP_ORIGIN ? next : '/';
+      try { sessionStorage.setItem('nivelato_last_handoff', String(Date.now())); } catch (_) {}
       window.location.href = destOrigin + '/sso.html?ctoken=' + encodeURIComponent(token)
         + '&next=' + encodeURIComponent(destNext);
       return true;
@@ -1944,6 +1945,17 @@
   }
 
   async function postAuthRedirect() {
+    // Loop breaker: if we just did an SSO handoff within the last 60s, don't
+    // mint another token — something downstream is bouncing us back.
+    try {
+      const lastHandoff = parseInt(sessionStorage.getItem('nivelato_last_handoff') || '0', 10);
+      if (Date.now() - lastHandoff < 60000) {
+        console.warn('[Nivelato] SSO handoff loop detected, holding.');
+        const errEl = document.getElementById('login-error');
+        if (errEl) { errEl.textContent = 'Se detectó un bucle de inicio de sesión. Espera un minuto e inténtalo de nuevo.'; errEl.classList.add('visible'); }
+        return;
+      }
+    } catch (_) {}
     // flowGate → claims → verdict routing, then SSO handoff to the app.
     const gate = await ensureFlowClaims();
     if (gate.ok && !gate.cached && routeAfterGate(gate.verdict, gate.reason)) return;
