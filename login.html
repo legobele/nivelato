@@ -527,6 +527,7 @@
 </script>
 
 <script>
+  console.log('[Nivelato] Cargando backend... (módulo JS)');
   // M17 watchdog (classic script — arms at parse time, needs no imports):
   // if the module below hasn't booted within 9s (stalled CDN / blocked
   // network), show a non-blocking warning instead of hanging silently.
@@ -573,6 +574,8 @@
   import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
   import { detectCountry, flowModeForCountry, ensureFlowClaims, routeAfterGate } from './geo.js';
 
+  console.log('[Nivelato] Cargando backend... imports listos, inicializando');
+
   // Correo de bienvenida: la app lo pide explícito tras el signup para que
   // funcione igual en el backend default y en backends propios (BYOB).
   // Best effort, nunca bloquea el registro.
@@ -615,6 +618,8 @@
   }
 
   window.__nivelatoBooted = true;
+  console.log('[Nivelato] Cargando backend... Firebase listo');
+  console.log('[Nivelato] Backend listo');
   // If the watchdog banner fired on a slow connection but we booted anyway,
   // remove it — the page is fully functional now.
   var bw = document.getElementById('boot-warn');
