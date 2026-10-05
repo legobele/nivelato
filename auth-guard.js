@@ -71,6 +71,13 @@ onAuthStateChanged(auth, async (user) => {
   const userDoc = await getDoc(doc(db, 'users', user.uid));
   currentUserData = userDoc.data();
 
+  // Immediate disabled check on initial load (same as dashboard.html):
+  // a disabled account must not keep write access until the 5-min refresh.
+  if (userDoc.exists() && userDoc.data().disabled === true) {
+    showPendingScreen();
+    return;
+  }
+
   // make permission checker available globally
   _can = makePermChecker(currentUserData);
   window._can = _can;

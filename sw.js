@@ -1,4 +1,8 @@
-const CACHE = 'nivelato-v5';
+// MANUAL-BUMP CONVENTION: bump CACHE (e.g. v6 -> v7) every time URLS or any
+// precached file changes. A version bump is required for the update to take
+// effect — activate() deletes every cache whose name !== CACHE, so without a
+// new name the old precache survives and the changed list never installs.
+const CACHE = 'nivelato-v6';
 // App shell: every file that must exist for the app to work offline.
 // (Keep this list in sync with the repo — a missing file used to make
 // addAll() reject and silently skip the ENTIRE precache.)
@@ -10,6 +14,9 @@ const URLS = [
   './settings.html',
   './sso.html',
   './blocked.html',
+  './geo-blocked.html',
+  './privacy.html',
+  './offline.html',
   './adhd.js',
   './auth-guard.js',
   './firebase-config.js',
@@ -59,10 +66,12 @@ self.addEventListener('fetch', e => {
         }
         return res;
       }).catch(() =>
-        // Offline: cached copy, else the cached app shell (never a white page).
+        // Offline: cached copy, else the offline notice page (never a white
+        // page, and never the wrong screen — e.g. don't land a settings
+        // navigation on the index shell while offline).
         caches.match(e.request).then(cached =>
-          cached || caches.match('./index.html').then(shell =>
-            shell || new Response('offline', { status: 503 })
+          cached || caches.match('./offline.html').then(page =>
+            page || new Response('offline', { status: 503 })
           )
         )
       )

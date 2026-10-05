@@ -2,8 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#121212">
 <title>Nivelato — Acceso restringido</title>
+<link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,6 +26,7 @@
   h2 { font-size: 20px; font-weight: 700; }
   p { font-size: 14px; color: #495057; max-width: 360px; line-height: 1.6; }
   p.en { color: #868e96; font-size: 13px; }
+  p a { color: #0c6b3c; font-weight: 600; }
   .btn {
     display: inline-block;
     padding: 12px 28px;
@@ -57,7 +60,7 @@
     vpn: {
       icon: '🚫',
       title: 'Acceso restringido',
-      es: 'Nivelato es de uso exclusivo de Quality Glass en Puerto Rico. Si crees que esto es un error, escríbenos.',
+      es: 'Nivelato es de uso exclusivo de Quality Glass en Puerto Rico. Si crees que esto es un error, <a href="mailto:legobele@gmail.com">escríbenos</a>.',
       en: 'Nivelato is exclusively for Quality Glass in Puerto Rico. If you think this is a mistake, contact us.',
       back: 'Volver',
     },
@@ -90,8 +93,9 @@
   const v = VARIANTS[params.get('reason')] || VARIANTS.vpn;
   document.getElementById('icon').textContent = v.icon;
   document.getElementById('title').textContent = v.title;
-  // textContent (not innerHTML) — reason comes from the query string.
-  document.getElementById('body-es').textContent = v.es;
+  // Fixed-literal copy only — the query-string value is just the lookup key,
+  // so innerHTML is safe here and lets the vpn variant carry its mailto link.
+  document.getElementById('body-es').innerHTML = v.es;
   document.getElementById('body-en').textContent = v.en;
   document.getElementById('back-btn').textContent = v.back;
 </script>

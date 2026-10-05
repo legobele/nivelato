@@ -76,21 +76,23 @@
     line-height: 1.5;
   }
 </style>
-<script src="testing.js"></script>
+<meta name="theme-color" content="#121212" />
+<link rel="manifest" href="manifest.json" />
+<script src="testing.js" defer></script>
 </head>
 <body>
 <div class="card">
   <div class="logo">Nivelato</div>
   <div class="tagline">Inicio de sesión único</div>
   <div class="app-name" id="sso-app-name">Solicitado por: —</div>
-  <button class="btn" id="sso-btn" onclick="signIn()">Iniciar sesión con Nivelato</button>
+  <button class="btn" id="sso-btn" onclick="if(window.signIn){window.signIn()}else{var e=document.getElementById('sso-error');e.textContent='Cargando el inicio de sesión… espera un momento e inténtalo de nuevo.';e.style.display='block';}">Continuar con Nivelato</button>
   <div class="error" id="sso-error"></div>
   <div class="info">Al iniciar sesión, compartirás tu nombre, correo y afiliación con la aplicación solicitante.</div>
 </div>
 
 <script type="module">
 import { auth } from './firebase-config.js';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
 import { getDoc, doc } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
 import { db } from './firebase-config.js';
 
@@ -98,35 +100,81 @@ const params = new URLSearchParams(window.location.search);
 const redirectUri = params.get('redirect_uri');
 const clientId = params.get('client_id') || 'Aplicación externa';
 
+// Origins the product actually lives on — anything else is denied so a
+// fresh ID token can never be shipped to an attacker's site via an open
+// redirect. Relative paths are allowed (same-origin redirects only).
+const ALLOWED_REDIRECT_ORIGINS = new Set([
+  'https://legobele.github.io',            // GitHub Pages project site (/nivelato/)
+  'https://nivelato-app.firebaseapp.com',  // Firebase hosting default domain
+  'https://nivelato-app.web.app',          // Firebase hosting twin domain
+]);
+
+function redirectUriIsAllowed(uri) {
+  if (typeof uri !== 'string' || !uri.trim()) return false;
+  uri = uri.trim();
+  // Protocol-relative URLs (//evil.example/x) resolve to a foreign origin — deny.
+  if (uri.startsWith('//')) return false;
+  // Absolute URL (has a scheme)? Must be https on the allowlist.
+  if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(uri)) {
+    let u;
+    try { u = new URL(uri); } catch (_) { return false; }
+    if (u.protocol !== 'https:') return false;
+    return ALLOWED_REDIRECT_ORIGINS.has(u.origin);
+  }
+  // No scheme: relative path — same-origin only. Reject anything that
+  // doesn't look like a plain path (no backslashes, no whitespace).
+  if (/[\s\\]/.test(uri)) return false;
+  return true;
+}
+
+const redirectAllowed = !redirectUri || redirectUriIsAllowed(redirectUri);
+
 document.getElementById('sso-app-name').textContent = 'Solicitado por: ' + clientId;
 
 if (!redirectUri) {
   document.getElementById('sso-error').textContent = 'Error: falta redirect_uri';
   document.getElementById('sso-error').style.display = 'block';
   document.getElementById('sso-btn').disabled = true;
+} else if (!redirectAllowed) {
+  // Default-deny: show an error, NEVER mint a token or redirect.
+  document.getElementById('sso-error').textContent = 'Error: redirect_uri no permitido';
+  document.getElementById('sso-error').style.display = 'block';
+  document.getElementById('sso-btn').disabled = true;
 }
 
 async function doRedirect(user) {
-  if (!redirectUri) return;
-  const token = await user.getIdToken();
-  const userSnap = await getDoc(doc(db, 'users', user.uid));
-  const userData = userSnap.exists() ? userSnap.data() : {};
-  const payload = {
-    token,
-    uid: user.uid,
-    name: userData.name || user.displayName || '',
-    email: user.email || '',
-    role: userData.role || '',
-    orgId: userData.orgId || '',
-  };
-  const sep = redirectUri.includes('?') ? '&' : '?';
-  window.location.href = redirectUri + sep + 'nivelato_token=' + encodeURIComponent(JSON.stringify(payload));
+  // Allowlist gate sits BEFORE any token minting or redirect.
+  if (!redirectUri || !redirectAllowed) return;
+  const btn = document.getElementById('sso-btn');
+  const err = document.getElementById('sso-error');
+  try {
+    const token = await user.getIdToken();
+    const userSnap = await getDoc(doc(db, 'users', user.uid));
+    const userData = userSnap.exists() ? userSnap.data() : {};
+    const payload = {
+      token,
+      uid: user.uid,
+      name: userData.name || user.displayName || '',
+      email: user.email || '',
+      role: userData.role || '',
+      orgId: userData.orgId || '',
+    };
+    const sep = redirectUri.includes('?') ? '&' : '?';
+    window.location.href = redirectUri + sep + 'nivelato_token=' + encodeURIComponent(JSON.stringify(payload));
+  } catch (e) {
+    // Never wedge on "Redirigiendo…" — show the error and reset the button.
+    err.textContent = 'No se pudo completar la redirección: ' + (e && e.message ? e.message : 'Intenta de nuevo.');
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Continuar con Nivelato';
+  }
 }
 
-// Already signed in? Skip straight to redirect
+// Already signed in? Skip straight to redirect (allowlisted destinations only).
 onAuthStateChanged(auth, (user) => {
-  if (user && redirectUri) {
+  if (user && redirectUri && redirectAllowed) {
     document.getElementById('sso-btn').textContent = 'Redirigiendo…';
+    document.getElementById('sso-btn').disabled = true;
     doRedirect(user);
   }
 });
@@ -148,14 +196,14 @@ window.signIn = async () => {
       err.textContent = 'La ventana emergente fue bloqueada o cerrada. Intenta de nuevo.';
       err.style.display = 'block';
       btn.disabled = false;
-      btn.textContent = 'Iniciar sesión con Nivelato';
+      btn.textContent = 'Continuar con Nivelato';
       return;
     }
     // Fallback: show error
     err.textContent = 'Error al iniciar sesión: ' + (e.message || 'Intenta de nuevo.');
     err.style.display = 'block';
     btn.disabled = false;
-    btn.textContent = 'Iniciar sesión con Nivelato';
+    btn.textContent = 'Continuar con Nivelato';
   }
 };
 </script>

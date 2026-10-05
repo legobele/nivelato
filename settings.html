@@ -2,21 +2,23 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#121212" />
+<link rel="manifest" href="manifest.json" />
 <title>Nivelato — Ajustes</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="autism.css" />
-<script src="testing.js"></script>
+<script src="testing.js" defer></script>
 <style>
   .settings-shell { max-width: 640px; margin: 0 auto; padding: 24px 20px; }
   h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
   .sub { font-size: 14px; color: #868e96; margin-bottom: 24px; }
-  .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: #f1f3f5; border-radius: 10px; padding: 4px; }
-  .tab-btn { flex: 1; padding: 10px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; background: transparent; color: #495057; transition: all 0.15s; }
-  .tab-btn.active { background: #fff; color: #1971c2; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: #f1f3f5; border-radius: 14px; padding: 4px; }
+  .tab-btn { flex: 1; padding: 10px 16px; min-height: 44px; border: none; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; background: transparent; color: #495057; transition: all 0.15s; }
+  .tab-btn.active { background: #fff; color: #1971c2; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.06); }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
-  .card { background: #fff; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .card { background: #fff; border: 1px solid #e9ecef; border-radius: 18px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.06); }
   .card-title { font-size: 15px; font-weight: 700; color: #212529; margin-bottom: 4px; }
   .card-desc { font-size: 13px; color: #868e96; margin-bottom: 16px; }
   .perm-member { border-bottom: 1px solid #f1f3f5; padding: 14px 0; }
@@ -24,14 +26,14 @@
   .perm-member-header { font-size: 14px; font-weight: 600; color: #212529; margin-bottom: 8px; }
   .perm-member-role { font-size: 12px; color: #868e96; font-weight: 500; }
   .perm-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-  .perm-grid label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: #495057; cursor: pointer; padding: 4px 10px; background: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6; }
+  .perm-grid label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: #495057; cursor: pointer; padding: 4px 10px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6; }
   .perm-grid label:has(input:checked) { background: #e7f5ff; border-color: #1971c2; color: #1971c2; }
   .perm-grid input { width: 14px; height: 14px; accent-color: #1971c2; }
-  .request-card { background: #fff; border: 1px solid #e9ecef; border-radius: 10px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .request-card { background: #fff; border: 1px solid #e9ecef; border-radius: 14px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .request-name { font-size: 14px; font-weight: 600; }
   .request-email { font-size: 12px; color: #868e96; }
   .request-actions { display: flex; gap: 8px; }
-  .btn-sm { padding: 7px 16px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .btn-sm { padding: 7px 16px; min-height: 44px; display: inline-flex; align-items: center; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
   .btn-sm.approve { background: #2f9e44; color: #fff; }
   .btn-sm.reject { background: #e03131; color: #fff; }
   .btn-back { display: inline-block; margin-bottom: 16px; font-size: 13px; color: #1971c2; text-decoration: none; font-weight: 600; cursor: pointer; }
@@ -41,14 +43,40 @@
   .info-label { font-weight: 600; color: #495057; min-width: 120px; }
   .info-value { color: #212529; }
   .saved-msg { font-size: 13px; color: #2f9e44; font-weight: 600; text-align: center; padding: 8px; display: none; }
-  .btn-delete-account { width: 100%; margin-top: 16px; padding: 10px 16px; background: #fff; border: 1.5px solid #ffc9c9; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; color: #c92a2a; transition: background 0.15s; }
+  .btn-delete-account { width: 100%; margin-top: 16px; padding: 12px 16px; min-height: 44px; background: #fff; border: 1.5px solid #ffc9c9; border-radius: 12px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; color: #c92a2a; transition: background 0.15s; }
   .btn-delete-account:hover { background: #fff5f5; }
   .btn-delete-account:disabled { opacity: 0.5; cursor: default; }
+  /* toggles de notificaciones */
+  .notif-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f1f3f5; }
+  .notif-row:last-child { border-bottom: none; }
+  .notif-label { font-size: 14px; font-weight: 600; color: #212529; }
+  .notif-desc { font-size: 12px; color: #868e96; margin-top: 2px; }
+  .switch { position: relative; width: 48px; height: 28px; flex: none; cursor: pointer; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch .track { position: absolute; inset: 0; background: #dee2e6; border-radius: 9999px; transition: background 0.2s; }
+  .switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; background: #fff; border-radius: 9999px; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.06); transition: transform 0.2s; }
+  .switch input:checked + .track { background: #1971c2; }
+  .switch input:checked + .track::after { transform: translateX(20px); }
+  /* backend personalizado */
+  .backend-field { margin-bottom: 10px; }
+  .backend-field label { display: block; font-size: 12px; font-weight: 600; color: #495057; margin-bottom: 4px; }
+  .backend-field input { width: 100%; padding: 10px 12px; font-size: 13px; font-family: monospace; border: 1.5px solid #dee2e6; border-radius: 12px; box-sizing: border-box; }
+  .backend-field input:focus { outline: none; border-color: #1971c2; box-shadow: 0 0 0 3px #e7f5ff; }
+  .btn-primary { width: 100%; padding: 12px 16px; min-height: 48px; background: #1971c2; color: #fff; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .btn-primary:active { transform: scale(0.98); background: #1864ab; }
+  .btn-primary:disabled { opacity: 0.6; cursor: default; }
+  .btn-secondary { width: 100%; margin-top: 8px; padding: 12px 16px; min-height: 48px; background: #fff; color: #495057; border: 1.5px solid #dee2e6; border-radius: 12px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .status-line { font-size: 13px; padding: 10px 14px; border-radius: 12px; margin-top: 12px; display: none; }
+  .status-line.ok { display: block; background: #ebfbee; color: #2f9e44; }
+  .status-line.warn { display: block; background: #fff3bf; color: #e67700; }
+  .status-line.err { display: block; background: #fff5f5; color: #c92a2a; }
+  .backend-current { font-size: 13px; color: #495057; background: #f8f9fa; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
+  .backend-current b { color: #212529; }
 </style>
 </head>
 <body>
 <div class="settings-shell">
-  <a class="btn-back" onclick="history.back()">← Volver</a>
+  <a class="btn-back" href="dashboard.html" onclick="if (history.length > 1) { history.back(); return false; }">← Volver</a>
   <h1>Ajustes</h1>
   <div class="sub">Configuración de tu cuenta y del taller</div>
 
@@ -67,28 +95,67 @@
       <div class="info-row"><span class="info-label">Rol</span><span class="info-value" id="info-role">—</span></div>
       <div class="info-row"><span class="info-label">Taller</span><span class="info-value" id="info-org">—</span></div>
       <div class="info-row"><span class="info-label">Código</span><span class="info-value" id="info-joincode">—</span></div>
-      <div id="delete-request-status" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;color:#e67700;display:none;">⏳ Tu solicitud de eliminación está pendiente.</div>
+      <div id="delete-request-status" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:12px;font-size:13px;color:#e67700;display:none;">⏳ Tu solicitud de eliminación está pendiente.</div>
       <button class="btn-delete-account" id="btn-delete-account" onclick="requestDeleteAccount()">🗑 Solicitar eliminación de cuenta</button>
       <button class="btn-delete-account" id="btn-logout" onclick="doLogout()" style="border-color:#dee2e6;color:#495057;">⏻ Cerrar sesión</button>
+      <div style="margin-top:16px;text-align:center;"><a href="privacy.html" style="font-size:13px;color:#1971c2;">Política de privacidad</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Notificaciones por correo</div>
+      <div class="card-desc">Elige qué avisos quieres recibir en tu correo. Salen de noreply@nivelatolabs.com.</div>
+      <div class="notif-row">
+        <div><div class="notif-label">Correo de bienvenida</div><div class="notif-desc">Un saludo cuando creas tu cuenta.</div></div>
+        <label class="switch"><input type="checkbox" id="ntf-welcomeEmail" checked /><span class="track"></span></label>
+      </div>
+      <div class="notif-row">
+        <div><div class="notif-label">Nueva cotización</div><div class="notif-desc">Avisa cuando alguien del taller crea una cotización.</div></div>
+        <label class="switch"><input type="checkbox" id="ntf-newProject" checked /><span class="track"></span></label>
+      </div>
+      <div class="notif-row">
+        <div><div class="notif-label">Cotización editada</div><div class="notif-desc">Avisa cuando editan una cotización existente.</div></div>
+        <label class="switch"><input type="checkbox" id="ntf-projectEdit" checked /><span class="track"></span></label>
+      </div>
+      <div class="notif-row">
+        <div><div class="notif-label">Cotización enviada</div><div class="notif-desc">Avisa cuando una cotización se marca como enviada al cliente.</div></div>
+        <label class="switch"><input type="checkbox" id="ntf-quoteReady" checked /><span class="track"></span></label>
+      </div>
+      <div class="saved-msg" id="ntf-saved">✓ Preferencias guardadas</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Backend de datos</div>
+      <div class="card-desc">Por defecto Nivelato usa su propio servidor. Si tu taller tiene su propio proyecto de Firebase, pega su configuración aquí y la app lo usará. Los correos siguen saliendo del servidor central de Nivelato.</div>
+      <div class="backend-current" id="backend-current">Backend actual: <b>cargando…</b></div>
+      <div class="backend-field"><label>apiKey</label><input id="be-apiKey" type="text" placeholder="AIza..." autocomplete="off" /></div>
+      <div class="backend-field"><label>authDomain</label><input id="be-authDomain" type="text" placeholder="mi-proyecto.firebaseapp.com" autocomplete="off" /></div>
+      <div class="backend-field"><label>projectId</label><input id="be-projectId" type="text" placeholder="mi-proyecto" autocomplete="off" /></div>
+      <div class="backend-field"><label>storageBucket</label><input id="be-storageBucket" type="text" placeholder="mi-proyecto.firebasestorage.app" autocomplete="off" /></div>
+      <div class="backend-field"><label>messagingSenderId</label><input id="be-messagingSenderId" type="text" placeholder="123456789" autocomplete="off" /></div>
+      <div class="backend-field"><label>appId</label><input id="be-appId" type="text" placeholder="1:123456789:web:abc..." autocomplete="off" /></div>
+      <button class="btn-primary" id="btn-backend-save" onclick="saveBackend()">Probar y guardar backend</button>
+      <button class="btn-secondary" id="btn-backend-reset" onclick="resetBackend()">Volver al backend de Nivelato</button>
+      <div class="status-line" id="backend-status"></div>
+      <p style="font-size:12px;color:#868e96;margin-top:12px;">Cambiar de backend cierra tu sesión y tendrás que entrar de nuevo. Tu proyecto necesita las reglas de Firestore de Nivelato (ver EMAIL_PIPELINE.md).</p>
     </div>
   </div>
 
   <!-- TALLER -->
   <div class="tab-panel" id="tab-taller">
-    <div class="card">
+    <div class="card company-member-card">
       <div class="card-title">Permisos de miembros</div>
       <div class="card-desc">Gestiona las capacidades de cada miembro del taller.</div>
       <div id="permissions-list"><p style="color:#868e96;font-size:13px;">Cargando miembros…</p></div>
       <div class="saved-msg" id="perm-saved">✓ Cambios guardados</div>
     </div>
 
-    <div class="card">
+    <div class="card company-member-card">
       <div class="card-title">Solicitudes de acceso</div>
       <div class="card-desc">Cuentas pendientes de aprobación para unirse al taller.</div>
       <div id="requests-list"><p style="color:#868e96;font-size:13px;">Cargando solicitudes…</p></div>
     </div>
 
-    <div class="card" id="delete-requests-card" style="display:none;">
+    <div class="card company-member-card" id="delete-requests-card" style="display:none;">
       <div class="card-title">🗑 Solicitudes de eliminación</div>
       <div class="card-desc">Usuarios que han solicitado eliminar su cuenta.</div>
       <div id="delete-requests-list"><p style="color:#868e96;font-size:13px;">Cargando…</p></div>
@@ -98,15 +165,23 @@
 
 <script type="module">
 import { auth, db } from './firebase-config.js';
+import { getBackendInfo, probeBackendConfig, saveBackendConfig, resetBackendConfig } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getDoc, doc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getDoc, doc, setDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { makePermChecker } from './permissions.js';
 import { PERM_DEFS } from './permissions.js';
+
+const NOTIF_KEYS = ['welcomeEmail', 'newProject', 'projectEdit', 'quoteReady'];
+const NOTIF_DEFAULTS = { welcomeEmail: true, newProject: true, projectEdit: true, quoteReady: true };
 
 let currentUser = null;
 let currentUserData = null;
 let orgMembers = [];
 let _can = () => false;
+
+// Ruta inyectada por el worker de Cloudflare ("company-settings",
+// "account-settings"); undefined al abrir el archivo directo: se muestra todo.
+const ROUTE = window.NIVELATO_ROUTE;
 
 // Escape ALL user-controlled strings before innerHTML interpolation (stored XSS).
 // Member names/emails/roles come from Firestore and any org member can set their own.
@@ -120,7 +195,16 @@ const escapeHtml = (s) => String(s ?? '')
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = 'login.html'; return; }
   currentUser = user;
+  // presencia realtime (presence.js la crea una tarea hermana; silencioso si el archivo falta)
+  import('./presence.js').then(m => m.startPresence(user.uid)).catch(() => {});
   const userSnap = await getDoc(doc(db, 'users', user.uid));
+  if (!userSnap.exists()) {
+    // Signed in, but no profile doc (orphaned auth account, interrupted
+    // signup, or deleted profile): don't leave a dead skeleton page.
+    alert('No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.');
+    window.location.href = 'login.html?missingProfile=1';
+    return;
+  }
   currentUserData = userSnap.data();
   _can = makePermChecker(currentUserData);
   const orgId = currentUserData.orgId;
@@ -159,7 +243,234 @@ onAuthStateChanged(auth, async (user) => {
     await loadRequests(orgId);
     await loadDeleteRequests();
   }
+
+  // notification prefs + backend status (propio backend o default)
+  await loadNotifPrefs();
+  renderBackendStatus();
+
+  // división por ruta: company-settings / account-settings / todo (sin ruta)
+  await applySettingsRoute(orgId);
 });
+
+// ─── División por ruta (company-settings / account-settings) ───
+// Sin ruta (undefined): se muestra TODO como hoy (tabs Mi cuenta / Taller).
+async function applySettingsRoute(orgId) {
+  if (ROUTE === 'company-settings') {
+    const tabs = document.querySelector('.tabs');
+    if (tabs) tabs.style.display = 'none';
+    const cuenta = document.getElementById('tab-cuenta');
+    if (cuenta) { cuenta.classList.remove('active'); cuenta.style.display = 'none'; }
+    const taller = document.getElementById('tab-taller');
+    if (taller) taller.classList.add('active');
+    const sub = document.querySelector('.settings-shell .sub');
+    if (sub) sub.textContent = 'Configuración de la compañía';
+    // Sin permiso de gestión de usuarios las tarjetas de miembros quedan
+    // sin cargar (el gate de arriba no corrió): ocultarlas en vez de dejar
+    // los "Cargando…" colgados.
+    if (!_can('userManagement')) {
+      document.querySelectorAll('.company-member-card').forEach(c => { c.style.display = 'none'; });
+    }
+    await setupCompanyCards(orgId);
+  } else if (ROUTE === 'account-settings') {
+    const tabs = document.querySelector('.tabs');
+    if (tabs) tabs.style.display = 'none';
+    const taller = document.getElementById('tab-taller');
+    if (taller) { taller.classList.remove('active'); taller.style.display = 'none'; }
+    const sub = document.querySelector('.settings-shell .sub');
+    if (sub) sub.textContent = 'Configuración de tu cuenta';
+    // el panel "Mi cuenta" ya viene activo en el HTML
+  }
+}
+
+let _companyOrgId = null;
+const _isOwner = () => !!(currentUserData && currentUserData.role === 'owner');
+
+function coStatus(elId, kind, text) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.className = 'status-line ' + kind;
+  el.textContent = text;
+}
+
+// Tarjetas nuevas de company-settings: perfil de la compañía y ajustes de
+// cotización. Se insertan al inicio del panel (que en esta ruta ya contiene
+// las tarjetas de miembros). Edición solo para el dueño; los demás las ven
+// de solo lectura.
+async function setupCompanyCards(orgId) {
+  _companyOrgId = orgId;
+  if (document.getElementById('card-company-profile')) return; // ya insertadas
+  const taller = document.getElementById('tab-taller');
+  if (!taller) return;
+  taller.insertAdjacentHTML('afterbegin', `
+    <div class="card" id="card-company-profile">
+      <div class="card-title">Perfil de la compañía</div>
+      <div class="card-desc">Nombre de la compañía como aparece en la app.</div>
+      <div class="backend-field"><label>Nombre de la compañía</label><input id="co-name" type="text" autocomplete="off" /></div>
+      <p id="co-profile-note" style="font-size:12px;color:#868e96;display:none;margin:0 0 12px;">Solo el dueño puede editar el perfil.</p>
+      <button class="btn-primary" id="btn-co-profile-save" onclick="saveCompanyProfile()">Guardar perfil</button>
+      <div class="status-line" id="co-profile-status"></div>
+    </div>
+    <div class="card" id="card-quote-settings">
+      <div class="card-title">Ajustes de cotización</div>
+      <div class="card-desc">Valores por defecto al crear cotizaciones nuevas.</div>
+      <div class="backend-field"><label>Prefijo de folio</label><input id="co-prefijo" type="text" placeholder="NIV" autocomplete="off" /></div>
+      <div class="backend-field"><label>Tasa de IVU (0.115 = 11.5%)</label><input id="co-tasaivu" type="number" step="0.001" min="0" /></div>
+      <div class="backend-field"><label>Validez (días)</label><input id="co-validez" type="number" step="1" min="1" /></div>
+      <p id="co-quote-note" style="font-size:12px;color:#868e96;display:none;margin:0 0 12px;">Solo el dueño puede editar los ajustes.</p>
+      <button class="btn-primary" id="btn-co-quote-save" onclick="saveQuoteSettings()">Guardar ajustes</button>
+      <div class="status-line" id="co-quote-status"></div>
+    </div>
+  `);
+  await loadCompanyProfile();
+  await loadQuoteSettings();
+}
+
+async function loadCompanyProfile() {
+  const owner = _isOwner();
+  try {
+    const snap = await getDoc(doc(db, 'orgs', _companyOrgId));
+    document.getElementById('co-name').value = snap.exists() ? (snap.data().name || '') : '';
+  } catch (e) {
+    coStatus('co-profile-status', 'err', 'No se pudo leer el perfil: ' + (e.message || 'error desconocido'));
+  }
+  if (!owner) {
+    document.getElementById('co-name').disabled = true;
+    document.getElementById('btn-co-profile-save').style.display = 'none';
+    document.getElementById('co-profile-note').style.display = 'block';
+  }
+}
+
+window.saveCompanyProfile = async () => {
+  const name = document.getElementById('co-name').value.trim();
+  if (!name) { coStatus('co-profile-status', 'err', 'El nombre no puede estar vacío.'); return; }
+  const btn = document.getElementById('btn-co-profile-save');
+  btn.disabled = true;
+  try {
+    // las reglas solo permiten al dueño actualizar el doc de la org
+    await updateDoc(doc(db, 'orgs', _companyOrgId), { name });
+    coStatus('co-profile-status', 'ok', 'Perfil guardado.');
+  } catch (e) {
+    coStatus('co-profile-status', 'err', 'No se pudo guardar: ' + (e.message || 'error desconocido'));
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+async function loadQuoteSettings() {
+  const owner = _isOwner();
+  try {
+    const snap = await getDoc(doc(db, 'companies', _companyOrgId));
+    const ajustes = (snap.exists() && snap.data().ajustes) || {};
+    document.getElementById('co-prefijo').value = ajustes.prefijoFolio || '';
+    document.getElementById('co-tasaivu').value = ajustes.tasaIVU != null ? ajustes.tasaIVU : 0.115;
+    document.getElementById('co-validez').value = ajustes.validezDias != null ? ajustes.validezDias : 30;
+  } catch (e) {
+    coStatus('co-quote-status', 'err', 'No se pudieron leer los ajustes: ' + (e.message || 'error desconocido'));
+  }
+  if (!owner) {
+    ['co-prefijo', 'co-tasaivu', 'co-validez'].forEach(id => { document.getElementById(id).disabled = true; });
+    document.getElementById('btn-co-quote-save').style.display = 'none';
+    document.getElementById('co-quote-note').style.display = 'block';
+  }
+}
+
+window.saveQuoteSettings = async () => {
+  const prefijo = document.getElementById('co-prefijo').value.trim();
+  const tasa = Number(document.getElementById('co-tasaivu').value);
+  const validez = Math.round(Number(document.getElementById('co-validez').value));
+  if (!Number.isFinite(tasa) || tasa < 0) { coStatus('co-quote-status', 'err', 'La tasa de IVU debe ser 0 o más (0.115 = 11.5%).'); return; }
+  if (!Number.isFinite(validez) || validez < 1) { coStatus('co-quote-status', 'err', 'La validez debe ser al menos 1 día.'); return; }
+  const btn = document.getElementById('btn-co-quote-save');
+  btn.disabled = true;
+  try {
+    // notación de puntos: no pisa otros campos que pueda tener ajustes
+    await updateDoc(doc(db, 'companies', _companyOrgId), {
+      'ajustes.prefijoFolio': prefijo,
+      'ajustes.tasaIVU': tasa,
+      'ajustes.validezDias': validez,
+    });
+    coStatus('co-quote-status', 'ok', 'Ajustes guardados.');
+  } catch (e) {
+    coStatus('co-quote-status', 'err', 'No se pudo guardar: ' + (e.message || 'error desconocido'));
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+async function loadNotifPrefs() {
+  let prefs = { ...NOTIF_DEFAULTS };
+  try {
+    const snap = await getDoc(doc(db, 'notification_prefs', currentUser.uid));
+    if (snap.exists()) prefs = { ...prefs, ...snap.data() };
+  } catch (e) {
+    console.warn('[Nivelato] no se pudieron leer las preferencias:', e.message);
+  }
+  for (const k of NOTIF_KEYS) {
+    const el = document.getElementById('ntf-' + k);
+    if (el) {
+      el.checked = prefs[k] !== false;
+      el.addEventListener('change', () => saveNotifPrefs());
+    }
+  }
+}
+
+async function saveNotifPrefs() {
+  const data = { updatedAt: serverTimestamp() };
+  for (const k of NOTIF_KEYS) {
+    const el = document.getElementById('ntf-' + k);
+    data[k] = el ? el.checked : true;
+  }
+  try {
+    await setDoc(doc(db, 'notification_prefs', currentUser.uid), data, { merge: true });
+    const msg = document.getElementById('ntf-saved');
+    msg.style.display = 'block';
+    setTimeout(() => { msg.style.display = 'none'; }, 2500);
+  } catch (e) {
+    alert('No se pudieron guardar las preferencias: ' + (e.message || 'error desconocido'));
+  }
+}
+
+function renderBackendStatus() {
+  const info = getBackendInfo();
+  const el = document.getElementById('backend-current');
+  el.innerHTML = 'Backend actual: <b>' + escapeHtml(info.projectId) + '</b>' +
+    (info.isCustom ? ' (personalizado)' : ' (default de Nivelato)');
+}
+
+function backendStatus(kind, text) {
+  const el = document.getElementById('backend-status');
+  el.className = 'status-line ' + kind;
+  el.textContent = text;
+}
+
+window.saveBackend = async () => {
+  const cfg = {};
+  for (const f of ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId']) {
+    cfg[f] = document.getElementById('be-' + f).value.trim();
+  }
+  const btn = document.getElementById('btn-backend-save');
+  btn.disabled = true;
+  backendStatus('warn', 'Probando la conexión con tu proyecto…');
+  try {
+    const res = await probeBackendConfig(cfg);
+    if (!res.ok) {
+      backendStatus('err', res.error);
+      return;
+    }
+    saveBackendConfig(cfg);
+    backendStatus('ok', (res.warning ? res.warning + ' ' : '') + 'Backend guardado. Recargando con tu proyecto…');
+    setTimeout(() => window.location.reload(), 1200);
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+window.resetBackend = () => {
+  if (!getBackendInfo().isCustom) return;
+  if (!confirm('¿Volver al backend default de Nivelato? Se cerrará tu sesión.')) return;
+  resetBackendConfig();
+  window.location.reload();
+};
 
 async function loadOrgMembers(orgId) {
   const q = query(collection(db, 'users'), where('orgId', '==', orgId));
@@ -171,7 +482,7 @@ function renderPermissions() {
   const container = document.getElementById('permissions-list');
   container.innerHTML = orgMembers.map(m => {
     const perms = m.permissions || {};
-    const roleLabel = { owner: 'Dueño', cotizador: 'Cotizador', supervisor: 'Supervisor', medidor: 'Técnico' }[m.role] || m.role || '—';
+    const roleLabel = { owner: 'Dueño / Admin', cotizador: 'Cotizador', supervisor: 'Supervisor', medidor: 'Técnico medidor' }[m.role] || m.role || '—';
     return `
       <div class="perm-member" data-uid="${escapeHtml(m.uid)}">
         <div class="perm-member-header">${escapeHtml(m.name) || 'Sin nombre'} <span class="perm-member-role">${escapeHtml(roleLabel)}</span></div>
@@ -278,15 +589,16 @@ async function loadDeleteRequests() {
 
 window.processDeleteRequest = async (uid, approved) => {
   if (!approved && !confirm('¿Rechazar esta solicitud? La cuenta permanecerá activa.')) return;
-  if (approved && !confirm('⚠️ ¿Eliminar permanentemente esta cuenta? Todos sus datos serán borrados. Esta acción NO se puede deshacer.')) return;
+  if (approved && !confirm('⚠️ ¿Eliminar permanentemente esta cuenta? Se borrarán su perfil, sus mediciones y su acceso. Esta acción NO se puede deshacer.')) return;
   try {
     if (approved) {
-      // delete the user doc and auth account
-      await deleteDoc(doc(db, 'users', uid));
-      // try to disable instead of full auth delete since admin can't delete others' auth
-      await updateDoc(doc(db, 'users', uid)).catch(() => {}); // no-op, doc already deleted
+      // Admin approval: stamps deleteApprovedAt. The processAccountDeletion
+      // Cloud Function watches that flag and performs the actual wipe
+      // (profile doc, jobs + photos, Firebase Auth account). Clients can
+      // never delete user docs directly (firestore.rules: allow delete: false).
+      await updateDoc(doc(db, 'users', uid), { deleteApprovedAt: new Date().toISOString() });
     } else {
-      // remove the delete request
+      // Reject: clear the request, the account stays active.
       await updateDoc(doc(db, 'users', uid), { deleteRequestedAt: null });
     }
     const card = document.querySelector(`#delete-requests-list .request-card[data-uid="${uid}"]`);

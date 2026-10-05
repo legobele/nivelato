@@ -2,8 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#121212" />
   <title>Nivelato — Iniciar sesión</title>
+  <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
@@ -30,7 +32,7 @@
       font-weight: 700;
       color: #1971c2;
       letter-spacing: -0.5px;
-      margin-bottom: 6px;
+      margin: 0 0 6px;
     }
     .logo.qgi { color: #0c6b3c; }
     .tagline {
@@ -59,6 +61,16 @@
       line-height: 1.6;
     }
     .pricing-note b { color: #1971c2; }
+    .geo-note {
+      font-size: 12px;
+      color: #856404;
+      background: #fff9db;
+      border: 1px solid #ffec99;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
     .tab-row {
       display: flex;
       border-bottom: 2px solid #e9ecef;
@@ -75,6 +87,12 @@
       border-bottom: 2px solid transparent;
       margin-bottom: -2px;
       transition: color 0.15s, border-color 0.15s;
+      /* button reset — tabs are real <button>s for keyboard access */
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      font-family: inherit;
     }
     .tab.active { color: #1971c2; border-bottom-color: #1971c2; }
     .tab.active.qgi-tab { color: #0c6b3c; border-bottom-color: #0c6b3c; }
@@ -128,109 +146,292 @@
       text-align: center;
       line-height: 1.5;
     }
-    .geo-loading { text-align: center; color: #868e96; font-size: 13px; padding: 24px 0; }
   </style>
 </head>
 <body>
+<!-- M17: the default (external) form is STATIC HTML — first paint never waits
+     on any network (module imports or the ipapi.co geo lookup). The module
+     below hydrates it, then swaps the flow UI in the background if geo says
+     otherwise. -->
 <div class="card" id="app-card">
-  <div class="geo-loading" id="geo-loading">Detectando ubicación…</div>
+  <h1 class="logo">Nivelato</h1>
+  <div class="tagline">Mediciones de campo, niveladas.</div>
+  <div class="pricing-note"><b>$29</b> por versión mayor por taller + <b>$4</b>/usuario/mes.<br>Prueba gratis: 30 días o 200 guardados.</div>
+
+  <div class="tab-row" role="tablist" aria-label="Iniciar sesión o crear cuenta">
+    <button type="button" role="tab" aria-selected="true" class="tab active" id="tab-login">Iniciar sesión</button>
+    <button type="button" role="tab" aria-selected="false" class="tab" id="tab-signup">Crear cuenta</button>
+  </div>
+
+  <div id="form-login">
+    <form id="login-form" autocomplete="on">
+      <div class="field">
+        <label for="login-email">Correo electrónico</label>
+        <input type="email" id="login-email" name="email" placeholder="correo@taller.com" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label for="login-pass">Contraseña</label>
+        <input type="password" id="login-pass" name="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <button class="btn-primary" id="btn-login" type="submit">Entrar</button>
+    </form>
+    <div style="text-align:center;margin-top:10px;"><a href="#" id="forgot-link" style="font-size:13px;color:#1971c2;">¿Olvidaste tu contraseña?</a></div>
+    <div class="error-msg" id="login-error" role="alert"></div>
+  </div>
+
+  <div id="form-signup" style="display:none">
+    <form id="signup-form" autocomplete="on">
+      <div class="field">
+        <label for="signup-name">Nombre completo</label>
+        <input type="text" id="signup-name" name="name" placeholder="Juan Pérez" autocomplete="name" />
+      </div>
+      <div class="field">
+        <label for="signup-email">Correo electrónico</label>
+        <input type="email" id="signup-email" name="email" placeholder="correo@taller.com" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label for="signup-pass">Contraseña</label>
+        <input type="password" id="signup-pass" name="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+      </div>
+      <div class="field">
+        <label for="signup-orgname">Nombre del taller</label>
+        <input type="text" id="signup-orgname" name="organization" placeholder="Vidriería Ejemplo" autocomplete="organization" />
+      </div>
+      <button class="btn-primary" id="btn-signup" type="submit">Empezar prueba gratis</button>
+    </form>
+    <div class="error-msg" id="signup-error" role="alert"></div>
+    <div class="signup-note">Al registrarte se crea tu taller con 30 días / 200 guardados de prueba.</div>
+  </div>
 </div>
 
+<script>
+  // M17 watchdog (classic script — arms at parse time, needs no imports):
+  // if the module below hasn't booted within 9s (stalled CDN / blocked
+  // network), show a non-blocking warning instead of hanging silently.
+  // The static form above stays visible and usable the whole time.
+  setTimeout(function () {
+    if (window.__nivelatoBooted) return;
+    var card = document.getElementById('app-card');
+    if (card && !document.getElementById('boot-warn')) {
+      var w = document.createElement('div');
+      w.id = 'boot-warn';
+      w.className = 'geo-note';
+      w.setAttribute('role', 'alert');
+      w.textContent = 'El inicio de sesión no terminó de cargar (¿conexión lenta o bloqueada?). Revisa tu red y recarga la página.';
+      card.prepend(w);
+    }
+  }, 9000);
+</script>
+
 <script type="module">
-  import { auth, db } from './firebase-config.js';
+  import { auth, db, centralFunctions } from './firebase-config.js';
   import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    updateProfile
+    updateProfile,
+    signOut,
+    onAuthStateChanged,
+    sendPasswordResetEmail
   } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
   import {
     doc, setDoc, getDoc, serverTimestamp, Timestamp
   } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+  import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
   import { detectCountry, flowModeForCountry, ensureFlowClaims, routeAfterGate } from './geo.js';
 
-  // ---- Geo-gated UI (spec §6): the other flow's UI is NEVER rendered ----
-  // Prefer the edge cookie (Cloudflare Worker, Phase 2) when present;
-  // fall back to client-side lookup. Unknown geo → external (§6.3).
+  // Correo de bienvenida: la app lo pide explícito tras el signup para que
+  // funcione igual en el backend default y en backends propios (BYOB).
+  // Best effort, nunca bloquea el registro.
+  async function maybeSendWelcome(email, name, uid) {
+    try {
+      await setDoc(doc(db, 'notification_prefs', uid), {
+        welcomeEmail: true, newProject: true, projectEdit: true, quoteReady: true,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      const prefs = (await getDoc(doc(db, 'notification_prefs', uid))).data() || {};
+      if (prefs.welcomeEmail === false) return;
+      await httpsCallable(centralFunctions, 'requestWelcomeEmail')({ email, name });
+    } catch (e) {
+      console.warn('[Nivelato] welcome email skipped:', e.message);
+    }
+  }
+
+  // Restablecer contraseña: primero el flujo propio (remitente
+  // noreply@nivelatolabs.com); si la cuenta vive en un backend propio,
+  // el servidor central no la conoce y caemos al correo default de Firebase.
+  async function doForgotPassword() {
+    const email = prompt('Escribe tu correo para enviarte el enlace:');
+    if (!email || !email.trim()) return;
+    try {
+      await httpsCallable(centralFunctions, 'requestPasswordReset')({ email: email.trim() });
+      alert('Revisa tu correo, te enviamos el enlace para restablecer tu contraseña.');
+    } catch (err) {
+      if (err.code === 'functions/not-found') {
+        try {
+          await sendPasswordResetEmail(auth, email.trim());
+          alert('Revisa tu correo, te enviamos el enlace para restablecer tu contraseña.');
+        } catch (e2) {
+          alert('No se pudo enviar el correo: ' + friendlyError(e2.code));
+        }
+      } else {
+        alert('No se pudo enviar el correo: ' + (err.message || 'error desconocido'));
+      }
+    }
+  }
+
+  window.__nivelatoBooted = true;
+
+  // ---- Geo-gated UI (spec §6) ----
+  // The default form is static HTML above, so geo NEVER gates first paint.
+  // Geo resolves in the background after paint; if the real flow differs from
+  // what's rendered, the UI is swapped then. Enforcement stays server-side
+  // in the flowGate callable — the client lookup is routing-only, so
+  // render-first is safe. Unknown geo → external (§6.3).
   function flowFromCookie() {
     const m = document.cookie.match(/(?:^|;\s*)nl_flow=(qgi|external)/);
     return m ? m[1] : null;
   }
-  const country = await detectCountry();
-  const MODE = flowFromCookie() || flowModeForCountry(country); // 'qgi' | 'external'
-  const QGI = MODE === 'qgi';
 
-  const card = document.getElementById('app-card');
-  card.innerHTML = `
-    <div class="logo${QGI ? ' qgi' : ''}">${QGI ? 'Quality Glass' : 'Nivelato'}</div>
-    <div class="tagline">${QGI
+  let QGI = false;        // currently rendered flow
+  let country = null;     // resolved async; null until geo settles
+  let currentTab = 'login';
+  let pendingShown = false;
+  let authInitDone = false;
+  let authBusy = false;   // a login/signup submit is in flight
+
+  const VALUE_IDS = ['login-email', 'login-pass', 'signup-name', 'signup-email',
+                     'signup-pass', 'signup-orgcode', 'signup-orgname'];
+  function collectValues() {
+    const v = {};
+    for (const id of VALUE_IDS) {
+      const el = document.getElementById(id);
+      if (el) v[id] = el.value;
+    }
+    return v;
+  }
+
+  function formHTML(qgi) {
+    return `
+    <h1 class="logo${qgi ? ' qgi' : ''}">${qgi ? 'Quality Glass' : 'Nivelato'}</h1>
+    <div class="tagline">${qgi
       ? 'Nivelato — exclusivo de Quality Glass en Puerto Rico'
-      : 'Medidas de campo para instaladores de vidrio'}</div>
-    ${QGI ? `<div class="exclusivity-note">En Puerto Rico, Nivelato es de uso <b>exclusivo de Quality Glass</b>. El registro es solo para empleados.</div>` : ''}
-    ${!QGI ? `<div class="pricing-note"><b>$29</b> por versión mayor por taller + <b>$4</b>/usuario/mes.<br>Prueba gratis: 30 días o 200 guardados.</div>` : ''}
+      : 'Mediciones de campo, niveladas.'}</div>
+    ${qgi ? `<div class="exclusivity-note">En Puerto Rico, Nivelato es de uso <b>exclusivo de Quality Glass</b>. El registro es solo para empleados.</div>` : ''}
+    ${!qgi ? `<div class="pricing-note"><b>$29</b> por versión mayor por taller + <b>$4</b>/usuario/mes.<br>Prueba gratis: 30 días o 200 guardados.</div>` : ''}
 
-    <div class="tab-row">
-      <div class="tab active${QGI ? ' qgi-tab' : ''}" id="tab-login">Iniciar sesión</div>
-      <div class="tab${QGI ? ' qgi-tab' : ''}" id="tab-signup">${QGI ? 'Soy empleado' : 'Crear cuenta'}</div>
+    <div class="tab-row" role="tablist" aria-label="Iniciar sesión o crear cuenta">
+      <button type="button" role="tab" aria-selected="true" class="tab active${qgi ? ' qgi-tab' : ''}" id="tab-login">Iniciar sesión</button>
+      <button type="button" role="tab" aria-selected="false" class="tab${qgi ? ' qgi-tab' : ''}" id="tab-signup">${qgi ? 'Soy empleado' : 'Crear cuenta'}</button>
     </div>
 
     <div id="form-login">
       <form id="login-form" autocomplete="on">
         <div class="field">
-          <label>Correo electrónico</label>
+          <label for="login-email">Correo electrónico</label>
           <input type="email" id="login-email" name="email" placeholder="correo@taller.com" autocomplete="email" />
         </div>
         <div class="field">
-          <label>Contraseña</label>
+          <label for="login-pass">Contraseña</label>
           <input type="password" id="login-pass" name="password" placeholder="••••••••" autocomplete="current-password" />
         </div>
-        <button class="btn-primary${QGI ? ' qgi-btn' : ''}" id="btn-login" type="submit">Entrar</button>
+        <button class="btn-primary${qgi ? ' qgi-btn' : ''}" id="btn-login" type="submit">Entrar</button>
       </form>
-      <div class="error-msg" id="login-error"></div>
+      <div style="text-align:center;margin-top:10px;"><a href="#" id="forgot-link" style="font-size:13px;color:#1971c2;">¿Olvidaste tu contraseña?</a></div>
+      <div class="error-msg" id="login-error" role="alert"></div>
     </div>
 
     <div id="form-signup" style="display:none">
       <form id="signup-form" autocomplete="on">
         <div class="field">
-          <label>Nombre completo</label>
+          <label for="signup-name">Nombre completo</label>
           <input type="text" id="signup-name" name="name" placeholder="Juan Pérez" autocomplete="name" />
         </div>
         <div class="field">
-          <label>Correo electrónico</label>
+          <label for="signup-email">Correo electrónico</label>
           <input type="email" id="signup-email" name="email" placeholder="correo@taller.com" autocomplete="email" />
         </div>
         <div class="field">
-          <label>Contraseña</label>
+          <label for="signup-pass">Contraseña</label>
           <input type="password" id="signup-pass" name="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
         </div>
-        ${QGI ? `
+        ${qgi ? `
         <div class="field">
-          <label>Código de empleado <span style="color:#868e96;font-weight:400">(te lo da tu supervisor)</span></label>
+          <label for="signup-orgcode">Código de empleado <span style="color:#868e96;font-weight:400">(te lo da tu supervisor)</span></label>
           <input type="text" id="signup-orgcode" placeholder="ABC123" autocomplete="off" style="text-transform:uppercase" />
         </div>` : `
         <div class="field">
-          <label>Nombre del taller</label>
+          <label for="signup-orgname">Nombre del taller</label>
           <input type="text" id="signup-orgname" name="organization" placeholder="Vidriería Ejemplo" autocomplete="organization" />
         </div>`}
-        <button class="btn-primary${QGI ? ' qgi-btn' : ''}" id="btn-signup" type="submit">${QGI ? 'Solicitar acceso' : 'Empezar prueba gratis'}</button>
+        <button class="btn-primary${qgi ? ' qgi-btn' : ''}" id="btn-signup" type="submit">${qgi ? 'Solicitar acceso' : 'Empezar prueba gratis'}</button>
       </form>
-      <div class="error-msg" id="signup-error"></div>
-      <div class="signup-note">${QGI
+      <div class="error-msg" id="signup-error" role="alert"></div>
+      <div class="signup-note">${qgi
         ? 'Las cuentas nuevas las aprueba <b>Daniel Lebrón</b>. Te avisaremos cuando tengas acceso.'
         : 'Al registrarte se crea tu taller con 30 días / 200 guardados de prueba.'}</div>
     </div>`;
+  }
 
-  document.getElementById('tab-login').addEventListener('click', () => switchTab('login'));
-  document.getElementById('tab-signup').addEventListener('click', () => switchTab('signup'));
+  function renderForm(mode, keepState = false) {
+    const prev = keepState ? collectValues() : {};
+    const prevTab = currentTab;
+    QGI = (mode === 'qgi');
+    document.getElementById('app-card').innerHTML = formHTML(QGI);
+    for (const id of Object.keys(prev)) {
+      const el = document.getElementById(id);
+      if (el) el.value = prev[id];
+    }
+    document.getElementById('tab-login').addEventListener('click', () => switchTab('login'));
+    document.getElementById('tab-signup').addEventListener('click', () => switchTab('signup'));
+    document.getElementById('login-form').addEventListener('submit', doLogin);
+    document.getElementById('signup-form').addEventListener('submit', doSignup);
+    const forgot = document.getElementById('forgot-link');
+    if (forgot) forgot.addEventListener('click', (e) => { e.preventDefault(); doForgotPassword(); });
+    switchTab(prevTab);
+  }
+
+  function showGeoNotice() {
+    const card = document.getElementById('app-card');
+    if (!card || document.getElementById('geo-note')) return;
+    const note = document.createElement('div');
+    note.id = 'geo-note';
+    note.className = 'geo-note';
+    note.textContent = 'No pudimos detectar tu ubicación; estás viendo la versión general de Nivelato.';
+    card.prepend(note);
+  }
+
+  // settings.html redirects here with ?missingProfile=1 when the signed-in
+  // account has no users/{uid} doc — surface it instead of failing silently.
+  function showMissingProfileNotice() {
+    const card = document.getElementById('app-card');
+    if (!card || document.getElementById('profile-note')) return;
+    const note = document.createElement('div');
+    note.id = 'profile-note';
+    note.className = 'geo-note';
+    note.setAttribute('role', 'alert');
+    note.textContent = 'No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.';
+    card.prepend(note);
+  }
 
   function switchTab(tab) {
+    currentTab = tab;
     document.getElementById('form-login').style.display  = tab === 'login'  ? '' : 'none';
     document.getElementById('form-signup').style.display = tab === 'signup' ? '' : 'none';
-    document.getElementById('tab-login').classList.toggle('active', tab === 'login');
-    document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+    const tl = document.getElementById('tab-login');
+    const ts = document.getElementById('tab-signup');
+    tl.classList.toggle('active', tab === 'login');
+    ts.classList.toggle('active', tab === 'signup');
+    tl.setAttribute('aria-selected', tab === 'login' ? 'true' : 'false');
+    ts.setAttribute('aria-selected', tab === 'signup' ? 'true' : 'false');
   }
 
   function showPendingApproval() {
-    document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2>Cuenta creada</h2><p style="color:#868e96;max-width:320px">Tu cuenta está pendiente de aprobación por el dueño del taller. Te avisarán cuando tengas acceso.</p></div>';
+    pendingShown = true;
+    document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2>Cuenta creada</h2><p style="color:#868e96;max-width:320px">Tu cuenta está pendiente de aprobación por el dueño del taller. Te avisarán cuando tengas acceso.</p><button id="btn-logout" class="btn-primary" style="max-width:240px">Cerrar sesión</button></div>';
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      try { await signOut(auth); } catch (_) { /* already signed out */ }
+      window.location.href = 'login.html';
+    });
   }
 
   async function postAuthRedirect() {
@@ -244,6 +445,7 @@
 
   async function doLogin(e) {
     e.preventDefault();
+    authBusy = true;
     const btn = document.getElementById('btn-login');
     const errEl = document.getElementById('login-error');
     btn.disabled = true;
@@ -259,11 +461,13 @@
       errEl.classList.add('visible');
       btn.disabled = false;
       btn.textContent = 'Entrar';
+      authBusy = false;
     }
   }
 
   async function doSignup(e) {
     e.preventDefault();
+    authBusy = true;
     const btn = document.getElementById('btn-signup');
     const errEl = document.getElementById('signup-error');
     btn.disabled = true;
@@ -292,6 +496,7 @@
           disabled: true, geoStatus: 'pending',
           createdAt: serverTimestamp()
         });
+        await maybeSendWelcome(email, name, cred.user.uid);
         const gate = await ensureFlowClaims();
         if (gate.ok && routeAfterGate(gate.verdict, gate.reason)) return;
         showPendingApproval();
@@ -333,17 +538,16 @@
       const gate = await ensureFlowClaims();
       if (gate.ok && routeAfterGate(gate.verdict, gate.reason)) return;
       alert(`¡Cuenta creada!\n\nCódigo de tu taller: ${orgId}\n\nDáselo a tus empleados para que puedan registrarse.\n\nPrueba: 30 días o 200 guardados.`);
+      await maybeSendWelcome(email, name, cred.user.uid);
       window.location.href = 'dashboard.html';
     } catch(err) {
       errEl.textContent = friendlyError(err.code);
       errEl.classList.add('visible');
       btn.disabled = false;
       btn.textContent = QGI ? 'Solicitar acceso' : 'Empezar prueba gratis';
+      authBusy = false;
     }
   }
-
-  document.getElementById('login-form').addEventListener('submit', doLogin);
-  document.getElementById('signup-form').addEventListener('submit', doSignup);
 
   function friendlyError(code) {
     const map = {
@@ -363,6 +567,31 @@
     };
     return map[code] || `Error: ${code}`;
   }
+
+  // ---- Init: hydrate the static form. NO network is awaited here. ----
+  renderForm(flowFromCookie() || 'external', true);
+  if (new URLSearchParams(location.search).get('missingProfile') === '1') showMissingProfileNotice();
+
+  // (a) Already signed in? Send them to the app. Ignores the initial
+  // null-fire while the persisted session restores, and stays out of the
+  // way of in-flight login/signup submits and the pending-approval screen.
+  onAuthStateChanged(auth, (user) => {
+    if (authInitDone || authBusy || pendingShown) return;
+    if (user) { authInitDone = true; postAuthRedirect(); }
+  });
+
+  // ---- Background geo (post-paint): swap the flow UI only if it differs.
+  // Hard 7s cap so a hung lookup can never stall the page; on failure the
+  // already-visible form stays, with a non-blocking notice. ----
+  Promise.race([
+    detectCountry(),
+    new Promise((resolve) => setTimeout(() => resolve(null), 7000)),
+  ]).then((cc) => {
+    country = cc;
+    const mode = flowFromCookie() || flowModeForCountry(country);
+    if (mode !== (QGI ? 'qgi' : 'external')) renderForm(mode, true);
+    if (country === null && !flowFromCookie()) showGeoNotice();
+  });
 </script>
 </body>
 </html>

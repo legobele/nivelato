@@ -73,7 +73,6 @@ function toFracStr(decimal) {
 // ─── STEP STATE ────────────────────────────────────────────────────────────
 let currentStep = 0;
 const TOTAL_STEPS = 7;
-let _historyPushed = 0;
 
 function getLingerView(leavingStep) {
   if (leavingStep === 2) {
@@ -107,8 +106,11 @@ function getLingerView(leavingStep) {
   return null;
 }
 
-function goStep(n, skipHistory) {
+function goStep(n, skipHistory, skipSave) {
   userZoomed = false; // reset auto-focus on each step transition
+  // (b) el botón "Restablecer" zoom solo tiene sentido con zoom manual activo
+  const _rzb = document.getElementById('reset-zoom-btn');
+  if (_rzb) _rzb.style.display = 'none';
   const leavingStep = currentStep;
   document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('step-' + n)?.classList.add('active');
@@ -121,7 +123,6 @@ function goStep(n, skipHistory) {
 
   if (!skipHistory) {
     history.pushState({ step: n }, '', '#step-' + n);
-    _historyPushed++;
   }
 
   /* resize canvas after step transition so flex layout can redistribute space */
@@ -145,6 +146,9 @@ function goStep(n, skipHistory) {
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // (a) persistir el paso actual en el borrador: un refresh ya no te tira un paso atrás
+  if (!skipSave) saveDraft();
 }
 
 function nextStep() {
@@ -204,6 +208,9 @@ function hideStepError(n) {
 
 // ─── DRAFT PERSISTENCE — localStorage (QA fix 2026-09-18) ──────────────────
 const DRAFT_KEY = 'nivelato_wizard_draft_v1';
+// (e) la foto anotada vive aquí desde el arranque para que saveDraft/restoreDraft
+// puedan leerla sin caer en la TDZ durante el init
+let annotatedPhotoDataUrl = null;
 const DRAFT_IDS = ['customer-name','project-name','location-name','notas-field',
   'hueco-ancho-bot-whole','hueco-ancho-bot-frac','hueco-alto-izq-whole','hueco-alto-izq-frac',
   'pI-a-whole','pI-a-frac','pI-b-whole','pI-b-frac',
@@ -218,7 +225,16 @@ function saveDraft() {
       const el = document.getElementById(id);
       if (el) values[id] = el.value;
     }
-    localStorage.setItem(DRAFT_KEY, JSON.stringify({ v: 1, ts: Date.now(), step: currentStep, values }));
+    // (e) la foto anotada también es parte del borrador
+    const draft = { v: 1, ts: Date.now(), step: currentStep, values };
+    if (annotatedPhotoDataUrl) draft.photo = annotatedPhotoDataUrl;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch (e2) {
+      // la foto no cabe en localStorage: guardar el borrador sin ella
+      delete draft.photo;
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    }
   } catch (e) { /* storage lleno o bloqueado: el wizard sigue funcionando */ }
 }
 
@@ -230,6 +246,18 @@ function restoreDraft() {
   for (const id of Object.keys(d.values)) {
     const el = document.getElementById(id);
     if (el) el.value = d.values[id];
+  }
+  // (e) restaurar la foto anotada guardada en el borrador
+  if (d.photo) {
+    annotatedPhotoDataUrl = d.photo;
+    const pimg = document.getElementById('photo-preview-img');
+    const pprev = document.getElementById('photo-preview');
+    const pbtn = document.getElementById('btn-open-photo');
+    if (pprev && pimg) {
+      pimg.src = d.photo;
+      pprev.style.display = 'block';
+      if (pbtn) pbtn.textContent = '📷 Cambiar foto';
+    }
   }
   const step = Math.max(0, Math.min(TOTAL_STEPS, d.step | 0));
   if (step !== currentStep) goStep(step, true);
@@ -246,6 +274,19 @@ window.addEventListener('popstate', function(e) {
   if (e.state && typeof e.state.step === 'number') {
     const targetStep = e.state.step;
     if (targetStep >= 0 && targetStep <= TOTAL_STEPS && targetStep !== currentStep) {
+      // M15: navegar hacia ADELANTE con Back/Forward del navegador valida
+      // igual que el botón Siguiente — no se puede saltar la validación.
+      if (targetStep > currentStep) {
+        const err = validateStep(currentStep);
+        if (err) {
+          showStepError(currentStep, err);
+          history.back(); // quedarse en el paso actual hasta que los campos sean válidos
+          return;
+        }
+        hideStepError(currentStep);
+      } else {
+        hideStepError(currentStep);
+      }
       document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
       document.getElementById('step-' + targetStep)?.classList.add('active');
       currentStep = targetStep;
@@ -255,6 +296,7 @@ window.addEventListener('popstate', function(e) {
       recalcAll();
       if (targetStep === TOTAL_STEPS) renderSummary();
       if (!userZoomed) animateCanvas(targetStep);
+      saveDraft(); // (a) persistir el paso tras navegar con Back/Forward
     }
   }
 });
@@ -315,8 +357,9 @@ function recalcAll() {
   // Computed dimensions from desniveles
   // Top width = bottom width - left wall lean - right wall lean
   // Right height = left height - ceiling tilt - floor tilt
-  results.anchoTop = anchoBot > 0 ? anchoBot - results.paredIzq.raw - results.paredDer.raw : 0;
-  results.altoDer  = altoIzq > 0  ? altoIzq - results.techo.raw - results.piso.raw : 0;
+  // (d) un desnivel mayor que la base no puede dar un ancho/alto negativo — clamp a 0
+  results.anchoTop = anchoBot > 0 ? Math.max(0, anchoBot - results.paredIzq.raw - results.paredDer.raw) : 0;
+  results.altoDer  = altoIzq > 0  ? Math.max(0, altoIzq - results.techo.raw - results.piso.raw) : 0;
 
   drawCanvas();
 }
@@ -463,6 +506,11 @@ window.newMeasurement = function() {
   _setSaveBtn(false, '💾 Guardar medida');
   _hidePostSaveActions();
   goStep(0, true);
+  // (c) la entrada vieja del paso 7 seguiría en el historial y el Back del
+  // navegador la resucitaría: reemplazarla por el paso 0 para que no haya
+  // resumen fantasma después de empezar una medida nueva
+  history.replaceState({ step: 0 }, '', '#step-0');
+  clearDraft(); // el goStep de arriba guardó un borrador vacío: no dejar rastro
 };
 
 // ─── TOAST — avisos livianos, ej. "Borrador restaurado" ─────────────────────
@@ -1024,10 +1072,6 @@ const FIELD_VIEWS = {
   'hueco-ancho-bot-frac':  { focusX: 0.5, focusY: 0.9, zoom: 0.85 },
   'hueco-alto-izq-whole':  { focusX: 0.1, focusY: 0.5, zoom: 0.85 },
   'hueco-alto-izq-frac':   { focusX: 0.1, focusY: 0.5, zoom: 0.85 },
-  'hueco-ancho-top-whole': { focusX: 0.5, focusY: 0.1, zoom: 0.85 },
-  'hueco-ancho-top-frac':  { focusX: 0.5, focusY: 0.1, zoom: 0.85 },
-  'hueco-alto-der-whole':  { focusX: 0.9, focusY: 0.5, zoom: 0.85 },
-  'hueco-alto-der-frac':   { focusX: 0.9, focusY: 0.5, zoom: 0.85 },
 };
 
 let activeFieldId = null;
@@ -1095,6 +1139,7 @@ window.addEventListener('resize', resizeCanvas);
 let isDragging = false;
 let dragStart = { x: 0, y: 0 };
 let vpAtDrag  = { x: 0, y: 0 };
+let userZoomed = false; // single source of truth: manual pan/zoom state (reset on step change)
 
 if (canvas) {
 canvas.addEventListener('mousedown', function(e) {
@@ -1111,19 +1156,26 @@ window.addEventListener('mousemove', function(e) {
   vp.x = vpAtDrag.x + dx; vp.y = vpAtDrag.y + dy;
   vpTarget.x = vp.x; vpTarget.y = vp.y;
   userZoomed = true;
+  _syncResetZoomBtn();
   drawCanvas();
 });
 window.addEventListener('mouseup', function() { isDragging = false; canvas.style.cursor = 'grab'; });
 canvas.style.cursor = 'grab';
 
 // ─── TOUCH + ZOOM HANDLING ───
-let userZoomed   = false;
 let touchDragStart = null;
 let lastPinchDist  = null;
+
+// (b) el botón "Restablecer" zoom solo aparece cuando hay zoom/paneo manual activo
+function _syncResetZoomBtn() {
+  const btn = document.getElementById('reset-zoom-btn');
+  if (btn) btn.style.display = userZoomed ? '' : 'none';
+}
 
 function applyZoom(cx, cy, factor) {
   const clampedFactor = Math.max(0.85, Math.min(1.18, factor));
   userZoomed = true;
+  _syncResetZoomBtn();
   const newScale = Math.max(0.3, Math.min(10, vp.scale * clampedFactor));
   const sf = newScale / vp.scale;
   vp.x = cx - sf * (cx - vp.x);
@@ -1154,6 +1206,7 @@ canvas.addEventListener('touchmove', function(e) {
     vp.y = touchDragStart.vpy + dy;
     vpTarget.x = vp.x; vpTarget.y = vp.y;
     userZoomed = true;
+    _syncResetZoomBtn();
     drawCanvas();
   } else if (e.touches.length === 2 && lastPinchDist !== null) {
     const dx   = e.touches[0].clientX - e.touches[1].clientX;
@@ -1183,25 +1236,14 @@ canvas.addEventListener('wheel', function(e) {
 } // end if (canvas)
 
 // reset zoom button
-window.resetZoom = function() { userZoomed = false; animateCanvas(currentStep); };
+window.resetZoom = function() { userZoomed = false; _syncResetZoomBtn(); animateCanvas(currentStep); };
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
 if (canvas) {
   resizeCanvas();
   history.replaceState({ step: 0 }, '', '#step-0');
-  goStep(0, true);
+  goStep(0, true, true); // skipSave: no pisar un borrador existente antes de restaurarlo
   restoreDraft(); // reanuda el borrador si existe (los selects se restauran de nuevo abajo, ya con fracciones)
-}
-
-function resetZoom() {
-  if (window.zoomLevel > 1 || window.panX || window.panY) {
-    window.zoomLevel = 1;
-    window.panX = 0;
-    window.panY = 0;
-    if (typeof drawCanvas === 'function') drawCanvas();
-    var btn = document.getElementById('reset-zoom-btn');
-    if (btn) btn.style.display = 'none';
-  }
 }
 
 window.embedGraph = function(cvs, data) {
@@ -1428,7 +1470,7 @@ window.embedGraph = function(cvs, data) {
 };
 
 // ─── FOTO CON MEDIDAS (optional step 6) ───────────────────────────────────
-let annotatedPhotoDataUrl = null;
+// (annotatedPhotoDataUrl se declara arriba, junto al borrador)
 
 window.openPhotoEditor = function() {
   // pass current measurements to the editor via postMessage after iframe loads
@@ -1472,6 +1514,7 @@ window.removePhoto = function() {
   annotatedPhotoDataUrl = null;
   document.getElementById('photo-preview').style.display = 'none';
   document.getElementById('btn-open-photo').textContent = '📷 Agregar foto';
+  saveDraft(); // (e) el borrador ya no debe llevar la foto
 };
 
 window.addEventListener('message', function(e) {
@@ -1485,6 +1528,7 @@ window.addEventListener('message', function(e) {
       document.getElementById('btn-open-photo').textContent = '📷 Cambiar foto';
     }
     if (typeof window.closePhotoEditor === 'function') window.closePhotoEditor();
+    saveDraft(); // (e) la foto anotada entra al borrador en cuanto llega
   }
 });
   

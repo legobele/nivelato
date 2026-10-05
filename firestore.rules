@@ -81,15 +81,50 @@ service cloud.firestore {
     // - get: own doc, or same-org (single reads need no per-doc get()).
     // - list: same-org only, via resource.data (NOT get(users/{id}) — a
     //   per-document get() makes every list query fail).
+    // - create (signup): pinned so a new account can NEVER self-grant
+    //   privilege. role must be 'medidor' or 'owner'; 'owner' is allowed ONLY
+    //   when the referenced org's ownerId is the signer (org creators); a
+    //   'medidor' joiner must reference an existing org AND land disabled
+    //   (pending owner approval). permissions/geo/deletion fields are
+    //   server- or owner-managed — never client-set at birth.
     // - update: self may edit profile fields only (role/orgId/permissions/
-    //   disabled/geo fields immutable — no self-promotion, no self-approval,
-    //   no geo-spoofing); owners may manage same-org members
-    //   (approve/reject/roles/permissions).
-    // - create/delete: self-create only (signup); NO client deletes —
-    //   delete+recreate was a full privilege-escalation bypass. Doc removal
-    //   happens in the Firebase Console, which bypasses rules.
+    //   disabled/deleteApprovedAt/geo fields immutable — no self-promotion,
+    //   no self-approval, no geo-spoofing, no self-approved deletion);
+    //   deleteRequestedAt is the one self-service field (B2 deletion flow).
+    //   Owners may manage same-org members (approve/reject/roles/
+    //   permissions, deletion approvals).
+    // - delete: NO client deletes — delete+recreate was a full
+    //   privilege-escalation bypass. Doc removal happens via the
+    //   processAccountDeletion Cloud Function (B2).
+    //
+    // The org a new user doc points at (create-time only). orgId must be a
+    // string; a missing/non-string orgId fails closed via exists() == false.
+    function createOrgPath() {
+      return /databases/$(database)/documents/orgs/$(request.resource.data.orgId);
+    }
+    function createOrgExists() {
+      return exists(createOrgPath());
+    }
+    function createOrg() {
+      return get(createOrgPath()).data;
+    }
     match /users/{userId} {
-      allow create: if isSignedIn() && myUid() == userId;
+      allow create: if isSignedIn()
+        && myUid() == userId
+        && request.resource.data.orgId is string
+        && createOrgExists()
+        && request.resource.data.role in ['medidor', 'owner']
+        && (request.resource.data.role == 'owner'
+            ? createOrg().ownerId == myUid()
+            : createOrg().flow in ['qgi', 'external']
+              && request.resource.data.disabled == true)
+        && !('permissions' in request.resource.data)
+        && (!('geoStatus' in request.resource.data)
+            || request.resource.data.geoStatus == 'pending')
+        && !('lastGeoCheck' in request.resource.data)
+        && !('lastSeenRegion' in request.resource.data)
+        && !('deleteRequestedAt' in request.resource.data)
+        && !('deleteApprovedAt' in request.resource.data);
       allow get: if isSignedIn() && (
         myUid() == userId ||
         (isActive() && myOrgId() == resource.data.orgId)
@@ -102,15 +137,36 @@ service cloud.firestore {
           && unchanged('orgId')
           && unchanged('permissions')
           && unchanged('disabled')
+          && unchanged('deleteApprovedAt')
           && unchanged('geoStatus')
           && unchanged('lastGeoCheck')
           && unchanged('lastSeenRegion'))
+        // B2: self-service deletion REQUEST — may only touch
+        // deleteRequestedAt, nothing else.
+        || (myUid() == userId
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['deleteRequestedAt']))
         || (isActive()
           && myUser().role == 'owner'
           && myOrgId() == resource.data.orgId
           && request.resource.data.orgId == resource.data.orgId)
       );
       allow delete: if false;
+
+      // Presence beacon — users/{userId}/presence/{beaconId}.
+      // A user may ONLY write their own beacon, and only the two beacon
+      // fields (no stuffing arbitrary data into presence). Anyone signed in
+      // may read their own beacon or a same-org member's (drives the online
+      // list + the pendingUpdateWatcher's nobody-online check).
+      match /presence/{beaconId} {
+        allow read: if isSignedIn() && (
+          myUid() == userId ||
+          (isActive() && myOrgId() ==
+            get(/databases/$(database)/documents/users/$(userId)).data.orgId)
+        );
+        allow write: if isSignedIn() && myUid() == userId
+          && request.resource.data.keys().hasOnly(['lastSeen', 'route']);
+      }
     }
 
     // Orgs.
@@ -118,13 +174,18 @@ service cloud.firestore {
     //   (Phase 3 Stripe checkout replaces this with server provisioning).
     //   QGI orgs are never client-created — console/Giulia only. Trial
     //   fields are pinned so a client can't mint itself a paid org.
-    // - read: active members with valid flow claims, PLUS users with no user
-    //   doc yet — they are mid-signup validating a join code (the user doc
-    //   is created after). Org docs only carry name/joinCode/ownerId/flow,
-    //   safe to expose there.
+    // - read: active members with valid flow claims. Mid-signup users with no
+    //   user doc yet get SINGLE-ORG reads only (they are validating a join
+    //   code — the user doc is created after): get is allowed, list is NOT,
+    //   so a fresh account can never enumerate org names/joinCodes/ownerIds.
     // - update/delete: owner of the org, with flow claims valid. `flow`,
-    //   `versionPolicy`, `licenseStatus` are console/function-only — clients
-    //   can never change them (same discipline as NextInv's versionPolicy).
+    //   `versionPolicy`, `licenseStatus`, `dataVersion` are
+    //   console/function-only - clients can never change them (same
+    //   discipline as NextInv's versionPolicy). `dataVersion` is stamped
+    //   only by the update engine (applyCompanyUpdate / pendingUpdateWatcher
+    //   via the Admin SDK); implicit current version is '0.9' until stamped.
+    //   `pendingUpdate` changes by owners remain allowed through this same
+    //   owner path (it is how the app defers an update).
     match /orgs/{orgId} {
       allow create: if isSignedIn()
         && request.resource.data.flow == 'external'
@@ -135,25 +196,35 @@ service cloud.firestore {
         && request.resource.data.keys().hasAll(
              ['name', 'ownerId', 'joinCode', 'flow', 'versionPolicy',
               'licenseStatus', 'trialSavesUsed', 'createdAt']);
-      allow read: if isSignedIn() && (
+      allow get: if isSignedIn() && (
         !hasUserDoc() ||
         (canReadOrgData(orgId) && myOrgId() == orgId)
       );
+      allow list: if isSignedIn() && isActive()
+        && myOrgId() == resource.data.orgId;
       allow update, delete: if canWriteOrgData(orgId)
         && myUser().role == 'owner' && myOrgId() == orgId
         && request.resource.data.flow == resource.data.flow
         && request.resource.data.versionPolicy == resource.data.versionPolicy
-        && request.resource.data.licenseStatus == resource.data.licenseStatus;
+        && request.resource.data.licenseStatus == resource.data.licenseStatus
+        && request.resource.data.get('dataVersion', '0.9')
+           == resource.data.get('dataVersion', '0.9');
 
       // Jobs.
       // - create/read: active org members with valid flow claims; read also
       //   for shared users.
+      // - create pins authorship: installerUid MUST be the signer, and the
+      //   job's orgId field MUST match the path org (which the signer
+      //   belongs to) — no writing jobs into someone else's org, no
+      //   impersonating another installer.
       // - update/delete: owner/supervisor any org job; anyone own jobs
       //   they created (matches canEditJob() in permissions.js).
       // - orgId comes from the path wildcard: no per-doc get(), so lists
       //   scale.
       match /jobs/{jobId} {
-        allow create: if canWriteOrgData(orgId) && myOrgId() == orgId;
+        allow create: if canWriteOrgData(orgId) && myOrgId() == orgId
+          && request.resource.data.get('installerUid', '') == myUid()
+          && request.resource.data.get('orgId', '') == orgId;
         allow read: if canReadOrgData(orgId) && (
           myOrgId() == orgId ||
           resource.data.get('sharedWith', []).hasAny([myUid()])
@@ -171,6 +242,18 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Notification prefs — notification_prefs/{uid}.
+    // Cada usuario lee y escribe SOLO su propio doc. Las claves están
+    // fijadas para que un cliente no pueda inyectar campos arbitrarios.
+    // En modo BYOB el taller debe pegar este mismo bloque en las reglas
+    // de SU proyecto (ver EMAIL_PIPELINE.md).
+    match /notification_prefs/{userId} {
+      allow read: if isSignedIn() && myUid() == userId;
+      allow write: if isSignedIn() && myUid() == userId
+        && request.resource.data.keys().hasOnly(
+             ['welcomeEmail', 'newProject', 'projectEdit', 'quoteReady', 'updatedAt']);
+    }
+
     // Easter-egg odometer — public read (the gay-button press count lives
     // here); signed-in users may only increment the counter by exactly 1.
     match /stats/easter-eggs {
@@ -181,6 +264,14 @@ service cloud.firestore {
       allow update: if isSignedIn()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gay'])
         && request.resource.data.gay == resource.data.gay + 1;
+    }
+
+    // App updates feed — public read (lets the app show update banners
+    // without auth, like nivelato_config/version); console/function-only
+    // write. Seeded by tools/seed-app-updates.js.
+    match /app_updates/{docId} {
+      allow read: if true;
+      allow write: if false;
     }
 
     // Version config — public read (lets the app check force-update floors

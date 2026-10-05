@@ -81,7 +81,9 @@ html, body {
   background: rgba(255,255,255,0.92);
   border: 1.5px solid #dee2e6;
   border-radius: 8px;
-  padding: 6px 12px;
+  padding: 10px 14px;
+  min-height: 44px; /* a11y: touch targets ≥ 44px */
+  min-width: 44px;
   font-size: 16px;
   cursor: pointer;
   box-shadow: 0 1px 4px rgba(0,0,0,0.12);
@@ -114,12 +116,6 @@ html, body {
     min-height: 40px;
   }
 }
-#drawing-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
 #drawing-canvas {
   display: block;
   width: 100%;
@@ -169,8 +165,10 @@ html, body {
 }
 .input-col.derived input:focus,
 .input-col.derived select:focus {
-  outline: none;
-  border-color: #dee2e6;
+  /* a11y: keep a visible focus indicator on derived fields (don't strip the outline) */
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-color: var(--accent);
 }
 
 /* ─── DERIVED NOTE ─── */
@@ -283,7 +281,12 @@ html, body {
 }
 
 .input-col input[type="text"]::placeholder {
-  color: var(--grey-400);
+  color: var(--grey-600); /* a11y: #ced4da on #f8f9fa was 1.42:1 */
+  font-weight: 400;
+}
+
+.fraction-row input[type="number"]::placeholder {
+  color: var(--grey-600);
   font-weight: 400;
 }
 
@@ -499,10 +502,12 @@ html, body {
 }
 
 #bottom-panel {
-  flex: 0 0 auto;           /* size to content — never internally scrollable */
+  flex: 0 1 auto;           /* can shrink below content height on short viewports */
+  min-height: 0;
   background: var(--white);
   border-top: 1px solid var(--grey-200);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;         /* M16: the panel scrolls internally so the save button is always reachable */
   -webkit-overflow-scrolling: touch;
   /* iOS safe area — keep buttons above home indicator / tab bar */
   padding-bottom: constant(safe-area-inset-bottom, 0px);

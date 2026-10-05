@@ -8,6 +8,9 @@ export const PERM_DEFS = [
   { key: 'editOwnMeasurements',    label: 'Editar mis medidas' },
   { key: 'viewOthersMeasurements', label: 'Ver medidas de otros' },
   { key: 'editOthersMeasurements', label: 'Editar medidas de otros' },
+  { key: 'managePriceList',        label: 'Gestionar lista de precios' },
+  { key: 'createQuotes',           label: 'Crear cotizaciones' },
+  { key: 'approveQuotes',          label: 'Aprobar cotizaciones' },
   { key: 'userManagement',         label: 'Gestión de usuarios' },
 ];
 
@@ -18,6 +21,9 @@ const ROLE_FALLBACK = {
   editOwnMeasurements:    ['owner', 'supervisor', 'medidor'],
   viewOthersMeasurements: ['owner', 'supervisor', 'medidor', 'cotizador'],
   editOthersMeasurements: ['owner', 'supervisor'],
+  managePriceList:         ['owner', 'supervisor'],
+  createQuotes:            ['owner', 'supervisor', 'cotizador'],
+  approveQuotes:           ['owner', 'supervisor'],
   userManagement:         ['owner'],
 };
 

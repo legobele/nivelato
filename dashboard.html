@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nivelato — Dashboard</title>
-<script>console.log('nivelato v1.0.0 — commit 68fe412')</script>
+  <meta name="theme-color" content="#121212" />
+  <link rel="manifest" href="manifest.json" />
+  <title>Nivelato - Dashboard</title>
+<script>console.log('nivelato v1.0.0 - commit 68fe412')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
 <script type="module" src="gay.js"></script>
 <script type="module" src="account-selector.js"></script>
 <script type="module" src="grass.js"></script>
-<script src="testing.js"></script>
+<script src="testing.js" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -120,6 +122,13 @@
     }
     .date-input-wrap input[type="date"]:focus + .date-placeholder,
     .date-input-wrap.has-value .date-placeholder { display: none; }
+    /* The native "mm/dd/yyyy" placeholder would otherwise render UNDER the
+       custom overlay span (double placeholder). Keep the native text
+       invisible until a value exists; on focus the native placeholder
+       shows instead of the overlay, and with a value the date shows. */
+    .date-input-wrap input[type="date"] { color: transparent; }
+    .date-input-wrap.has-value input[type="date"],
+    .date-input-wrap input[type="date"]:focus { color: #495057; }
     .date-input-wrap input[type="date"]::-webkit-calendar-picker-indicator {
       cursor: pointer; opacity: 0.5;
     }
@@ -192,7 +201,7 @@
     }
     #modal-canvas:active { cursor: grabbing; }
     /* Stack the graph/photo under the details whenever the modal can't
-       comfortably fit the 320px column next to the text — this covers
+       comfortably fit the 320px column next to the text - this covers
        phones, tablets and zoomed viewports uniformly. */
     @media (max-width: 900px) {
       .modal-inner { flex-direction: column; }
@@ -247,6 +256,113 @@
     @media (max-width: 380px) {
       .stats-row { grid-template-columns: 1fr; }
     }
+
+    /* LISTA DE PRECIOS (Fase 2 quoting) */
+    .pl-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+    .pl-add { width: auto; padding: 10px 18px; margin-top: 0; }
+    .pl-inactive-toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #495057; cursor: pointer; }
+    .pl-inactive-toggle input { width: 16px; height: 16px; accent-color: #1971c2; cursor: pointer; }
+    .pl-group { margin-bottom: 20px; }
+    .pl-group-title { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #868e96; margin: 0 0 8px; }
+    .pl-table-wrap { overflow-x: auto; background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .pl-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 560px; }
+    .pl-table th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #adb5bd; padding: 10px 12px; border-bottom: 1px solid #f1f3f5; }
+    .pl-table td { padding: 10px 12px; border-bottom: 1px solid #f8f9fa; color: #212529; vertical-align: middle; }
+    .pl-table tr:last-child td { border-bottom: none; }
+    .pl-table .pl-price { font-weight: 700; white-space: nowrap; }
+    .pl-table .pl-model { color: #868e96; white-space: nowrap; }
+    .pl-table .pl-actions { text-align: right; white-space: nowrap; }
+    .pl-row-inactive td { color: #adb5bd; }
+    .pl-row-inactive .pl-price { color: #adb5bd; }
+    .pl-tag-inactive { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: #f1f3f5; color: #868e96; margin-left: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .pl-btn { border: 1.5px solid #dee2e6; background: #fff; border-radius: 6px; padding: 5px 10px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; margin-left: 6px; color: #495057; }
+    .pl-btn:hover { border-color: #adb5bd; }
+    .pl-btn-edit { border-color: #1971c2; color: #1971c2; }
+    .pl-btn-edit:hover { background: #e7f5ff; }
+    .pl-btn-off { border-color: #ffc9c9; color: #c92a2a; }
+    .pl-btn-off:hover { background: #fff5f5; }
+    .pl-btn-on { border-color: #b2d8b2; color: #2f9e44; }
+    .pl-btn-on:hover { background: #ebfbee; }
+    .pl-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #495057; margin-top: 14px; cursor: pointer; }
+    .pl-check input { width: 16px; height: 16px; accent-color: #1971c2; cursor: pointer; }
+    .pl-error { margin-top: 12px; padding: 10px 14px; background: #fff5f5; border: 1px solid #ffc9c9; border-radius: 8px; font-size: 13px; color: #c92a2a; }
+    .pl-hint { font-size: 12px; color: #868e96; margin-top: 6px; }
+    @media (max-width: 600px) {
+      .pl-toolbar { flex-direction: row; }
+      .pl-add { flex: 1; }
+    }
+
+    /* COTIZACIONES (Fase 3 quoting) */
+    .qt-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+    .qt-add { width: auto; padding: 10px 18px; margin-top: 0; }
+    .qt-filter { padding: 9px 14px; border: 1.5px solid #dee2e6; border-radius: 8px; font-size: 13px; font-family: inherit; color: #495057; background: #fff; }
+    .qt-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .qt-est-borrador { background: #f1f3f5; color: #868e96; }
+    .qt-est-enviada { background: #e7f5ff; color: #1971c2; }
+    .qt-est-aprobada { background: #ebfbee; color: #2f9e44; }
+    .qt-est-rechazada { background: #ffe3e3; color: #c92a2a; }
+    .qt-total { font-weight: 700; color: #212529; white-space: nowrap; }
+    .qt-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+    .qt-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .qt-line { background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 10px; }
+    .qt-line-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+    .qt-line-desc { font-size: 14px; font-weight: 600; color: #212529; }
+    .qt-line-detail { font-size: 12px; color: #868e96; margin-top: 2px; }
+    .qt-line-sub { font-size: 14px; font-weight: 700; color: #1971c2; white-space: nowrap; }
+    .qt-line-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .qt-line-add-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 4px; }
+    .qt-med-badge { display: inline-block; font-size: 11px; font-weight: 600; background: #e7f5ff; color: #1971c2; border-radius: 4px; padding: 2px 8px; margin-left: 6px; }
+    .qt-totals { background: #fff; border-radius: 12px; padding: 6px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 12px; }
+    .qt-total-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #495057; border-bottom: 1px solid #f8f9fa; }
+    .qt-total-row:last-child { border-bottom: none; }
+    .qt-total-row.grand { font-size: 17px; font-weight: 700; color: #212529; }
+    .qt-hint-inline { font-size: 12px; color: #868e96; }
+    .qt-med-card { background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 10px; cursor: pointer; }
+    .qt-med-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    @media (max-width: 600px) {
+      .qt-form-grid { grid-template-columns: 1fr; }
+      .qt-add { flex: 1; }
+    }
+
+    /* ─── Cotización imprimible (Fase 5) ─────────────────────────────
+       #qpdf-print-area se llena con el documento de la cotización y se
+       imprime con el diálogo del navegador (guardar como PDF incluido).
+       Sin jsPDF: funciona offline y sin dependencias nuevas. */
+    #qpdf-print-area { display: none; }
+    @page { size: letter; margin: 13mm 12mm; }
+    @media print {
+      body > *:not(#qpdf-print-area) { display: none !important; }
+      #qpdf-print-area { display: block !important; }
+      .qpdf { font-family: 'Inter', Arial, Helvetica, sans-serif; color: #111; font-size: 11pt; line-height: 1.45; }
+      .qpdf-head { border-bottom: 2px solid #1971c2; padding-bottom: 8pt; margin-bottom: 12pt; }
+      .qpdf-co { font-size: 18pt; font-weight: 700; color: #1971c2; margin-bottom: 2pt; }
+      .qpdf-head div { font-size: 10pt; color: #333; }
+      .qpdf-title { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 6pt; }
+      .qpdf-title h1 { font-size: 20pt; letter-spacing: 0.06em; margin: 0; }
+      .qpdf-folio { font-size: 12pt; font-weight: 700; }
+      .qpdf-meta { font-size: 10pt; color: #333; margin-bottom: 10pt; }
+      .qpdf-meta span { font-weight: 600; color: #111; }
+      .qpdf-sec { margin-bottom: 10pt; }
+      .qpdf-sec-title { font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #1971c2; border-bottom: 1px solid #dee2e6; padding-bottom: 2pt; margin-bottom: 5pt; }
+      .qpdf-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4pt; padding: 7pt 10pt; }
+      .qpdf-cn { font-weight: 700; font-size: 12pt; }
+      .qpdf-box div { font-size: 10pt; }
+      .qpdf-table { width: 100%; border-collapse: collapse; margin-bottom: 10pt; font-size: 10pt; }
+      .qpdf-table th { background: #1971c2; color: #fff; text-align: left; padding: 5pt 7pt; font-size: 9.5pt; }
+      .qpdf-table td { padding: 6pt 7pt; border-bottom: 1px solid #e9ecef; vertical-align: top; }
+      .qpdf-table th.r, .qpdf-table td.r { text-align: right; white-space: nowrap; }
+      .qpdf-line-desc { font-weight: 600; }
+      .qpdf-line-det { font-size: 8.5pt; color: #555; margin-top: 2pt; }
+      .qpdf-tot { margin-left: auto; width: 46%; font-size: 10.5pt; }
+      .qpdf-tot .row { display: flex; justify-content: space-between; padding: 2.5pt 0; }
+      .qpdf-tot .row.grand { font-size: 13pt; font-weight: 700; border-top: 2px solid #1971c2; margin-top: 4pt; padding-top: 6pt; }
+      .qpdf-notas { font-size: 10pt; color: #333; background: #fff; border: 1px solid #e9ecef; border-radius: 4pt; padding: 7pt 10pt; margin-bottom: 10pt; }
+      .qpdf-validez { font-size: 9.5pt; color: #555; font-style: italic; margin-bottom: 16pt; }
+      .qpdf-sig { display: flex; gap: 40pt; margin: 22pt 0 12pt; }
+      .qpdf-sig > div { flex: 1; font-size: 9.5pt; color: #333; }
+      .qpdf-sigline { border-bottom: 1px solid #111; height: 26pt; margin-bottom: 3pt; }
+      .qpdf-foot { margin-top: 14pt; padding-top: 6pt; border-top: 1px solid #dee2e6; font-size: 9pt; color: #666; text-align: center; }
+    }
   </style>
 </head>
 <body>
@@ -256,24 +372,27 @@
   <div class="header-logo">Nivelato<span id="estradiol-indicator">E2</span></div>
   <div class="header-right">
     <div class="org-badge" id="org-name-badge">…</div>
+    <button id="btn-pricelist" onclick="togglePriceListView()" style="display:none;background:#fff;color:#1971c2;border:1.5px solid #1971c2;border-radius:8px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">📋 Precios</button>
+    <button id="btn-quotes" onclick="toggleQuotesView()" style="display:none;background:#fff;color:#1971c2;border:1.5px solid #1971c2;border-radius:8px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">💲 Cotizaciones</button>
     <button id="btn-new-measure" onclick="window.location.href='index.html'" style="display:none;background:#1971c2;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Nueva medida</button>
   </div>
 </header>
 
 <main>
+ <div id="view-measures">
   <h1>Historial de medidas</h1>
   <div class="subtitle" id="dash-subtitle">Cargando…</div>
   <div id="join-code-section" style="display:none; background:#e8f0fe; border-radius:12px; padding:14px 20px; margin:16px 0 8px; align-items:center; gap:16px; flex-wrap:wrap;">
     <span style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
-    <span id="join-code-display" style="font-size:24px; font-weight:700; color:#1a73e8; letter-spacing:0.15em; font-family:monospace; margin-left:8px;">——</span>
+    <span id="join-code-display" style="font-size:24px; font-weight:700; color:#1a73e8; letter-spacing:0.15em; font-family:monospace; margin-left:8px;">--</span>
     <button onclick="copyJoinCode()" id="copy-btn" style="margin-left:auto; background:#1a73e8; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;">📋 Copiar</button>
     <span style="font-size:11px; color:#888; width:100%; margin-top:2px;">Dáselo a tus empleados para que se registren en Nivelato</span>
   </div>
 
   <div class="stats-row">
-    <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Medidas totales</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-today">—</div><div class="stat-label">Hoy</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-warn">—</div><div class="stat-label">Con advertencias</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-total">-</div><div class="stat-label">Medidas totales</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-today">-</div><div class="stat-label">Hoy</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-warn">-</div><div class="stat-label">Con advertencias</div></div>
   </div>
 
   <div class="filter-row">
@@ -292,11 +411,94 @@
   <div class="job-list" id="job-list">
     <div class="loading">Cargando medidas…</div>
   </div>
+ </div><!-- /view-measures -->
+ <div id="view-pricelist" style="display:none">
+  <h1>Lista de precios</h1>
+  <div class="subtitle" id="pl-subtitle">Cargando…</div>
+  <div class="pl-toolbar">
+    <button class="btn-save pl-add" id="pl-add-btn" onclick="openPriceItemModal()" style="display:none">＋ Agregar ítem</button>
+    <label class="pl-inactive-toggle"><input type="checkbox" id="pl-show-inactive" onchange="renderPriceList()" /> Mostrar inactivos</label>
+  </div>
+  <div id="pl-list"><div class="loading">Cargando lista de precios…</div></div>
+  <button class="btn-close" onclick="togglePriceListView()">📊 Volver a medidas</button>
+ </div>
+ <div id="view-quotes" style="display:none">
+  <h1>Cotizaciones</h1>
+  <div class="subtitle" id="qt-subtitle">Cargando…</div>
+  <div class="qt-toolbar">
+    <button class="btn-save qt-add" id="qt-new-btn" onclick="openQuoteBuilder()" style="display:none">＋ Nueva cotización</button>
+    <select class="qt-filter" id="qt-filter-estado" onchange="renderQuotes()">
+      <option value="">Todos los estados</option>
+      <option value="borrador">Borrador</option>
+      <option value="enviada">Enviada</option>
+      <option value="aprobada">Aprobada</option>
+      <option value="rechazada">Rechazada</option>
+    </select>
+  </div>
+  <div class="job-list" id="qt-list"><div class="loading">Cargando cotizaciones…</div></div>
+  <button class="btn-close" onclick="toggleQuotesView()">📊 Volver a medidas</button>
+ </div>
+ <div id="view-builder" style="display:none">
+  <button class="btn-cancel" style="width:auto;padding:8px 16px;margin:0 0 12px" onclick="showDashView('quotes')">← Volver a cotizaciones</button>
+  <h1 id="qb-title">Nueva cotización</h1>
+  <div class="subtitle" id="qb-subtitle"></div>
+  <div class="detail-section-title">Cliente</div>
+  <div class="qt-form-grid">
+    <div>
+      <label class="modal-edit-label" for="qb-cliente-nombre">Nombre *</label>
+      <input class="modal-edit-input" id="qb-cliente-nombre" maxlength="120" autocomplete="off" />
+    </div>
+    <div>
+      <label class="modal-edit-label" for="qb-cliente-telefono">Teléfono</label>
+      <input class="modal-edit-input" id="qb-cliente-telefono" inputmode="tel" maxlength="30" autocomplete="off" />
+    </div>
+    <div>
+      <label class="modal-edit-label" for="qb-cliente-email">Email</label>
+      <input class="modal-edit-input" id="qb-cliente-email" inputmode="email" maxlength="120" autocomplete="off" />
+    </div>
+    <div>
+      <label class="modal-edit-label" for="qb-cliente-direccion">Dirección del proyecto</label>
+      <input class="modal-edit-input" id="qb-cliente-direccion" maxlength="200" autocomplete="off" />
+    </div>
+  </div>
+  <div class="detail-section-title">Líneas</div>
+  <div id="qb-lines"></div>
+  <div class="qt-line-add-row">
+    <button class="pl-btn" onclick="openLineModal('lista')">＋ Línea de lista</button>
+    <button class="pl-btn" onclick="openLineModal('personalizado')">＋ Personalizada</button>
+    <button class="pl-btn" onclick="openLineModal('sacabocados')">＋ Sacabocados</button>
+    <button class="pl-btn" onclick="openLineModal('barreno')">＋ Barreno</button>
+  </div>
+  <div class="detail-section-title">Totales</div>
+  <div class="qt-totals" id="qb-totals"></div>
+  <label class="modal-edit-label" for="qb-descuento-tipo">Descuento</label>
+  <div class="qt-row">
+    <select class="modal-edit-input qt-filter" id="qb-descuento-tipo" style="max-width:150px" onchange="renderBuilderTotals()">
+      <option value="ninguno">Ninguno</option>
+      <option value="porciento">Porciento %</option>
+      <option value="monto">Monto $</option>
+    </select>
+    <input class="modal-edit-input" id="qb-descuento-valor" type="number" min="0" step="0.01" inputmode="decimal" value="0" style="max-width:120px" oninput="renderBuilderTotals()" />
+  </div>
+  <label class="modal-edit-label" for="qb-tasaivu">Tasa de IVU</label>
+  <div class="qt-row">
+    <input class="modal-edit-input" id="qb-tasaivu" type="number" min="0" step="0.001" inputmode="decimal" style="max-width:120px" oninput="renderBuilderTotals()" />
+    <span class="qt-hint-inline">0.115 = 11.5%</span>
+  </div>
+  <div class="qt-row" style="margin-top:12px">
+    <label class="modal-edit-label" for="qb-validez" style="margin:0">Validez (días)</label>
+    <input class="modal-edit-input" id="qb-validez" type="number" min="1" step="1" inputmode="numeric" style="max-width:100px" />
+  </div>
+  <label class="modal-edit-label" for="qb-notas">Notas visibles al cliente</label>
+  <textarea class="modal-edit-input" id="qb-notas" style="min-height:56px;resize:vertical" maxlength="1000"></textarea>
+  <div class="pl-error" id="qb-error" style="display:none"></div>
+  <button class="btn-save" onclick="saveQuote()">💾 Guardar borrador</button>
+ </div>
 </main>
 
 <!-- JOB DETAIL MODAL -->
-<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
-  <div class="modal" id="modal">
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" onclick="closeModal(event)">
+  <div class="modal" id="modal" tabindex="-1">
     <div class="modal-title" id="modal-title">Detalle</div>
     <div class="modal-inner">
       <div class="modal-details">
@@ -324,10 +526,88 @@
   </div>
 </div>
 
+<!-- PRICE LIST ITEM MODAL (Fase 2 quoting) -->
+<div class="modal-overlay" id="pl-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="pl-modal-title" onclick="closePriceItemModal(event)">
+  <div class="modal" id="pl-modal" tabindex="-1" style="max-width:520px">
+    <div class="modal-title" id="pl-modal-title">Agregar ítem</div>
+    <label class="modal-edit-label" for="pl-nombre">Nombre</label>
+    <input class="modal-edit-input" id="pl-nombre" placeholder="Ej. Vidrio claro 1/4 pulg" maxlength="120" />
+    <label class="modal-edit-label" for="pl-tipo">Tipo</label>
+    <select class="modal-edit-input" id="pl-tipo" onchange="onPriceTipoChange()">
+      <option value="vidrio">Vidrio</option>
+      <option value="borde">Borde</option>
+      <option value="herraje">Herraje</option>
+      <option value="manoDeObra">Mano de obra</option>
+      <option value="instalacion">Instalación</option>
+      <option value="sacabocados">Sacabocados</option>
+      <option value="barreno">Barrenos</option>
+      <option value="servicio">Servicio</option>
+    </select>
+    <div id="pl-grosor-wrap">
+      <label class="modal-edit-label" for="pl-grosor">Grosor</label>
+      <select class="modal-edit-input" id="pl-grosor">
+        <option value="1/8">1/8"</option>
+        <option value="3/16">3/16"</option>
+        <option value="1/4">1/4"</option>
+        <option value="5/16">5/16"</option>
+        <option value="3/8">3/8"</option>
+        <option value="1/2">1/2"</option>
+        <option value="5/8">5/8"</option>
+        <option value="3/4">3/4"</option>
+      </select>
+    </div>
+    <label class="modal-edit-label" for="pl-modelo">Modelo de precio</label>
+    <select class="modal-edit-input" id="pl-modelo">
+      <option value="porPieCuadrado">Por pie cuadrado</option>
+      <option value="porUnidad">Por unidad</option>
+    </select>
+    <div class="pl-hint" id="pl-immutable-hint" style="display:none">El tipo y el modelo de precio no se pueden cambiar después de crear el ítem.</div>
+    <label class="modal-edit-label" for="pl-precio">Precio (USD)</label>
+    <input class="modal-edit-input" id="pl-precio" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+    <label class="pl-check"><input type="checkbox" id="pl-activo" checked /> Activo</label>
+    <div class="pl-error" id="pl-form-error" style="display:none"></div>
+    <button class="btn-save" onclick="savePriceItem()">💾 Guardar</button>
+    <button class="btn-cancel" onclick="closePriceItemModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- QUOTE DETAIL MODAL (Fase 3 quoting) -->
+<div class="modal-overlay" id="qt-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="qt-modal-title" onclick="closeQuoteModal(event)">
+  <div class="modal" id="qt-modal" tabindex="-1" style="max-width:640px">
+    <div class="modal-title" id="qt-modal-title">Cotización</div>
+    <div id="qt-modal-body"></div>
+    <div id="qt-modal-actions"></div>
+    <button class="btn-close" onclick="closeQuoteModal()">Cerrar</button>
+  </div>
+</div>
+
+<!-- QUOTE LINE MODAL (Fase 3 quoting) -->
+<div class="modal-overlay" id="qt-line-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="qt-line-modal-title" onclick="closeLineModal(event)">
+  <div class="modal" id="qt-line-modal" tabindex="-1" style="max-width:560px">
+    <div class="modal-title" id="qt-line-modal-title">Agregar línea</div>
+    <div id="qt-line-body"></div>
+    <div class="qt-line-sub" id="qt-line-subtotal" style="margin:14px 0 4px"></div>
+    <div class="pl-error" id="qt-line-error" style="display:none"></div>
+    <button class="btn-save" onclick="saveLineModal()">💾 Guardar línea</button>
+    <button class="btn-cancel" onclick="closeLineModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- MEASUREMENT PICKER MODAL (Fase 3 quoting) -->
+<div class="modal-overlay" id="qt-med-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="qt-med-modal-title" onclick="closeMedPicker(event)">
+  <div class="modal" id="qt-med-modal" tabindex="-1" style="max-width:560px">
+    <div class="modal-title" id="qt-med-modal-title">Usar medida guardada</div>
+    <div class="qt-hint-inline" style="margin-bottom:12px">Toca una medida para copiar su ancho y alto a la línea. Se guarda el vínculo (medicionRef) con la medida original; la medida no se duplica.</div>
+    <div id="qt-med-list"></div>
+    <button class="btn-cancel" onclick="closeMedPicker()">Cancelar</button>
+  </div>
+</div>
+
 <script type="module">
-import { auth, db } from "./firebase-config.js";
+import { auth, db, centralFunctions, isCustomBackend } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getDoc, doc, setDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getDoc, doc, setDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
 import { makePermChecker, canEditJob } from './permissions.js';
 
 // ─── Central helpers ───
@@ -353,12 +633,23 @@ const syncDatePlaceholder = () => {
 
 // Pantalla de "cuenta pendiente": se muestra al entrar si la cuenta está
 // desactivada, y también si un admin la desactiva mid-session (el re-read
-// periódico de abajo) — en vez de confusos errores de permiso.
+// periódico de abajo) - en vez de confusos errores de permiso.
 const showPendingScreen = () => {
   if (window._pendingShown) return;
   window._pendingShown = true;
   window._pendingSignOut = async () => { await signOut(auth); window.location.href = 'login.html'; };
   document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2 style="color:#212529">Cuenta pendiente de aprobación</h2><p style="color:#868e96;max-width:320px">Tu cuenta está siendo revisada. El administrador del taller te dará acceso en breve.</p><button onclick="window._pendingSignOut()" style="padding:12px 28px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div>';
+};
+
+// Pantalla de "perfil no encontrado": la cuenta existe en Auth pero no tiene
+// doc en users/{uid} (p. ej. registro interrumpido). Sin esto, userDoc.data()
+// era undefined y el TypeError dejaba el dashboard atascado en "Cargando…".
+const showMissingProfileScreen = () => {
+  if (window._pendingShown) return;
+  window._pendingShown = true;
+  window._missingRetry = () => window.location.reload();
+  window._missingSignOut = async () => { await signOut(auth); window.location.href = 'login.html'; };
+  document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⚠️</div><h2 style="color:#212529">No se encontró tu perfil</h2><p style="color:#868e96;max-width:340px">Tu sesión es válida pero no hay un perfil de usuario asociado. Si acabas de registrarte, espera unos segundos y reintenta; si no, cierra sesión y pide a tu administrador un enlace de registro nuevo.</p><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button onclick="window._missingRetry()" style="padding:12px 28px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Reintentar</button><button onclick="window._missingSignOut()" style="padding:12px 28px;background:#f1f3f5;color:#495057;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div></div>';
 };
 
 // redraw open modal graph when bread mode toggles
@@ -377,15 +668,98 @@ document.addEventListener('breadchange', function () {
   }
 });
 
+// ─── Vista de compañía (ruta /company) ───
+// El worker de Cloudflare inyecta window.NIVELATO_ROUTE antes de </body>.
+// Al abrir el archivo directo (GitHub Pages) la variable no existe:
+// en ese caso, o con ruta "dashboard", se usa el dashboard normal.
+const NIV_ROUTE = window.NIVELATO_ROUTE;
+
+const CO_ROLE_LABEL = { owner: 'Dueño / Admin', cotizador: 'Cotizador', supervisor: 'Supervisor', medidor: 'Técnico medidor' };
+const CO_ESTADOS = { borrador: 'Borrador', enviada: 'Enviada', aprobada: 'Aprobada', rechazada: 'Rechazada' };
+
+async function initCompanyView(user) {
+  // presencia realtime (presence.js la crea una tarea hermana; silencioso si el archivo falta)
+  import('./presence.js').then(m => m.startPresence(user.uid)).catch(() => {});
+  const userSnap = await getDoc(doc(db, 'users', user.uid));
+  if (!userSnap.exists()) { showMissingProfileScreen(); return; }
+  const userData = userSnap.data();
+  if (userData.disabled === true) { showPendingScreen(); return; }
+  const orgId = userData.orgId;
+  window._orgId = orgId;
+
+  const orgSnap = await getDoc(doc(db, 'orgs', orgId)).catch(() => null);
+  const orgName = (orgSnap && orgSnap.exists() && orgSnap.data().name) || orgId || 'Mi compañía';
+
+  let members = [];
+  try {
+    const ms = await getDocs(query(collection(db, 'users'), where('orgId', '==', orgId)));
+    members = ms.docs.map(d => ({ uid: d.id, ...d.data() })).filter(m => m.disabled !== true);
+  } catch (e) { console.error('[Nivelato] vista compañía: no se pudieron leer miembros:', e); }
+
+  let quotes = [];
+  try {
+    const qs = await getDocs(query(collection(db, 'companies', orgId, 'quotes'), orderBy('creadoEl', 'desc')));
+    quotes = qs.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) { console.error('[Nivelato] vista compañía: no se pudieron leer cotizaciones:', e); }
+
+  const nEstado = (s) => quotes.filter(q => (q.estado || 'borrador') === s).length;
+
+  const rowStyle = 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #f1f3f5';
+  const cardStyle = 'background:#fff;border-radius:12px;padding:4px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-bottom:24px';
+
+  const memberRows = members.map(m => {
+    const rl = CO_ROLE_LABEL[m.role] || m.role || 'Sin rol';
+    return '<div style="' + rowStyle + '">' +
+      '<div><div style="font-size:14px;font-weight:600;color:#212529">' + escapeHtml(m.name || 'Sin nombre') + '</div>' +
+      '<div style="font-size:12px;color:#868e96">' + escapeHtml(m.email || '') + '</div></div>' +
+      '<span style="font-size:12px;font-weight:600;color:#1971c2;background:#e7f5ff;padding:4px 10px;border-radius:20px;white-space:nowrap">' + escapeHtml(rl) + '</span></div>';
+  }).join('');
+
+  const recentRows = quotes.slice(0, 10).map(q => {
+    const estado = q.estado || 'borrador';
+    const estadoLabel = CO_ESTADOS[estado] || estado;
+    const total = '$' + (Number(q.totales && q.totales.total) || 0).toFixed(2);
+    return '<div style="' + rowStyle + '">' +
+      '<div><div style="font-size:14px;font-weight:600;color:#212529">' + escapeHtml(q.numero || 'Sin folio') +
+      ' <span style="font-size:11px;font-weight:600;color:#495057;background:#f1f3f5;padding:3px 8px;border-radius:20px;white-space:nowrap">' + escapeHtml(estadoLabel) + '</span></div>' +
+      '<div style="font-size:12px;color:#868e96">' + escapeHtml((q.cliente && q.cliente.nombre) || 'Sin cliente') + '</div></div>' +
+      '<div style="font-size:14px;font-weight:700;color:#212529;white-space:nowrap">' + escapeHtml(total) + '</div></div>';
+  }).join('');
+
+  document.body.innerHTML =
+    '<main style="padding:24px 20px;max-width:720px;margin:0 auto">' +
+    '<h1>' + escapeHtml(orgName) + '</h1>' +
+    '<p class="subtitle">Vista de compañía</p>' +
+    '<div class="stats-row" style="grid-template-columns:repeat(2,1fr)">' +
+      '<div class="stat-card"><div class="stat-num">' + nEstado('borrador') + '</div><div class="stat-label">Cotizaciones en borrador</div></div>' +
+      '<div class="stat-card"><div class="stat-num">' + nEstado('aprobada') + '</div><div class="stat-label">Cotizaciones aprobadas</div></div>' +
+      '<div class="stat-card"><div class="stat-num">' + nEstado('enviada') + '</div><div class="stat-label">Cotizaciones enviadas</div></div>' +
+      '<div class="stat-card"><div class="stat-num">' + members.length + '</div><div class="stat-label">Miembros del equipo</div></div>' +
+    '</div>' +
+    '<h2 style="font-size:16px;font-weight:700;color:#212529;margin:8px 0 12px">Equipo</h2>' +
+    '<div style="' + cardStyle + '">' +
+      (memberRows || '<p style="padding:16px 0;font-size:13px;color:#868e96">No hay miembros en esta compañía.</p>') +
+    '</div>' +
+    '<h2 style="font-size:16px;font-weight:700;color:#212529;margin:8px 0 12px">Cotizaciones recientes</h2>' +
+    '<div style="' + cardStyle + '">' +
+      (recentRows || '<p style="padding:16px 0;font-size:13px;color:#868e96">Aún no hay cotizaciones.</p>') +
+    '</div>' +
+    '</main>';
+}
+
+// La ruta /company usa su propio init; el callback del dashboard normal se salta abajo.
+if (NIV_ROUTE === 'company') {
+  onAuthStateChanged(auth, (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    initCompanyView(user);
+  });
+}
+
   let allJobs = [];
 let currentUser;
 
-  if (typeof onAuthStateChanged === "undefined") {
-    const dl = document.querySelector(".loading");
-    if(dl) dl.textContent = "Conectando...";
-    setTimeout(() => { if (typeof onAuthStateChanged === "undefined") window.location.href = "./index.html"; }, 3000);
-  } else {
   onAuthStateChanged(auth, async (user) => {
+    if (NIV_ROUTE === 'company') return; // la ruta /company usa initCompanyView (arriba)
     if (!user) { window.location.href = 'login.html'; return; }
     // check if account is pending approval
     const userSnap = await getDoc(doc(db, 'users', user.uid));
@@ -394,7 +768,13 @@ let currentUser;
       return;
     }
     currentUser = user;
+    // presencia realtime (presence.js la crea una tarea hermana; silencioso si el archivo falta)
+    import('./presence.js').then(m => m.startPresence(user.uid)).catch(() => {});
     const userDoc = await getDoc(doc(db, 'users', user.uid));
+    if (!userDoc.exists()) {
+      showMissingProfileScreen();
+      return;
+    }
     const userData = userDoc.data();
 
     // build shared account selector (replaces old standalone logout button)
@@ -412,9 +792,17 @@ let currentUser;
       window.location.href = 'index.html'; return;
     }
     const orgId = userData.orgId;
-    // Nueva medida button — only if user can create measurements
+    // Nueva medida button - only if user can create measurements
     const btnNew = document.getElementById('btn-new-measure');
     if (btnNew && _can('createMeasurements')) btnNew.style.display = 'block';
+    // Lista de precios: lectura para todos los roles (matriz QUOTING_SCHEMA §1)
+    const btnPl = document.getElementById('btn-pricelist');
+    if (btnPl) btnPl.style.display = 'block';
+    // Cotizaciones: lectura para todos los roles (matriz QUOTING_SCHEMA §1,
+    // el medidor también ve); el botón "Nueva cotización" se filtra por rol
+    // dentro de la vista.
+    const btnQ = document.getElementById('btn-quotes');
+    if (btnQ) btnQ.style.display = 'block';
     const orgDoc = await getDoc(doc(db, 'orgs', orgId));
     const orgName = orgDoc.data()?.name || orgId;
     document.getElementById('org-name-badge').textContent = orgName;
@@ -438,7 +826,7 @@ let currentUser;
     const jobsRef = collection(db, 'orgs', orgId, 'jobs');
     const q = query(jobsRef, orderBy('createdAt', 'desc'));
     const applyJobsSnap = (snap) => {
-      // drafts are temp jobs mid-share — never show them
+      // drafts are temp jobs mid-share - never show them
       let jobs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(j => j.status !== 'draft');
 
       // filter jobs by permissions
@@ -454,14 +842,14 @@ let currentUser;
       refreshJobFiltersAndRender();
     };
 
-    // realtime subscription — the list live-updates on add/edit/delete
+    // realtime subscription - the list live-updates on add/edit/delete
     if (window._jobsUnsub) window._jobsUnsub();
     window._jobsUnsub = onSnapshot(q, applyJobsSnap, (err) => {
       console.error('[Nivelato] jobs listener error:', err);
       const dl = document.querySelector('.loading');
       if (dl) dl.textContent = 'No se pudieron cargar las medidas. Revisa tu conexión.';
     });
-    window.addEventListener('pagehide', () => { if (window._jobsUnsub) { window._jobsUnsub(); window._jobsUnsub = null; } if (window._userRefreshTimer) { clearInterval(window._userRefreshTimer); window._userRefreshTimer = null; } });
+    window.addEventListener('pagehide', () => { if (window._jobsUnsub) { window._jobsUnsub(); window._jobsUnsub = null; } if (window._plUnsub) { window._plUnsub(); window._plUnsub = null; } if (window._qUnsub) { window._qUnsub(); window._qUnsub = null; } if (window._userRefreshTimer) { clearInterval(window._userRefreshTimer); window._userRefreshTimer = null; } });
 
     // Releer el doc del usuario cada 5 min: si un admin desactiva la cuenta
     // mid-session, mostrar la pantalla de pendiente en vez de errores raros.
@@ -481,10 +869,10 @@ let currentUser;
           window._can = nc;
           window._currentUserData = d;
         }
-      } catch (_) { /* sin conexión — reintentar en el próximo ciclo */ }
+      } catch (_) { /* sin conexión - reintentar en el próximo ciclo */ }
     }, 5 * 60 * 1000);
 
-    // populate installer filter (clear stale options first — keep the default "Todos…" entry)
+    // populate installer filter (clear stale options first - keep the default "Todos…" entry)
     const refreshJobFiltersAndRender = () => {
     const installers = [...new Set(allJobs.map(j => j.installerName).filter(Boolean))];
     const sel = document.getElementById('filter-installer');
@@ -511,7 +899,6 @@ let currentUser;
     renderJobs(allJobs);
     };
   });
-  }
 
   window.applyFilters = () => {
     syncDatePlaceholder();
@@ -546,7 +933,13 @@ let currentUser;
     document.getElementById('stat-warn').textContent  = warnCount;
 
     if (jobs.length === 0) {
-      list.innerHTML = '<div class="empty-state">No hay medidas registradas aún.</div>';
+      // Distinguish "the org has no measurements at all" from "the active
+      // filters just don't match anything" so users know whether to add a
+      // measurement or clear the filters.
+      const msg = allJobs.length === 0
+        ? 'No hay medidas registradas aún.'
+        : 'No se encontraron medidas con estos filtros. Prueba ajustar la fecha o los filtros.';
+      list.innerHTML = `<div class="empty-state">${msg}</div>`;
       return;
     }
     list.innerHTML = jobs.map((job, i) => {
@@ -556,20 +949,22 @@ let currentUser;
       const tag = hasWarn
         ? `<span class="job-tag tag-warn">⚠ Advertencias</span>`
         : `<span class="job-tag tag-ok">✓ OK</span>`;
-      const hueco = job.hueco ? `${(job.hueco.anchoBot||job.hueco.anchoBottom||job.hueco.ancho||'?')}" × ${(job.hueco.altoIzq||job.hueco.altoLeft||job.hueco.alto||'?')}"` : '—';
+      const hueco = job.hueco ? `${(job.hueco.anchoBot||job.hueco.anchoBottom||job.hueco.ancho||'?')}" × ${(job.hueco.altoIzq||job.hueco.altoLeft||job.hueco.alto||'?')}"` : '-';
       const notasPreview = job.notas ? (job.notas.length > 30 ? job.notas.slice(0,30) + '…' : job.notas) : '';
-      // Título = cliente — proyecto (el técnico va en la meta, no en el título).
+      // Título = cliente - proyecto (el técnico va en la meta, no en el título).
       const titleCustomer = job.customer || 'Sin cliente';
-      const titleText = job.project ? `${titleCustomer} — ${job.project}` : titleCustomer;
+      const titleText = job.project ? `${titleCustomer} - ${job.project}` : titleCustomer;
       return `
-        <div class="job-card" onclick="openJob(${i})">
+        <div class="job-card" tabindex="0" role="button" aria-label="Abrir detalle de la medida de ${escapeHtml(titleCustomer)}"
+             onclick="openJob(${i})"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openJob(${i});}">
           <div class="job-card-top">
             <div class="job-title">${escapeHtml(titleText)} ${tag}</div>
             <div class="job-date">${escapeHtml(dateStr)}</div>
           </div>
           <div class="job-meta">
             <span>📐 ${escapeHtml(hueco)}</span>
-            <span>👤 ${escapeHtml(job.installerName) || '—'}</span>
+            <span>👤 ${escapeHtml(job.installerName) || '-'}</span>
             ${notasPreview ? `<span>📝 ${escapeHtml(notasPreview)}</span>` : ''}
           </div>
         </div>`;
@@ -583,34 +978,34 @@ let currentUser;
     const job = window._jobs[i];
     const date = job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now());
     const dateStr = date.toLocaleDateString('es-PR', { timeZone: 'America/Puerto_Rico', day:'2-digit', month:'short', year:'numeric' }) + ' ' + date.toLocaleTimeString('es-PR', { timeZone: 'America/Puerto_Rico', hour:'2-digit', minute:'2-digit' });
-    document.getElementById('modal-title').textContent = `Medida — ${job.installerName || 'Técnico'}`;
+    document.getElementById('modal-title').textContent = `Medida - ${job.installerName || 'Técnico medidor'}`;
     const row = (l,v) => `<div class="detail-row"><span class="detail-label">${escapeHtml(l)}</span><span class="detail-val">${escapeHtml(v)}</span></div>`;
     const sec = (t) => `<div class="detail-section-title">${t}</div>`;
     let html = '';
     html += sec('General');
-    html += row('Técnico', job.installerName || '—');
+    html += row('Técnico medidor', job.installerName || '-');
     html += row('Fecha', dateStr);
-    html += row('Cliente', job.customer || '—');
-    html += row('Proyecto', job.project || '—');
-    html += row('Ubicación', job.location || '—');
+    html += row('Cliente', job.customer || '-');
+    html += row('Proyecto', job.project || '-');
+    html += row('Ubicación', job.location || '-');
     html += sec('Hueco (Abertura)');
     if (job.hueco) {
-      // Step-1 value is the base (bottom) width — label it exactly like the wizard.
-      html += row('Ancho abajo (base)', (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) ? (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) + '"' : (job.hueco.ancho ? job.hueco.ancho + '"' : '—'));
-      html += row('Ancho superior', (job.hueco.anchoTop||job.hueco.anchoSuperior) ? (job.hueco.anchoTop||job.hueco.anchoSuperior) + '"' : '—');
-      html += row('Alto izquierdo', (job.hueco.altoIzq||job.hueco.altoIzquierda) ? (job.hueco.altoIzq||job.hueco.altoIzquierda) + '"' : (job.hueco.alto ? job.hueco.alto + '"' : '—'));
-      html += row('Alto derecho',   (job.hueco.altoDer||job.hueco.altoDerecha) ? (job.hueco.altoDer||job.hueco.altoDerecha) + '"' : '—');
-    } else { html += row('Hueco', '—'); }
+      // Step-1 value is the base (bottom) width - label it exactly like the wizard.
+      html += row('Ancho abajo (base)', (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) ? (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) + '"' : (job.hueco.ancho ? job.hueco.ancho + '"' : '-'));
+      html += row('Ancho superior', (job.hueco.anchoTop||job.hueco.anchoSuperior) ? (job.hueco.anchoTop||job.hueco.anchoSuperior) + '"' : '-');
+      html += row('Alto izquierdo', (job.hueco.altoIzq||job.hueco.altoIzquierda) ? (job.hueco.altoIzq||job.hueco.altoIzquierda) + '"' : (job.hueco.alto ? job.hueco.alto + '"' : '-'));
+      html += row('Alto derecho',   (job.hueco.altoDer||job.hueco.altoDerecha) ? (job.hueco.altoDer||job.hueco.altoDerecha) + '"' : '-');
+    } else { html += row('Hueco', '-'); }
     html += sec('Desniveles');
     // Tolerate records where desniveles is missing or values are {label} objects / nulls.
     const desn = job.desniveles || job.desnivel || {};
     const dval = (v) => {
-      if (v === null || v === undefined) return '—';
+      if (v === null || v === undefined) return '-';
       if (typeof v === 'object') {
         const l = v.label ?? v.value ?? v.text;
-        return (l === null || l === undefined || String(l) === '') ? '—' : l;
+        return (l === null || l === undefined || String(l) === '') ? '-' : l;
       }
-      return String(v) === '' ? '—' : v;
+      return String(v) === '' ? '-' : v;
     };
     html += row('Pared Izq.', dval(desn.paredIzq));
     html += row('Pared Der.', dval(desn.paredDer));
@@ -649,6 +1044,9 @@ let currentUser;
     document.getElementById('modal-overlay').classList.add('open');
     // lock page scroll while the modal is open so the header/backdrop stay put
     document.body.style.overflow = 'hidden';
+    // keyboard a11y: remember who opened the modal and move focus inside it
+    window._modalPrevFocus = document.activeElement;
+    document.getElementById('modal').focus();
     // show annotated photo if present, else the graph
     const cw = document.querySelector('.modal-canvas-wrap');
     const cvs = document.getElementById('modal-canvas');
@@ -690,27 +1088,27 @@ let currentUser;
     document.getElementById('share-panel').style.display = 'none';
     document.getElementById('modal-edit-actions').style.display = 'block';
 
-    const l = (text, key, val) => `<label class="modal-edit-label">${escapeHtml(text)}</label><input class="modal-edit-input" id="edit-${key}" value="${escapeHtml(val || '')}" />`;
-    const ta = (text, key, val) => `<label class="modal-edit-label">${escapeHtml(text)}</label><textarea class="modal-edit-input" id="edit-${key}" style="min-height:60px;resize:vertical;">${escapeHtml(val || '')}</textarea>`;
+    const l = (text, key, val) => `<label class="modal-edit-label" for="edit-${key}">${escapeHtml(text)}</label><input class="modal-edit-input" id="edit-${key}" value="${escapeHtml(val || '')}" />`;
+    const ta = (text, key, val) => `<label class="modal-edit-label" for="edit-${key}">${escapeHtml(text)}</label><textarea class="modal-edit-input" id="edit-${key}" style="min-height:60px;resize:vertical;">${escapeHtml(val || '')}</textarea>`;
     let html = '';
     html += l('Cliente', 'customer', job.customer || '');
     html += l('Proyecto', 'project', job.project || '');
     html += l('Ubicación', 'location', job.location || '');
-    // Medidas crudas editables — los valores derivados se recalculan al guardar.
-    const num = (text, key, val) => `<label class="modal-edit-label">${escapeHtml(text)}</label><input class="modal-edit-input" id="edit-m-${key}" type="number" min="0" max="20000" step="0.0625" inputmode="decimal" value="${escapeHtml(val ?? '')}" />`;
+    // Medidas crudas editables - los valores derivados se recalculan al guardar.
+    const num = (text, key, val) => `<label class="modal-edit-label" for="edit-m-${key}">${escapeHtml(text)}</label><input class="modal-edit-input" id="edit-m-${key}" type="number" min="0" max="20000" step="0.0625" inputmode="decimal" value="${escapeHtml(val ?? '')}" />`;
     const hb0 = job.hueco || {};
     const par0 = job.paredes || {};
     html += `<div class="detail-section-title" style="margin-top:16px">Medidas (pulgadas)</div>`;
     html += num('Ancho abajo (base)', 'anchoBot', hb0.anchoBot ?? hb0.anchoAbajo ?? hb0.anchoBottom ?? hb0.ancho ?? '');
     html += num('Alto izquierdo (base)', 'altoIzq', hb0.altoIzq ?? hb0.altoIzquierda ?? hb0.altoLeft ?? hb0.alto ?? '');
-    html += num('Pared izq. — A', 'pI-a', par0.izq?.a ?? '');
-    html += num('Pared izq. — B', 'pI-b', par0.izq?.b ?? '');
-    html += num('Pared der. — A', 'pD-a', par0.der?.a ?? '');
-    html += num('Pared der. — B', 'pD-b', par0.der?.b ?? '');
-    html += num('Techo — A', 't-a', par0.techo?.a ?? '');
-    html += num('Techo — B', 't-b', par0.techo?.b ?? '');
-    html += num('Piso — A', 'p-a', par0.piso?.a ?? '');
-    html += num('Piso — B', 'p-b', par0.piso?.b ?? '');
+    html += num('Pared izq. - A', 'pI-a', par0.izq?.a ?? '');
+    html += num('Pared izq. - B', 'pI-b', par0.izq?.b ?? '');
+    html += num('Pared der. - A', 'pD-a', par0.der?.a ?? '');
+    html += num('Pared der. - B', 'pD-b', par0.der?.b ?? '');
+    html += num('Techo - A', 't-a', par0.techo?.a ?? '');
+    html += num('Techo - B', 't-b', par0.techo?.b ?? '');
+    html += num('Piso - A', 'p-a', par0.piso?.a ?? '');
+    html += num('Piso - B', 'p-b', par0.piso?.b ?? '');
     html += ta('Notas', 'notas', job.notas || '');
     document.getElementById('modal-edit-fields').innerHTML = html;
     document.getElementById('modal-edit-fields').style.display = 'block';
@@ -853,10 +1251,10 @@ let currentUser;
     const i = window._currentJobIdx;
     if (i === null || i === undefined) return;
     const job = window._jobs[i];
-    if (!confirm(`¿Eliminar la medida de ${job.installerName || 'este técnico'}? Esta acción no se puede deshacer.`)) return;
+    if (!confirm(`¿Eliminar la medida de ${job.installerName || 'este técnico medidor'}? Esta acción no se puede deshacer.`)) return;
     try {
       await deleteDoc(doc(db, 'orgs', window._orgId, 'jobs', job.id));
-      document.getElementById('modal-overlay').classList.remove('open');
+      window._closeModalDialog();
       // remove from local array and re-render
       allJobs = allJobs.filter(j => j.id !== job.id);
       window._currentJobIdx = null;
@@ -903,12 +1301,48 @@ let currentUser;
     }
   };
 
+  // Single modal close path: every exit (button, backdrop click, Escape,
+  // delete) goes through here so the body scroll lock is always released
+  // and focus returns to whatever opened the modal.
+  window._closeModalDialog = () => {
+    document.getElementById('modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+    if (window._modalPrevFocus && document.contains(window._modalPrevFocus)) {
+      window._modalPrevFocus.focus();
+    }
+    window._modalPrevFocus = null;
+  };
+
   window.closeModal = (e) => {
     if (!e || e.target === document.getElementById('modal-overlay')) {
-      document.getElementById('modal-overlay').classList.remove('open');
-      document.body.style.overflow = '';
+      window._closeModalDialog();
     }
   };
+
+  // Escape closes the open modal (keyboard a11y).
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('modal-overlay').classList.contains('open')) {
+      e.preventDefault();
+      window._closeModalDialog();
+    }
+    if (e.key === 'Escape' && document.getElementById('pl-modal-overlay').classList.contains('open')) {
+      e.preventDefault();
+      window.closePriceItemModal();
+    }
+    // Cotizaciones: cerrar el modal superior primero (medida > línea > detalle).
+    if (e.key === 'Escape' && document.getElementById('qt-med-modal-overlay').classList.contains('open')) {
+      e.preventDefault();
+      window.closeMedPicker();
+    }
+    else if (e.key === 'Escape' && document.getElementById('qt-line-modal-overlay').classList.contains('open')) {
+      e.preventDefault();
+      window.closeLineModal();
+    }
+    else if (e.key === 'Escape' && document.getElementById('qt-modal-overlay').classList.contains('open')) {
+      e.preventDefault();
+      window.closeQuoteModal();
+    }
+  });
 
   window.copyJoinCode = async () => {
     const btn = document.getElementById('copy-btn');
@@ -939,9 +1373,1189 @@ let currentUser;
     }
   };
 
+  // ─── Lista de precios (Fase 2 quoting) ──────────────────────────────
+  // Modelo: companies/{companyId}/priceList/{itemId} (QUOTING_SCHEMA §2.2).
+  // En el modelo web la org ES la compañía: companyId = userData.orgId.
+  // El rol sale del mapa members del doc de la compañía (fuente de verdad
+  // de las reglas de Firestore); si el doc no existe, fallback al role del
+  // user doc, igual que el resto del dashboard. Matriz de permisos
+  // (QUOTING_SCHEMA §1): owner/supervisor gestionan; cotizador/medidor
+  // solo ven. El borrado es lógico (activo:false), nunca deleteDoc.
+  const PL_TIPOS = [
+    ['vidrio', 'Vidrio'], ['borde', 'Borde'], ['herraje', 'Herraje'],
+    ['manoDeObra', 'Mano de obra'], ['instalacion', 'Instalación'],
+    ['sacabocados', 'Sacabocados'], ['barreno', 'Barrenos'], ['servicio', 'Servicio'],
+  ];
+  const PL_TIPO_LABEL = {};
+  PL_TIPOS.forEach(([k, v]) => { PL_TIPO_LABEL[k] = v; });
+  const PL_MODELO_LABEL = { porPieCuadrado: 'Por pie²', porUnidad: 'Por unidad' };
+
+  const plCompanyId = () => window._orgId;
+  const plRef = () => collection(db, 'companies', plCompanyId(), 'priceList');
+  const plRole = () => {
+    const m = window._plMembers || {};
+    return m[currentUser.uid] || (window._currentUserData && window._currentUserData.role) || '';
+  };
+  const plCanManage = () => {
+    // el flag explícito (settings) gana, igual que makePermChecker
+    const explicit = ((window._currentUserData && window._currentUserData.permissions) || {}).managePriceList;
+    if (explicit !== undefined) return !!explicit;
+    const r = plRole();
+    return r === 'owner' || r === 'supervisor';
+  };
+  const plMoney = (n) => '$' + (Number(n) || 0).toFixed(2);
+
+  let plLoaded = false;
+  let plEditingId = null;
+
+  // togglePriceListView vive en el bloque de Cotizaciones (Fase 3) y usa
+  // showDashView, que maneja las cuatro vistas.
+
+  async function ensurePriceList() {
+    const orgName = (document.getElementById('org-name-badge').textContent || '').trim();
+    document.getElementById('pl-subtitle').textContent = orgName && orgName !== '…'
+      ? orgName + ' · Precios en USD' : 'Precios en USD';
+    if (plLoaded) { renderPriceList(); return; }
+    plLoaded = true;
+    // members: fuente de verdad de las reglas; si falla, {} y el fallback a userData.role
+    try {
+      const cs = await getDoc(doc(db, 'companies', plCompanyId()));
+      window._plMembers = cs.exists() ? (cs.data().members || {}) : {};
+    } catch (e) { window._plMembers = {}; }
+    const addBtn = document.getElementById('pl-add-btn');
+    if (addBtn) addBtn.style.display = plCanManage() ? '' : 'none';
+    if (window._plUnsub) window._plUnsub();
+    window._plUnsub = onSnapshot(
+      query(plRef(), orderBy('nombre')),
+      (snap) => {
+        window._plItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderPriceList();
+      },
+      (err) => {
+        console.error('[Nivelato] priceList listener error:', err);
+        document.getElementById('pl-list').innerHTML =
+          '<div class="empty-state">No se pudo cargar la lista de precios. Revisa tu conexión o pide a un administrador que configure la compañía.</div>';
+      }
+    );
+  }
+
+  window.renderPriceList = () => {
+    const showInactive = document.getElementById('pl-show-inactive').checked;
+    const manage = plCanManage();
+    const items = (window._plItems || []).filter(it => showInactive || it.activo !== false);
+    window._plView = items; // índice numérico para los onclick (igual que window._jobs)
+    const box = document.getElementById('pl-list');
+    if (!items.length) {
+      const total = (window._plItems || []).length;
+      const msg = total === 0
+        ? 'No hay ítems en la lista de precios.' + (manage ? ' Toca "Agregar ítem" para empezar.' : '')
+        : 'Todos los ítems están inactivos. Marca "Mostrar inactivos" para verlos.';
+      box.innerHTML = '<div class="empty-state">' + msg + '</div>';
+      return;
+    }
+    const rowHtml = (it, idx) => {
+      const inactive = it.activo === false;
+      const grosor = (it.tipo === 'vidrio' && it.grosor) ? escapeHtml(it.grosor) + '"' : '-';
+      return '<tr class="' + (inactive ? 'pl-row-inactive' : '') + '">' +
+        '<td><strong>' + escapeHtml(it.nombre || 'Sin nombre') + '</strong>' +
+        (inactive ? '<span class="pl-tag-inactive">Inactivo</span>' : '') + '</td>' +
+        '<td>' + grosor + '</td>' +
+        '<td class="pl-model">' + escapeHtml(PL_MODELO_LABEL[it.modeloPrecio] || it.modeloPrecio || '-') + '</td>' +
+        '<td class="pl-price">' + plMoney(it.precio) + '</td>' +
+        '<td class="pl-actions">' + (manage
+          ? '<button class="pl-btn pl-btn-edit" onclick="openPriceItemModal(' + idx + ')">Editar</button>' +
+            (inactive
+              ? '<button class="pl-btn pl-btn-on" onclick="togglePriceItemActive(' + idx + ', true)">Reactivar</button>'
+              : '<button class="pl-btn pl-btn-off" onclick="togglePriceItemActive(' + idx + ', false)">Desactivar</button>')
+          : '') + '</td></tr>';
+    };
+    const groupHtml = (label, group, baseIdx) => {
+      let h = '<div class="pl-group"><div class="pl-group-title">' + escapeHtml(label) +
+        ' (' + group.length + ')</div><div class="pl-table-wrap"><table class="pl-table">' +
+        '<thead><tr><th>Ítem</th><th>Grosor</th><th>Modelo</th><th>Precio</th><th></th></tr></thead><tbody>';
+      group.forEach((it, i) => { h += rowHtml(it, baseIdx + i); });
+      return h + '</tbody></table></div></div>';
+    };
+    let html = '';
+    let base = 0;
+    PL_TIPOS.forEach(([tipo, label]) => {
+      const group = items.filter(it => it.tipo === tipo);
+      if (!group.length) return;
+      html += groupHtml(label, group, base);
+      base += group.length;
+    });
+    // tipos no reconocidos (datos viejos o futuros): van al final sin romper nada
+    const known = new Set(PL_TIPOS.map(([k]) => k));
+    const rest = items.filter(it => !known.has(it.tipo));
+    if (rest.length) html += groupHtml('Otros', rest, base);
+    box.innerHTML = html;
+  };
+
+  window.onPriceTipoChange = () => {
+    const isGlass = document.getElementById('pl-tipo').value === 'vidrio';
+    document.getElementById('pl-grosor-wrap').style.display = isGlass ? '' : 'none';
+  };
+
+  window.openPriceItemModal = (idx) => {
+    if (!plCanManage()) return;
+    const it = (idx === undefined || idx === null) ? null : (window._plView || [])[idx];
+    plEditingId = it ? it.id : null;
+    document.getElementById('pl-modal-title').textContent = it ? 'Editar ítem' : 'Agregar ítem';
+    document.getElementById('pl-nombre').value = it ? (it.nombre || '') : '';
+    const tipoSel = document.getElementById('pl-tipo');
+    tipoSel.value = it ? (it.tipo || 'vidrio') : 'vidrio';
+    tipoSel.disabled = !!it; // inmutable: las reglas exigen tipo/modelo iguales en update
+    const modeloSel = document.getElementById('pl-modelo');
+    modeloSel.value = it ? (it.modeloPrecio || 'porUnidad') : 'porPieCuadrado';
+    modeloSel.disabled = !!it;
+    document.getElementById('pl-immutable-hint').style.display = it ? '' : 'none';
+    document.getElementById('pl-grosor').value = (it && it.grosor) || '1/4';
+    document.getElementById('pl-precio').value = (it && it.precio != null) ? Number(it.precio).toFixed(2) : '';
+    document.getElementById('pl-activo').checked = it ? it.activo !== false : true;
+    const err = document.getElementById('pl-form-error');
+    err.style.display = 'none';
+    err.textContent = '';
+    onPriceTipoChange();
+    document.getElementById('pl-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('pl-modal').focus();
+  };
+
+  window.closePriceItemModal = (e) => {
+    if (!e || e.target === document.getElementById('pl-modal-overlay')) {
+      document.getElementById('pl-modal-overlay').classList.remove('open');
+      // solo soltar el scroll lock si el modal de medidas no está abierto
+      if (!document.getElementById('modal-overlay').classList.contains('open')) {
+        document.body.style.overflow = '';
+      }
+      plEditingId = null;
+    }
+  };
+
+  window.savePriceItem = async () => {
+    if (!plCanManage()) return;
+    const err = document.getElementById('pl-form-error');
+    const fail = (msg) => { err.textContent = msg; err.style.display = ''; };
+    const nombre = document.getElementById('pl-nombre').value.trim();
+    const tipo = document.getElementById('pl-tipo').value;
+    const grosor = document.getElementById('pl-grosor').value;
+    const modelo = document.getElementById('pl-modelo').value;
+    const precioRaw = document.getElementById('pl-precio').value.trim();
+    const activo = document.getElementById('pl-activo').checked;
+    if (!nombre) { fail('Escribe un nombre para el ítem.'); return; }
+    if (tipo === 'vidrio' && !grosor) { fail('Elige el grosor del vidrio.'); return; }
+    const precio = Math.round(Number(precioRaw) * 100) / 100;
+    if (!Number.isFinite(precio) || precio <= 0) { fail('El precio debe ser mayor a 0.'); return; }
+    err.style.display = 'none';
+    // unidad derivada del modelo (QUOTING_SCHEMA §2.2)
+    const unidad = modelo === 'porPieCuadrado' ? 'pie2'
+      : tipo === 'manoDeObra' ? 'hora'
+      : tipo === 'herraje' ? 'pieza' : 'unidad';
+    try {
+      if (plEditingId) {
+        // tipo y modeloPrecio no viajan: las reglas exigen que no cambien
+        const data = { nombre, precio, unidad, activo, actualizadoEl: serverTimestamp() };
+        if (tipo === 'vidrio') data.grosor = grosor;
+        await updateDoc(doc(db, 'companies', plCompanyId(), 'priceList', plEditingId), data);
+      } else {
+        const data = {
+          tipo, nombre, modeloPrecio: modelo, precio, unidad, activo,
+          creadoPor: currentUser.uid,
+          creadoEl: serverTimestamp(), actualizadoEl: serverTimestamp(),
+        };
+        if (tipo === 'vidrio') data.grosor = grosor;
+        await addDoc(plRef(), data);
+      }
+      closePriceItemModal();
+    } catch (e) {
+      console.error('[Nivelato] savePriceItem error:', e);
+      fail('No se pudo guardar: ' + (e.message || 'error desconocido'));
+    }
+  };
+
+  // Borrado lógico: activo:false. Nunca deleteDoc (QUOTING_SCHEMA §2.2).
+  window.togglePriceItemActive = async (idx, active) => {
+    if (!plCanManage()) return;
+    const it = (window._plView || [])[idx];
+    if (!it) return;
+    const verb = active ? 'Reactivar' : 'Desactivar';
+    if (!confirm('¿' + verb + ' "' + (it.nombre || 'este ítem') + '"?' +
+        (active ? '' : ' Ya no saldrá en las cotizaciones nuevas, pero el historial se conserva.'))) return;
+    try {
+      await updateDoc(doc(db, 'companies', plCompanyId(), 'priceList', it.id),
+        { activo: !!active, actualizadoEl: serverTimestamp() });
+    } catch (e) {
+      alert('Error al actualizar: ' + (e.message || 'error desconocido'));
+    }
+  };
+
+  // ─── Cotizaciones (Fase 3 quoting) ────────────────────────────────
+  // Modelo: companies/{companyId}/quotes/{quoteId} (QUOTING_SCHEMA §2.3).
+  // companyId = userData.orgId (la org ES la compañía en el modelo web).
+  //
+  // CÁLCULO (QUOTING_SCHEMA §2.3.3/§2.3.4): cada línea se redondea a 2
+  // decimales (half up) y luego se suma. TODO el cálculo vive en qRound2,
+  // qAreaPie2, qLineSubtotal y qTotals; la UI solo los llama, nunca duplica
+  // las fórmulas.
+  const qRound2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+  const qAreaPie2 = (anchoIn, altoIn) => qRound2((Number(anchoIn) || 0) * (Number(altoIn) || 0) / 144);
+
+  function qLineSubtotal(line) {
+    const cant = Number(line.cantidad) || 0;
+    const pu = Number(line.precioUnitario) || 0;
+    if (line.modeloPrecio === 'porPieCuadrado') {
+      return qRound2(cant * pu * (Number(line.areaPie2) || 0));
+    }
+    return qRound2(cant * pu);
+  }
+
+  function qTotals(lineas, descuento, tasaIVU) {
+    const subtotal = qRound2((lineas || []).reduce((a, l) => a + (Number(l.subtotalLinea) || 0), 0));
+    let descMonto = 0;
+    if (descuento && descuento.tipo === 'porciento') descMonto = qRound2(subtotal * (Number(descuento.valor) || 0) / 100);
+    else if (descuento && descuento.tipo === 'monto') descMonto = qRound2(Number(descuento.valor) || 0);
+    if (descMonto > subtotal) descMonto = subtotal;
+    const base = qRound2(subtotal - descMonto);
+    const tasa = Number(tasaIVU);
+    const tasaOk = Number.isFinite(tasa) && tasa >= 0 ? tasa : 0;
+    const montoIVU = qRound2(base * tasaOk);
+    return { subtotal, descuento: descMonto, tasaIVU: tasaOk, montoIVU, total: qRound2(base + montoIVU) };
+  }
+
+  const fmtPct = (t) => (Math.round((Number(t) || 0) * 1000) / 10) + '%';
+  const fmtDims = (n) => { const v = Number(n); return Number.isFinite(v) ? String(Math.round(v * 100) / 100) : ''; };
+  const qFormaLabel = (f) => ({ circular: 'Circular', rectangular: 'Rectangular', ranura: 'Ranura', semicircular: 'Semicircular', personalizada: 'Personalizada' }[f] || f || '');
+  function qDimStr(l) {
+    const dim = l.dimensiones || {};
+    const inch = (v) => fmtDims(v) + '"';
+    if (l.forma === 'circular') return dim.diametroIn ? ' Ø ' + inch(dim.diametroIn) : '';
+    if (l.forma === 'rectangular' || l.forma === 'ranura') return (dim.anchoIn && dim.largoIn) ? ' ' + inch(dim.anchoIn) + ' × ' + inch(dim.largoIn) : '';
+    if (l.forma === 'semicircular') return dim.radioIn ? ' radio ' + inch(dim.radioIn) : '';
+    return dim.detalle ? ' ' + dim.detalle : '';
+  }
+
+  // Doc de la compañía: fuente de verdad del rol (mapa members, igual que
+  // las reglas de Firestore) y de los defaults (ajustes.tasaIVU,
+  // ajustes.validezDias, prefijoFolio) más el snapshot de empresa.
+  async function ensureCompany() {
+    if (window._qCompany) return window._qCompany;
+    const cid = window._orgId;
+    let data = null, members = {};
+    try {
+      const cs = await getDoc(doc(db, 'companies', cid));
+      if (cs.exists()) { data = cs.data(); members = data.members || {}; }
+    } catch (e) { console.error('[Nivelato] companies read error:', e); }
+    window._plMembers = members; // la lista de precios usa la misma fuente
+    window._qCompany = { members, data };
+    return window._qCompany;
+  }
+  const qRole = () => {
+    const m = (window._qCompany && window._qCompany.members) || window._plMembers || {};
+    return m[currentUser.uid] || (window._currentUserData && window._currentUserData.role) || '';
+  };
+  const qExplicit = (key) => {
+    const v = ((window._currentUserData && window._currentUserData.permissions) || {})[key];
+    return v === undefined ? null : !!v;
+  };
+  // Matriz QUOTING_SCHEMA §1: owner/supervisor/cotizador crean cotizaciones;
+  // solo owner/supervisor aprueban, rechazan o eliminan. El flag explícito
+  // (settings) gana sobre el rol, igual que makePermChecker.
+  const qCanCreateQuote = () => {
+    const e = qExplicit('createQuotes');
+    if (e !== null) return e;
+    return ['owner', 'supervisor', 'cotizador'].includes(qRole());
+  };
+  const qCanApproveQuote = () => {
+    const e = qExplicit('approveQuotes');
+    if (e !== null) return e;
+    return ['owner', 'supervisor'].includes(qRole());
+  };
+  const qCanEditQuote = (q) => {
+    if (!q || q.estado !== 'borrador') return false;
+    const r = qRole();
+    if (r === 'owner' || r === 'supervisor') return true;
+    return r === 'cotizador' && q.creadoPor === currentUser.uid;
+  };
+  const qCanSendQuote = (q) => {
+    if (!q || q.estado !== 'borrador') return false;
+    const r = qRole();
+    if (r === 'owner' || r === 'supervisor') return true;
+    return r === 'cotizador' && q.creadoPor === currentUser.uid;
+  };
+
+  // Navegación entre las cuatro vistas del dashboard.
+  window.showDashView = (name) => {
+    const views = { measures: 'view-measures', pricelist: 'view-pricelist', quotes: 'view-quotes', builder: 'view-builder' };
+    Object.keys(views).forEach(k => {
+      const el = document.getElementById(views[k]);
+      if (el) el.style.display = (k === name) ? '' : 'none';
+    });
+    const btnPl = document.getElementById('btn-pricelist');
+    const btnQ = document.getElementById('btn-quotes');
+    if (btnPl) btnPl.textContent = name === 'pricelist' ? '📊 Medidas' : '📋 Precios';
+    if (btnQ) btnQ.textContent = (name === 'quotes' || name === 'builder') ? '📊 Medidas' : '💲 Cotizaciones';
+    if (name === 'pricelist') ensurePriceList();
+    if (name === 'quotes') ensureQuotes();
+    window.scrollTo(0, 0);
+  };
+  window.togglePriceListView = () => {
+    const inPl = document.getElementById('view-pricelist').style.display !== 'none';
+    window.showDashView(inPl ? 'measures' : 'pricelist');
+  };
+  window.toggleQuotesView = () => {
+    const inQ = document.getElementById('view-quotes').style.display !== 'none' ||
+      document.getElementById('view-builder').style.display !== 'none';
+    window.showDashView(inQ ? 'measures' : 'quotes');
+  };
+
+  const QT_ESTADOS = { borrador: 'Borrador', enviada: 'Enviada', aprobada: 'Aprobada', rechazada: 'Rechazada' };
+  let qLoaded = false;
+
+  async function ensureQuotes() {
+    await ensureCompany();
+    const orgName = (document.getElementById('org-name-badge').textContent || '').trim();
+    document.getElementById('qt-subtitle').textContent = orgName && orgName !== '…'
+      ? orgName + ' · Precios en USD, IVU incluido' : 'Cotizaciones en USD';
+    const newBtn = document.getElementById('qt-new-btn');
+    if (newBtn) newBtn.style.display = qCanCreateQuote() ? '' : 'none';
+    if (qLoaded) { renderQuotes(); return; }
+    qLoaded = true;
+    if (window._qUnsub) window._qUnsub();
+    const qRef = collection(db, 'companies', window._orgId, 'quotes');
+    window._qUnsub = onSnapshot(
+      query(qRef, orderBy('creadoEl', 'desc')),
+      (snap) => {
+        window._qItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderQuotes();
+      },
+      (err) => {
+        console.error('[Nivelato] quotes listener error:', err);
+        document.getElementById('qt-list').innerHTML =
+          '<div class="empty-state">No se pudieron cargar las cotizaciones. Revisa tu conexión o pide a un administrador que configure la compañía.</div>';
+      }
+    );
+  }
+
+  const qDateStr = (ts) => {
+    const d = ts && ts.toDate ? ts.toDate() : (ts ? new Date(ts) : new Date());
+    return d.toLocaleDateString('es-PR', { timeZone: 'America/Puerto_Rico', day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  window.renderQuotes = () => {
+    const f = document.getElementById('qt-filter-estado').value;
+    let items = window._qItems || [];
+    if (f) items = items.filter(q => q.estado === f);
+    window._qView = items; // índice numérico para los onclick (igual que window._jobs)
+    const list = document.getElementById('qt-list');
+    if (!items.length) {
+      list.innerHTML = '<div class="empty-state">' +
+        ((window._qItems || []).length === 0
+          ? 'No hay cotizaciones todavía.' + (qCanCreateQuote() ? ' Toca "Nueva cotización" para empezar.' : '')
+          : 'Ninguna cotización coincide con ese estado.') + '</div>';
+      return;
+    }
+    list.innerHTML = items.map((q, i) => {
+      const total = q.totales ? q.totales.total : 0;
+      return '<div class="job-card" tabindex="0" role="button" aria-label="Abrir cotización ' + escapeHtml(q.numero || '') + '"' +
+        ' onclick="openQuote(' + i + ')"' +
+        ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openQuote(' + i + ');}">' +
+        '<div class="job-card-top"><div class="job-title">' + escapeHtml(q.numero || 'Sin número') +
+        ' <span class="qt-badge qt-est-' + escapeHtml(q.estado || 'borrador') + '">' + escapeHtml(QT_ESTADOS[q.estado] || q.estado || '') + '</span></div>' +
+        '<div class="job-date">' + escapeHtml(qDateStr(q.creadoEl)) + '</div></div>' +
+        '<div class="job-meta"><span>👤 ' + escapeHtml((q.cliente && q.cliente.nombre) || 'Sin cliente') + '</span>' +
+        '<span class="qt-total">' + plMoney(total) + '</span></div></div>';
+    }).join('');
+  };
+
+  const qById = (id) => (window._qItems || []).find(q => q.id === id);
+
+  window.openQuote = (i) => {
+    const q = (window._qView || [])[i];
+    if (!q) return;
+    window._qCurrentId = q.id;
+    renderQuoteDetail(q);
+    document.getElementById('qt-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('qt-modal').focus();
+  };
+
+  function renderQuoteDetail(q) {
+    document.getElementById('qt-modal-title').textContent = 'Cotización ' + (q.numero || '');
+    const row = (l, v) => '<div class="detail-row"><span class="detail-label">' + escapeHtml(l) + '</span><span class="detail-val">' + escapeHtml(v) + '</span></div>';
+    const sec = (t) => '<div class="detail-section-title">' + t + '</div>';
+    let html = '<div><span class="qt-badge qt-est-' + escapeHtml(q.estado || 'borrador') + '">' +
+      escapeHtml(QT_ESTADOS[q.estado] || '') + '</span></div>';
+    const e = q.empresa || {};
+    html += sec('Compañía');
+    html += row('Nombre', e.nombre || '-');
+    if (e.telefono) html += row('Teléfono', e.telefono);
+    if (e.email) html += row('Email', e.email);
+    const c = q.cliente || {};
+    html += sec('Cliente');
+    html += row('Nombre', c.nombre || '-');
+    if (c.telefono) html += row('Teléfono', c.telefono);
+    if (c.email) html += row('Email', c.email);
+    if (c.direccion) html += row('Dirección', c.direccion);
+    html += sec('Líneas (' + (q.lineas || []).length + ')');
+    html += '<div class="qt-totals" style="padding:2px 16px">';
+    (q.lineas || []).forEach(l => {
+      html += '<div class="qt-total-row"><span>' + escapeHtml(l.descripcion || '') +
+        ((l.cantidad || 0) > 1 ? ' ×' + escapeHtml(String(l.cantidad)) : '') + '</span><span>' + plMoney(l.subtotalLinea) + '</span></div>';
+    });
+    html += '</div>';
+    const t = q.totales || {};
+    html += sec('Totales');
+    html += '<div class="qt-totals">';
+    html += '<div class="qt-total-row"><span>Subtotal</span><span>' + plMoney(t.subtotal) + '</span></div>';
+    if ((t.descuento || 0) > 0) html += '<div class="qt-total-row"><span>Descuento</span><span>−' + plMoney(t.descuento) + '</span></div>';
+    html += '<div class="qt-total-row"><span>IVU (' + escapeHtml(fmtPct(t.tasaIVU)) + ')</span><span>' + plMoney(t.montoIVU) + '</span></div>';
+    html += '<div class="qt-total-row grand"><span>Total</span><span>' + plMoney(t.total) + '</span></div></div>';
+    html += sec('Vigencia');
+    html += row('Válida por', (q.validezDias || '-') + ' días');
+    if (q.emitidaEl) html += row('Emitida', qDateStr(q.emitidaEl));
+    if (q.validaHasta) html += row('Válida hasta', qDateStr(q.validaHasta));
+    if (q.notas) html += '<div class="modal-notes">📝 ' + escapeHtml(q.notas) + '</div>';
+    document.getElementById('qt-modal-body').innerHTML = html;
+
+    // Acciones según estado y rol (matriz QUOTING_SCHEMA §1).
+    let actions = '';
+    const btn = (fn, cls, label) => '<button class="' + cls + '" onclick="' + fn + '(\'' + q.id + '\')">' + label + '</button>';
+    actions += btn('qPdfQuote', 'btn-edit', '🖨️ Imprimir / PDF');
+    if (qCanEditQuote(q)) actions += btn('openQuoteBuilder', 'btn-edit', '✏️ Editar borrador');
+    if (qCanSendQuote(q)) actions += btn('qtSendQuote', 'btn-save', '📤 Marcar como enviada');
+    if (q.estado === 'enviada' && qCanApproveQuote(q)) {
+      actions += btn('qtApproveQuote', 'btn-save', '✅ Aprobar');
+      actions += btn('qtRejectQuote', 'btn-delete', '❌ Rechazar');
+    }
+    if (qCanApproveQuote(q)) actions += btn('qtDeleteQuote', 'btn-delete', '🗑 Eliminar cotización');
+    document.getElementById('qt-modal-actions').innerHTML = actions;
+  }
+
+  // ─── Cotización imprimible / PDF (Fase 5) ────────────────────────
+  // El PDF se genera con el diálogo de impresión del navegador
+  // (window.print + CSS @media print en #qpdf-print-area): cero
+  // dependencias, funciona offline. El contenido se lee de los totales
+  // ya guardados en la cotización; nunca se recalcula para el PDF.
+  function qPdfLineDetail(l) {
+    const parts = [];
+    if (l.tipo === 'sacabocados' || l.tipo === 'barreno') {
+      let s = (qFormaLabel(l.forma) + qDimStr(l)).trim();
+      const pos = l.posicion || {};
+      if (pos.etiqueta) s += ' · ' + pos.etiqueta;
+      if (s) parts.push(s);
+    } else {
+      const dims = [];
+      if (l.anchoIn != null && l.altoIn != null)
+        dims.push(fmtDims(l.anchoIn) + '" × ' + fmtDims(l.altoIn) + '"');
+      if (l.areaPie2 != null) dims.push(fmtDims(l.areaPie2) + ' pie²');
+      if (dims.length) parts.push(dims.join(' · '));
+    }
+    return parts.join(' · ');
+  }
+
+  function qPdfHtml(q) {
+    const e = q.empresa || {}, c = q.cliente || {}, t = q.totales || {};
+    const esc = escapeHtml;
+    let h = '<div class="qpdf">';
+    // Encabezado de la compañía (snapshot de la cotización).
+    h += '<div class="qpdf-head"><div class="qpdf-co">' + esc(e.nombre || 'Cotización') + '</div>';
+    if (e.direccion) h += '<div>' + esc(e.direccion) + '</div>';
+    const eContact = [e.telefono, e.email].filter(Boolean).map(esc).join(' · ');
+    if (eContact) h += '<div>' + eContact + '</div>';
+    h += '</div>';
+    // Título + folio + fechas.
+    h += '<div class="qpdf-title"><h1>COTIZACIÓN</h1><div class="qpdf-folio">No. ' + esc(q.numero || '') + '</div></div>';
+    h += '<div class="qpdf-meta">';
+    h += '<div><span>Fecha de emisión:</span> ' + esc(qDateStr(q.emitidaEl || q.creadoEl)) + '</div>';
+    if (q.validaHasta) h += '<div><span>Válida hasta:</span> ' + esc(qDateStr(q.validaHasta)) + '</div>';
+    h += '<div><span>Estado:</span> ' + esc(QT_ESTADOS[q.estado] || q.estado || '') + '</div></div>';
+    // Cliente.
+    h += '<div class="qpdf-sec"><div class="qpdf-sec-title">Cliente</div><div class="qpdf-box">';
+    h += '<div class="qpdf-cn">' + esc(c.nombre || '-') + '</div>';
+    if (c.direccion) h += '<div>' + esc(c.direccion) + '</div>';
+    const cContact = [c.telefono, c.email].filter(Boolean).map(esc).join(' · ');
+    if (cContact) h += '<div>' + cContact + '</div>';
+    h += '</div></div>';
+    // Tabla de líneas.
+    h += '<div class="qpdf-sec"><div class="qpdf-sec-title">Detalle (' + (q.lineas || []).length + ' líneas)</div>';
+    h += '<table class="qpdf-table"><thead><tr><th>Descripción</th><th>Medidas</th>' +
+      '<th class="r">Cant.</th><th class="r">Precio unit.</th><th class="r">Subtotal</th></tr></thead><tbody>';
+    (q.lineas || []).forEach(l => {
+      const det = qPdfLineDetail(l);
+      const medidas = (l.tipo === 'sacabocados' || l.tipo === 'barreno') ? esc(det)
+        : ((l.anchoIn != null && l.altoIn != null)
+          ? esc(fmtDims(l.anchoIn) + '" × ' + fmtDims(l.altoIn) + '"' +
+            (l.areaPie2 != null ? ' (' + fmtDims(l.areaPie2) + ' pie²)' : ''))
+          : '-');
+      h += '<tr><td><div class="qpdf-line-desc">' + esc(l.descripcion || '') + '</div>' +
+        (det && (l.tipo === 'sacabocados' || l.tipo === 'barreno') ? '' :
+          (det ? '<div class="qpdf-line-det">' + esc(det) + '</div>' : '')) + '</td>' +
+        '<td>' + medidas + '</td>' +
+        '<td class="r">' + esc(String(l.cantidad != null ? l.cantidad : '')) + '</td>' +
+        '<td class="r">' + plMoney(l.precioUnitario) + '</td>' +
+        '<td class="r">' + plMoney(l.subtotalLinea) + '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+    // Totales (leídos del doc; el PDF nunca recalcula).
+    h += '<div class="qpdf-tot">';
+    h += '<div class="row"><span>Subtotal</span><span>' + plMoney(t.subtotal) + '</span></div>';
+    if ((t.descuento || 0) > 0)
+      h += '<div class="row"><span>Descuento</span><span>−' + plMoney(t.descuento) + '</span></div>';
+    h += '<div class="row"><span>IVU (' + esc(fmtPct(t.tasaIVU)) + ')</span><span>' + plMoney(t.montoIVU) + '</span></div>';
+    h += '<div class="row grand"><span>TOTAL</span><span>' + plMoney(t.total) + '</span></div></div>';
+    if (q.notas) h += '<div class="qpdf-notas">Notas: ' + esc(q.notas) + '</div>';
+    h += '<div class="qpdf-validez">Esta cotización es válida por ' +
+      esc(String(q.validezDias != null ? q.validezDias : '-')) +
+      ' días a partir de la fecha de emisión. Precios en USD, IVU incluido.</div>';
+    // Firmas.
+    h += '<div class="qpdf-sig"><div><div class="qpdf-sigline"></div>Cliente: ' + esc(c.nombre || '') +
+      '</div><div><div class="qpdf-sigline"></div>Autorizado por</div></div>';
+    // Pie.
+    h += '<div class="qpdf-foot">' + esc(e.nombre || '') + (eContact ? ' · ' + eContact : '') + '</div>';
+    h += '</div>';
+    return h;
+  }
+
+  window.qPdfQuote = (id) => {
+    const q = qById(id);
+    if (!q) return;
+    document.getElementById('qpdf-print-area').innerHTML = qPdfHtml(q);
+    window.print();
+  };
+
+  const qTouch = (q) => ({    actualizadoPor: currentUser.uid,
+    actualizadoEl: serverTimestamp(),
+    version: (Number(q.version) || 1) + 1,
+  });
+
+  // ─── Notificaciones de cotizaciones (EMAIL_PIPELINE.md) ─────────────────
+  // La app reporta el evento a la función central; el servidor resuelve
+  // destinatarios y respeta sus preferencias. En modo BYOB el proyecto
+  // central no ve el Firestore del taller, así que resolvemos los correos
+  // aquí y los pasamos explícitos. Fire-and-forget: nunca bloquea el UI.
+  const _reportQuoteEvent = httpsCallable(centralFunctions, 'reportQuoteEvent');
+  async function notifyQuoteEvent(type, q) {
+    try {
+      const co = await ensureCompany();
+      const payload = {
+        type,
+        companyId: window._orgId,
+        quoteNumero: q.numero || '',
+        clienteNombre: (q.cliente && q.cliente.nombre) || '',
+        companyName: (co.data && co.data.nombre) || '',
+        total: q.totales && q.totales.total != null ? Number(q.totales.total).toFixed(2) : null,
+        actorName: currentUser.displayName
+          || (window._currentUserData && window._currentUserData.name) || '',
+      };
+      if (isCustomBackend()) {
+        const members = (co && co.members) || {};
+        const emails = new Set();
+        for (const uid of Object.keys(members)) {
+          if (uid === currentUser.uid) continue;
+          try {
+            const us = await getDoc(doc(db, 'users', uid));
+            const em = us.exists() && us.data().email;
+            if (em) emails.add(String(em).toLowerCase());
+          } catch (_) { /* best effort */ }
+        }
+        for (const to of emails) {
+          try { await _reportQuoteEvent({ ...payload, to }); }
+          catch (e) { console.warn('[Nivelato] notify failed:', e.message); }
+        }
+      } else {
+        await _reportQuoteEvent(payload);
+      }
+    } catch (e) {
+      console.warn('[Nivelato] notifyQuoteEvent failed:', e.message);
+    }
+  }
+
+  window.qtSendQuote = async (id) => {
+    const q = qById(id);
+    if (!q || !qCanSendQuote(q)) return;
+    if (!confirm('¿Marcar la cotización ' + (q.numero || '') + ' como enviada? Ya no se podrá editar.')) return;
+    const dias = Number(q.validezDias) || 30;
+    try {
+      await updateDoc(doc(db, 'companies', window._orgId, 'quotes', id), {
+        estado: 'enviada',
+        emitidaEl: serverTimestamp(),
+        validaHasta: new Date(Date.now() + dias * 86400000),
+        ...qTouch(q),
+      });
+      closeQuoteModal();
+      notifyQuoteEvent('ready', q);
+    } catch (e) { alert('Error al actualizar: ' + (e.message || 'error desconocido')); }
+  };
+
+  window.qtApproveQuote = async (id) => {
+    const q = qById(id);
+    if (!q || !qCanApproveQuote(q) || q.estado !== 'enviada') return;
+    if (!confirm('¿Aprobar la cotización ' + (q.numero || '') + '?')) return;
+    try {
+      await updateDoc(doc(db, 'companies', window._orgId, 'quotes', id), { estado: 'aprobada', ...qTouch(q) });
+      closeQuoteModal();
+    } catch (e) { alert('Error al actualizar: ' + (e.message || 'error desconocido')); }
+  };
+
+  window.qtRejectQuote = async (id) => {
+    const q = qById(id);
+    if (!q || !qCanApproveQuote(q) || q.estado !== 'enviada') return;
+    if (!confirm('¿Rechazar la cotización ' + (q.numero || '') + '?')) return;
+    try {
+      await updateDoc(doc(db, 'companies', window._orgId, 'quotes', id), { estado: 'rechazada', ...qTouch(q) });
+      closeQuoteModal();
+    } catch (e) { alert('Error al actualizar: ' + (e.message || 'error desconocido')); }
+  };
+
+  window.qtDeleteQuote = async (id) => {
+    const q = qById(id);
+    if (!q || !qCanApproveQuote(q)) return;
+    if (!confirm('¿Eliminar la cotización ' + (q.numero || '') + '? Esta acción no se puede deshacer.')) return;
+    try {
+      await deleteDoc(doc(db, 'companies', window._orgId, 'quotes', id));
+      closeQuoteModal();
+    } catch (e) { alert('Error al eliminar: ' + (e.message || 'error desconocido')); }
+  };
+
+  window.closeQuoteModal = (e) => {
+    if (!e || e.target === document.getElementById('qt-modal-overlay')) {
+      document.getElementById('qt-modal-overlay').classList.remove('open');
+      // solo soltar el scroll lock si ningún otro modal sigue abierto
+      if (!document.getElementById('modal-overlay').classList.contains('open') &&
+          !document.getElementById('pl-modal-overlay').classList.contains('open') &&
+          !document.getElementById('qt-line-modal-overlay').classList.contains('open') &&
+          !document.getElementById('qt-med-modal-overlay').classList.contains('open')) {
+        document.body.style.overflow = '';
+      }
+      window._qCurrentId = null;
+    }
+  };
+
+  // ─── Constructor de cotizaciones (Fase 3) ─────────────────────────
+  // window._qb es el borrador en memoria que arma la vista builder.
+  const newLineaId = () => 'lin_' + (window.crypto && crypto.randomUUID
+    ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10));
+
+  function qGenNumero(companyData) {
+    const pref = (companyData && companyData.ajustes && companyData.ajustes.prefijoFolio)
+      || ((companyData && companyData.nombre) || 'NIV').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'NIV';
+    return pref + '-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
+  }
+
+  window.openQuoteBuilder = async (quoteId) => {
+    if (!qCanCreateQuote()) return;
+    window.closeQuoteModal(); // si venimos del detalle, cerrarlo primero
+    const co = await ensureCompany();
+    const data = co.data || {};
+    const ajustes = data.ajustes || {};
+    const q = quoteId ? qById(quoteId) : null;
+    if (quoteId && (!q || !qCanEditQuote(q))) return;
+    // Snapshot de empresa al crear (QUOTING_SCHEMA §2.3.2): el PDF de una
+    // cotización vieja no cambia si la compañía actualiza sus datos.
+    window._qb = {
+      quoteId: q ? q.id : null,
+      numero: q ? q.numero : qGenNumero(data),
+      cliente: q ? { ...(q.cliente || {}) } : { nombre: '', telefono: '', email: '', direccion: '' },
+      lineas: q ? (q.lineas || []).map(l => ({ ...l })) : [],
+      descuento: q && q.descuento ? { ...q.descuento } : { tipo: 'ninguno', valor: 0 },
+      tasaIVU: q && q.totales ? Number(q.totales.tasaIVU) : (ajustes.tasaIVU != null ? Number(ajustes.tasaIVU) : 0.115),
+      validezDias: q ? q.validezDias : (ajustes.validezDias != null ? Number(ajustes.validezDias) : 30),
+      notas: q ? (q.notas || '') : '',
+      empresa: q ? { ...(q.empresa || {}) } : {
+        nombre: data.nombre || '', direccion: data.direccion || '',
+        telefono: data.telefono || '', email: data.email || '', logoUrl: data.logoUrl || '',
+      },
+    };
+    document.getElementById('qb-title').textContent = q ? 'Editar cotización ' + (q.numero || '') : 'Nueva cotización';
+    document.getElementById('qb-subtitle').textContent = (data.nombre || '') + ' · Folio ' + window._qb.numero;
+    document.getElementById('qb-cliente-nombre').value = window._qb.cliente.nombre || '';
+    document.getElementById('qb-cliente-telefono').value = window._qb.cliente.telefono || '';
+    document.getElementById('qb-cliente-email').value = window._qb.cliente.email || '';
+    document.getElementById('qb-cliente-direccion').value = window._qb.cliente.direccion || '';
+    document.getElementById('qb-descuento-tipo').value = window._qb.descuento.tipo || 'ninguno';
+    document.getElementById('qb-descuento-valor').value = window._qb.descuento.valor || 0;
+    document.getElementById('qb-tasaivu').value = window._qb.tasaIVU;
+    document.getElementById('qb-validez').value = window._qb.validezDias;
+    document.getElementById('qb-notas').value = window._qb.notas || '';
+    const err = document.getElementById('qb-error');
+    err.style.display = 'none'; err.textContent = '';
+    renderBuilderLines();
+    renderBuilderTotals();
+    window.showDashView('builder');
+  };
+
+  function lineKindOf(l) {
+    if (!l) return 'lista';
+    if (l.tipo === 'sacabocados') return 'sacabocados';
+    if (l.tipo === 'barreno') return 'barreno';
+    if (l.tipo === 'personalizado') return 'personalizado';
+    return 'lista';
+  }
+  function blankLineFor(kind) {
+    const base = { lineaId: newLineaId(), cantidad: 1, precioUnitario: 0, modeloPrecio: 'porUnidad', descripcion: '' };
+    if (kind === 'personalizado') return { ...base, tipo: 'personalizado', itemRef: null };
+    if (kind === 'sacabocados') return { ...base, tipo: 'sacabocados', forma: 'rectangular', dimensiones: {}, posicion: { xIn: 0, yIn: 0, etiqueta: '' } };
+    if (kind === 'barreno') return { ...base, tipo: 'barreno', forma: 'circular', dimensiones: {}, posicion: { xIn: 0, yIn: 0, etiqueta: '' } };
+    return { ...base, tipo: '', modeloPrecio: '', itemRef: null };
+  }
+
+  window.renderBuilderLines = () => {
+    const box = document.getElementById('qb-lines');
+    const lineas = window._qb ? window._qb.lineas : [];
+    if (!lineas.length) {
+      box.innerHTML = '<div class="empty-state" style="padding:24px">Sin líneas todavía. Agrega la primera con los botones de abajo.</div>';
+      return;
+    }
+    box.innerHTML = lineas.map((l, i) => {
+      let detail = '';
+      if (l.modeloPrecio === 'porPieCuadrado') {
+        detail = fmtDims(l.anchoIn) + '" × ' + fmtDims(l.altoIn) + '" · ' + fmtDims(l.areaPie2) + ' pie² · ' +
+          escapeHtml(String(l.cantidad)) + ' × ' + plMoney(l.precioUnitario) + '/pie²';
+      } else {
+        detail = escapeHtml(String(l.cantidad)) + ' × ' + plMoney(l.precioUnitario) +
+          (l.precioManual ? ' (manual)' : '');
+      }
+      if (l.tipo === 'sacabocados' || l.tipo === 'barreno') {
+        detail += ' · ' + escapeHtml(qFormaLabel(l.forma)) + escapeHtml(qDimStr(l));
+        if (l.posicion && l.posicion.etiqueta) detail += ' · ' + escapeHtml(l.posicion.etiqueta);
+      }
+      const med = l.medicionRef ? '<span class="qt-med-badge">📐 Medida vinculada</span>' : '';
+      return '<div class="qt-line"><div class="qt-line-top"><div><div class="qt-line-desc">' +
+        escapeHtml(l.descripcion || 'Línea') + med + '</div><div class="qt-line-detail">' + detail + '</div></div>' +
+        '<div class="qt-line-sub">' + plMoney(l.subtotalLinea) + '</div></div>' +
+        '<div class="qt-line-actions">' +
+        '<button class="pl-btn pl-btn-edit" onclick="openLineModal(\'edit\',' + i + ')">Editar</button>' +
+        '<button class="pl-btn pl-btn-off" onclick="removeBuilderLine(' + i + ')">Quitar</button>' +
+        '</div></div>';
+    }).join('');
+  };
+
+  function qbDescuentoFromInputs() {
+    const tipo = document.getElementById('qb-descuento-tipo').value;
+    const valor = Number(document.getElementById('qb-descuento-valor').value) || 0;
+    return { tipo, valor };
+  }
+  window.renderBuilderTotals = () => {
+    if (!window._qb) return;
+    const t = qTotals(window._qb.lineas, qbDescuentoFromInputs(),
+      Number(document.getElementById('qb-tasaivu').value));
+    let html = '<div class="qt-total-row"><span>Subtotal (' + window._qb.lineas.length + ' líneas)</span><span>' + plMoney(t.subtotal) + '</span></div>';
+    if (t.descuento > 0) html += '<div class="qt-total-row"><span>Descuento</span><span>−' + plMoney(t.descuento) + '</span></div>';
+    html += '<div class="qt-total-row"><span>IVU (' + escapeHtml(fmtPct(t.tasaIVU)) + ')</span><span>' + plMoney(t.montoIVU) + '</span></div>';
+    html += '<div class="qt-total-row grand"><span>Total</span><span>' + plMoney(t.total) + '</span></div>';
+    document.getElementById('qb-totals').innerHTML = html;
+  };
+
+  window.removeBuilderLine = (i) => {
+    window._qb.lineas.splice(i, 1);
+    renderBuilderLines();
+    renderBuilderTotals();
+  };
+
+  // ─── Modal de línea ───
+  const plActiveItems = () => (window._plItems || []).filter(it => it.activo !== false);
+
+  function qItemOptions() {
+    let html = '<option value="">- Elige un ítem -</option>';
+    PL_TIPOS.forEach(([tipo, label]) => {
+      const group = plActiveItems().filter(it => it.tipo === tipo);
+      if (!group.length) return;
+      html += '<optgroup label="' + escapeHtml(label) + '">';
+      group.forEach(it => {
+        html += '<option value="' + escapeHtml(it.id) + '">' + escapeHtml(it.nombre || 'Sin nombre') +
+          ' · ' + plMoney(it.precio) + (it.modeloPrecio === 'porPieCuadrado' ? '/pie²' : '') + '</option>';
+      });
+      html += '</optgroup>';
+    });
+    return html;
+  }
+
+  const numField = (id, label, val) =>
+    '<label class="modal-edit-label" for="' + id + '">' + escapeHtml(label) + '</label>' +
+    '<input class="modal-edit-input" id="' + id + '" type="number" min="0" step="0.0625" inputmode="decimal" value="' +
+    (val == null || val === '' ? '' : escapeHtml(String(val))) + '" oninput="recalcLineDraft()" />';
+
+  const lineDimsHtml = (d) =>
+    '<label class="modal-edit-label" for="ql-ancho">Ancho (pulg) *</label>' +
+    '<input class="modal-edit-input" id="ql-ancho" type="number" min="0.01" step="0.0625" inputmode="decimal" value="' + (d.line.anchoIn || '') + '" oninput="recalcLineDraft()" />' +
+    '<label class="modal-edit-label" for="ql-alto">Alto (pulg) *</label>' +
+    '<input class="modal-edit-input" id="ql-alto" type="number" min="0.01" step="0.0625" inputmode="decimal" value="' + (d.line.altoIn || '') + '" oninput="recalcLineDraft()" />' +
+    '<div class="pl-hint">El área se calcula sola: (ancho × alto) / 144 = pie².</div>';
+
+  const lineBodyLista = (d) => {
+    const perSqft = d.line.modeloPrecio === 'porPieCuadrado';
+    return '<label class="modal-edit-label" for="ql-item">Ítem de la lista *</label>' +
+      '<select class="modal-edit-input" id="ql-item" onchange="onLineItemPick()">' + qItemOptions() + '</select>' +
+      '<label class="pl-check"><input type="checkbox" id="ql-manual" ' + (d.line.precioManual ? 'checked' : '') + ' onchange="onLineManualToggle()" /> Precio manual (sobreescribir lista)</label>' +
+      '<label class="modal-edit-label" for="ql-precio">Precio unitario (USD) *</label>' +
+      '<input class="modal-edit-input" id="ql-precio" type="number" min="0.01" step="0.01" inputmode="decimal" value="' + (d.line.precioUnitario || '') + '" oninput="recalcLineDraft()" ' + (d.line.precioManual ? '' : 'disabled') + ' />' +
+      '<label class="modal-edit-label" for="ql-cantidad">Cantidad *</label>' +
+      '<input class="modal-edit-input" id="ql-cantidad" type="number" min="1" step="1" inputmode="numeric" value="' + (d.line.cantidad || 1) + '" oninput="recalcLineDraft()" />' +
+      '<div id="ql-dims-wrap">' + (perSqft ? lineDimsHtml(d) : '') + '</div>' +
+      '<div style="margin-top:12px"><button class="pl-btn" type="button" onclick="openMedPicker()">📐 Usar medida guardada</button> ' +
+      '<span id="ql-med-badge">' + (d.line.medicionRef
+        ? '<span class="qt-med-badge">📐 Medida vinculada</span> <button class="pl-btn pl-btn-off" type="button" onclick="clearMedRef()">Quitar</button>'
+        : '') + '</span></div>';
+  };
+
+  const lineBodyCustom = (d) =>
+    '<label class="modal-edit-label" for="ql-desc">Descripción *</label>' +
+    '<input class="modal-edit-input" id="ql-desc" maxlength="160" value="' + escapeHtml(d.line.descripcion || '') + '" oninput="recalcLineDraft()" placeholder="Ej. Desmonte de ventana existente" />' +
+    '<label class="modal-edit-label" for="ql-precio">Precio (USD) *</label>' +
+    '<input class="modal-edit-input" id="ql-precio" type="number" min="0.01" step="0.01" inputmode="decimal" value="' + (d.line.precioUnitario || '') + '" oninput="recalcLineDraft()" />' +
+    '<label class="modal-edit-label" for="ql-cantidad">Cantidad *</label>' +
+    '<input class="modal-edit-input" id="ql-cantidad" type="number" min="1" step="1" inputmode="numeric" value="' + (d.line.cantidad || 1) + '" oninput="recalcLineDraft()" />';
+
+  const sacaPriceHtml = (d, tipo) => {
+    const items = plActiveItems().filter(it => it.tipo === tipo);
+    const l = d.line;
+    const sel = l.itemRef || (l.precioManual ? 'manual' : '');
+    let html = '<label class="modal-edit-label" for="ql-item">Precio de lista</label>' +
+      '<select class="modal-edit-input" id="ql-item" onchange="onLineSacaPrice()"><option value="">- Elige un ítem -</option>';
+    items.forEach(it => {
+      html += '<option value="' + escapeHtml(it.id) + '"' + (sel === it.id ? ' selected' : '') + '>' +
+        escapeHtml(it.nombre || '') + ' · ' + plMoney(it.precio) + '</option>';
+    });
+    html += '<option value="manual"' + (sel === 'manual' ? ' selected' : '') + '>Precio manual</option></select>';
+    if (sel === 'manual' || !items.length) {
+      html += '<label class="modal-edit-label" for="ql-precio">Precio manual (USD) *</label>' +
+        '<input class="modal-edit-input" id="ql-precio" type="number" min="0.01" step="0.01" inputmode="decimal" value="' + (l.precioUnitario || '') + '" oninput="recalcLineDraft()" />';
+    }
+    return html;
+  };
+
+  const lineBodySaca = (d) => {
+    const l = d.line;
+    const dim = l.dimensiones || {};
+    const pos = l.posicion || {};
+    const forma = l.forma || 'rectangular';
+    let dimHtml = '';
+    if (forma === 'circular') dimHtml = numField('ql-dim-diametro', 'Diámetro (pulg) *', dim.diametroIn);
+    else if (forma === 'rectangular' || forma === 'ranura') dimHtml = numField('ql-dim-ancho', 'Ancho (pulg) *', dim.anchoIn) + numField('ql-dim-largo', 'Largo (pulg) *', dim.largoIn);
+    else if (forma === 'semicircular') dimHtml = numField('ql-dim-radio', 'Radio (pulg) *', dim.radioIn);
+    else dimHtml = '<label class="modal-edit-label" for="ql-dim-detalle">Detalle *</label><input class="modal-edit-input" id="ql-dim-detalle" maxlength="120" value="' + escapeHtml(dim.detalle || '') + '" oninput="recalcLineDraft()" />';
+    return '<label class="modal-edit-label" for="ql-forma">Forma *</label>' +
+      '<select class="modal-edit-input" id="ql-forma" onchange="onLineFormaChange()">' +
+      ['circular', 'rectangular', 'ranura', 'semicircular', 'personalizada'].map(f =>
+        '<option value="' + f + '"' + (forma === f ? ' selected' : '') + '>' + qFormaLabel(f) + '</option>').join('') +
+      '</select><div id="ql-dims-wrap">' + dimHtml + '</div>' +
+      '<div class="detail-section-title">Posición en el paño</div>' +
+      numField('ql-pos-x', 'Distancia desde el borde izquierdo (pulg)', pos.xIn) +
+      numField('ql-pos-y', 'Distancia desde el borde inferior (pulg)', pos.yIn) +
+      '<label class="modal-edit-label" for="ql-pos-et">Etiqueta</label>' +
+      '<input class="modal-edit-input" id="ql-pos-et" maxlength="80" value="' + escapeHtml(pos.etiqueta || '') + '" placeholder="Ej. lado de la cerradura" oninput="recalcLineDraft()" />' +
+      '<label class="modal-edit-label" for="ql-cantidad">Cantidad *</label>' +
+      '<input class="modal-edit-input" id="ql-cantidad" type="number" min="1" step="1" inputmode="numeric" value="' + (l.cantidad || 1) + '" oninput="recalcLineDraft()" />' +
+      sacaPriceHtml(d, 'sacabocados');
+  };
+
+  const lineBodyBarreno = (d) => {
+    const l = d.line;
+    const dim = l.dimensiones || {};
+    const pos = l.posicion || {};
+    return '<label class="modal-edit-label" for="ql-dim-diametro">Diámetro (pulg) *</label>' +
+      '<input class="modal-edit-input" id="ql-dim-diametro" type="number" min="0.01" step="0.0625" inputmode="decimal" value="' + (dim.diametroIn || '') + '" oninput="recalcLineDraft()" />' +
+      '<div class="detail-section-title">Posición en el paño</div>' +
+      numField('ql-pos-x', 'Distancia desde el borde izquierdo (pulg)', pos.xIn) +
+      numField('ql-pos-y', 'Distancia desde el borde inferior (pulg)', pos.yIn) +
+      '<label class="modal-edit-label" for="ql-pos-et">Etiqueta</label>' +
+      '<input class="modal-edit-input" id="ql-pos-et" maxlength="80" value="' + escapeHtml(pos.etiqueta || '') + '" placeholder="Ej. par superior" oninput="recalcLineDraft()" />' +
+      '<label class="modal-edit-label" for="ql-cantidad">Cantidad *</label>' +
+      '<input class="modal-edit-input" id="ql-cantidad" type="number" min="1" step="1" inputmode="numeric" value="' + (l.cantidad || 1) + '" oninput="recalcLineDraft()" />' +
+      sacaPriceHtml(d, 'barreno');
+  };
+
+  function renderLineBody() {
+    const d = window._lineDraft;
+    if (!d) return;
+    const body = document.getElementById('qt-line-body');
+    if (d.kind === 'lista') body.innerHTML = lineBodyLista(d);
+    else if (d.kind === 'personalizado') body.innerHTML = lineBodyCustom(d);
+    else if (d.kind === 'sacabocados') body.innerHTML = lineBodySaca(d);
+    else if (d.kind === 'barreno') body.innerHTML = lineBodyBarreno(d);
+    const sel = document.getElementById('ql-item');
+    if (sel && d.line.itemRef) sel.value = d.line.itemRef;
+    document.getElementById('qt-line-error').style.display = 'none';
+    recalcLineDraft();
+  }
+
+  // kind: 'lista' | 'personalizado' | 'sacabocados' | 'barreno' | 'edit'
+  window.openLineModal = async (kind, idx) => {
+    if (!window._qb) return;
+    await ensurePriceList(); // el selector necesita window._plItems
+    const editing = kind === 'edit';
+    const src = editing ? window._qb.lineas[idx] : null;
+    if (editing && !src) return;
+    const realKind = editing ? lineKindOf(src) : kind;
+    window._lineDraft = { kind: realKind, idx: editing ? idx : null, line: src ? { ...src } : blankLineFor(realKind) };
+    document.getElementById('qt-line-modal-title').textContent = editing ? 'Editar línea' : ({
+      lista: 'Línea de lista de precios', personalizado: 'Línea personalizada',
+      sacabocados: 'Sacabocados', barreno: 'Barreno',
+    }[realKind] || 'Línea');
+    renderLineBody();
+    document.getElementById('qt-line-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('qt-line-modal').focus();
+  };
+
+  window.onLineItemPick = () => {
+    const d = window._lineDraft;
+    const it = plActiveItems().find(x => x.id === document.getElementById('ql-item').value);
+    if (!it) return;
+    d.line.itemRef = it.id;
+    d.line.tipo = it.tipo;
+    d.line.modeloPrecio = it.modeloPrecio;
+    if (!d.line.precioManual) d.line.precioUnitario = Number(it.precio) || 0;
+    d.line.descripcion = (it.nombre || '') + (it.tipo === 'vidrio' && it.grosor ? ' ' + it.grosor + '"' : '');
+    renderLineBody();
+  };
+
+  window.onLineManualToggle = () => {
+    const d = window._lineDraft;
+    if (!d) return;
+    d.line.precioManual = document.getElementById('ql-manual').checked;
+    renderLineBody();
+  };
+
+  window.onLineSacaPrice = () => {
+    const d = window._lineDraft;
+    if (!d) return;
+    const sel = document.getElementById('ql-item').value;
+    const it = plActiveItems().find(x => x.id === sel);
+    if (it) { d.line.itemRef = it.id; d.line.precioUnitario = Number(it.precio) || 0; d.line.precioManual = false; }
+    else { d.line.itemRef = null; d.line.precioManual = sel === 'manual'; d.line.precioUnitario = 0; }
+    renderLineBody();
+  };
+
+  window.onLineFormaChange = () => {
+    const d = window._lineDraft;
+    if (!d) return;
+    d.line.forma = document.getElementById('ql-forma').value;
+    d.line.dimensiones = {};
+    renderLineBody();
+  };
+
+  // Lee el formulario del modal y arma el objeto línea según el esquema.
+  // silent=true: solo valida, sin mostrar errores (para el preview en vivo).
+  function buildLineFromInputs(silent) {
+    const d = window._lineDraft;
+    const err = document.getElementById('qt-line-error');
+    const fail = (msg) => { if (!silent) { err.textContent = msg; err.style.display = ''; } return null; };
+    const num = (id, min) => {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      const v = Number(el.value);
+      return Number.isFinite(v) && v >= (min == null ? 0 : min) ? v : null;
+    };
+    const line = { ...d.line, lineaId: d.line.lineaId || newLineaId() };
+    if (d.kind === 'lista') {
+      const it = plActiveItems().find(x => x.id === document.getElementById('ql-item').value);
+      if (!it) return fail('Elige un ítem de la lista de precios.');
+      line.itemRef = it.id;
+      line.tipo = it.tipo;
+      line.modeloPrecio = it.modeloPrecio;
+      line.precioManual = document.getElementById('ql-manual').checked;
+      line.precioUnitario = line.precioManual ? num('ql-precio', 0.01) : Number(it.precio) || 0;
+      if (!(line.precioUnitario > 0)) return fail('El precio debe ser mayor a 0.');
+      line.descripcion = (it.nombre || '') + (it.tipo === 'vidrio' && it.grosor ? ' ' + it.grosor + '"' : '');
+      line.cantidad = num('ql-cantidad', 1);
+      if (!(line.cantidad >= 1)) return fail('La cantidad debe ser al menos 1.');
+      if (line.modeloPrecio === 'porPieCuadrado') {
+        line.anchoIn = num('ql-ancho', 0.01);
+        line.altoIn = num('ql-alto', 0.01);
+        if (!(line.anchoIn > 0) || !(line.altoIn > 0)) return fail('Escribe el ancho y el alto en pulgadas.');
+        line.areaPie2 = qAreaPie2(line.anchoIn, line.altoIn);
+        line.fraccion = fmtDims(line.anchoIn) + ' x ' + fmtDims(line.altoIn);
+        line.descripcion += ', ' + line.fraccion;
+      } else {
+        delete line.anchoIn; delete line.altoIn; delete line.areaPie2; delete line.fraccion;
+      }
+    } else if (d.kind === 'personalizado') {
+      line.itemRef = null;
+      line.descripcion = document.getElementById('ql-desc').value.trim();
+      if (!line.descripcion) return fail('Escribe una descripción.');
+      line.precioUnitario = num('ql-precio', 0.01);
+      if (!(line.precioUnitario > 0)) return fail('El precio debe ser mayor a 0.');
+      line.cantidad = num('ql-cantidad', 1);
+      if (!(line.cantidad >= 1)) return fail('La cantidad debe ser al menos 1.');
+    } else {
+      // sacabocados o barreno: campos estructurados del esquema §2.3.3
+      const forma = d.kind === 'barreno' ? 'circular' : document.getElementById('ql-forma').value;
+      line.forma = forma;
+      const dimensiones = {};
+      if (forma === 'circular') {
+        dimensiones.diametroIn = num('ql-dim-diametro', 0.01);
+        if (!(dimensiones.diametroIn > 0)) return fail('Escribe el diámetro en pulgadas.');
+      } else if (forma === 'rectangular' || forma === 'ranura') {
+        dimensiones.anchoIn = num('ql-dim-ancho', 0.01);
+        dimensiones.largoIn = num('ql-dim-largo', 0.01);
+        if (!(dimensiones.anchoIn > 0) || !(dimensiones.largoIn > 0)) return fail('Escribe el ancho y el largo en pulgadas.');
+      } else if (forma === 'semicircular') {
+        dimensiones.radioIn = num('ql-dim-radio', 0.01);
+        if (!(dimensiones.radioIn > 0)) return fail('Escribe el radio en pulgadas.');
+      } else {
+        dimensiones.detalle = document.getElementById('ql-dim-detalle').value.trim();
+        if (!dimensiones.detalle) return fail('Describe la forma personalizada.');
+      }
+      line.dimensiones = dimensiones;
+      const xIn = num('ql-pos-x', 0), yIn = num('ql-pos-y', 0);
+      line.posicion = {
+        xIn: xIn == null ? 0 : xIn,
+        yIn: yIn == null ? 0 : yIn,
+        etiqueta: document.getElementById('ql-pos-et').value.trim(),
+      };
+      line.cantidad = num('ql-cantidad', 1);
+      if (!(line.cantidad >= 1)) return fail('La cantidad debe ser al menos 1.');
+      const it = plActiveItems().find(x => x.id === document.getElementById('ql-item').value);
+      if (it) { line.itemRef = it.id; line.precioUnitario = Number(it.precio) || 0; line.precioManual = false; }
+      else { line.itemRef = null; line.precioManual = true; line.precioUnitario = num('ql-precio', 0.01); }
+      if (!(line.precioUnitario > 0)) return fail('Elige un precio de la lista o escribe un precio manual.');
+      line.descripcion = (it ? it.nombre : qFormaLabel(forma) + ' (manual)') + qDimStr({ forma, dimensiones });
+    }
+    line.subtotalLinea = qLineSubtotal(line);
+    return line;
+  }
+
+  window.recalcLineDraft = () => {
+    if (!window._lineDraft) return;
+    const built = buildLineFromInputs(true);
+    document.getElementById('qt-line-subtotal').textContent =
+      built ? 'Subtotal de la línea: ' + plMoney(built.subtotalLinea) : '';
+  };
+
+  window.saveLineModal = () => {
+    const d = window._lineDraft;
+    if (!d || !window._qb) return;
+    const line = buildLineFromInputs(false);
+    if (!line) return;
+    if (d.idx == null) window._qb.lineas.push(line);
+    else window._qb.lineas[d.idx] = line;
+    window._lineDraft = null;
+    closeLineModal();
+    renderBuilderLines();
+    renderBuilderTotals();
+  };
+
+  window.closeLineModal = (e) => {
+    if (!e || e.target === document.getElementById('qt-line-modal-overlay')) {
+      document.getElementById('qt-line-modal-overlay').classList.remove('open');
+      if (!document.getElementById('qt-med-modal-overlay').classList.contains('open') &&
+          !document.getElementById('modal-overlay').classList.contains('open') &&
+          !document.getElementById('pl-modal-overlay').classList.contains('open') &&
+          !document.getElementById('qt-modal-overlay').classList.contains('open')) {
+        document.body.style.overflow = '';
+      }
+      window._lineDraft = null;
+    }
+  };
+
+  // ─── Selector de medida guardada ───
+  // Las medidas viven en orgs/{orgId}/jobs (el "Historial de medidas" ya las
+  // carga en allJobs). Al vincular, medicionRef = { jobId, medidaId, fuente }
+  // (QUOTING_SCHEMA §2.3.3) y anchoIn/altoIn se copian como snapshot.
+  window.openMedPicker = () => {
+    const jobs = allJobs || [];
+    const box = document.getElementById('qt-med-list');
+    if (!jobs.length) {
+      box.innerHTML = '<div class="empty-state" style="padding:24px">No hay medidas guardadas todavía.</div>';
+    } else {
+      box.innerHTML = jobs.map((j) => {
+        const w = j.hueco?.anchoBot ?? j.hueco?.anchoAbajo ?? j.hueco?.ancho ?? null;
+        const h = j.hueco?.altoIzq ?? j.hueco?.alto ?? null;
+        const dims = (w != null && h != null) ? fmtDims(w) + '" × ' + fmtDims(h) + '"' : 'sin dimensiones';
+        const title = (j.customer || 'Sin cliente') + (j.project ? ' - ' + j.project : '');
+        return '<div class="qt-med-card" tabindex="0" role="button" onclick="attachMeasurement(\'' + escapeHtml(j.id) + '\')" ' +
+          'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();attachMeasurement(\'' + escapeHtml(j.id) + '\')}">' +
+          '<div class="job-title">' + escapeHtml(title) + '</div>' +
+          '<div class="job-meta"><span>📐 ' + escapeHtml(dims) + '</span><span>👤 ' + escapeHtml(j.installerName || '-') + '</span></div></div>';
+      }).join('');
+    }
+    document.getElementById('qt-med-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('qt-med-modal').focus();
+  };
+
+  window.closeMedPicker = (e) => {
+    if (!e || e.target === document.getElementById('qt-med-modal-overlay')) {
+      document.getElementById('qt-med-modal-overlay').classList.remove('open');
+    }
+  };
+
+  window.clearMedRef = () => {
+    if (window._lineDraft) { window._lineDraft.line.medicionRef = null; renderLineBody(); }
+  };
+
+  window.attachMeasurement = (jobId) => {
+    const d = window._lineDraft;
+    const job = (allJobs || []).find(j => j.id === jobId);
+    if (!d || !job) return;
+    const w = job.hueco?.anchoBot ?? job.hueco?.anchoAbajo ?? job.hueco?.ancho ?? null;
+    const h = job.hueco?.altoIzq ?? job.hueco?.alto ?? null;
+    if (!(w > 0) || !(h > 0)) { alert('Esa medida no tiene dimensiones de hueco.'); return; }
+    d.line.anchoIn = Math.round(w * 100) / 100;
+    d.line.altoIn = Math.round(h * 100) / 100;
+    d.line.medicionRef = { jobId: job.id, medidaId: 'hueco', fuente: 'orgs' };
+    closeMedPicker();
+    renderLineBody();
+  };
+
+  // ─── Guardar cotización ───
+  window.saveQuote = async () => {
+    const qb = window._qb;
+    if (!qb || !qCanCreateQuote()) return;
+    const err = document.getElementById('qb-error');
+    const fail = (msg) => { err.textContent = msg; err.style.display = ''; window.scrollTo(0, 0); };
+    err.style.display = 'none';
+    const cliente = {
+      nombre: document.getElementById('qb-cliente-nombre').value.trim(),
+      telefono: document.getElementById('qb-cliente-telefono').value.trim(),
+      email: document.getElementById('qb-cliente-email').value.trim(),
+      direccion: document.getElementById('qb-cliente-direccion').value.trim(),
+    };
+    if (!cliente.nombre) { fail('Escribe el nombre del cliente.'); return; }
+    if (!qb.lineas.length) { fail('Agrega al menos una línea a la cotización.'); return; }
+    const descuento = qbDescuentoFromInputs();
+    const tasaRaw = Number(document.getElementById('qb-tasaivu').value);
+    if (!Number.isFinite(tasaRaw) || tasaRaw < 0) { fail('La tasa de IVU debe ser 0 o más (0.115 = 11.5%).'); return; }
+    const totales = qTotals(qb.lineas, descuento, tasaRaw);
+    const validezDias = Math.max(1, Math.round(Number(document.getElementById('qb-validez').value) || 30));
+    const notas = document.getElementById('qb-notas').value.trim();
+    const co = await ensureCompany();
+    const cdata = co.data || {};
+    const empresa = {
+      nombre: cdata.nombre || '', direccion: cdata.direccion || '',
+      telefono: cdata.telefono || '', email: cdata.email || '', logoUrl: cdata.logoUrl || '',
+    };
+    const base = {
+      numero: qb.numero, companyId: window._orgId, estado: 'borrador',
+      cliente, empresa, lineas: qb.lineas, totales,
+      descuento: descuento.tipo === 'ninguno' ? { tipo: 'ninguno', valor: 0 } : descuento,
+      validezDias, notas,
+      actualizadoPor: currentUser.uid, actualizadoEl: serverTimestamp(),
+    };
+    try {
+      if (qb.quoteId) {
+        const prev = qById(qb.quoteId);
+        await updateDoc(doc(db, 'companies', window._orgId, 'quotes', qb.quoteId),
+          { ...base, version: (Number(prev && prev.version) || 1) + 1 });
+        notifyQuoteEvent('updated', { numero: base.numero, cliente: base.cliente, totales: base.totales });
+      } else {
+        await addDoc(collection(db, 'companies', window._orgId, 'quotes'),
+          { ...base, creadoPor: currentUser.uid, creadoEl: serverTimestamp(), version: 1 });
+        notifyQuoteEvent('created', { numero: base.numero, cliente: base.cliente, totales: base.totales });
+      }
+      window._qb = null;
+      window.showDashView('quotes');
+    } catch (e) {
+      console.error('[Nivelato] saveQuote error:', e);
+      fail('No se pudo guardar: ' + (e.message || 'error desconocido'));
+    }
+  };
+
   // initial state for the custom date placeholder (dd/mm/aaaa)
   syncDatePlaceholder();
 </script>
+<div id="qpdf-print-area" aria-hidden="true"></div>
 </body>
 </html>
 

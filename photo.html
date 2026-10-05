@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#121212" />
+<link rel="manifest" href="manifest.json" />
 <title>Nivelato — Foto con medidas</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -50,6 +52,8 @@
   button:focus-visible { outline: 2px solid #1971c2; outline-offset: 2px; }
   .label-actions { display: flex; gap: 8px; }
   .label-actions button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+  #load-error { display: none; color: #ff8787; font-size: 13px; max-width: 320px; }
   .btn-ok { background: #1971c2; color: #fff; }
   .btn-cancel { background: #262c35; color: #8b93a1; }
   .quick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
@@ -64,7 +68,7 @@
 <div id="app-shell">
   <header>
     <div class="header-titles">
-      <div class="header-title">Foto con medidas</div>
+      <h1 class="header-title">Foto con medidas</h1>
       <div class="header-sub" id="header-sub">Alinea el marco con la abertura</div>
     </div>
     <div class="header-btns">
@@ -81,8 +85,9 @@
         <button class="btn-photo" id="btn-camera">Tomar foto</button>
         <button class="btn-photo ghost" id="btn-gallery">Elegir de galería</button>
       </div>
+      <div id="load-error" role="alert"></div>
     </div>
-    <canvas id="photo-canvas" style="display:none;touch-action:none;"></canvas>
+    <canvas id="photo-canvas" style="display:none;touch-action:none;" aria-label="Foto del hueco con marco de medidas"></canvas>
     <canvas id="loupe-canvas"></canvas>
   </div>
 
@@ -97,10 +102,11 @@
   <div id="hint-bar"></div>
 </div>
 
-<div id="label-modal">
+<div id="label-modal" role="dialog" aria-modal="true" aria-labelledby="label-title">
   <div class="label-card">
     <h3 id="label-title">Texto</h3>
     <div class="quick-chips" id="quick-chips"></div>
+    <label class="sr-only" for="label-input">Texto de la etiqueta</label>
     <input id="label-input" placeholder="Texto" maxlength="40" />
     <div class="label-actions">
       <button class="btn-cancel" id="btn-label-cancel">Cancelar</button>
@@ -388,21 +394,57 @@ document.getElementById('btn-gallery').addEventListener('click', () => {
   document.getElementById('file-input-gallery').click();
 });
 
+const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25MB — dataURL buffering costs ~1.37x the raw bytes
+
+function showLoadError(msg) {
+  const box = document.getElementById('load-error');
+  box.textContent = msg;
+  box.style.display = 'block';
+  // only resurface the empty state if there is no photo loaded yet;
+  // a failed re-pick keeps the current photo and just hints the error
+  if (!img) document.getElementById('empty-state').style.display = 'flex';
+  setHint(msg);
+}
+
+function clearLoadError() {
+  const box = document.getElementById('load-error');
+  box.textContent = '';
+  box.style.display = 'none';
+}
+
 ['file-input-camera', 'file-input-gallery'].forEach(id => {
   const el = document.getElementById(id);
   el.addEventListener('change', (e) => {
     const f = e.target.files[0];
+    el.value = '';
     if (!f) return;
+    clearLoadError();
+    // accept="image/*" is advisory — validate client-side before buffering
+    // the whole file into memory as base64 (~1.37x the file size).
+    if (f.type && !f.type.startsWith('image/')) {
+      showLoadError('No se pudo leer la foto: el archivo no es una imagen (' + f.type + ').');
+      return;
+    }
+    if (f.size > MAX_FILE_BYTES) {
+      showLoadError('No se pudo leer la foto: el archivo pesa más de 25 MB (' + Math.round(f.size / 1048576) + ' MB).');
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (ev) => loadImage(ev.target.result);
-    reader.readAsDataURL(f);
-    el.value = '';
+    reader.onerror = () => showLoadError('No se pudo leer la foto: error al abrir el archivo.');
+    try {
+      reader.readAsDataURL(f);
+    } catch (err) {
+      showLoadError('No se pudo leer la foto: ' + (err && err.message ? err.message : err));
+    }
   });
 });
 
 function loadImage(dataUrl) {
   const im = new Image();
+  im.onerror = () => showLoadError('No se pudo leer la foto: el archivo está dañado o usa un formato no compatible (p. ej. HEIC).');
   im.onload = () => {
+    clearLoadError();
     img = im;
     baseW = im.naturalWidth;
     baseH = im.naturalHeight;
@@ -414,11 +456,7 @@ function loadImage(dataUrl) {
     }
     canvas.width = baseW;
     canvas.height = baseH;
-    const stageRect = stage.getBoundingClientRect();
-    const pad = 8;
-    scale = Math.min((stageRect.width - pad) / baseW, (stageRect.height - pad) / baseH);
-    canvas.style.width = (baseW * scale) + 'px';
-    canvas.style.height = (baseH * scale) + 'px';
+    fitCanvas();
     canvas.style.display = 'block';
     document.getElementById('empty-state').style.display = 'none';
     document.getElementById('toolbar').style.display = 'flex';
@@ -429,6 +467,19 @@ function loadImage(dataUrl) {
   };
   im.src = dataUrl;
 }
+
+// ── canvas fit: recompute on load, resize and rotation so the CSS size ──
+// ── never goes stale ──
+function fitCanvas() {
+  if (!img) return;
+  const stageRect = stage.getBoundingClientRect();
+  const pad = 8;
+  scale = Math.min((stageRect.width - pad) / baseW, (stageRect.height - pad) / baseH);
+  canvas.style.width = (baseW * scale) + 'px';
+  canvas.style.height = (baseH * scale) + 'px';
+}
+window.addEventListener('resize', fitCanvas);
+window.addEventListener('orientationchange', () => setTimeout(fitCanvas, 100));
 
 // ── hit testing / dragging ──
 function hitHandle(e) {
@@ -540,7 +591,7 @@ canvas.addEventListener('pointermove', (e) => {
   showLoupe(e.clientX, e.clientY);
 });
 
-canvas.addEventListener('pointerup', (e) => {
+function endPointer(e) {
   if (e.pointerId !== activePointer) return;
   activePointer = null;
   hideLoupe();
@@ -558,7 +609,11 @@ canvas.addEventListener('pointerup', (e) => {
     dragging = null;
     setHint('Arrastra los puntos de las esquinas para alinear el marco. Usa las herramientas para añadir líneas o texto.');
   }
-});
+}
+canvas.addEventListener('pointerup', endPointer);
+// pointercancel (OS-level cancellation, e.g. a phone call or palm gesture)
+// must clear the same drag state or the loupe/drag sticks forever
+canvas.addEventListener('pointercancel', endPointer);
 
 // ── label modal ──
 function openLabelModal(title, chips) {
@@ -577,6 +632,17 @@ function openLabelModal(title, chips) {
   setTimeout(() => document.getElementById('label-input').focus(), 50);
 }
 
+function closeLabelModal() {
+  document.getElementById('label-modal').classList.remove('open');
+  pendingLabel = null;
+  redraw();
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('label-modal').classList.contains('open')) {
+    closeLabelModal();
+  }
+});
+
 document.getElementById('btn-label-ok').addEventListener('click', () => {
   const val = document.getElementById('label-input').value.trim();
   document.getElementById('label-modal').classList.remove('open');
@@ -594,9 +660,7 @@ document.getElementById('btn-label-ok').addEventListener('click', () => {
   redraw();
 });
 document.getElementById('btn-label-cancel').addEventListener('click', () => {
-  document.getElementById('label-modal').classList.remove('open');
-  pendingLabel = null;
-  redraw();
+  closeLabelModal();
 });
 
 // ── toolbar ──
@@ -623,6 +687,15 @@ btnReset.addEventListener('click', () => {
 });
 
 // ── done → composite + send back ──
+const DONE_ACK_TIMEOUT_MS = 5000;
+let doneAckTimer = null;
+
+function restoreDoneButton() {
+  btnDone.disabled = false;
+  btnDone.textContent = '✓ Usar esta foto';
+  if (doneAckTimer) { clearTimeout(doneAckTimer); doneAckTimer = null; }
+}
+
 btnDone.addEventListener('click', () => {
   if (!img) return;
   btnDone.disabled = true;
@@ -638,28 +711,43 @@ btnDone.addEventListener('click', () => {
   }
   const dataUrl = out.toDataURL('image/jpeg', 0.9);
   try {
+    // The payload carries the annotated photo (measurements + customer
+    // context), so the target origin is pinned to the app origin instead
+    // of '*', which would leak it to any embedding origin.
+    const targetOrigin = location.origin;
     if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'NIVELATO_ANNOTATED_PHOTO', dataUrl }, '*');
+      window.parent.postMessage({ type: 'NIVELATO_ANNOTATED_PHOTO', dataUrl }, targetOrigin);
+      // without a parent listener the button would stick on "Generando…"
+      // forever — restore it on ack, or on timeout
+      doneAckTimer = setTimeout(() => {
+        restoreDoneButton();
+        setHint('Parece que la foto no llegó al destino. Toca "✓ Usar esta foto" para reintentar.');
+      }, DONE_ACK_TIMEOUT_MS);
     } else if (window.opener) {
-      window.opener.postMessage({ type: 'NIVELATO_ANNOTATED_PHOTO', dataUrl }, '*');
+      window.opener.postMessage({ type: 'NIVELATO_ANNOTATED_PHOTO', dataUrl }, targetOrigin);
       window.close();
     } else {
       const a = document.createElement('a');
       a.href = dataUrl;
       a.download = 'nivelato-medidas.jpg';
       a.click();
-      btnDone.disabled = false;
-      btnDone.textContent = '✓ Usar esta foto';
+      restoreDoneButton();
     }
   } catch (e) {
-    btnDone.disabled = false;
-    btnDone.textContent = '✓ Usar esta foto';
+    restoreDoneButton();
     alert('Error al enviar la foto: ' + e.message);
   }
 });
 
 // ── measurements handoff from the flow ──
 window.addEventListener('message', (e) => {
+  // Only the app itself may inject data into this page: messages are
+  // accepted from the app origin only, never from any window reference.
+  if (e.origin !== location.origin) return;
+  if (e.data && e.data.type === 'NIVELATO_PHOTO_ACK') {
+    restoreDoneButton();
+    return;
+  }
   if (e.data && e.data.type === 'NIVELATO_MEASUREMENTS') {
     measurements = {
       anchoBot: e.data.anchoBot,

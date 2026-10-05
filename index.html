@@ -6,8 +6,10 @@
 <title>Nivelato</title>
 <script>console.log('nivelato v1.0.0 — commit 68fe412')</script>
 <link rel="manifest" href="/nivelato/manifest.json" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#121212" />
+<meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="apple-touch-icon" href="icon-192.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="autism.css" />
@@ -28,7 +30,7 @@
 <script type="module" src="auth-guard.js"></script>
 <script type="module" src="account-selector.js"></script>
 <script type="module" src="grass.js"></script>
-<script src="testing.js"></script>
+<script src="testing.js" defer></script>
 </head>
 <body>
 <div id="app-shell">
@@ -50,8 +52,8 @@
 
 <!-- ══ STEP 0 — CLIENTE ══ -->
 <section class="step-panel active" id="step-0">
-<div class="step-title">Cliente / Proyecto</div>
-<p class="step-hint">Ingresa el nombre del cliente, proyecto y ubicación antes de empezar a medir.</p>
+<h2 class="step-title">Cliente / Proyecto</h2>
+<p class="step-hint">Ingresa el nombre del cliente y del proyecto antes de empezar a medir. La ubicación es opcional.</p>
 <div class="input-row">
 <div class="input-col">
 <label for="customer-name">Cliente</label>
@@ -72,7 +74,7 @@
 
 <!-- ══ STEP 1 — HUECO ══ -->
 <section class="step-panel" id="step-1">
-<div class="step-title">Medidas del hueco</div>
+<h2 class="step-title">Medidas del hueco</h2>
 <p class="step-hint">Ingresa las 2 medidas base: ancho abajo y alto izquierda. Las otras 2 se calculan automáticamente con los desniveles.</p>
 <div class="input-row">
 <div class="input-col">
@@ -98,7 +100,7 @@
 
 <!-- ══ STEP 2 — PARED IZQUIERDA ══ -->
 <section class="step-panel" id="step-2">
-<div class="step-title">Pared izquierda</div>
+<h2 class="step-title">Pared izquierda</h2>
 <p class="step-hint">Mide del láser a la pared izquierda: punto A (abajo) y punto B (arriba).</p>
 <div class="input-row">
 <div class="input-col">
@@ -127,7 +129,7 @@
 
 <!-- ══ STEP 3 — PARED DERECHA ══ -->
 <section class="step-panel" id="step-3">
-<div class="step-title">Pared derecha</div>
+<h2 class="step-title">Pared derecha</h2>
 <p class="step-hint">Mide del láser a la pared derecha: punto A (abajo) y punto B (arriba).</p>
 <div class="input-row">
 <div class="input-col">
@@ -156,7 +158,7 @@
 
 <!-- ══ STEP 4 — ARRIBA (was TECHO) ══ -->
 <section class="step-panel" id="step-4">
-<div class="step-title">Arriba</div>
+<h2 class="step-title">Arriba</h2>
 <p class="step-hint">Mide del láser arriba: punto A (izquierda) y punto B (derecha).</p>
 <div class="input-row">
 <div class="input-col">
@@ -186,7 +188,7 @@
 
 <!-- ══ STEP 5 — ABAJO (was PISO) ══ -->
 <section class="step-panel" id="step-5">
-<div class="step-title">Abajo</div>
+<h2 class="step-title">Abajo</h2>
 <p class="step-hint">Mide del láser abajo: punto A (izquierda) y punto B (derecha).</p>
 <div class="input-row">
 <div class="input-col">
@@ -215,7 +217,7 @@
 
 <!-- ══ STEP 6 — FOTO (optional) ══ -->
 <section class="step-panel" id="step-6">
-<div class="step-title">Foto con medidas</div>
+<h2 class="step-title">Foto con medidas</h2>
 <p class="step-hint">Opcional: agrega una foto del hueco y márcala con las medidas para que el taller la vea.</p>
 <div id="photo-panel">
   <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -239,9 +241,9 @@
 
 <!-- ══ STEP 7 — RESUMEN ══ -->
 <section class="step-panel" id="step-7">
-<div class="step-title">Resumen</div>
+<h2 class="step-title">Resumen</h2>
 <div id="validation-block" class="val-ok">✓ Medidas OK</div>
-<div class="verify-note" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;color:#e67700;font-weight:500;">
+<div class="verify-note" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;font-weight:500;">
 ⚠️ Verifique todas las medidas calculadas con mediciones manuales antes de cotizar o instalar.
 </div>
 <div class="summary-grid">
@@ -306,5 +308,5 @@ document.querySelectorAll('.frac-select').forEach(sel => { sel.innerHTML = FRAC_
 // Restore any in-progress wizard draft now that the selects are populated.
 if (typeof restoreDraft === 'function') { try { restoreDraft(); } catch (e) {} }
 </script>
-<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/nivelato/sw.js")}</script></body>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/nivelato/sw.js").catch(function(e){console.warn("[Nivelato] service worker no registrado:",e)})}</script></body>
 </html>

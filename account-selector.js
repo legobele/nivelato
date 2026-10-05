@@ -1,5 +1,5 @@
 // account-selector.js — shared header account menu (main app + dashboard)
-// Loaded as a classic script. auth-guard.js / dashboard.js must call
+// Loaded as an ES module. auth-guard.js / dashboard.js must call
 // window.initAccountSelector({ user, userData }) once Firebase auth resolves.
 import { signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { auth } from "./firebase-config.js";
@@ -127,6 +127,7 @@ function closeMenu() {
 }
 
 function buildMenu({ user, userData }) {
+  try {
   injectStyles();
   const header = document.getElementById("app-header") || document.querySelector("header");
   if (!header) return;
@@ -154,7 +155,7 @@ function buildMenu({ user, userData }) {
         <div class="rl">${escapeHtml(roleLabel(userData?.role))}</div>
       </div>
       <button class="acct-item" id="acct-settings" role="menuitem" onclick="window.location.href='settings.html'">⚙️ Ajustes</button>
-      <button class="acct-item danger" id="acct-signout" role="menuitem">Salir / Cerrar sesión</button>
+      <button class="acct-item danger" id="acct-signout" role="menuitem">Cerrar sesión</button>
     </div>
   `;
 
@@ -188,8 +189,16 @@ function buildMenu({ user, userData }) {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && _menuOpen) closeMenu();
   });
+  } catch (e) {
+    // Never wedge init: pages without a header must still load fine.
+    console.warn("[Nivelato] account selector failed:", e);
+  }
 }
 
 window.initAccountSelector = ({ user, userData }) => {
-  buildMenu({ user, userData });
+  try {
+    buildMenu({ user, userData });
+  } catch (e) {
+    console.warn("[Nivelato] initAccountSelector failed:", e);
+  }
 };

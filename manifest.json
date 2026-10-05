@@ -1,17 +1,1 @@
-{
-  "name": "Nivelato — Calculadora de Vidrios",
-  "short_name": "Nivelato",
-  "description": "Calcula medidas y desniveles para instalación de vidrios y puertas.",
-  "start_url": "/nivelato/",
-  "scope": "/nivelato/",
-  "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#121212",
-  "theme_color": "#1a1a2e",
-  "icons": [
-    { "src": "/nivelato/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/nivelato/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/nivelato/icon-192-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "/nivelato/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
-  ]
-}
+{"background_color":"#121212","description":"Mediciones de campo, niveladas.","display":"standalone","icons":[{"sizes":"192x192","src":"/nivelato/icon-192.png","type":"image/png"},{"sizes":"512x512","src":"/nivelato/icon-512.png","type":"image/png"},{"purpose":"maskable","sizes":"192x192","src":"/nivelato/icon-192-maskable.png","type":"image/png"},{"purpose":"maskable","sizes":"512x512","src":"/nivelato/icon-512-maskable.png","type":"image/png"}],"name":"Nivelato","orientation":"portrait","scope":"/nivelato/","short_name":"Nivelato","start_url":"/nivelato/","theme_color":"#1a1a2e"}

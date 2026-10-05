@@ -4,13 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#121212">
-<title>Nivelato — Sin acceso</title>
+<title>Nivelato — Sin conexión</title>
 <link rel="manifest" href="manifest.json">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: system-ui, sans-serif;
     background: #f8f9fa;
     color: #212529;
     min-height: 100dvh;
@@ -20,15 +19,15 @@
     justify-content: center;
     padding: 32px;
     text-align: center;
-    gap: 16px;
+    gap: 14px;
   }
   .icon { font-size: 56px; }
-  h2 { font-size: 20px; font-weight: 700; color: #212529; }
-  p { font-size: 14px; color: #868e96; max-width: 340px; line-height: 1.6; }
+  h2 { font-size: 20px; font-weight: 700; }
+  p { font-size: 14px; color: #495057; max-width: 360px; line-height: 1.6; }
   .btn {
     display: inline-block;
     padding: 12px 28px;
-    background: #1971c2;
+    background: #0c6b3c;
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -36,17 +35,17 @@
     font-weight: 600;
     cursor: pointer;
     font-family: inherit;
-    text-decoration: none;
     margin-top: 8px;
   }
-  .btn:active { background: #1864ab; }
+  .btn:active { background: #095c33; }
 </style>
-<script src="testing.js" defer></script>
 </head>
 <body>
-  <div class="icon">🚫</div>
-  <h2>Sin acceso al panel</h2>
-  <p>No tienes permisos para ver el panel de administración. Si crees que esto es un error, contacta al administrador del taller.</p>
-  <a href="index.html" class="btn">Volver a la app</a>
+  <!-- Offline notice page: the service worker's navigation fallback when the
+       network is down (see sw.js). Precached, so it always loads offline. -->
+  <div class="icon">📶</div>
+  <h2>Sin conexión</h2>
+  <p>Estás offline. Reconecta a internet y vuelve a intentarlo — la app se cargará de nuevo.</p>
+  <button class="btn" type="button" onclick="location.reload()">Reintentar</button>
 </body>
 </html>
