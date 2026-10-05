@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0b0b0e" />
-  <title>Nivelato — Iniciar sesión</title>
+  <title>Nivelato - Iniciar sesión</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -184,6 +184,24 @@
       text-align: center;
       line-height: 1.5;
     }
+    .lang-toggle {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      line-height: 1;
+      z-index: 2;
+    }
+    .lang-toggle:hover { color: var(--ink); border-color: var(--dim); }
+    .lang-toggle:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
     @media (max-width: 420px) {
       body { padding: 16px; }
       .card { padding: 32px 22px; }
@@ -197,55 +215,316 @@
      below hydrates it, then swaps the flow UI in the background if geo says
      otherwise. -->
 <div class="card" id="app-card">
+  <button type="button" id="lang-toggle" class="lang-toggle" aria-label="Switch to English">🌐 EN</button>
   <h1 class="logo">Nivelato<span class="adot">.</span></h1>
-  <div class="tagline">Mediciones de campo, niveladas.</div>
-  <div class="pricing-note">Para Ultra, paga desde la app en tu teléfono (Google Play).</div>
+  <div class="tagline" data-i18n="tagline">Mediciones de campo, niveladas.</div>
+  <div class="pricing-note" data-i18n="pricing_note">Para Ultra, paga desde la app en tu teléfono (Google Play).</div>
 
-  <div class="tab-row" role="tablist" aria-label="Iniciar sesión o crear cuenta">
-    <button type="button" role="tab" aria-selected="true" class="tab active" id="tab-login">Iniciar sesión</button>
-    <button type="button" role="tab" aria-selected="false" class="tab" id="tab-signup">Solicitar acceso</button>
+  <div class="tab-row" role="tablist" data-i18n-aria="tablist_label" aria-label="Iniciar sesión o solicitar acceso">
+    <button type="button" role="tab" aria-selected="true" class="tab active" id="tab-login" data-i18n="tab_login">Iniciar sesión</button>
+    <button type="button" role="tab" aria-selected="false" class="tab" id="tab-signup" data-i18n="tab_signup">Solicitar acceso</button>
   </div>
 
   <div id="form-login">
     <form id="login-form" autocomplete="on">
       <div class="field">
-        <label for="login-email">Correo electrónico</label>
-        <input type="email" id="login-email" name="email" placeholder="correo@taller.com" autocomplete="email" />
+        <label for="login-email" data-i18n="label_email">Correo electrónico</label>
+        <input type="email" id="login-email" name="email" data-i18n-ph="ph_email" placeholder="correo@taller.com" autocomplete="email" />
       </div>
       <div class="field">
-        <label for="login-pass">Contraseña</label>
-        <input type="password" id="login-pass" name="password" placeholder="••••••••" autocomplete="current-password" />
+        <label for="login-pass" data-i18n="label_password">Contraseña</label>
+        <input type="password" id="login-pass" name="password" data-i18n-ph="ph_password" placeholder="••••••••" autocomplete="current-password" />
       </div>
-      <button class="btn-primary" id="btn-login" type="submit">Entrar</button>
+      <button class="btn-primary" id="btn-login" type="submit" data-i18n="btn_login">Entrar</button>
     </form>
-    <div style="text-align:center;margin-top:10px;"><a href="#" id="forgot-link" class="forgot-link">¿Olvidaste tu contraseña?</a></div>
+    <div style="text-align:center;margin-top:10px;"><a href="#" id="forgot-link" class="forgot-link" data-i18n="forgot">¿Olvidaste tu contraseña?</a></div>
     <div class="error-msg" id="login-error" role="alert"></div>
   </div>
 
   <div id="form-signup" style="display:none">
     <form id="signup-form" autocomplete="on">
       <div class="field">
-        <label for="signup-name">Nombre completo</label>
-        <input type="text" id="signup-name" name="name" placeholder="Juan Pérez" autocomplete="name" />
+        <label for="signup-name" data-i18n="label_name">Nombre completo</label>
+        <input type="text" id="signup-name" name="name" data-i18n-ph="ph_name" placeholder="Juan Pérez" autocomplete="name" />
       </div>
       <div class="field">
-        <label for="signup-email">Correo electrónico</label>
-        <input type="email" id="signup-email" name="email" placeholder="correo@taller.com" autocomplete="email" />
+        <label for="signup-email" data-i18n="label_email">Correo electrónico</label>
+        <input type="email" id="signup-email" name="email" data-i18n-ph="ph_email" placeholder="correo@taller.com" autocomplete="email" />
       </div>
       <div class="field">
-        <label for="signup-pass">Contraseña</label>
-        <input type="password" id="signup-pass" name="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+        <label for="signup-pass" data-i18n="label_password">Contraseña</label>
+        <input type="password" id="signup-pass" name="password" data-i18n-ph="ph_pass_min" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
       </div>
       <div class="field">
-        <label for="signup-orgname">Nombre del taller</label>
-        <input type="text" id="signup-orgname" name="organization" placeholder="Vidriería Ejemplo" autocomplete="organization" />
+        <label for="signup-orgname" data-i18n="label_shop">Nombre del taller</label>
+        <input type="text" id="signup-orgname" name="organization" data-i18n-ph="ph_shop" placeholder="Vidriería Ejemplo" autocomplete="organization" />
       </div>
-      <button class="btn-primary" id="btn-signup" type="submit">Solicitar acceso</button>
+      <button class="btn-primary" id="btn-signup" type="submit" data-i18n="btn_signup">Solicitar acceso</button>
     </form>
     <div class="error-msg" id="signup-error" role="alert"></div>
-    <div class="signup-note">Tu solicitud será revisada. Te avisaremos cuando tengas acceso.</div>
+    <div class="signup-note" data-i18n="signup_note">Tu solicitud será revisada. Te avisaremos cuando tengas acceso.</div>
   </div>
 </div>
+
+<script>
+  // ---- Nivelato login i18n (classic script — zero network dependencies) ----
+  // Dictionary + language state live here so the language toggle and the tab
+  // fallback work even before the Firebase ES module boots. The module
+  // reuses window.nivT / window.setLang / window.nivApplyLang for every
+  // string it builds dynamically.
+  (function () {
+    var DICT = {
+      es: {
+        page_title: 'Nivelato - Iniciar sesión',
+        tagline: 'Mediciones de campo, niveladas.',
+        tagline_qgi: 'Nivelato, exclusivo de Quality Glass en Puerto Rico',
+        pricing_note: 'Para Ultra, paga desde la app en tu teléfono (Google Play).',
+        exclusivity_note_html: 'En Puerto Rico, Nivelato es de uso <b>exclusivo de Quality Glass</b>. El registro es solo para empleados.',
+        tablist_label: 'Iniciar sesión o solicitar acceso',
+        tab_login: 'Iniciar sesión',
+        tab_signup: 'Solicitar acceso',
+        label_email: 'Correo electrónico',
+        label_password: 'Contraseña',
+        label_name: 'Nombre completo',
+        label_shop: 'Nombre del taller',
+        label_empcode_html: 'Código de empleado <span style="color:#868e96;font-weight:400">(te lo da tu supervisor)</span>',
+        ph_email: 'correo@taller.com',
+        ph_password: '••••••••',
+        ph_name: 'Juan Pérez',
+        ph_pass_min: 'Mínimo 6 caracteres',
+        ph_shop: 'Vidriería Ejemplo',
+        ph_empcode: 'ABC123',
+        btn_login: 'Entrar',
+        btn_login_busy: 'Entrando...',
+        btn_signup: 'Solicitar acceso',
+        btn_signup_busy: 'Creando cuenta...',
+        forgot: '¿Olvidaste tu contraseña?',
+        signup_note: 'Tu solicitud será revisada. Te avisaremos cuando tengas acceso.',
+        signup_note_qgi_html: 'Las cuentas nuevas las aprueba <b>Daniel Lebrón</b>. Te avisaremos cuando tengas acceso.',
+        geo_note: 'No pudimos detectar tu ubicación; estás viendo la versión general de Nivelato.',
+        pr_note_1: 'En Puerto Rico, el uso empresarial de Nivelato es exclusivo para empleados de Quality Glass. ',
+        pr_note_2: 'Los demás pueden usar la app gratuita: ',
+        pr_note_link: 'Descargar en Google Play',
+        profile_note: 'No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.',
+        save_title: 'Sesión iniciada',
+        save_q: '¿Guardar la sesión en este dispositivo?',
+        save_yes: 'Guardar sesión',
+        save_no: 'Solo esta vez',
+        pending_title: 'Cuenta creada',
+        pending_body: 'Tu cuenta está pendiente de aprobación por el dueño del taller. Te avisarán cuando tengas acceso.',
+        pending_logout: 'Cerrar sesión',
+        forgot_prompt: 'Escribe tu correo para enviarte el enlace:',
+        forgot_sent: 'Revisa tu correo, te enviamos el enlace para restablecer tu contraseña.',
+        forgot_failed: 'No se pudo enviar el correo: ',
+        forgot_unknown: 'error desconocido',
+        sso_failed: 'No se pudo completar el inicio de sesión. Intenta de nuevo.',
+        fs_fail: '¡Auth OK pero Firestore falló!\n\nError: ',
+        fs_fail_uid: '\n\nTu UID: ',
+        fs_fail_rules: '\n\nRevisa las Rules en Firebase Console.',
+        boot_a: 'El inicio de sesión está tardando más de lo normal (¿conexión lenta?). Puedes esperar o ',
+        boot_reload: 'recargar la página',
+        boot_b: '.',
+        err_invalid_email: 'Correo electrónico inválido.',
+        err_user_not_found: 'No existe una cuenta con ese correo.',
+        err_wrong_password: 'Contraseña incorrecta.',
+        err_invalid_credential: 'Correo o contraseña incorrectos.',
+        err_missing_password: 'Ingresa tu contraseña. Si usaste autocompletado, escríbela manualmente.',
+        err_missing_email: 'Ingresa tu correo electrónico.',
+        err_email_in_use: 'Ya existe una cuenta con ese correo.',
+        err_weak_password: 'La contraseña debe tener al menos 6 caracteres.',
+        err_too_many: 'Demasiados intentos. Intenta más tarde.',
+        err_missing_name: 'Ingresa tu nombre completo.',
+        err_missing_orgname: 'Ingresa el nombre del taller.',
+        err_missing_code: 'Ingresa el código de empleado.',
+        err_invalid_code: 'Código inválido. Verifica con tu supervisor.',
+        lang_toggle_to_en: 'Switch to English',
+        lang_toggle_to_es: 'Cambiar a español'
+      },
+      en: {
+        page_title: 'Nivelato - Sign in',
+        tagline: 'Field measurements, leveled.',
+        tagline_qgi: 'Nivelato, exclusive to Quality Glass in Puerto Rico',
+        pricing_note: 'For Ultra, pay from the app on your phone (Google Play).',
+        exclusivity_note_html: 'In Puerto Rico, Nivelato is for <b>Quality Glass</b> exclusive use. Registration is for employees only.',
+        tablist_label: 'Sign in or request access',
+        tab_login: 'Sign in',
+        tab_signup: 'Request access',
+        label_email: 'Email',
+        label_password: 'Password',
+        label_name: 'Full name',
+        label_shop: 'Shop name',
+        label_empcode_html: 'Employee code <span style="color:#868e96;font-weight:400">(ask your supervisor for it)</span>',
+        ph_email: 'email@shop.com',
+        ph_password: '••••••••',
+        ph_name: 'John Smith',
+        ph_pass_min: 'Minimum 6 characters',
+        ph_shop: 'Example Glass Shop',
+        ph_empcode: 'ABC123',
+        btn_login: 'Sign in',
+        btn_login_busy: 'Signing in...',
+        btn_signup: 'Request access',
+        btn_signup_busy: 'Creating account...',
+        forgot: 'Forgot your password?',
+        signup_note: 'Your request will be reviewed. We will let you know when you have access.',
+        signup_note_qgi_html: 'New accounts are approved by <b>Daniel Lebrón</b>. We will let you know when you have access.',
+        geo_note: 'We could not detect your location; you are seeing the general version of Nivelato.',
+        pr_note_1: 'In Puerto Rico, business use of Nivelato is exclusive to Quality Glass employees. ',
+        pr_note_2: 'Everyone else can use the free app: ',
+        pr_note_link: 'Download on Google Play',
+        profile_note: 'We could not find your user profile. Sign in again to fix it.',
+        save_title: 'Signed in',
+        save_q: 'Stay signed in on this device?',
+        save_yes: 'Stay signed in',
+        save_no: 'Just this once',
+        pending_title: 'Account created',
+        pending_body: 'Your account is pending approval by the shop owner. They will let you know when you have access.',
+        pending_logout: 'Sign out',
+        forgot_prompt: 'Enter your email to receive the link:',
+        forgot_sent: 'Check your email, we sent you the link to reset your password.',
+        forgot_failed: 'Could not send the email: ',
+        forgot_unknown: 'unknown error',
+        sso_failed: 'Could not complete sign-in. Try again.',
+        fs_fail: 'Auth OK but Firestore failed!\n\nError: ',
+        fs_fail_uid: '\n\nYour UID: ',
+        fs_fail_rules: '\n\nCheck the Rules in Firebase Console.',
+        boot_a: 'Sign-in is taking longer than usual (slow connection?). You can wait or ',
+        boot_reload: 'reload the page',
+        boot_b: '.',
+        err_invalid_email: 'Invalid email address.',
+        err_user_not_found: 'No account exists with that email.',
+        err_wrong_password: 'Incorrect password.',
+        err_invalid_credential: 'Incorrect email or password.',
+        err_missing_password: 'Enter your password. If you used autocomplete, type it manually.',
+        err_missing_email: 'Enter your email address.',
+        err_email_in_use: 'An account with that email already exists.',
+        err_weak_password: 'Password must be at least 6 characters.',
+        err_too_many: 'Too many attempts. Try again later.',
+        err_missing_name: 'Enter your full name.',
+        err_missing_orgname: 'Enter the shop name.',
+        err_missing_code: 'Enter the employee code.',
+        err_invalid_code: 'Invalid code. Check with your supervisor.',
+        lang_toggle_to_en: 'Switch to English',
+        lang_toggle_to_es: 'Cambiar a español'
+      }
+    };
+    var STORE_KEY = 'nivelato-login-lang';
+    function detectLang() {
+      try {
+        var s = localStorage.getItem(STORE_KEY);
+        if (s === 'es' || s === 'en') return s;
+      } catch (_) { /* storage unavailable */ }
+      try {
+        var nav = (navigator.language || navigator.userLanguage || '').toLowerCase();
+        if (nav === 'en' || nav.indexOf('en-') === 0) return 'en';
+      } catch (_) { /* ignore */ }
+      return 'es';
+    }
+    var lang = detectLang();
+    function t(key) {
+      var d = DICT[lang] || DICT.es;
+      if (d && d[key] !== undefined) return d[key];
+      return DICT.es[key] !== undefined ? DICT.es[key] : key;
+    }
+    function applyLang() {
+      try { document.documentElement.setAttribute('lang', lang); } catch (_) {}
+      try { document.title = t('page_title'); } catch (_) {}
+      var btn = document.getElementById('lang-toggle');
+      if (btn) {
+        btn.innerHTML = '🌐 ' + (lang === 'es' ? 'EN' : 'ES');
+        var al = t(lang === 'es' ? 'lang_toggle_to_en' : 'lang_toggle_to_es');
+        btn.setAttribute('aria-label', al);
+        btn.setAttribute('title', al);
+      }
+      var els = document.querySelectorAll('[data-i18n]');
+      for (var i = 0; i < els.length; i++) {
+        var k = els[i].getAttribute('data-i18n');
+        if (els[i].hasAttribute('data-i18n-html')) els[i].innerHTML = t(k);
+        else els[i].textContent = t(k);
+      }
+      var phs = document.querySelectorAll('[data-i18n-ph]');
+      for (var j = 0; j < phs.length; j++) {
+        phs[j].setAttribute('placeholder', t(phs[j].getAttribute('data-i18n-ph')));
+      }
+      var aras = document.querySelectorAll('[data-i18n-aria]');
+      for (var m = 0; m < aras.length; m++) {
+        aras[m].setAttribute('aria-label', t(aras[m].getAttribute('data-i18n-aria')));
+      }
+      // watchdog banner, if visible: rebuild it in the current language
+      var bw = document.getElementById('boot-warn');
+      if (bw) {
+        bw.innerHTML = '';
+        bw.appendChild(document.createTextNode(t('boot_a')));
+        var rb = document.createElement('button');
+        rb.type = 'button';
+        rb.id = 'boot-retry';
+        rb.setAttribute('style', 'text-decoration:underline;background:none;border:none;color:inherit;font:inherit;cursor:pointer;padding:0');
+        rb.textContent = t('boot_reload');
+        rb.addEventListener('click', function () { window.location.reload(); });
+        bw.appendChild(rb);
+        bw.appendChild(document.createTextNode(t('boot_b')));
+      }
+    }
+    function setLang(l) {
+      if (l !== 'es' && l !== 'en') return;
+      if (l === lang) return;
+      lang = l;
+      try { localStorage.setItem(STORE_KEY, l); } catch (_) { /* ignore */ }
+      applyLang();
+      // let the ES module re-render its dynamic strings (form, notices,
+      // save-login prompt, pending screen) in the new language
+      if (window.__nivelatoOnLangChange) {
+        try { window.__nivelatoOnLangChange(l); } catch (_) { /* ignore */ }
+      }
+    }
+    window.nivT = t;
+    window.nivApplyLang = applyLang;
+    window.nivGetLang = function () { return lang; };
+    window.setLang = setLang;
+
+    // ---- Pre-boot tab fallback ----
+    // The module rebinds the tabs to its own switchTab once loaded; until
+    // then this global keeps them working on first paint. The chosen tab is
+    // stashed so the module can honor it on boot.
+    window.switchTab = function (tab) {
+      window.__nivelatoTab = tab;
+      var fl = document.getElementById('form-login');
+      var fs = document.getElementById('form-signup');
+      var tl = document.getElementById('tab-login');
+      var ts = document.getElementById('tab-signup');
+      if (fl) fl.style.display = tab === 'login' ? '' : 'none';
+      if (fs) fs.style.display = tab === 'signup' ? '' : 'none';
+      if (tl) {
+        tl.classList.toggle('active', tab === 'login');
+        tl.setAttribute('aria-selected', tab === 'login' ? 'true' : 'false');
+      }
+      if (ts) {
+        ts.classList.toggle('active', tab === 'signup');
+        ts.setAttribute('aria-selected', tab === 'signup' ? 'true' : 'false');
+      }
+    };
+
+    // Delegated: survives the module's innerHTML re-renders.
+    document.addEventListener('click', function (e) {
+      var el = e.target && e.target.closest ? e.target.closest('#lang-toggle') : null;
+      if (el) {
+        e.preventDefault();
+        setLang(lang === 'es' ? 'en' : 'es');
+        return;
+      }
+      var tl = e.target && e.target.closest ? e.target.closest('#tab-login') : null;
+      var ts = e.target && e.target.closest ? e.target.closest('#tab-signup') : null;
+      if (tl) window.switchTab('login');
+      else if (ts) window.switchTab('signup');
+    });
+
+    // Apply the stored/device language to the static HTML immediately.
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', applyLang);
+    } else {
+      applyLang();
+    }
+  })();
+</script>
 
 <script>
   // M17 watchdog (classic script — arms at parse time, needs no imports):
@@ -256,15 +535,21 @@
     if (window.__nivelatoBooted) return;
     var card = document.getElementById('app-card');
     if (card && !document.getElementById('boot-warn')) {
+      var t = window.nivT || function (k) { return k; };
       var w = document.createElement('div');
       w.id = 'boot-warn';
       w.className = 'geo-note';
       w.setAttribute('role', 'alert');
-      w.innerHTML = 'El inicio de sesión está tardando más de lo normal (¿conexión lenta?). Puedes esperar o <button type="button" id="boot-retry" style="text-decoration:underline;background:none;border:none;color:inherit;font:inherit;cursor:pointer;padding:0">recargar la página</button>.';
+      w.appendChild(document.createTextNode(t('boot_a')));
+      var rb = document.createElement('button');
+      rb.type = 'button';
+      rb.id = 'boot-retry';
+      rb.setAttribute('style', 'text-decoration:underline;background:none;border:none;color:inherit;font:inherit;cursor:pointer;padding:0');
+      rb.textContent = t('boot_reload');
+      rb.addEventListener('click', function () { window.location.reload(); });
+      w.appendChild(rb);
+      w.appendChild(document.createTextNode(t('boot_b')));
       card.prepend(w);
-      document.getElementById('boot-retry').addEventListener('click', function () {
-        window.location.reload();
-      });
     }
   }, 60000);
 </script>
@@ -309,21 +594,22 @@
   // noreply@nivelatolabs.com); si la cuenta vive en un backend propio,
   // el servidor central no la conoce y caemos al correo default de Firebase.
   async function doForgotPassword() {
-    const email = prompt('Escribe tu correo para enviarte el enlace:');
+    const t = window.nivT;
+    const email = prompt(t('forgot_prompt'));
     if (!email || !email.trim()) return;
     try {
       await httpsCallable(centralFunctions, 'requestPasswordReset')({ email: email.trim() });
-      alert('Revisa tu correo, te enviamos el enlace para restablecer tu contraseña.');
+      alert(t('forgot_sent'));
     } catch (err) {
       if (err.code === 'functions/not-found') {
         try {
           await sendPasswordResetEmail(auth, email.trim());
-          alert('Revisa tu correo, te enviamos el enlace para restablecer tu contraseña.');
+          alert(t('forgot_sent'));
         } catch (e2) {
-          alert('No se pudo enviar el correo: ' + friendlyError(e2.code));
+          alert(t('forgot_failed') + friendlyError(e2.code));
         }
       } else {
-        alert('No se pudo enviar el correo: ' + (err.message || 'error desconocido'));
+        alert(t('forgot_failed') + (err.message || t('forgot_unknown')));
       }
     }
   }
@@ -352,10 +638,12 @@
 
   let QGI = false;        // currently rendered flow
   let country = null;     // resolved async; null until geo settles
-  let currentTab = 'login';
+  let currentTab = window.__nivelatoTab || 'login';
   let pendingShown = false;
   let authInitDone = false;
   let authBusy = false;   // a login/signup submit is in flight
+  let savePromptShown = false;  // the "save login?" prompt replaced the card
+  let prNoticeOn = false, geoNoticeOn = false, profileNoticeOn = false;
 
   const VALUE_IDS = ['login-email', 'login-pass', 'signup-name', 'signup-email',
                      'signup-pass', 'signup-orgcode', 'signup-orgname'];
@@ -370,63 +658,60 @@
 
   function formHTML(qgi) {
     return `
+    <button type="button" id="lang-toggle" class="lang-toggle"></button>
     <h1 class="logo${qgi ? ' qgi' : ''}">${qgi ? 'Quality Glass' : 'Nivelato<span class="adot">.</span>'}</h1>
-    <div class="tagline">${qgi
-      ? 'Nivelato — exclusivo de Quality Glass en Puerto Rico'
-      : 'Mediciones de campo, niveladas.'}</div>
-    ${qgi ? `<div class="exclusivity-note">En Puerto Rico, Nivelato es de uso <b>exclusivo de Quality Glass</b>. El registro es solo para empleados.</div>` : ''}
-    ${!qgi ? `<div class="pricing-note">Para Ultra, paga desde la app en tu teléfono (Google Play).</div>` : ''}
+    <div class="tagline" data-i18n="${qgi ? 'tagline_qgi' : 'tagline'}"></div>
+    ${qgi ? `<div class="exclusivity-note" data-i18n="exclusivity_note_html" data-i18n-html="1"></div>` : ''}
+    ${!qgi ? `<div class="pricing-note" data-i18n="pricing_note"></div>` : ''}
 
-    <div class="tab-row" role="tablist" aria-label="Iniciar sesión o crear cuenta">
-      <button type="button" role="tab" aria-selected="true" class="tab active${qgi ? ' qgi-tab' : ''}" id="tab-login">Iniciar sesión</button>
-      <button type="button" role="tab" aria-selected="false" class="tab${qgi ? ' qgi-tab' : ''}" id="tab-signup">Solicitar acceso</button>
+    <div class="tab-row" role="tablist" data-i18n-aria="tablist_label">
+      <button type="button" role="tab" aria-selected="true" class="tab active${qgi ? ' qgi-tab' : ''}" id="tab-login" data-i18n="tab_login"></button>
+      <button type="button" role="tab" aria-selected="false" class="tab${qgi ? ' qgi-tab' : ''}" id="tab-signup" data-i18n="tab_signup"></button>
     </div>
 
     <div id="form-login">
       <form id="login-form" autocomplete="on">
         <div class="field">
-          <label for="login-email">Correo electrónico</label>
-          <input type="email" id="login-email" name="email" placeholder="correo@taller.com" autocomplete="email" />
+          <label for="login-email" data-i18n="label_email"></label>
+          <input type="email" id="login-email" name="email" data-i18n-ph="ph_email" autocomplete="email" />
         </div>
         <div class="field">
-          <label for="login-pass">Contraseña</label>
-          <input type="password" id="login-pass" name="password" placeholder="••••••••" autocomplete="current-password" />
+          <label for="login-pass" data-i18n="label_password"></label>
+          <input type="password" id="login-pass" name="password" data-i18n-ph="ph_password" autocomplete="current-password" />
         </div>
-        <button class="btn-primary${qgi ? ' qgi-btn' : ''}" id="btn-login" type="submit">Entrar</button>
+        <button class="btn-primary${qgi ? ' qgi-btn' : ''}" id="btn-login" type="submit" data-i18n="btn_login"></button>
       </form>
-      <div style="text-align:center;margin-top:10px;"><a href="#" id="forgot-link" class="forgot-link">¿Olvidaste tu contraseña?</a></div>
+      <div style="text-align:center;margin-top:10px;"><a href="#" id="forgot-link" class="forgot-link" data-i18n="forgot"></a></div>
       <div class="error-msg" id="login-error" role="alert"></div>
     </div>
 
     <div id="form-signup" style="display:none">
       <form id="signup-form" autocomplete="on">
         <div class="field">
-          <label for="signup-name">Nombre completo</label>
-          <input type="text" id="signup-name" name="name" placeholder="Juan Pérez" autocomplete="name" />
+          <label for="signup-name" data-i18n="label_name"></label>
+          <input type="text" id="signup-name" name="name" data-i18n-ph="ph_name" autocomplete="name" />
         </div>
         <div class="field">
-          <label for="signup-email">Correo electrónico</label>
-          <input type="email" id="signup-email" name="email" placeholder="correo@taller.com" autocomplete="email" />
+          <label for="signup-email" data-i18n="label_email"></label>
+          <input type="email" id="signup-email" name="email" data-i18n-ph="ph_email" autocomplete="email" />
         </div>
         <div class="field">
-          <label for="signup-pass">Contraseña</label>
-          <input type="password" id="signup-pass" name="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+          <label for="signup-pass" data-i18n="label_password"></label>
+          <input type="password" id="signup-pass" name="password" data-i18n-ph="ph_pass_min" autocomplete="new-password" />
         </div>
         ${qgi ? `
         <div class="field">
-          <label for="signup-orgcode">Código de empleado <span style="color:#868e96;font-weight:400">(te lo da tu supervisor)</span></label>
-          <input type="text" id="signup-orgcode" placeholder="ABC123" autocomplete="off" style="text-transform:uppercase" />
+          <label for="signup-orgcode" data-i18n="label_empcode_html" data-i18n-html="1"></label>
+          <input type="text" id="signup-orgcode" data-i18n-ph="ph_empcode" autocomplete="off" style="text-transform:uppercase" />
         </div>` : `
         <div class="field">
-          <label for="signup-orgname">Nombre del taller</label>
-          <input type="text" id="signup-orgname" name="organization" placeholder="Vidriería Ejemplo" autocomplete="organization" />
+          <label for="signup-orgname" data-i18n="label_shop"></label>
+          <input type="text" id="signup-orgname" name="organization" data-i18n-ph="ph_shop" autocomplete="organization" />
         </div>`}
-        <button class="btn-primary${qgi ? ' qgi-btn' : ''}" id="btn-signup" type="submit">Solicitar acceso</button>
+        <button class="btn-primary${qgi ? ' qgi-btn' : ''}" id="btn-signup" type="submit" data-i18n="btn_signup"></button>
       </form>
       <div class="error-msg" id="signup-error" role="alert"></div>
-      <div class="signup-note">${qgi
-        ? 'Las cuentas nuevas las aprueba <b>Daniel Lebrón</b>. Te avisaremos cuando tengas acceso.'
-        : 'Tu solicitud será revisada. Te avisaremos cuando tengas acceso.'}</div>
+      <div class="signup-note" data-i18n="${qgi ? 'signup_note_qgi_html' : 'signup_note'}"${qgi ? ' data-i18n-html="1"' : ''}></div>
     </div>`;
   }
 
@@ -439,52 +724,86 @@
       const el = document.getElementById(id);
       if (el) el.value = prev[id];
     }
-    document.getElementById('tab-login').addEventListener('click', () => switchTab('login'));
-    document.getElementById('tab-signup').addEventListener('click', () => switchTab('signup'));
+    // Tab clicks are handled by the delegated listener in the classic
+    // script, which calls window.switchTab — overridden below to the
+    // module's stateful version once the module is loaded.
     document.getElementById('login-form').addEventListener('submit', doLogin);
     document.getElementById('signup-form').addEventListener('submit', doSignup);
     const forgot = document.getElementById('forgot-link');
     if (forgot) forgot.addEventListener('click', (e) => { e.preventDefault(); doForgotPassword(); });
+    window.nivApplyLang();
     switchTab(prevTab);
   }
 
+  // Override the pre-boot global: the classic script's delegated tab clicks
+  // keep working, now routed through the module's stateful switchTab.
+  window.switchTab = function (tab) {
+    window.__nivelatoTab = tab;
+    switchTab(tab);
+  };
+
   function showGeoNotice() {
+    geoNoticeOn = true;
     const card = document.getElementById('app-card');
     if (!card || document.getElementById('geo-note')) return;
     const note = document.createElement('div');
     note.id = 'geo-note';
     note.className = 'geo-note';
-    note.textContent = 'No pudimos detectar tu ubicación; estás viendo la versión general de Nivelato.';
+    note.textContent = window.nivT('geo_note');
     card.prepend(note);
   }
 
   // PR company-use notice: QGC gray theme. In Puerto Rico only QGC employees
   // may use Nivelato as a company; everyone else gets the free Play Store app.
   function showPrNotice() {
+    prNoticeOn = true;
     const card = document.getElementById('app-card');
     if (!card || document.getElementById('pr-note')) return;
+    const t = window.nivT;
     const note = document.createElement('div');
     note.id = 'pr-note';
     note.setAttribute('role', 'alert');
     note.style.cssText = 'background:#3a3a3e;border:1px solid #55555c;border-radius:12px;padding:14px;margin-bottom:20px;color:#f2f1ec;font-size:13px;line-height:1.6';
     note.innerHTML = '<img src="./qgc-logo.jpg" alt="Quality Glazing Contractors" style="display:block;max-width:180px;border-radius:8px;margin-bottom:10px">'
-      + 'En Puerto Rico, el uso empresarial de Nivelato es exclusivo para empleados de Quality Glass. '
-      + 'Los demás pueden usar la app gratuita: <a href="https://play.google.com/store/apps/details?id=com.nivelato.app" style="font-weight:700;color:#ffffff;text-decoration:underline">Descargar en Google Play</a>.';
+      + t('pr_note_1')
+      + t('pr_note_2')
+      + '<a href="https://play.google.com/store/apps/details?id=com.nivelato.app" style="font-weight:700;color:#ffffff;text-decoration:underline">' + t('pr_note_link') + '</a>.';
     card.prepend(note);
   }
 
   // settings.html redirects here with ?missingProfile=1 when the signed-in
   // account has no users/{uid} doc — surface it instead of failing silently.
   function showMissingProfileNotice() {
+    profileNoticeOn = true;
     const card = document.getElementById('app-card');
     if (!card || document.getElementById('profile-note')) return;
     const note = document.createElement('div');
     note.id = 'profile-note';
     note.className = 'geo-note';
     note.setAttribute('role', 'alert');
-    note.textContent = 'No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.';
+    note.textContent = window.nivT('profile_note');
     card.prepend(note);
   }
+
+  // Re-render the visible notices in the new language (renderForm wipes them).
+  function refreshNotices() {
+    for (const id of ['pr-note', 'geo-note', 'profile-note']) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+    if (prNoticeOn) showPrNotice();
+    if (geoNoticeOn) showGeoNotice();
+    if (profileNoticeOn) showMissingProfileNotice();
+  }
+
+  // Called by the classic script's setLang after applyLang: re-render every
+  // dynamic surface (form, notices, save-login prompt, pending screen).
+  window.__nivelatoOnLangChange = function () {
+    if (pendingShown) { showPendingApproval(); return; }
+    if (savePromptShown) { showSaveLoginPrompt(); return; }
+    renderForm(QGI ? 'qgi' : 'external', true);
+    refreshNotices();
+  };
 
   function switchTab(tab) {
     currentTab = tab;
@@ -500,7 +819,10 @@
 
   function showPendingApproval() {
     pendingShown = true;
-    document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2>Cuenta creada</h2><p style="color:#a7a7b3;max-width:320px">Tu cuenta está pendiente de aprobación por el dueño del taller. Te avisarán cuando tengas acceso.</p><button id="btn-logout" class="btn-primary" style="max-width:240px">Cerrar sesión</button></div>';
+    const t = window.nivT;
+    document.body.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
+      + '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2>' + t('pending_title') + '</h2><p style="color:#a7a7b3;max-width:320px">' + t('pending_body') + '</p><button id="btn-logout" class="btn-primary" style="max-width:240px">' + t('pending_logout') + '</button></div>';
+    window.nivApplyLang();
     document.getElementById('btn-logout').addEventListener('click', async () => {
       try { await signOut(auth); } catch (_) { /* already signed out */ }
       window.location.href = 'login.html';
@@ -549,7 +871,7 @@
     }
   }
   function ssoFailed(errEl) {
-    errEl.textContent = 'No se pudo completar el inicio de sesión. Intenta de nuevo.';
+    errEl.textContent = window.nivT('sso_failed');
     errEl.classList.add('visible');
   }
 
@@ -564,17 +886,18 @@
     // Token mint failed (e.g. functions not deployed yet): stay on the form.
     ssoFailed(document.getElementById('login-error'));
     const btn = document.getElementById('btn-login');
-    if (btn) { btn.disabled = false; btn.textContent = 'Entrar'; }
+    if (btn) { btn.disabled = false; btn.textContent = window.nivT('btn_login'); }
     authBusy = false;
   }
 
   async function doLogin(e) {
     e.preventDefault();
     authBusy = true;
+    const t = window.nivT;
     const btn = document.getElementById('btn-login');
     const errEl = document.getElementById('login-error');
     btn.disabled = true;
-    btn.textContent = 'Entrando...';
+    btn.textContent = t('btn_login_busy');
     errEl.classList.remove('visible');
     try {
       const email = document.getElementById('login-email').value.trim();
@@ -585,7 +908,7 @@
       errEl.textContent = friendlyError(err.code);
       errEl.classList.add('visible');
       btn.disabled = false;
-      btn.textContent = 'Entrar';
+      btn.textContent = t('btn_login');
       authBusy = false;
     }
   }
@@ -593,13 +916,17 @@
   // Post-login: "save login on this device?" — local persistence keeps the
   // session across restarts; session persistence drops it when the tab closes.
   function showSaveLoginPrompt() {
+    savePromptShown = true;
+    const t = window.nivT;
     const card = document.getElementById('app-card');
-    card.innerHTML = '<h1 class="logo">Nivelato<span class="adot">.</span></h1>'
-      + '<div class="tagline">Sesión iniciada</div>'
-      + '<p style="color:#a7a7b3;font-size:14px;line-height:1.6;margin:0 0 24px">¿Guardar la sesión en este dispositivo?</p>'
-      + '<button class="btn-primary" id="btn-save-yes" type="button">Guardar sesión</button>'
-      + '<button class="btn-primary" id="btn-save-no" type="button" style="background:transparent;border:1px solid #2c2c31;color:#f2f1ec;margin-top:10px">Solo esta vez</button>'
+    card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
+      + '<h1 class="logo">Nivelato<span class="adot">.</span></h1>'
+      + '<div class="tagline">' + t('save_title') + '</div>'
+      + '<p style="color:#a7a7b3;font-size:14px;line-height:1.6;margin:0 0 24px">' + t('save_q') + '</p>'
+      + '<button class="btn-primary" id="btn-save-yes" type="button">' + t('save_yes') + '</button>'
+      + '<button class="btn-primary" id="btn-save-no" type="button" style="background:transparent;border:1px solid #2c2c31;color:#f2f1ec;margin-top:10px">' + t('save_no') + '</button>'
       + '<div class="error-msg" id="login-error" role="alert"></div>';
+    window.nivApplyLang();
     document.getElementById('btn-save-yes').addEventListener('click', () => finishLoginWithPersistence(browserLocalPersistence));
     document.getElementById('btn-save-no').addEventListener('click', () => finishLoginWithPersistence(browserSessionPersistence));
   }
@@ -614,10 +941,11 @@
   async function doSignup(e) {
     e.preventDefault();
     authBusy = true;
+    const t = window.nivT;
     const btn = document.getElementById('btn-signup');
     const errEl = document.getElementById('signup-error');
     btn.disabled = true;
-    btn.textContent = 'Creando cuenta...';
+    btn.textContent = t('btn_signup_busy');
     errEl.classList.remove('visible');
     try {
       const name  = document.getElementById('signup-name').value.trim();
@@ -665,7 +993,7 @@
         });
       } catch(fsErr) {
         console.error('Firestore write failed:', fsErr.code, fsErr.message);
-        alert(`¡Auth OK pero Firestore falló!\n\nError: ${fsErr.code}\n\nTu UID: ${cred.user.uid}\n\nRevisa las Rules en Firebase Console.`);
+        alert(t('fs_fail') + fsErr.code + t('fs_fail_uid') + cred.user.uid + t('fs_fail_rules'));
         await ssoHandoff('/dashboard.html');
         return;
       }
@@ -676,26 +1004,27 @@
       errEl.textContent = friendlyError(err.code);
       errEl.classList.add('visible');
       btn.disabled = false;
-      btn.textContent = 'Solicitar acceso';
+      btn.textContent = t('btn_signup');
       authBusy = false;
     }
   }
 
   function friendlyError(code) {
+    const t = window.nivT;
     const map = {
-      'auth/invalid-email':          'Correo electrónico inválido.',
-      'auth/user-not-found':         'No existe una cuenta con ese correo.',
-      'auth/wrong-password':         'Contraseña incorrecta.',
-      'auth/invalid-credential':     'Correo o contraseña incorrectos.',
-      'auth/missing-password':       'Ingresa tu contraseña. Si usaste autocompletado, escríbela manualmente.',
-      'auth/missing-email':          'Ingresa tu correo electrónico.',
-      'auth/email-already-in-use':   'Ya existe una cuenta con ese correo.',
-      'auth/weak-password':          'La contraseña debe tener al menos 6 caracteres.',
-      'auth/too-many-requests':      'Demasiados intentos. Intenta más tarde.',
-      'missing-name':                'Ingresa tu nombre completo.',
-      'missing-orgname':             'Ingresa el nombre del taller.',
-      'missing-code':                'Ingresa el código de empleado.',
-      'invalid-code':                'Código inválido. Verifica con tu supervisor.',
+      'auth/invalid-email':          t('err_invalid_email'),
+      'auth/user-not-found':         t('err_user_not_found'),
+      'auth/wrong-password':         t('err_wrong_password'),
+      'auth/invalid-credential':     t('err_invalid_credential'),
+      'auth/missing-password':       t('err_missing_password'),
+      'auth/missing-email':          t('err_missing_email'),
+      'auth/email-already-in-use':   t('err_email_in_use'),
+      'auth/weak-password':          t('err_weak_password'),
+      'auth/too-many-requests':      t('err_too_many'),
+      'missing-name':                t('err_missing_name'),
+      'missing-orgname':             t('err_missing_orgname'),
+      'missing-code':                t('err_missing_code'),
+      'invalid-code':                t('err_invalid_code'),
     };
     return map[code] || `Error: ${code}`;
   }
