@@ -1253,12 +1253,15 @@
   // Called by the classic script's setLang after applyLang: re-render every
   // dynamic surface (form, notices, save-login prompt, pending screen).
   window.__nivelatoOnLangChange = function () {
-    if (savePromptShown) { showSaveLoginPrompt(); return; }
-    if (travelShown) { renderTravelUI(); return; }
-    if (addAccountShown) { renderAddAccountUI(); return; }
-    if (cantAddShown) { renderCantAddUI(); return; }
-    if (companyShown) { renderCompanyUI(); return; }
-    if (companySelectShown) { renderCompanySelectUI(); return; }
+    // Every branch rebuilds #app-card (wiping the notice elements), so
+    // re-render the notices in the new language on ALL paths, not just the
+    // main form fallthrough.
+    if (savePromptShown) { showSaveLoginPrompt(); refreshNotices(); return; }
+    if (travelShown) { renderTravelUI(); refreshNotices(); return; }
+    if (addAccountShown) { renderAddAccountUI(); refreshNotices(); return; }
+    if (cantAddShown) { renderCantAddUI(); refreshNotices(); return; }
+    if (companyShown) { renderCompanyUI(); refreshNotices(); return; }
+    if (companySelectShown) { renderCompanySelectUI(); refreshNotices(); return; }
     renderForm(QGI ? 'qgi' : 'external', true);
     refreshNotices();
   };
