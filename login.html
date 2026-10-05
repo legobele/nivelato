@@ -1045,13 +1045,15 @@
       'color: #1b9aaa; font-style: italic; font-size: 13px;');
   } catch (_) { /* whimsy is optional */ }
   // Self-XSS warning: never paste commands here. Ever.
+  // QR code for the console FAQ (data URL so it works offline of the worker).
+  var NIV_CONSOLE_QR = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQgAAAEIAQAAAACLjVdSAAABlElEQVR4nO2ZwYrEMAxDpWX+/5ffHuQkXViYU1MzmTIDbdBBNbYsu0Zvrp93gC/igxEvybnDyOSJddqG6bZ4CGm+v5Als067MN0XDzlv7z85Mk67MN2OICmBDf4XsYdHF4THL/XyGI9HES+ppEJYWERZ52kbpvviUcVhzEiNKSJ9mO5BXCvDippydr2sXKgozLj4PP8xEICYWmotY9aN6b2I6AeyGDVSCiJO9B/lT53kSE5YEpFWH1kvThCSEBiQ7JKTVkxvR8R/mJgOLEsyVJps49EFIQBGZxHl2kmyIOjCdBvCQzorSapeWIg9PLogiH5UfxlWJME5rt+WGZ1O3RUfxY8dFw/BmvSZ/0gKR+qHVO8uSWsXpPJkvZjejUgcqqnU/ew2Eqflx2WSzfyWJcgYYrbx6IK47NeHBYt3P7ffliXTiEFty8ZXh05M70dc9+spGUytUX1mvczL2GOEWZrahel2BDLIIj3Hlv0Ej0cRl/36MO4ZdE0Jaxem++Jx2a/HqafV1kfLLky3+49HeXwRPRG/x/fK2hDpkmYAAAAASUVORK5CYII=';
   try {
     console.log('%cSTOP!', 'color:#ff3b30;font-size:56px;font-weight:900;');
     console.log('%cPasting commands into this console can let attackers steal your account. ' +
       'No real Nivelato feature will ever ask you to paste anything here.\n' +
       'Learn why: https://faq.nivelatolabs.com/console',
       'font-size:14px;line-height:1.6;');
-    console.log('%c ', 'padding:70px 90px;background:url("data:image/png;base64,' + qr + '") no-repeat center;background-size:contain;');
+    console.log('%c ', 'padding:70px 90px;background:url("data:image/png;base64,' + NIV_CONSOLE_QR + '") no-repeat center;background-size:contain;');
     console.log('%c^ scan for the FAQ: why you never paste console commands',
       'color:#a7a7b3;font-size:12px;font-style:italic;');
   } catch (_) { /* the warning is load-bearing, the styling is not */ }
@@ -1652,7 +1654,8 @@
     } catch (e) {
       var code = (e && e.code) || '';
       if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
-      errEl.textContent = 'Sign-in failed. Try again.';
+      // Surface the real code: the popup failing blank gives us nothing to go on otherwise.
+      errEl.textContent = 'Sign-in failed' + (code ? ' (' + code + ')' : '') + '. Try again.';
     }
   }
 
