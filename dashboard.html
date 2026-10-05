@@ -433,6 +433,29 @@
   /* sidebar nav active state sync */
   .niv-nav-btn.active { background: linear-gradient(135deg, #0ea5a5, #1971c2); }
 
+
+  /* project detail view */
+  .niv-proj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .niv-proj-grid { grid-template-columns: 1fr; } }
+  .niv-proj-measure {
+    display: flex; align-items: center; justify-content: space-between;
+    border: 1px solid var(--niv-border); border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 10px; cursor: pointer;
+    background: var(--niv-surface);
+  }
+  .niv-proj-measure:hover { background: var(--niv-surface-2); }
+  .niv-users-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .niv-user-circle {
+    aspect-ratio: 1; border-radius: 50%;
+    border: 1px solid var(--niv-border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: var(--niv-text-dim);
+    background: var(--niv-surface-2);
+    overflow: hidden;
+  }
+  .niv-user-circle img { width: 100%; height: 100%; object-fit: cover; }
+  .niv-user-circle.assigned { border-color: var(--niv-green); color: var(--niv-text); }
+
   /* easter egg modes on dark */
   .estradiol-mode .niv-company-name { color: #e64980; }
   .estradiol-mode #estradiol-indicator { display: inline-block; }
@@ -594,6 +617,22 @@
   <textarea class="modal-edit-input" id="qb-notas" style="min-height:56px;resize:vertical" maxlength="1000"></textarea>
   <div class="pl-error" id="qb-error" style="display:none"></div>
   <button class="btn-save" onclick="saveQuote()">💾 Guardar borrador</button>
+ </div>
+ <div id="view-project" style="display:none">
+  <button class="btn-cancel" style="width:auto;padding:8px 16px;margin:0 0 12px" onclick="window.showDashView('measures')">← Volver</button>
+  <h1 id="proj-title">Proyecto</h1>
+  <div class="subtitle" id="proj-subtitle"></div>
+  <div class="niv-proj-grid">
+    <div class="niv-card">
+      <div class="niv-card-title" style="font-size:20px;margin-bottom:16px;">Measurements</div>
+      <div id="proj-measures"></div>
+    </div>
+    <div class="niv-card">
+      <div class="niv-card-title" style="font-size:20px;margin-bottom:16px;">Users assigned</div>
+      <div class="niv-users-grid" id="proj-users"></div>
+      <button class="niv-btn-pill" style="width:100%;margin-top:16px;" onclick="openAssignUsers()">Add more</button>
+    </div>
+  </div>
  </div>
 </main>
 
@@ -974,6 +1013,8 @@ let currentUser;
       const _nu = document.getElementById('nav-users');
       if (_nu) _nu.style.display = 'block';
     }
+    window._currentOrgId = orgId;
+    loadProjects();
     document.getElementById('dash-subtitle').textContent = `${orgName} · ${_can('userManagement') ? 'Administrador' : (hasQuotes ? 'Cotizaciones' : 'Medidas')}`;
     // show join code only for user management
     if (_can('userManagement')) {
@@ -1875,7 +1916,7 @@ let currentUser;
   window.showDashView = (name) => {
     // orgs sin quoting (QGC): las vistas de precios/cotizaciones no existen
     if (!orgHasQuotes(window._currentUserData) && ['pricelist', 'quotes', 'builder'].includes(name)) name = 'measures';
-    const views = { measures: 'view-measures', pricelist: 'view-pricelist', quotes: 'view-quotes', builder: 'view-builder' };
+    const views = { measures: 'view-measures', pricelist: 'view-pricelist', quotes: 'view-quotes', builder: 'view-builder', project: 'view-project' };
     Object.keys(views).forEach(k => {
       const el = document.getElementById(views[k]);
       if (el) el.style.display = (k === name) ? '' : 'none';
@@ -2749,6 +2790,63 @@ let currentUser;
 
   // initial state for the custom date placeholder (dd/mm/aaaa)
   syncDatePlaceholder();
+
+
+  // ---- projects ----
+  let _projects = [];
+  let _currentProject = null;
+
+  window.loadProjects = async () => {
+    const orgId = window._currentOrgId;
+    if (!orgId) return;
+    try {
+      const snap = await getDocs(collection(db, 'orgs', orgId, 'projects'));
+      _projects = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (e) { console.warn('[Nivelato] projects load failed:', e.message); _projects = []; }
+    const el = document.getElementById('niv-panel-projects');
+    if (el) {
+      el.innerHTML = _projects.length
+        ? _projects.map((p, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="openProject('${p.id}')"><span>${escapeHtml(p.name || 'Proyecto')}</span><span class="dots">...</span></div>`).join('')
+        : '<div class="niv-panel-empty">Sin proyectos</div>';
+    }
+  };
+
+  window.openProject = async (projectId) => {
+    const p = _projects.find(x => x.id === projectId);
+    if (!p) return;
+    _currentProject = p;
+    document.getElementById('proj-title').textContent = p.name || 'Proyecto';
+    document.getElementById('proj-subtitle').textContent = p.customer || '';
+    // measurements in this project
+    const meas = allJobs.filter(j => j.projectId === projectId);
+    const measEl = document.getElementById('proj-measures');
+    measEl.innerHTML = meas.length
+      ? meas.map(j => { const idx = window._jobs ? window._jobs.findIndex(x => x.id === j.id) : -1; return `<div class="niv-proj-measure" onclick="window.openJob(${idx})"><span>${escapeHtml(j.customer || j.project || 'Medida')}</span><span class="dots">...</span></div>`; }).join('')
+      : '<div class="niv-panel-empty">Sin medidas en este proyecto.</div>';
+    // assigned users
+    renderProjectUsers(p);
+    window.showDashView('project');
+  };
+
+  function renderProjectUsers(p) {
+    const el = document.getElementById('proj-users');
+    const uids = p.memberUids || [];
+    // show up to 18 slots like the mockup
+    let html = '';
+    for (let i = 0; i < 18; i++) {
+      const uid = uids[i];
+      const m = uid && window._orgMembers ? window._orgMembers.find(x => x.uid === uid) : null;
+      const label = m ? (m.name || m.email || '?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase()
+                      : (i < uids.length ? '?' : String(i + 1));
+      html += `<div class="niv-user-circle${m ? ' assigned' : ''}" title="${m ? escapeHtml(m.name || m.email) : ''}">${escapeHtml(label)}</div>`;
+    }
+    el.innerHTML = html;
+  }
+
+  window.openAssignUsers = () => {
+    // TODO: member picker modal — for now, jump to company users
+    window.location.href = 'company/settings.html';
+  };
 
   // ---- floating panel: drag + collapse ----
   (() => {

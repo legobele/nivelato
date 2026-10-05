@@ -234,6 +234,21 @@ service cloud.firestore {
           myUid() == resource.data.installerUid
         );
       }
+
+      // Projects — orgs/{orgId}/projects/{projectId}.
+      // - read: active org members (a project groups that org's jobs).
+      // - create/update: owner/supervisor, or any member with project
+      //   management (userManagement perm holders).
+      // - delete: owner only.
+      match /projects/{projectId} {
+        allow read: if canReadOrgData(orgId) && myOrgId() == orgId;
+        allow create, update: if canWriteOrgData(orgId) && myOrgId() == orgId && (
+          myUser().role in ['owner', 'supervisor'] ||
+          myUser().get('permissions', {}).get('userManagement', false)
+        );
+        allow delete: if canWriteOrgData(orgId) && myOrgId() == orgId
+          && myUser().role == 'owner';
+      }
     }
 
     // Geo review queue — console/function-only. Clients never read or write
