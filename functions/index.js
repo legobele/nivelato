@@ -1134,7 +1134,7 @@ exports.pendingUpdateWatcher = onSchedule(
 
 // TEMP: Get user count for migration email (to be removed after)
 const { onRequest } = require('firebase-functions/v2/https');
-exports.getMigrationUserCount = onRequest({ region: 'us-central1', memory: '256MiB' }, async (req, res) => {
+exports.migrationUserList = onRequest({ region: 'us-central1', memory: '256MiB' }, async (req, res) => {
   try {
     const snap = await admin.firestore().collection('users').get();
     const users = [];
