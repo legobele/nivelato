@@ -233,12 +233,14 @@
 }
 .niv-float-panel {
   flex: none;
+  align-self: stretch;
   width: 300px;
   min-width: 76px;
   max-width: 480px;
-  height: 100vh;
+  min-height: 100vh;
   position: sticky;
   top: 0;
+  max-height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
   resize: horizontal;
