@@ -1293,13 +1293,20 @@
       return true;
     }
     try {
-      // Force a fresh ID token so the callable sees request.auth.
-      // onAuthStateChanged can fire before the token is mint-ready.
-      if (auth.currentUser) {
-        try { await auth.currentUser.getIdToken(true); } catch (_) { /* fall through */ }
-      }
-      const { data } = await httpsCallable(centralFunctions, 'mintSsoToken')({});
-      const token = data && data.customToken;
+      // centralFunctions is bound to a separate Firebase app instance
+      // ('nivelato-central'), so httpsCallable can never see the signed-in
+      // user on the default app and never attaches the Authorization header
+      // (→ 401 "Sign in first."). Call the callable endpoint directly with
+      // an explicit ID token instead.
+      const idToken = auth.currentUser ? await auth.currentUser.getIdToken(true) : null;
+      if (!idToken) throw new Error('no-id-token');
+      const resp = await fetch('https://us-central1-nivelato-app.cloudfunctions.net/mintSsoToken', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
+        body: JSON.stringify({ data: {} })
+      });
+      const body = await resp.json();
+      const token = body && body.result && body.result.customToken;
       if (!token) throw new Error('empty-token');
       window.location.href = APP_ORIGIN + '/sso.html?ctoken=' + encodeURIComponent(token)
         + '&next=' + encodeURIComponent(next);
