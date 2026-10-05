@@ -435,6 +435,16 @@
 
 
 
+
+  .niv-plus-btn {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 1px solid var(--niv-border); background: transparent;
+    color: var(--niv-text-dim); font-size: 18px; line-height: 1;
+    cursor: pointer; font-family: inherit; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .niv-plus-btn:hover { color: var(--niv-text); border-color: var(--niv-text); }
+
   /* measurement detail view */
   .niv-back-btn {
     width: 44px; height: 44px; border-radius: 50%;
@@ -503,7 +513,7 @@
   <div class="org-badge" id="tier-badge" style="display:none;">Pro</div>
   <div class="niv-panel-body" id="niv-panel-body">
     <div class="niv-panel-sec">
-      <div class="niv-panel-sec-title">Projects</div>
+      <div class="niv-panel-sec-title" style="display:flex;align-items:center;justify-content:space-between;">Projects<button class="niv-plus-btn" onclick="openNewProject()" title="Nuevo proyecto">+</button></div>
       <div id="niv-panel-projects"><div class="niv-panel-empty">Sin proyectos</div></div>
     </div>
     <div class="niv-panel-sec">
@@ -783,6 +793,21 @@
     <div class="qt-hint-inline" style="margin-bottom:12px">Toca una medida para copiar su ancho y alto a la línea. Se guarda el vínculo (medicionRef) con la medida original; la medida no se duplica.</div>
     <div id="qt-med-list"></div>
     <button class="btn-cancel" onclick="closeMedPicker()">Cancelar</button>
+  </div>
+</div>
+
+
+<!-- NEW PROJECT MODAL -->
+<div class="modal-overlay" id="np-modal-overlay" role="dialog" aria-modal="true" onclick="closeNewProject(event)">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-title">Nuevo proyecto</div>
+    <label class="modal-edit-label" for="np-name">Nombre *</label>
+    <input class="modal-edit-input" id="np-name" placeholder="Ej. Casa Rivera" maxlength="120" autocomplete="off" />
+    <label class="modal-edit-label" for="np-customer">Cliente</label>
+    <input class="modal-edit-input" id="np-customer" placeholder="Nombre del cliente" maxlength="120" autocomplete="off" />
+    <div class="pl-error" id="np-error" style="display:none"></div>
+    <button class="btn-save" onclick="saveNewProject()">Crear proyecto</button>
+    <button class="btn-cancel" onclick="closeNewProject()">Cancelar</button>
   </div>
 </div>
 
@@ -2934,6 +2959,41 @@ let currentUser;
 
   window.measureBack = () => {
     window.showDashView(_measureReturnView === 'measure' ? 'measures' : _measureReturnView);
+  };
+
+
+  // ---- new project ----
+  window.openNewProject = () => {
+    document.getElementById('np-name').value = '';
+    document.getElementById('np-customer').value = '';
+    document.getElementById('np-error').style.display = 'none';
+    document.getElementById('np-modal-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('np-name').focus(), 100);
+  };
+  window.closeNewProject = (e) => {
+    // close on overlay backdrop click or Cancel button; ignore clicks inside the modal
+    if (e && e.type === 'click' && e.target && !e.target.classList.contains('modal-overlay') && e.target.textContent.trim() !== 'Cancelar') return;
+    document.getElementById('np-modal-overlay').classList.remove('open');
+  };
+  window.saveNewProject = async () => {
+    const name = document.getElementById('np-name').value.trim();
+    const customer = document.getElementById('np-customer').value.trim();
+    const errEl = document.getElementById('np-error');
+    if (!name) { errEl.textContent = 'El nombre es obligatorio.'; errEl.style.display = 'block'; return; }
+    const orgId = window._currentOrgId;
+    if (!orgId) { errEl.textContent = 'Sin organización.'; errEl.style.display = 'block'; return; }
+    try {
+      await addDoc(collection(db, 'orgs', orgId, 'projects'), {
+        name, customer: customer || '',
+        memberUids: [], createdAt: serverTimestamp(),
+        createdBy: auth.currentUser ? auth.currentUser.uid : ''
+      });
+      document.getElementById('np-modal-overlay').classList.remove('open');
+      await loadProjects();
+    } catch (e) {
+      errEl.textContent = 'No se pudo crear: ' + (e.message || 'error');
+      errEl.style.display = 'block';
+    }
   };
 
   // ---- floating panel: drag + collapse ----
