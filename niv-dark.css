@@ -224,3 +224,54 @@
   }
   .niv-main { padding: 20px 16px; }
 }
+
+/* ---- floating movable/collapsible panel ---- */
+.niv-float-panel {
+  position: fixed;
+  top: 24px; left: 24px;
+  width: 280px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  background: var(--niv-surface);
+  border: 1px solid var(--niv-border);
+  border-radius: 20px;
+  padding: 18px 16px;
+  z-index: 500;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  user-select: none;
+}
+.niv-float-panel.collapsed .niv-panel-body { display: none; }
+.niv-float-panel.collapsed { width: auto; padding: 12px 14px; }
+.niv-panel-head {
+  display: flex; align-items: center; gap: 12px;
+  cursor: grab;
+  padding: 4px 2px 12px;
+}
+.niv-panel-head:active { cursor: grabbing; }
+.niv-panel-head .niv-company-avatar { width: 44px; height: 44px; font-size: 15px; }
+.niv-panel-head .niv-company-name { font-size: 15px; flex: 1; }
+.niv-panel-collapse {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--niv-border);
+  background: transparent; color: var(--niv-text);
+  font-size: 16px; cursor: pointer; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  font-family: inherit;
+}
+.niv-panel-collapse:hover { background: var(--niv-surface-2); }
+.niv-panel-sec { margin-bottom: 14px; }
+.niv-panel-sec-title { font-size: 13px; color: var(--niv-text-dim); margin-bottom: 8px; padding-left: 4px; }
+.niv-panel-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 4px; font-size: 14px; border-radius: 8px; cursor: pointer;
+}
+.niv-panel-item:hover { background: var(--niv-surface-2); }
+.niv-panel-item.first { font-weight: 700; }
+.niv-panel-item .dots { color: var(--niv-text-dim); letter-spacing: 2px; padding: 4px 8px; border-radius: 6px; }
+.niv-panel-item .dots:hover { background: #2a2a2f; color: var(--niv-text); }
+.niv-panel-empty { font-size: 13px; color: var(--niv-text-dim); padding: 4px 4px 8px; font-style: italic; }
+.niv-panel-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--niv-border-soft); }
+.niv-panel-actions .niv-nav-btn { padding: 10px 14px; font-size: 13px; }
+@media (max-width: 900px) {
+  .niv-float-panel { top: auto; bottom: 16px; left: 16px; right: 16px; width: auto; max-height: 45vh; }
+}

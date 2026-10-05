@@ -448,33 +448,36 @@
 <body>
 <canvas id="drawing-canvas" style="display:none;width:340px;height:420px"></canvas>
 
-<div class="niv-shell">
-<aside class="niv-sidebar">
-  <div class="niv-company-card">
-    <div class="niv-company-top">
-      <div class="niv-company-avatar" id="sidebar-avatar">N</div>
-      <div>
-        <div class="niv-company-name" id="org-name-badge">…</div>
-        <div class="niv-company-ver">Nivelato v1.0<span id="estradiol-indicator">E2</span></div>
-      </div>
-    </div>
-    <div class="org-badge" id="tier-badge" style="display:none;">Pro</div>
+<div class="niv-float-panel" id="niv-panel">
+  <div class="niv-panel-head" id="niv-panel-head">
+    <div class="niv-company-avatar" id="sidebar-avatar">N</div>
+    <div class="niv-company-name" id="org-name-badge">…<span id="estradiol-indicator">E2</span></div>
+    <button class="niv-panel-collapse" id="niv-panel-collapse" title="Colapsar">–</button>
   </div>
-  <nav class="niv-nav">
-    <button class="niv-nav-btn active" id="nav-measures" onclick="window.showDashView('measures')">Medidas</button>
-    <button class="niv-nav-btn" id="btn-pricelist" onclick="togglePriceListView()" style="display:none">Precios</button>
-    <button class="niv-nav-btn" id="btn-quotes" onclick="toggleQuotesView()" style="display:none">Cotizaciones</button>
-    <button class="niv-nav-btn niv-btn-primary" id="btn-new-measure" onclick="window.location.href='index.html'" style="display:none">Nueva medida</button>
-    <a class="niv-nav-btn" id="nav-users" href="company/settings.html" style="display:none">Users</a>
-    <a class="niv-nav-btn" href="account/settings.html">Mi cuenta</a>
-    <a class="niv-nav-btn linklike" href="#" onclick="return false;">Billing</a>
-    <div class="niv-card" style="margin:0;">
-      <div class="niv-card-title">Updates</div>
-      <div class="niv-card-desc" style="margin:0;"><u>New version available</u> ○</div>
+  <div class="org-badge" id="tier-badge" style="display:none;">Pro</div>
+  <div class="niv-panel-body" id="niv-panel-body">
+    <div class="niv-panel-sec">
+      <div class="niv-panel-sec-title">Projects</div>
+      <div id="niv-panel-projects"><div class="niv-panel-empty">Sin proyectos</div></div>
     </div>
-  </nav>
-</aside>
-<div class="niv-main">
+    <div class="niv-panel-sec">
+      <div class="niv-panel-sec-title">Customers</div>
+      <div id="niv-panel-customers"><div class="niv-panel-empty">Sin clientes</div></div>
+    </div>
+    <div class="niv-panel-sec">
+      <div class="niv-panel-sec-title">Measurements</div>
+      <div id="niv-panel-measures"><div class="niv-panel-empty">Sin medidas</div></div>
+    </div>
+    <div class="niv-panel-actions">
+      <button class="niv-nav-btn" id="nav-measures" onclick="window.showDashView('measures')">Medidas</button>
+      <button class="niv-nav-btn" id="btn-pricelist" onclick="togglePriceListView()" style="display:none">Precios</button>
+      <button class="niv-nav-btn" id="btn-quotes" onclick="toggleQuotesView()" style="display:none">Cotizaciones</button>
+      <button class="niv-nav-btn niv-btn-primary" id="btn-new-measure" onclick="window.location.href='index.html'" style="display:none">Nueva medida</button>
+      <a class="niv-nav-btn" id="nav-users" href="company/settings.html" style="display:none">Users</a>
+      <a class="niv-nav-btn" href="account/settings.html">Mi cuenta</a>
+    </div>
+  </div>
+</div>
 
 <main>
  <div id="view-measures">
@@ -593,8 +596,6 @@
   <button class="btn-save" onclick="saveQuote()">💾 Guardar borrador</button>
  </div>
 </main>
-</div><!-- /niv-main -->
-</div><!-- /niv-shell -->
 
 <!-- JOB DETAIL MODAL -->
 <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" onclick="closeModal(event)">
@@ -1064,7 +1065,27 @@ let currentUser;
     if ([...custSel.options].some(o => o.value === prevCust)) custSel.value = prevCust;
 
     renderJobs(allJobs);
+      refreshFloatPanel(allJobs);
     };
+
+  // floating panel: customers + measurements lists
+  window.refreshFloatPanel = (jobs) => {
+    const esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const custEl = document.getElementById('niv-panel-customers');
+    if (custEl) {
+      const customers = [...new Set(jobs.map(j => j.customer).filter(Boolean))].slice(0, 5);
+      custEl.innerHTML = customers.length
+        ? customers.map((c, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}"><span>${esc(c)}</span><span class="dots">...</span></div>`).join('')
+        : '<div class="niv-panel-empty">Sin clientes</div>';
+    }
+    const measEl = document.getElementById('niv-panel-measures');
+    if (measEl) {
+      const recent = jobs.slice(0, 5);
+      measEl.innerHTML = recent.length
+        ? recent.map((j, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}"><span>${esc(j.customer || j.project || 'Medida')}</span><span class="dots">...</span></div>`).join('')
+        : '<div class="niv-panel-empty">Sin medidas</div>';
+    }
+  };
   });
 
   window.applyFilters = () => {
@@ -2728,6 +2749,52 @@ let currentUser;
 
   // initial state for the custom date placeholder (dd/mm/aaaa)
   syncDatePlaceholder();
+
+  // ---- floating panel: drag + collapse ----
+  (() => {
+    const panel = document.getElementById('niv-panel');
+    const head = document.getElementById('niv-panel-head');
+    const collapseBtn = document.getElementById('niv-panel-collapse');
+    if (!panel || !head) return;
+    collapseBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      panel.classList.toggle('collapsed');
+      collapseBtn.textContent = panel.classList.contains('collapsed') ? '+' : '–';
+    });
+    let sx = 0, sy = 0, ox = 0, oy = 0, dragging = false;
+    head.addEventListener('mousedown', (e) => {
+      if (e.target === collapseBtn) return;
+      dragging = true;
+      sx = e.clientX; sy = e.clientY;
+      const r = panel.getBoundingClientRect();
+      ox = r.left; oy = r.top;
+      panel.style.top = oy + 'px'; panel.style.left = ox + 'px';
+      panel.style.bottom = 'auto'; panel.style.right = 'auto';
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      panel.style.left = Math.max(0, Math.min(window.innerWidth - 80, ox + e.clientX - sx)) + 'px';
+      panel.style.top = Math.max(0, Math.min(window.innerHeight - 60, oy + e.clientY - sy)) + 'px';
+    });
+    window.addEventListener('mouseup', () => { dragging = false; });
+    // touch support
+    head.addEventListener('touchstart', (e) => {
+      if (e.target === collapseBtn) return;
+      const tc = e.touches[0];
+      dragging = true; sx = tc.clientX; sy = tc.clientY;
+      const r = panel.getBoundingClientRect(); ox = r.left; oy = r.top;
+      panel.style.top = oy + 'px'; panel.style.left = ox + 'px';
+      panel.style.bottom = 'auto'; panel.style.right = 'auto';
+    }, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      if (!dragging) return;
+      const tc = e.touches[0];
+      panel.style.left = Math.max(0, Math.min(window.innerWidth - 80, ox + tc.clientX - sx)) + 'px';
+      panel.style.top = Math.max(0, Math.min(window.innerHeight - 60, oy + tc.clientY - sy)) + 'px';
+    }, { passive: true });
+    window.addEventListener('touchend', () => { dragging = false; });
+  })();
 </script>
 <div id="qpdf-print-area" aria-hidden="true"></div>
 </body>
