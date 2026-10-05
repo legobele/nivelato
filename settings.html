@@ -93,6 +93,15 @@
     <div class="card">
       <div class="card-title">Información de la cuenta</div>
       <div class="card-desc">Datos de tu perfil en Nivelato.</div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+        <img id="profile-pic" alt="Foto de perfil" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:#e9ecef;display:none;" />
+        <div id="profile-pic-fallback" style="width:64px;height:64px;border-radius:50%;background:#1971c2;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;"></div>
+        <div>
+          <input type="file" id="profile-pic-input" accept="image/*" style="display:none;" />
+          <button class="btn-secondary" id="btn-change-pic" style="padding:8px 16px;font-size:13px;">Cambiar foto</button>
+          <div id="pic-upload-status" style="font-size:12px;color:#868e96;margin-top:6px;"></div>
+        </div>
+      </div>
       <div class="info-row"><span class="info-label">Nombre</span><span class="info-value" id="info-name">—</span></div>
       <div class="info-row"><span class="info-label">Correo</span><span class="info-value" id="info-email">—</span></div>
       <div class="info-row"><span class="info-label">Rol</span><span class="info-value" id="info-role">—</span></div>
@@ -136,25 +145,17 @@
       <div class="saved-msg" id="lang-saved">✓ Idioma guardado</div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Backend de datos</div>
-      <div class="card-desc">Por defecto Nivelato usa su propio servidor. Si tu taller tiene su propio proyecto de Firebase, pega su configuración aquí y la app lo usará. Los correos siguen saliendo del servidor central de Nivelato.</div>
-      <div class="backend-current" id="backend-current">Backend actual: <b>cargando…</b></div>
-      <div class="backend-field"><label>apiKey</label><input id="be-apiKey" type="text" placeholder="AIza..." autocomplete="off" /></div>
-      <div class="backend-field"><label>authDomain</label><input id="be-authDomain" type="text" placeholder="mi-proyecto.firebaseapp.com" autocomplete="off" /></div>
-      <div class="backend-field"><label>projectId</label><input id="be-projectId" type="text" placeholder="mi-proyecto" autocomplete="off" /></div>
-      <div class="backend-field"><label>storageBucket</label><input id="be-storageBucket" type="text" placeholder="mi-proyecto.firebasestorage.app" autocomplete="off" /></div>
-      <div class="backend-field"><label>messagingSenderId</label><input id="be-messagingSenderId" type="text" placeholder="123456789" autocomplete="off" /></div>
-      <div class="backend-field"><label>appId</label><input id="be-appId" type="text" placeholder="1:123456789:web:abc..." autocomplete="off" /></div>
-      <button class="btn-primary" id="btn-backend-save" onclick="saveBackend()">Probar y guardar backend</button>
-      <button class="btn-secondary" id="btn-backend-reset" onclick="resetBackend()">Volver al backend de Nivelato</button>
-      <div class="status-line" id="backend-status"></div>
-      <p style="font-size:12px;color:#868e96;margin-top:12px;">Cambiar de backend cierra tu sesión y tendrás que entrar de nuevo. Tu proyecto necesita las reglas de Firestore de Nivelato (ver EMAIL_PIPELINE.md).</p>
-    </div>
   </div>
 
   <!-- TALLER -->
   <div class="tab-panel" id="tab-taller">
+    <div class="card company-member-card">
+      <div class="card-title">API de 2FA</div>
+      <div class="card-desc">Dominio o URL del API que el taller usa para el segundo factor de autenticación. Nivel de compañía, no por usuario.</div>
+      <div class="backend-field"><label>URL del API de 2FA</label><input id="tfa-url" type="url" placeholder="https://taller.example.com/api/2fa" autocomplete="off" /></div>
+      <button class="btn-primary" id="btn-tfa-save" onclick="saveTfaApi()">Guardar</button>
+      <div class="status-line" id="tfa-status"></div>
+    </div>
     <div class="card company-member-card">
       <div class="card-title">Permisos de miembros</div>
       <div class="card-desc">Gestiona las capacidades de cada miembro del taller.</div>
@@ -178,7 +179,6 @@
 
 <script type="module">
 import { auth, db } from './firebase-config.js';
-import { getBackendInfo, probeBackendConfig, saveBackendConfig, resetBackendConfig } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getDoc, doc, setDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { makePermChecker } from './permissions.js';
@@ -232,6 +232,38 @@ onAuthStateChanged(auth, async (user) => {
   // fill info tab
   document.getElementById('info-name').textContent = currentUserData.name || '—';
   document.getElementById('info-email').textContent = user.email || '—';
+  // profile picture
+  const _picUrl = currentUserData.photoURL || user.photoURL || '';
+  const _picImg = document.getElementById('profile-pic');
+  const _picFb = document.getElementById('profile-pic-fallback');
+  if (_picUrl) { _picImg.src = _picUrl; _picImg.style.display = 'block'; _picFb.style.display = 'none'; }
+  else {
+    const _nm = currentUserData.name || user.email || '?';
+    _picFb.textContent = _nm.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  }
+  document.getElementById('btn-change-pic').addEventListener('click', () => {
+    document.getElementById('profile-pic-input').click();
+  });
+  document.getElementById('profile-pic-input').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const status = document.getElementById('pic-upload-status');
+    status.textContent = 'Subiendo...';
+    try {
+      const { ref, uploadBytes, getDownloadURL } = await import('https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js');
+      const { storage } = await import('./firebase-config.js');
+      const path = 'avatars/' + user.uid + '.jpg';
+      await uploadBytes(ref(storage, path), file, { contentType: file.type || 'image/jpeg' });
+      const url = await getDownloadURL(ref(storage, path));
+      await updateDoc(doc(db, 'users', user.uid), { photoURL: url });
+      currentUserData.photoURL = url;
+      _picImg.src = url; _picImg.style.display = 'block'; _picFb.style.display = 'none';
+      status.textContent = 'Foto actualizada.';
+    } catch (err) {
+      console.error('[Nivelato] avatar upload failed:', err);
+      status.textContent = 'No se pudo subir la foto. Intenta de nuevo.';
+    }
+  });
   document.getElementById('info-role').textContent = {
     owner: 'Dueño / Admin', cotizador: 'Cotizador', supervisor: 'Supervisor', medidor: 'Técnico medidor'
   }[currentUserData.role] || currentUserData.role || '—';
@@ -262,6 +294,7 @@ onAuthStateChanged(auth, async (user) => {
     renderPermissions();
     await loadRequests(orgId);
     await loadDeleteRequests();
+    await loadTfaApi(orgId);
   }
 
   // notification prefs + backend status (propio backend o default)
@@ -496,46 +529,38 @@ async function saveLangPref(l) {
   }
 }
 
-function renderBackendStatus() {
-  const info = getBackendInfo();
-  const el = document.getElementById('backend-current');
-  el.innerHTML = 'Backend actual: <b>' + escapeHtml(info.projectId) + '</b>' +
-    (info.isCustom ? ' (personalizado)' : ' (default de Nivelato)');
+// API de 2FA (nivel compañía): un solo campo, guardado en el doc de la org.
+async function loadTfaApi(orgId) {
+  try {
+    const snap = await getDoc(doc(db, 'orgs', orgId));
+    const url = snap.data()?.twoFactorApiUrl || '';
+    document.getElementById('tfa-url').value = url;
+  } catch (_) { /* best effort */ }
 }
 
-function backendStatus(kind, text) {
-  const el = document.getElementById('backend-status');
+function tfaStatus(kind, text) {
+  const el = document.getElementById('tfa-status');
   el.className = 'status-line ' + kind;
   el.textContent = text;
 }
 
-window.saveBackend = async () => {
-  const cfg = {};
-  for (const f of ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId']) {
-    cfg[f] = document.getElementById('be-' + f).value.trim();
+window.saveTfaApi = async () => {
+  const url = document.getElementById('tfa-url').value.trim();
+  if (url && !/^https?:\/\//i.test(url)) {
+    tfaStatus('err', 'La URL debe empezar con https://');
+    return;
   }
-  const btn = document.getElementById('btn-backend-save');
+  const btn = document.getElementById('btn-tfa-save');
   btn.disabled = true;
-  backendStatus('warn', 'Probando la conexión con tu proyecto…');
   try {
-    const res = await probeBackendConfig(cfg);
-    if (!res.ok) {
-      backendStatus('err', res.error);
-      return;
-    }
-    saveBackendConfig(cfg);
-    backendStatus('ok', (res.warning ? res.warning + ' ' : '') + 'Backend guardado. Recargando con tu proyecto…');
-    setTimeout(() => window.location.reload(), 1200);
+    await updateDoc(doc(db, 'orgs', currentUserData.orgId), { twoFactorApiUrl: url });
+    tfaStatus('ok', 'API de 2FA guardada.');
+  } catch (e) {
+    console.error('[Nivelato] save 2FA API failed:', e);
+    tfaStatus('err', 'No se pudo guardar. Intenta de nuevo.');
   } finally {
     btn.disabled = false;
   }
-};
-
-window.resetBackend = () => {
-  if (!getBackendInfo().isCustom) return;
-  if (!confirm('¿Volver al backend default de Nivelato? Se cerrará tu sesión.')) return;
-  resetBackendConfig();
-  window.location.reload();
 };
 
 async function loadOrgMembers(orgId) {
