@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
+<script src="./company-theme.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#121212" />
 <link rel="manifest" href="manifest.json" />
@@ -63,6 +64,7 @@
   /* HINT */
   #hint-bar { font-size: 11px; color: #8b93a1; text-align: center; padding: 8px 16px; background: #171b21; border-top: 1px solid #262c35; flex-shrink: 0; }
 </style>
+<link rel="stylesheet" href="./qgc-theme.css">
 </head>
 <body>
 <div id="app-shell">
@@ -384,6 +386,8 @@ function resetCorners() {
 
 // ── image loading ──
 onAuthStateChanged(auth, (user) => {
+  // QGC gray theme fallback via ID-token claims (claims.flow === 'qgi')
+  if (window.applyCompanyThemeFromAuth) { try { window.applyCompanyThemeFromAuth(auth); } catch (_) {} }
   if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
 });
 

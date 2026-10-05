@@ -68,6 +68,10 @@ onAuthStateChanged(auth, async (user) => {
   }
   _prevUid = user.uid;
   currentUser = user;
+  // QGC gray theme fallback via ID-token claims (claims.flow === 'qgi')
+  if (typeof window.applyCompanyThemeFromAuth === 'function') {
+    try { window.applyCompanyThemeFromAuth(auth); } catch (_) { /* theme best-effort */ }
+  }
   const userDoc = await getDoc(doc(db, 'users', user.uid));
   currentUserData = userDoc.data();
 

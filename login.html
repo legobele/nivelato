@@ -1934,6 +1934,8 @@
     if (gate.ok && !gate.cached && routeAfterGate(gate.verdict, gate.reason)) return;
     const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
     const role = userDoc.data()?.role;
+    // Seed the company-theme fast-path flag for the app pages (QGC = gray theme).
+    seedCompanyThemeFlag(userDoc.data());
     // Adopt the DB-saved language (it wins over localStorage once it exists).
     const dbLang = userDoc.data()?.language;
     if ((dbLang === 'es' || dbLang === 'en') && window.__nivelatoAdoptDbLang) {
@@ -2391,6 +2393,16 @@
   }
 
   // Shared post-signin path for the add-account screen (email or Google).
+  // Seed the company-theme fast-path flag for the app pages.
+  // QGC users get the gray theme; everyone else gets standard Nivelato.
+  // Best-effort: the app pages re-resolve from the user doc anyway.
+  function seedCompanyThemeFlag(userData) {
+    try {
+      const qgc = !!userData && (userData.isQGC === true || userData.company === 'qgc');
+      localStorage.setItem('nivelato_company_theme', qgc ? 'qgc' : 'standard');
+    } catch (_) { /* ignore */ }
+  }
+
   async function finishAddAccountSignIn(user) {
     const t = window.nivT;
     const email = (user && user.email) || '';
@@ -2403,6 +2415,13 @@
         return;
       }
       markQgcAuthed();
+      seedCompanyThemeFlag({ isQGC: true });
+    } else {
+      // Non-QGI add-account: best-effort doc read to seed the theme flag.
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        seedCompanyThemeFlag(snap.exists() ? snap.data() : null);
+      } catch (_) { /* app pages re-resolve */ }
     }
     try {
       const _dn = (user && user.displayName) || '';

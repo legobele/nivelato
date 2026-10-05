@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
+<script src="./company-theme.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#121212" />
 <link rel="manifest" href="manifest.json" />
@@ -74,6 +75,7 @@
   .backend-current { font-size: 13px; color: #495057; background: #f8f9fa; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
   .backend-current b { color: #212529; }
 </style>
+<link rel="stylesheet" href="./qgc-theme.css" />
 </head>
 <body>
 <div class="settings-shell">
@@ -205,10 +207,14 @@ const escapeHtml = (s) => String(s ?? '')
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
+  // backup: theme from ID-token claims if user doc path changes
+  if (window.applyCompanyThemeFromAuth) { try { window.applyCompanyThemeFromAuth(auth); } catch (_) {} }
   currentUser = user;
   // presencia realtime (presence.js la crea una tarea hermana; silencioso si el archivo falta)
   import('./presence.js').then(m => m.startPresence(user.uid)).catch(() => {});
   const userSnap = await getDoc(doc(db, 'users', user.uid));
+  // QGC theme from user doc (source of truth)
+  if (window.applyCompanyTheme) { try { window.applyCompanyTheme(userSnap.data()); } catch (_) {} }
   if (!userSnap.exists()) {
     // Signed in, but no profile doc (orphaned auth account, interrupted
     // signup, or deleted profile): don't leave a dead skeleton page.

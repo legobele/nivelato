@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
+<script src="./company-theme.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Iniciar sesión — Nivelato</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -76,6 +77,7 @@
     line-height: 1.5;
   }
 </style>
+<link rel="stylesheet" href="./qgc-theme.css">
 <meta name="theme-color" content="#121212" />
 <link rel="manifest" href="manifest.json" />
 <script src="testing.js" defer></script>
@@ -222,6 +224,8 @@ async function doRedirect(user) {
 
 // Already signed in? Skip straight to redirect (allowlisted destinations only).
 onAuthStateChanged(auth, (user) => {
+  // QGC gray theme fallback via ID-token claims (claims.flow === 'qgi')
+  if (window.applyCompanyThemeFromAuth) { try { window.applyCompanyThemeFromAuth(auth); } catch (_) {} }
   if (user && redirectUri && redirectAllowed) {
     document.getElementById('sso-btn').textContent = 'Redirigiendo…';
     document.getElementById('sso-btn').disabled = true;

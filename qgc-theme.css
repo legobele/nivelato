@@ -1,0 +1,222 @@
+
+    body.qgc-theme .niv-spinner { border-color: #55555c; border-top-color: #b9b9c2; }
+
+    /* ---- QGC "depressing gray" theme ----
+       Applied to <body> whenever QGI mode is active. Everything goes gray:
+       page, card, tabs, inputs, buttons. The QGC logo is stretched
+       fullscreen behind it all (aspect ratio intentionally distorted). */
+    body.qgc-theme { background: #2a2a2e; }
+
+    body.qgc-theme::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://raw.githubusercontent.com/legobele/nivelato/main/qgc-logo.jpg');
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      opacity: 0.12;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body.qgc-theme::after {
+      content: "";
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(20, 20, 22, 0.55);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body.qgc-theme .card {
+      background: #3a3a3e;
+      border-color: #55555c;
+      padding: 24px 26px;
+      /* never push a page-level scrollbar: scroll inside the card instead */
+      max-height: calc(100dvh - 32px);
+      overflow-y: auto;
+    }
+
+    body.qgc-theme .logo { color: #f2f1ec; }
+
+    body.qgc-theme .logo .adot { color: #8e8e99; }
+
+    body.qgc-theme .tagline { color: #b9b9c2; margin-bottom: 18px; }
+
+    body.qgc-theme .tab-row { border-bottom-color: #55555c; margin-bottom: 18px; }
+
+    body.qgc-theme .tab { color: #8e8e99; }
+
+    body.qgc-theme .tab:hover { color: #b9b9c2; }
+
+    body.qgc-theme .tab.active,
+    body.qgc-theme .tab.active.qgi-tab { color: #e8e8ec; border-bottom-color: #8e8e99; }
+
+    body.qgc-theme .field label { color: #b9b9c2; }
+
+    body.qgc-theme .field input {
+      background: #2a2a2e;
+      border-color: #55555c;
+      color: #f2f1ec;
+    }
+
+    body.qgc-theme .field input::placeholder { color: #6d6d78; }
+
+    body.qgc-theme .field input:focus { border-color: #8e8e99; }
+
+    body.qgc-theme .field input:-webkit-autofill {
+      -webkit-text-fill-color: #f2f1ec;
+      -webkit-box-shadow: 0 0 0 1000px #2a2a2e inset;
+    }
+
+    body.qgc-theme .btn-primary,
+    body.qgc-theme .btn-primary.qgi-btn { background: #63636b; color: #f2f1ec; }
+
+    body.qgc-theme .btn-primary:hover,
+    body.qgc-theme .btn-primary.qgi-btn:hover { background: #75757e; }
+
+    body.qgc-theme .btn-primary:disabled,
+    body.qgc-theme .btn-primary.qgi-btn:disabled { background: #2a2a2e; color: #6d6d78; }
+
+    body.qgc-theme .forgot-link { color: #b9b9c2; }
+
+    body.qgc-theme .exclusivity-note {
+      color: #d8d8de;
+      background: rgba(255,255,255,.05);
+      border-color: #55555c;
+    }
+
+    body.qgc-theme .geo-note {
+      color: #d8d8de;
+      background: rgba(255,255,255,.05);
+      border-color: #55555c;
+    }
+
+    body.qgc-theme .geo-note a,
+    body.qgc-theme .geo-note button { color: #e8e8ec; }
+
+    body.qgc-theme .signup-note { color: #8e8e99; }
+
+    body.qgc-theme .travel-body { color: #a7a7b3; }
+
+    body.qgc-theme .lang-toggle { border-color: #55555c; color: #b9b9c2; }
+
+    body.qgc-theme .lang-toggle:hover { color: #f2f1ec; border-color: #8e8e99; }
+
+    body.qgc-theme .lang-toggle:focus-visible { outline-color: #8e8e99; }
+
+    body.qgc-theme .error-msg {
+      background: rgba(255,255,255,.05);
+      border-color: #77777f;
+      color: #f2f1ec;
+    }
+
+    /* QGC gray theme for the split layout */
+    body.qgc-theme .brand-panel { background: #2a2a2e; border-color: #55555c; }
+
+    body.qgc-theme .brand-logo-box { background: #2a2a2e; border-color: #55555c; }
+
+    body.qgc-theme .accounts-title { color: #b9b9c2; }
+
+    body.qgc-theme .account-pill { background: #2a2a2e; border-color: #55555c; }
+
+    body.qgc-theme .account-pill:hover { border-color: #8e8e99; }
+
+    body.qgc-theme .account-pill:focus-visible { outline-color: #8e8e99; }
+
+    body.qgc-theme .account-avatar { background: #55555c; color: #f2f1ec; }
+
+    body.qgc-theme .account-add { border-color: #55555c; color: #b9b9c2; }
+
+    body.qgc-theme .account-add:hover { border-color: #8e8e99; color: #f2f1ec; }
+
+    body.qgc-theme .account-add:focus-visible { outline-color: #8e8e99; }
+
+    body.qgc-theme .account-add-icon { border-color: #55555c; color: #b9b9c2; }
+
+    body.qgc-theme .account-add:hover .account-add-icon { border-color: #8e8e99; color: #f2f1ec; }
+
+    body.qgc-theme .account-name { color: #f2f1ec; }
+
+    body.qgc-theme .account-kind { color: #b9b9c2; }
+
+    body.qgc-theme .qgc-only-notice { color: #f2f1ec; }
+
+    body.qgc-theme .company-head .account-pill:hover { border-color: #55555c; }
+
+    body.qgc-theme .company-employee-notice { color: #f2f1ec; }
+
+    body.qgc-theme .company-inquiry { color: #b9b9c2; }
+
+    body.qgc-theme .company-travel-notice { color: #f5b83d; }
+
+    body.qgc-theme .or-sep { color: #8e8e99; }
+
+    body.qgc-theme .or-sep::before, body.qgc-theme .or-sep::after { background: #55555c; }
+
+    body.qgc-theme .btn-google { border-color: #55555c; color: #f2f1ec; }
+
+    body.qgc-theme .btn-google:hover { border-color: #8e8e99; background: rgba(255,255,255,.04); }
+
+    body.qgc-theme .back-btn { border-color: #55555c; color: #f2f1ec; }
+
+    body.qgc-theme .back-btn:hover { border-color: #8e8e99; }
+
+    body.qgc-theme .cantadd-title { color: #f2f1ec; }
+
+    body.qgc-theme .cantadd-msg { color: #b9b9c2; }
+
+/* ---- CSS variable bridge ----
+   Pages that theme via :root variables get QGC values when the class is on.
+   body.qgc-theme (0,1,1) beats :root (0,1,0); the sheet loads last anyway. */
+body.qgc-theme {
+  --bg: #2a2a2e;
+  --card: #3a3a3e;
+  --line: #55555c;
+  --line-soft: #45454c;
+  --border: #55555c;
+  --text: #f2f1ec;
+  --muted: #b9b9c2;
+  --faint: #8e8e99;
+  --ink: #f2f1ec;
+  --dim: #8e8e99;
+  /* accents go gray (the depressing part) */
+  --blue: #8e8e99;
+  --teal1: #b9b9c2;
+  --teal2: #8e8e99;
+  --amber: #b9b9c2;
+  --amber-dark: #8e8e99;
+  --amber-dim: rgba(255,255,255,.05);
+  --brand: #63636b;
+  --brand-pressed: #75757e;
+  --laser: #b9b9c2;
+  /* errors stay readable, just desaturated */
+  --red: #e0685c;
+  --red-dark: #b3544a;
+}
+
+/* ---- Generic element fallbacks ----
+   For pages whose classes don't match the login-page selectors above.
+   Specificity: body.qgc-theme X beats single-class page rules; the sheet
+   loads after the page's own styles. No !important, no layout changes. */
+body.qgc-theme { background: #2a2a2e; color: #f2f1ec; }
+body.qgc-theme a { color: #b9b9c2; }
+body.qgc-theme input,
+body.qgc-theme select,
+body.qgc-theme textarea {
+  background: #2a2a2e;
+  border-color: #55555c;
+  color: #f2f1ec;
+}
+body.qgc-theme input::placeholder,
+body.qgc-theme textarea::placeholder { color: #6d6d78; }

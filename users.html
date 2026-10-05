@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<script src="./company-theme.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0d0d0f" />
 <link rel="manifest" href="manifest.json" />
@@ -353,6 +354,7 @@
     .detail { padding: 24px 16px; }
   }
 </style>
+<link rel="stylesheet" href="./qgc-theme.css" />
 </head>
 <body>
 <div class="shell">
@@ -676,12 +678,16 @@ onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
   currentUser = user;
 
+  // Backup theme pass: in case the fast path or doc-based check could not run.
+  if (window.applyCompanyThemeFromAuth) { try { window.applyCompanyThemeFromAuth(auth); } catch (_) {} }
+
   const userSnap = await getDoc(doc(db, 'users', user.uid));
   if (!userSnap.exists()) {
     alert('We could not find your user profile. Please sign in again to repair it.');
     window.location.href = 'login.html?missingProfile=1';
     return;
   }
+  if (window.applyCompanyTheme) { try { window.applyCompanyTheme(userSnap.data()); } catch (_) {} }
   currentUserData = userSnap.data();
   orgId = currentUserData.orgId;
 
