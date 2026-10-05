@@ -676,6 +676,7 @@
 
 <script>
   // ---- Nivelato login i18n (classic script — zero network dependencies) ----
+  // speaks two languages and judges your browser in both
   // Dictionary + language state live here so the language toggle and the tab
   // fallback work even before the Firebase ES module boots. The module
   // reuses window.nivT / window.setLang / window.nivApplyLang for every
@@ -1094,6 +1095,7 @@
   if (bw) bw.remove();
 
   // ---- Geo-gated UI (spec §6) ----
+  // "are you in puerto rico?" — the page needs to know. it ALWAYS needs to know.
   // The default form is static HTML above, so geo NEVER gates first paint.
   // Geo resolves in the background after paint; if the real flow differs from
   // what's rendered, the UI is swapped then. Enforcement stays server-side
@@ -1137,6 +1139,7 @@
   }
 
   // ---- "Cuentas usadas" (used-accounts picker, mockup) ----
+  // the lineup of everyone who's ever typed a password here. no snitching.
   // Successful logins are remembered in localStorage (email + display name
   // + kind). Tapping a pill pre-fills the email and focuses the password
   // field; a QGC account also forces QGC mode. Most-recent-first, capped.
@@ -1399,6 +1402,7 @@
   };
 
   // ---- Dev options (hidden panel, Giulia only) ----
+  // if you're reading this and you're not giulia: hi. this isn't for you. :)
   // Ctrl+Alt+D: open (Google gate on first unlock per browser); if the panel
   //   is open, revert all dev settings and close.
   // Ctrl+Alt+Shift+H: hide the panel (settings kept).
@@ -1486,6 +1490,7 @@
   }
 
   // Mobile: long-press (1.5s) the top-right corner of the page = Ctrl+Alt+D.
+  // the secret handshake, but for thumbs.
   var _holdTimer = null;
   function devEnsureHoldZone() {
     if (document.getElementById('dev-hold-zone')) return;
@@ -1803,6 +1808,8 @@
   } else { devEnsureDom(); }
 
   // ---- Cross-origin SSO handoff ----
+  // the login page lives here, the app lives over there,
+  // and this is the diplomatic pouch between them. do not shake.
   // This page lives on login.nivelatolabs.com; the app lives on
   // app.nivelatolabs.com (and dashboard.nivelatolabs.com). Firebase Auth
   // sessions are origin-scoped, so after a successful sign-in here we mint
@@ -1971,6 +1978,7 @@
   }
 
   // ---- Travel verification backend seam (TODO) ----
+  // for when the laptop says "not PR" but the heart says "PR"
   // A QGC-trusted device outside PR can request a 30-day travel grant via
   // an email verification link. The frontend flow (detection, UI, grant
   // check, link redeem) is fully built below; the two functions here are
@@ -2008,6 +2016,7 @@
   let travelLinkError = false; // a ?travel_verify link was invalid/expired
 
   // ---- Company-branded signin ----
+  // put on the company costume. the logo goes on, the personality stays.
   // APPROVAL LIST: only companies in this object appear in the PR domain
   // selector and the "Join a company" selector. Adding a company here =
   // Giulia's manual approval (after the meeting/contact process described
@@ -2103,6 +2112,7 @@
   let companySelectShown = false; // "join a company" selector is visible
 
   // ---- View navigation: slide animations + history ----
+  // slides. history. the back button works. we checked.
   // Views: 'main' | 'add-account' | 'company-select' | 'cant-add' | 'company:<id>'.
   // Forward navigation: slide in from the right + pushState. Back (chevron or
   // device back button): slide in from the left via the popstate handler.
@@ -2901,6 +2911,7 @@
   }
 
   // ---- Init: hydrate the static form. NO network is awaited here. ----
+  // the page paints before it thinks. like all of us.
   // Use synchronously-available signals (Cloudflare-injected country,
   // device timezone) for the initial mode so PR users don't see a
   // generic→QGC flash when the background geo resolves.
@@ -2913,6 +2924,7 @@
   } catch (_) {}
   // DEV override (Regional flags): force a country for testing geo-gated UI.
   // Set via the hidden dev options panel (Ctrl+Alt+D); stored in localStorage.
+  // the page thinks it's wherever giulia says it is. the page is wrong. lovingly.
   var _devGeo = null;
   try { _devGeo = localStorage.getItem('nl_dev_geo') || null; } catch (_) { /* ignore */ }
   if (_devGeo && !/^[A-Za-z]{2}$/.test(_devGeo)) _devGeo = null;
@@ -3009,6 +3021,7 @@
   });
 
   // ---- Background geo (post-paint): swap the flow UI only if it differs.
+  // the page guessed where you are. now it checks for real. don't move.
   // Hard 7s cap so a hung lookup can never stall the page; on failure the
   // already-visible form stays, with a non-blocking notice. ----
   // Country: prefer the Cloudflare-injected header (reliable, no API call);

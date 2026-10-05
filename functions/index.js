@@ -111,6 +111,7 @@ function emailShell(title, bodyHtml) {
 // requestWelcomeEmail - callable. The app calls this right after signup
 // (after creating notification_prefs defaults) so the welcome email fires
 // on BOTH the default backend and BYOB shops. Rate-limited per address.
+// Says hi so you don't have to.
 // ---------------------------------------------------------------------------
 exports.requestWelcomeEmail = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
   const data = request.data || {};
@@ -138,6 +139,7 @@ exports.requestWelcomeEmail = onCall({ region: 'us-central1', memory: '256MiB' }
 // requestPasswordReset - callable. Generates the reset link with the Admin
 // SDK (central project) and sends it from noreply@nivelatolabs.com, bypassing
 // Firebase's default firebaseapp.com sender.
+// For when the password is gone and so is your memory of it.
 //
 // BYOB note: the link can only be minted for users in the CENTRAL project.
 // If the email isn't found here, the function throws 'not-found' and the
@@ -264,7 +266,7 @@ exports.reportQuoteEvent = onCall({ region: 'us-central1', memory: '256MiB' }, a
 });
 
 // ---------------------------------------------------------------------------
-// IP intelligence provider.
+// IP intelligence provider. Knows where you are before you do.
 // ip-api.com free tier (45 req/min, no key): countryCode + proxy/hosting flags.
 // IPINFO_TOKEN env var optionally overrides with ipinfo.io (paid tier).
 // If all providers fail, lookups fail CLOSED to `review` — never `allow`,
@@ -754,6 +756,7 @@ exports.provisionBundleKey = onCall(
 // it hands to app.nivelatolabs.com/sso.html; that page signs in there with
 // signInWithCustomToken. Rate-limited: 30 mints per uid per day (page loads
 // with a persisted session each burn one via the auto-handoff).
+// 30, because 10 turned out to be "one monday afternoon". ask giulia.
 // ---------------------------------------------------------------------------
 exports.mintSsoToken = onCall(
   { region: 'us-central1', memory: '256MiB' },
@@ -789,6 +792,7 @@ exports.mintSsoToken = onCall(
 // Returns server time + the deployed function inventory so the panel's
 // Backend section always reflects what's actually deployed.
 // NOTE: keep DEV_FUNCTION_INVENTORY in sync when adding/removing functions.
+// Yes, this comment is load-bearing.
 const DEV_FUNCTION_INVENTORY = [
   { name: 'mintSsoToken', type: 'callable', region: 'us-central1' },
   { name: 'flowGate', type: 'callable', region: 'us-central1' },
