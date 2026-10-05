@@ -184,6 +184,13 @@
       text-align: center;
       line-height: 1.5;
     }
+    .travel-body {
+      font-size: 14px;
+      color: var(--dim);
+      line-height: 1.6;
+      margin: 0 0 20px;
+      text-align: center;
+    }
     .lang-toggle {
       position: absolute;
       top: 14px;
@@ -266,6 +273,7 @@
     body.qgc-theme .geo-note a,
     body.qgc-theme .geo-note button { color: #e8e8ec; }
     body.qgc-theme .signup-note { color: #8e8e99; }
+    body.qgc-theme .travel-body { color: #a7a7b3; }
     body.qgc-theme .lang-toggle { border-color: #55555c; color: #b9b9c2; }
     body.qgc-theme .lang-toggle:hover { color: #f2f1ec; border-color: #8e8e99; }
     body.qgc-theme .lang-toggle:focus-visible { outline-color: #8e8e99; }
@@ -274,6 +282,109 @@
       border-color: #77777f;
       color: #f2f1ec;
     }
+    /* ---- Split layout: brand panel + accounts/form panel (mockup) ---- */
+    .card.split-card { max-width: 780px; }
+    .split { display: flex; gap: 24px; align-items: stretch; }
+    .brand-panel {
+      flex: 0 0 280px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 28px 24px;
+      background: var(--bg2);
+      display: flex;
+      flex-direction: column;
+    }
+    .brand-panel .logo { font-size: 32px; }
+    .brand-panel .tagline { margin-bottom: 0; }
+    .brand-logo-box {
+      margin-top: 24px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--bg);
+      aspect-ratio: 4 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .brand-logo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    .main-panel { flex: 1; min-width: 0; }
+    .accounts-section { margin-bottom: 20px; }
+    .accounts-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 12px;
+    }
+    .account-pill {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 10px 16px 10px 10px;
+      margin-bottom: 10px;
+      background: var(--bg2);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: left;
+      transition: border-color 0.15s;
+    }
+    .account-pill:last-child { margin-bottom: 0; }
+    .account-pill:hover { border-color: var(--dim); }
+    .account-pill:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+    .account-avatar {
+      flex: 0 0 auto;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--line);
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .account-meta { min-width: 0; display: flex; flex-direction: column; }
+    .account-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .account-kind {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    @media (max-width: 680px) {
+      .split { flex-direction: column; }
+      .brand-panel { flex: none; }
+      .brand-logo-box { aspect-ratio: 16 / 8; }
+    }
+    /* QGC gray theme for the split layout */
+    body.qgc-theme .brand-panel { background: #2a2a2e; border-color: #55555c; }
+    body.qgc-theme .brand-logo-box { background: #2a2a2e; border-color: #55555c; }
+    body.qgc-theme .accounts-title { color: #b9b9c2; }
+    body.qgc-theme .account-pill { background: #2a2a2e; border-color: #55555c; }
+    body.qgc-theme .account-pill:hover { border-color: #8e8e99; }
+    body.qgc-theme .account-pill:focus-visible { outline-color: #8e8e99; }
+    body.qgc-theme .account-avatar { background: #55555c; color: #f2f1ec; }
+    body.qgc-theme .account-name { color: #f2f1ec; }
+    body.qgc-theme .account-kind { color: #b9b9c2; }
     @media (max-width: 420px) {
       body { padding: 16px; }
       .card { padding: 32px 22px; }
@@ -286,13 +397,22 @@
      on any network (module imports or the ipapi.co geo lookup). The module
      below hydrates it, then swaps the flow UI in the background if geo says
      otherwise. -->
-<div class="card" id="app-card">
+<div class="card split-card" id="app-card">
   <button type="button" id="lang-toggle" class="lang-toggle" aria-label="Switch to English">🌐 EN</button>
-  <h1 class="logo">Nivelato<span class="adot">.</span></h1>
-  <div class="tagline" data-i18n="tagline">Mediciones de campo, niveladas.</div>
-  <div class="pricing-note" data-i18n="pricing_note">Para Ultra, paga desde la app en tu teléfono (Google Play).</div>
+  <div class="split">
+    <div class="brand-panel">
+      <h1 class="logo">Nivelato<span class="adot">.</span></h1>
+      <div class="tagline" data-i18n="tagline">Mediciones de campo, niveladas.</div>
+      <div class="brand-logo-box"><img src="./icon-192.png" alt="Nivelato" /></div>
+    </div>
+    <div class="main-panel">
+      <div class="accounts-section" id="accounts-section" style="display:none">
+        <div class="accounts-title" data-i18n="used_accounts">Cuentas usadas</div>
+        <div id="accounts-list"></div>
+      </div>
+      <div class="pricing-note" data-i18n="pricing_note">Para Ultra, paga desde la app en tu teléfono (Google Play).</div>
 
-  <div class="tab-row" role="tablist" data-i18n-aria="tablist_label" aria-label="Iniciar sesión o solicitar acceso">
+      <div class="tab-row" role="tablist" data-i18n-aria="tablist_label" aria-label="Iniciar sesión o solicitar acceso">
     <button type="button" role="tab" aria-selected="true" class="tab active" id="tab-login" data-i18n="tab_login">Iniciar sesión</button>
     <button type="button" role="tab" aria-selected="false" class="tab" id="tab-signup" data-i18n="tab_signup">Solicitar acceso</button>
   </div>
@@ -334,7 +454,9 @@
       <button class="btn-primary" id="btn-signup" type="submit" data-i18n="btn_signup">Solicitar acceso</button>
     </form>
     <div class="error-msg" id="signup-error" role="alert"></div>
-    <div class="signup-note" data-i18n="signup_note">Tu solicitud será revisada. Te avisaremos cuando tengas acceso.</div>
+      <div class="signup-note" data-i18n="signup_note">Tu solicitud será revisada. Te avisaremos cuando tengas acceso.</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -355,6 +477,10 @@
         tablist_label: 'Iniciar sesión o solicitar acceso',
         tab_login: 'Iniciar sesión',
         tab_signup: 'Solicitar acceso',
+        used_accounts: 'Cuentas usadas',
+        account_kind_qgc: 'Quality Glass - Trabajo',
+        account_kind_work: 'Trabajo',
+        account_kind_personal: 'Personal',
         label_email: 'Correo electrónico',
         label_password: 'Contraseña',
         label_name: 'Nombre completo',
@@ -372,7 +498,7 @@
         btn_signup_busy: 'Creando cuenta...',
         forgot: '¿Olvidaste tu contraseña?',
         signup_note: 'Tu solicitud será revisada. Te avisaremos cuando tengas acceso.',
-        signup_note_qgi_html: 'Las cuentas nuevas las aprueba <b>Daniel Lebrón</b>. Te avisaremos cuando tengas acceso.',
+        signup_note_qgi_html: 'Tu solicitud será revisada por <b>Quality Glass</b>. Te avisaremos cuando tengas acceso.',
         geo_note: 'No pudimos detectar tu ubicación; estás viendo la versión general de Nivelato.',
         pr_note_1: 'En Puerto Rico, el uso empresarial de Nivelato es exclusivo para empleados de Quality Glass. ',
         pr_note_2: 'Los demás pueden usar la app gratuita: ',
@@ -409,6 +535,17 @@
         err_missing_orgname: 'Ingresa el nombre del taller.',
         err_missing_code: 'Ingresa el código de empleado.',
         err_invalid_code: 'Código inválido. Verifica con tu supervisor.',
+        travel_title: 'Acceso de viaje',
+        travel_body: 'Parece que estás fuera de Puerto Rico. Te enviamos un enlace de verificación a tu correo registrado para activar el acceso por 30 días.',
+        travel_send: 'Enviar enlace',
+        travel_sending: 'Enviando...',
+        travel_sent_title: 'Enlace enviado',
+        travel_sent_body: 'Revisa tu correo y abre el enlace en este dispositivo para activar tu acceso por 30 días.',
+        travel_back: 'Volver al inicio de sesión',
+        travel_err_email: 'Ingresa un correo válido.',
+        travel_err_send: 'No pudimos enviar el enlace. Intenta de nuevo.',
+        travel_err_link: 'Ese enlace no es válido o ya expiró. Solicita uno nuevo.',
+        travel_err_notimpl: 'La verificación de viaje aún no está disponible.',
         lang_toggle_to_en: 'Switch to English',
         lang_toggle_to_es: 'Cambiar a español'
       },
@@ -421,6 +558,10 @@
         tablist_label: 'Sign in or request access',
         tab_login: 'Sign in',
         tab_signup: 'Request access',
+        used_accounts: 'Used accounts',
+        account_kind_qgc: 'Quality Glass - Work',
+        account_kind_work: 'Work',
+        account_kind_personal: 'Personal',
         label_email: 'Email',
         label_password: 'Password',
         label_name: 'Full name',
@@ -438,7 +579,7 @@
         btn_signup_busy: 'Creating account...',
         forgot: 'Forgot your password?',
         signup_note: 'Your request will be reviewed. We will let you know when you have access.',
-        signup_note_qgi_html: 'New accounts are approved by <b>Daniel Lebrón</b>. We will let you know when you have access.',
+        signup_note_qgi_html: 'Your request will be reviewed by <b>Quality Glass</b>. We will let you know when you have access.',
         geo_note: 'We could not detect your location; you are seeing the general version of Nivelato.',
         pr_note_1: 'In Puerto Rico, business use of Nivelato is exclusive to Quality Glass employees. ',
         pr_note_2: 'Everyone else can use the free app: ',
@@ -475,6 +616,17 @@
         err_missing_orgname: 'Enter the shop name.',
         err_missing_code: 'Enter the employee code.',
         err_invalid_code: 'Invalid code. Check with your supervisor.',
+        travel_title: 'Travel access',
+        travel_body: 'It looks like you are outside Puerto Rico. We will send a verification link to your registered email to activate access for 30 days.',
+        travel_send: 'Send link',
+        travel_sending: 'Sending...',
+        travel_sent_title: 'Link sent',
+        travel_sent_body: 'Check your email and open the link on this device to activate your 30-day travel access.',
+        travel_back: 'Back to sign in',
+        travel_err_email: 'Enter a valid email.',
+        travel_err_send: 'We could not send the link. Try again.',
+        travel_err_link: 'That link is invalid or expired. Request a new one.',
+        travel_err_notimpl: 'Travel verification is not available yet.',
         lang_toggle_to_en: 'Switch to English',
         lang_toggle_to_es: 'Cambiar a español'
       }
@@ -713,6 +865,104 @@
     return m ? m[1] : null;
   }
 
+  // QGC device trust: once a device signs in successfully in QGC mode, it is
+  // remembered in localStorage. On later visits the flag forces QGC mode
+  // directly, skipping geo-detection entirely (covers iCloud Private Relay
+  // and VPN cases where geo fails but the device already proved it is QGC).
+  // Device-level trust: never cleared on sign-out, only on storage clear.
+  const QGC_AUTHED_KEY = 'nivelato_qgc_authed';
+  function qgcAuthed() {
+    try { return localStorage.getItem(QGC_AUTHED_KEY) === '1'; } catch (_) { return false; }
+  }
+  function markQgcAuthed() {
+    try { localStorage.setItem(QGC_AUTHED_KEY, '1'); } catch (_) { /* ignore */ }
+  }
+
+  // Travel grant: a QGC-trusted device outside PR can get 30 days of QGC
+  // mode via an email verification link. The grant is a localStorage
+  // timestamp; page load enables QGC mode when the device is trusted AND
+  // (the grant is still in the future OR geo says PR). Being back in PR
+  // makes the grant redundant, so it never needs explicit clearing.
+  const QGC_TRAVEL_KEY = 'nivelato_qgc_travel_until';
+  function qgcTravelValid() {
+    try { return parseInt(localStorage.getItem(QGC_TRAVEL_KEY) || '0', 10) > Date.now(); }
+    catch (_) { return false; }
+  }
+  function storeTravelGrant(validUntilMs) {
+    try { localStorage.setItem(QGC_TRAVEL_KEY, String(validUntilMs)); } catch (_) { /* ignore */ }
+  }
+
+  // ---- "Cuentas usadas" (used-accounts picker, mockup) ----
+  // Successful logins are remembered in localStorage (email + display name
+  // + kind). Tapping a pill pre-fills the email and focuses the password
+  // field; a QGC account also forces QGC mode. Most-recent-first, capped.
+  const USED_ACCOUNTS_KEY = 'nivelato_used_accounts';
+  const MAX_USED_ACCOUNTS = 5;
+  function getUsedAccounts() {
+    try {
+      const raw = localStorage.getItem(USED_ACCOUNTS_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr.filter(function (a) { return a && a.email; }) : [];
+    } catch (_) { return []; }
+  }
+  function saveUsedAccount(email, displayName, kind) {
+    try {
+      const norm = String(email || '').trim().toLowerCase();
+      if (!norm) return;
+      const rest = getUsedAccounts().filter(function (a) {
+        return String(a.email || '').toLowerCase() !== norm;
+      });
+      rest.unshift({ email: norm, displayName: String(displayName || '').trim(), kind: kind || 'personal', ts: Date.now() });
+      localStorage.setItem(USED_ACCOUNTS_KEY, JSON.stringify(rest.slice(0, MAX_USED_ACCOUNTS)));
+    } catch (_) { /* ignore */ }
+  }
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function initialsOf(name) {
+    const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+  function accountKindLabel(kind) {
+    const t = window.nivT;
+    if (kind === 'qgc') return t('account_kind_qgc');
+    if (kind === 'trabajo') return t('account_kind_work');
+    return t('account_kind_personal');
+  }
+  function accountsSectionHTML() {
+    const accounts = getUsedAccounts();
+    const pills = accounts.map(function (a, i) {
+      const label = a.displayName || a.email;
+      return '<button type="button" class="account-pill" data-acct-index="' + i + '">'
+        + '<span class="account-avatar">' + escapeHtml(initialsOf(label)) + '</span>'
+        + '<span class="account-meta">'
+        + '<span class="account-name">' + escapeHtml(label) + '</span>'
+        + '<span class="account-kind">' + escapeHtml(accountKindLabel(a.kind)) + '</span>'
+        + '</span></button>';
+    }).join('');
+    return '<div class="accounts-section" id="accounts-section"' + (accounts.length ? '' : ' style="display:none"') + '>'
+      + '<div class="accounts-title" data-i18n="used_accounts"></div>'
+      + '<div id="accounts-list">' + pills + '</div></div>';
+  }
+  function onAccountPillClick(e) {
+    const pill = e.target && e.target.closest ? e.target.closest('.account-pill') : null;
+    if (!pill) return;
+    const accounts = getUsedAccounts();
+    const acct = accounts[parseInt(pill.getAttribute('data-acct-index'), 10)];
+    if (!acct || !acct.email) return;
+    // A QGC account forces QGC mode (upgrade only, never downgrade).
+    if (acct.kind === 'qgc' && !QGI) renderForm('qgi', true);
+    switchTab('login');
+    const emailEl = document.getElementById('login-email');
+    const passEl = document.getElementById('login-pass');
+    if (emailEl) emailEl.value = acct.email;
+    if (passEl) passEl.focus();
+  }
+
   let QGI = false;        // currently rendered flow
   let country = null;     // resolved async; null until geo settles
   let currentTab = window.__nivelatoTab || 'login';
@@ -734,14 +984,22 @@
   }
 
   function formHTML(qgi) {
+    const logoSrc = qgi ? './qgc-logo.jpg' : './icon-192.png';
+    const logoAlt = qgi ? 'Quality Glass' : 'Nivelato';
     return `
     <button type="button" id="lang-toggle" class="lang-toggle"></button>
-    <h1 class="logo${qgi ? ' qgi' : ''}">${qgi ? 'Quality Glass' : 'Nivelato<span class="adot">.</span>'}</h1>
-    <div class="tagline" data-i18n="${qgi ? 'tagline_qgi' : 'tagline'}"></div>
-    ${qgi ? `<div class="exclusivity-note" data-i18n="exclusivity_note_html" data-i18n-html="1"></div>` : ''}
-    ${!qgi ? `<div class="pricing-note" data-i18n="pricing_note"></div>` : ''}
+    <div class="split">
+      <div class="brand-panel">
+        <h1 class="logo${qgi ? ' qgi' : ''}">${qgi ? 'Quality Glass' : 'Nivelato<span class="adot">.</span>'}</h1>
+        <div class="tagline" data-i18n="${qgi ? 'tagline_qgi' : 'tagline'}"></div>
+        <div class="brand-logo-box"><img src="${logoSrc}" alt="${logoAlt}" /></div>
+      </div>
+      <div class="main-panel">
+        ${accountsSectionHTML()}
+        ${qgi ? `<div class="exclusivity-note" data-i18n="exclusivity_note_html" data-i18n-html="1"></div>` : ''}
+        ${!qgi ? `<div class="pricing-note" data-i18n="pricing_note"></div>` : ''}
 
-    <div class="tab-row" role="tablist" data-i18n-aria="tablist_label">
+        <div class="tab-row" role="tablist" data-i18n-aria="tablist_label">
       <button type="button" role="tab" aria-selected="true" class="tab active${qgi ? ' qgi-tab' : ''}" id="tab-login" data-i18n="tab_login"></button>
       <button type="button" role="tab" aria-selected="false" class="tab${qgi ? ' qgi-tab' : ''}" id="tab-signup" data-i18n="tab_signup"></button>
     </div>
@@ -788,7 +1046,9 @@
         <button class="btn-primary${qgi ? ' qgi-btn' : ''}" id="btn-signup" type="submit" data-i18n="btn_signup"></button>
       </form>
       <div class="error-msg" id="signup-error" role="alert"></div>
-      <div class="signup-note" data-i18n="${qgi ? 'signup_note_qgi_html' : 'signup_note'}"${qgi ? ' data-i18n-html="1"' : ''}></div>
+        <div class="signup-note" data-i18n="${qgi ? 'signup_note_qgi_html' : 'signup_note'}"${qgi ? ' data-i18n-html="1"' : ''}></div>
+        </div>
+      </div>
     </div>`;
   }
 
@@ -809,6 +1069,8 @@
     // module's stateful version once the module is loaded.
     document.getElementById('login-form').addEventListener('submit', doLogin);
     document.getElementById('signup-form').addEventListener('submit', doSignup);
+    const acctList = document.getElementById('accounts-list');
+    if (acctList) acctList.addEventListener('click', onAccountPillClick);
     const forgot = document.getElementById('forgot-link');
     if (forgot) forgot.addEventListener('click', (e) => { e.preventDefault(); doForgotPassword(); });
     window.nivApplyLang();
@@ -880,6 +1142,7 @@
   window.__nivelatoOnLangChange = function () {
     if (pendingShown) { showPendingApproval(); return; }
     if (savePromptShown) { showSaveLoginPrompt(); return; }
+    if (travelShown) { renderTravelUI(); return; }
     renderForm(QGI ? 'qgi' : 'external', true);
     refreshNotices();
   };
@@ -982,6 +1245,14 @@
       const email = document.getElementById('login-email').value.trim();
       const pass  = document.getElementById('login-pass').value;
       await signInWithEmailAndPassword(auth, email, pass);
+      // QGC device trust: this device proved it is QGC. Remember it so
+      // later visits skip geo-detection and go straight to QGC mode.
+      if (QGI) markQgcAuthed();
+      // Remember this account for the "Cuentas usadas" picker.
+      try {
+        const _dn = (auth.currentUser && auth.currentUser.displayName) || '';
+        saveUsedAccount(email, _dn, QGI ? 'qgc' : 'personal');
+      } catch (_) { /* ignore */ }
       showSaveLoginPrompt();
     } catch(err) {
       errEl.textContent = friendlyError(err.code);
@@ -1046,7 +1317,7 @@
         }
         await setDoc(doc(db, 'users', cred.user.uid), {
           name, email, role: 'medidor', orgId: joinCode,
-          disabled: true, geoStatus: 'pending',
+          isQGC: true, disabled: true, geoStatus: 'pending',
           createdAt: serverTimestamp()
         });
         await maybeSendWelcome(email, name, cred.user.uid);
@@ -1108,6 +1379,123 @@
     return map[code] || `Error: ${code}`;
   }
 
+  // ---- Travel verification backend seam (TODO) ----
+  // A QGC-trusted device outside PR can request a 30-day travel grant via
+  // an email verification link. The frontend flow (detection, UI, grant
+  // check, link redeem) is fully built below; the two functions here are
+  // the backend seam, currently stubs.
+  //
+  // TODO(backend): implement requestTravelVerification.
+  //   Firebase callable `requestTravelVerification`:
+  //   - input: { email } — must belong to an existing user in the QGC org
+  //   - generates a single-use token tied to the user's UID, expiring in 1 hour
+  //   - sends the verification email via the existing email infra; the link is
+  //     https://login.nivelatolabs.com/?travel_verify=<token>
+  //   - resolves on success, rejects with { code } on failure
+  async function sendTravelVerificationEmail(email) {
+    // TODO: return (await requestTravelVerification({ email }));
+    throw { code: 'not-implemented' };
+  }
+  //
+  // TODO(backend): implement redeemTravelVerification.
+  //   Firebase callable `redeemTravelVerification`:
+  //   - input: { token } — single-use, UID-tied, 1h expiry
+  //   - validates and burns the token
+  //   - resolves { validUntil } where validUntil = Date.now() + 30 days (epoch ms)
+  //   - rejects with { code: 'invalid-travel-token' } on bad/expired/used token
+  async function redeemTravelVerification(token) {
+    // TODO: return (await redeemTravelVerification({ token }));
+    throw { code: 'not-implemented' };
+  }
+
+  // ---- Travel verification UI ----
+  // Shown on QGC-trusted devices that are definitively outside PR without a
+  // valid travel grant. QGC gray themed. Re-rendered on language change
+  // like the other dynamic screens.
+  let travelShown = false;    // travel verification screen is visible
+  let travelSent = false;     // the verification link was sent
+  let travelLinkError = false; // a ?travel_verify link was invalid/expired
+
+  function showTravelUI() {
+    travelShown = true;
+    document.body.classList.add('qgc-theme');
+    const _tc = document.querySelector('meta[name="theme-color"]');
+    if (_tc) _tc.setAttribute('content', '#2a2a2e');
+    renderTravelUI();
+  }
+
+  function renderTravelUI() {
+    const t = window.nivT;
+    const card = document.getElementById('app-card');
+    if (!card) return;
+    const prevEmail = (document.getElementById('travel-email') || {}).value || '';
+    let prefill = prevEmail;
+    if (!prefill) { try { prefill = (auth.currentUser && auth.currentUser.email) || ''; } catch (_) {} }
+    const safePrefill = String(prefill).replace(/"/g, '&quot;');
+    let bodyHtml;
+    if (travelSent) {
+      bodyHtml = '<div style="text-align:center">'
+        + '<div style="font-size:40px;margin-bottom:12px">✉️</div>'
+        + '<div class="tagline" style="margin-bottom:8px">' + t('travel_sent_title') + '</div>'
+        + '<p class="travel-body">' + t('travel_sent_body') + '</p>'
+        + '</div>';
+    } else {
+      bodyHtml = '<p class="travel-body">' + t('travel_body') + '</p>'
+        + '<form id="travel-form" autocomplete="on" onsubmit="return false">'
+        + '<div class="field">'
+        + '<label for="travel-email">' + t('label_email') + '</label>'
+        + '<input type="email" id="travel-email" name="email" placeholder="' + t('ph_email') + '" autocomplete="email" value="' + safePrefill + '" />'
+        + '</div>'
+        + '<button class="btn-primary qgi-btn" id="btn-travel-send" type="submit">' + t('travel_send') + '</button>'
+        + '</form>'
+        + '<div class="error-msg" id="travel-error" role="alert"></div>';
+    }
+    card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
+      + '<h1 class="logo qgi">Quality Glass</h1>'
+      + '<div class="tagline">' + t('travel_title') + '</div>'
+      + bodyHtml
+      + '<div style="text-align:center;margin-top:16px"><a href="#" id="travel-back" class="forgot-link">' + t('travel_back') + '</a></div>';
+    if (travelLinkError && !travelSent) {
+      const errEl = document.getElementById('travel-error');
+      if (errEl) { errEl.textContent = t('travel_err_link'); errEl.classList.add('visible'); }
+      travelLinkError = false;
+    }
+    window.nivApplyLang();
+    const form = document.getElementById('travel-form');
+    if (form) form.addEventListener('submit', doSendTravelLink);
+    document.getElementById('travel-back').addEventListener('click', function (e) {
+      e.preventDefault();
+      travelShown = false;
+      renderForm('external', true);
+    });
+  }
+
+  async function doSendTravelLink(e) {
+    if (e) e.preventDefault();
+    const t = window.nivT;
+    const btn = document.getElementById('btn-travel-send');
+    const errEl = document.getElementById('travel-error');
+    const email = ((document.getElementById('travel-email') || {}).value || '').trim();
+    if (errEl) errEl.classList.remove('visible');
+    if (!email || email.indexOf('@') < 0 || email.indexOf('.') < 0) {
+      if (errEl) { errEl.textContent = t('travel_err_email'); errEl.classList.add('visible'); }
+      return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = t('travel_sending'); }
+    try {
+      await sendTravelVerificationEmail(email);
+      travelSent = true;
+      renderTravelUI();
+    } catch (err) {
+      const code = err && err.code;
+      if (errEl) {
+        errEl.textContent = code === 'not-implemented' ? t('travel_err_notimpl') : t('travel_err_send');
+        errEl.classList.add('visible');
+      }
+      if (btn) { btn.disabled = false; btn.textContent = t('travel_send'); }
+    }
+  }
+
   // ---- Init: hydrate the static form. NO network is awaited here. ----
   // Use synchronously-available signals (Cloudflare-injected country,
   // device timezone) for the initial mode so PR users don't see a
@@ -1121,9 +1509,54 @@
   } catch (_) {}
   var _injectedCc = (typeof window.NIVELATO_COUNTRY === 'string' && window.NIVELATO_COUNTRY) || null;
   var _initialCc = _injectedCc || (_tzIsPR ? 'PR' : null);
-  renderForm(flowFromCookie() || flowModeForCountry(_initialCc), true);
+  // Travel verification link (?travel_verify=<token>): redeemed below.
+  var _travelToken = null;
+  try { _travelToken = new URLSearchParams(location.search).get('travel_verify'); } catch (_) {}
+  // QGC device trust is checked FIRST, before any geo signal.
+  // - trusted + valid travel grant: straight to QGC mode, no geo at all.
+  // - trusted + sync signals say PR: QGC mode (background geo refines).
+  // - trusted + Cloudflare definitively says not-PR: travel verification UI.
+  // - trusted + geo unknown from sync signals: trust the device (QGC mode),
+  //   background geo refines (covers iCloud Private Relay / VPN).
+  // - not trusted: normal geo-gated flow.
+  var _trusted = qgcAuthed();
+  var _travelValid = qgcTravelValid();
+  var _syncPR = (_injectedCc === 'PR') || _tzIsPR;
+  var _syncNotPR = !!_injectedCc && _injectedCc !== 'PR';
+  var _initialMode;
+  if (_trusted && _travelValid) _initialMode = 'qgi';
+  else if (_trusted && _syncPR) _initialMode = 'qgi';
+  else if (_trusted && _syncNotPR) _initialMode = 'travel';
+  else if (_trusted) _initialMode = 'qgi';
+  else _initialMode = flowFromCookie() || flowModeForCountry(_initialCc);
+  if (_initialMode === 'travel') showTravelUI();
+  else renderForm(_initialMode, true);
   if (_initialCc === 'PR') showPrNotice();
   if (new URLSearchParams(location.search).get('missingProfile') === '1') showMissingProfileNotice();
+
+  // Redeem a travel verification link in the background. On success the
+  // device gets device trust + a 30-day travel grant and lands in QGC mode
+  // (the token is stripped from the URL). On failure, an invalid/expired
+  // notice is surfaced if the travel screen is showing.
+  if (_travelToken) {
+    redeemTravelVerification(_travelToken).then(function (res) {
+      if (res && res.validUntil) {
+        markQgcAuthed();
+        storeTravelGrant(res.validUntil);
+        travelShown = false;
+        travelSent = false;
+        try {
+          var _u = new URL(location.href);
+          _u.searchParams.delete('travel_verify');
+          history.replaceState(null, '', _u.toString());
+        } catch (_) {}
+        renderForm('qgi', true);
+        if (_initialCc === 'PR') showPrNotice();
+      }
+    }).catch(function () {
+      if (travelShown) { travelLinkError = true; renderTravelUI(); }
+    });
+  }
 
   // (a) Already signed in? Send them to the app. Ignores the initial
   // null-fire while the persisted session restores, and stays out of the
@@ -1139,8 +1572,14 @@
   // Country: prefer the Cloudflare-injected header (reliable, no API call);
   // fall back to the IP lookup for direct GitHub Pages visits.
   // (Timezone fallback already computed above as _tzIsPR.)
+  // Trusted devices with a valid travel grant skip geo entirely. Trusted
+  // devices without one still run geo: a definitive not-PR surfaces the
+  // travel verification UI, and a return to PR restores QGC mode (which
+  // supersedes any travel state).
+  if (!(_trusted && _travelValid)) {
   var injectedCc = _injectedCc;
   var tzIsPR = _tzIsPR;
+  var trustedDev = _trusted;
   var countryPromise = injectedCc
     ? Promise.resolve(injectedCc)
     : Promise.race([
@@ -1149,13 +1588,28 @@
       ]);
   countryPromise.then((cc) => {
     country = cc;
-    var effectivePR = (country === 'PR') || tzIsPR;
-    var effectiveCountry = effectivePR ? 'PR' : country;
+    var effectivePR = (cc === 'PR') || tzIsPR;
+    if (trustedDev) {
+      // A travel grant acquired after boot (e.g. via link redeem) supersedes geo.
+      if (qgcTravelValid()) return;
+      if (effectivePR) {
+        travelShown = false;
+        travelSent = false;
+        if (!QGI) renderForm('qgi', true);
+        showPrNotice();
+      } else if (cc && cc !== 'PR') {
+        if (!travelShown && !pendingShown && !savePromptShown && !authBusy) showTravelUI();
+      }
+      // cc null: geo inconclusive, device trust stands as rendered.
+      return;
+    }
+    var effectiveCountry = effectivePR ? 'PR' : cc;
     const mode = flowFromCookie() || flowModeForCountry(effectiveCountry);
     if (mode !== (QGI ? 'qgi' : 'external')) renderForm(mode, true);
-    if (country === null && !flowFromCookie() && !tzIsPR) showGeoNotice();
+    if (cc === null && !flowFromCookie() && !tzIsPR) showGeoNotice();
     if (effectivePR) showPrNotice();
   });
+  }
 </script>
 </body>
 </html>
