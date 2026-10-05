@@ -752,7 +752,8 @@ exports.provisionBundleKey = onCall(
 // a successful sign-in on the login page, the client calls this with its
 // session and gets back a short-lived custom token for the SAME uid, which
 // it hands to app.nivelatolabs.com/sso.html; that page signs in there with
-// signInWithCustomToken. Rate-limited: 10 mints per uid per day.
+// signInWithCustomToken. Rate-limited: 30 mints per uid per day (page loads
+// with a persisted session each burn one via the auto-handoff).
 // ---------------------------------------------------------------------------
 exports.mintSsoToken = onCall(
   { region: 'us-central1', memory: '256MiB' },
@@ -766,7 +767,7 @@ exports.mintSsoToken = onCall(
     const granted = await db.runTransaction(async (tx) => {
       const snap = await tx.get(grantRef);
       const d = snap.exists ? snap.data() : {};
-      if (d.date === today && (d.count || 0) >= 10) return false;
+      if (d.date === today && (d.count || 0) >= 30) return false;
       tx.set(grantRef, {
         date: today,
         count: d.date === today ? (d.count || 0) + 1 : 1,
