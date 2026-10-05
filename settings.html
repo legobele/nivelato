@@ -81,15 +81,10 @@
 <div class="settings-shell">
   <a class="btn-back" href="dashboard.html" onclick="if (history.length > 1) { history.back(); return false; }">← Volver</a>
   <h1>Ajustes</h1>
-  <div class="sub">Configuración de tu cuenta y del taller</div>
-
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('cuenta')">Mi cuenta</button>
-    <button class="tab-btn" id="tab-taller-btn" onclick="switchTab('taller')" style="display:none">Taller</button>
-  </div>
+  <div class="sub">Configuración de tu cuenta</div>
 
   <!-- MI CUENTA -->
-  <div class="tab-panel active" id="tab-cuenta">
+  <div id="tab-cuenta">
     <div class="card">
       <div class="card-title">Información de la cuenta</div>
       <div class="card-desc">Datos de tu perfil en Nivelato.</div>
@@ -110,7 +105,8 @@
       <div id="delete-request-status" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:12px;font-size:13px;color:#e67700;display:none;">⏳ Tu solicitud de eliminación está pendiente.</div>
       <button class="btn-delete-account" id="btn-delete-account" onclick="requestDeleteAccount()">🗑 Solicitar eliminación de cuenta</button>
       <button class="btn-delete-account" id="btn-logout" onclick="doLogout()" style="border-color:#dee2e6;color:#495057;">⏻ Cerrar sesión</button>
-      <div style="margin-top:16px;text-align:center;"><a href="privacy.html" style="font-size:13px;color:#1971c2;">Política de privacidad</a></div>
+      <div id="company-link" style="margin-top:16px;text-align:center;display:none;"><a href="company/settings.html" style="font-size:13px;color:#1971c2;">⚙ Ajustes de la compañía</a></div>
+    <div style="margin-top:16px;text-align:center;"><a href="privacy.html" style="font-size:13px;color:#1971c2;">Política de privacidad</a></div>
     </div>
 
     <div class="card">
@@ -147,34 +143,6 @@
 
   </div>
 
-  <!-- TALLER -->
-  <div class="tab-panel" id="tab-taller">
-    <div class="card company-member-card">
-      <div class="card-title">API de 2FA</div>
-      <div class="card-desc">Dominio o URL del API que el taller usa para el segundo factor de autenticación. Nivel de compañía, no por usuario.</div>
-      <div class="backend-field"><label>URL del API de 2FA</label><input id="tfa-url" type="url" placeholder="https://taller.example.com/api/2fa" autocomplete="off" /></div>
-      <button class="btn-primary" id="btn-tfa-save" onclick="saveTfaApi()">Guardar</button>
-      <div class="status-line" id="tfa-status"></div>
-    </div>
-    <div class="card company-member-card">
-      <div class="card-title">Permisos de miembros</div>
-      <div class="card-desc">Gestiona las capacidades de cada miembro del taller.</div>
-      <div id="permissions-list"><p style="color:#868e96;font-size:13px;">Cargando miembros…</p></div>
-      <div class="saved-msg" id="perm-saved">✓ Cambios guardados</div>
-    </div>
-
-    <div class="card company-member-card">
-      <div class="card-title">Solicitudes de acceso</div>
-      <div class="card-desc">Cuentas pendientes de aprobación para unirse al taller.</div>
-      <div id="requests-list"><p style="color:#868e96;font-size:13px;">Cargando solicitudes…</p></div>
-    </div>
-
-    <div class="card company-member-card" id="delete-requests-card" style="display:none;">
-      <div class="card-title">🗑 Solicitudes de eliminación</div>
-      <div class="card-desc">Usuarios que han solicitado eliminar su cuenta.</div>
-      <div id="delete-requests-list"><p style="color:#868e96;font-size:13px;">Cargando…</p></div>
-    </div>
-  </div>
 </div>
 
 <script type="module">
@@ -182,7 +150,6 @@ import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getDoc, doc, setDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { makePermChecker } from './permissions.js';
-import { PERM_DEFS, orgHasQuotes } from './permissions.js';
 import { ensureFlowClaims } from './geo.js';
 
 const NOTIF_KEYS = ['welcomeEmail', 'newProject', 'projectEdit', 'quoteReady'];
@@ -192,10 +159,6 @@ let currentUser = null;
 let currentUserData = null;
 let orgMembers = [];
 let _can = () => false;
-
-// Ruta inyectada por el worker de Cloudflare ("company-settings",
-// "account-settings"); undefined al abrir el archivo directo: se muestra todo.
-const ROUTE = window.NIVELATO_ROUTE;
 
 // Escape ALL user-controlled strings before innerHTML interpolation (stored XSS).
 // Member names/emails/roles come from Firestore and any org member can set their own.
@@ -287,169 +250,15 @@ onAuthStateChanged(auth, async (user) => {
     if (drStatus) drStatus.style.display = 'block';
   }
 
-  // show taller tab only for userManagement
+  // company settings live at company/settings.html; link it for managers
   if (_can('userManagement')) {
-    document.getElementById('tab-taller-btn').style.display = 'block';
-    await loadOrgMembers(orgId);
-    renderPermissions();
-    await loadRequests(orgId);
-    await loadDeleteRequests();
-    await loadTfaApi(orgId);
+    document.getElementById('company-link').style.display = 'block';
   }
 
   // notification prefs + backend status (propio backend o default)
   await loadNotifPrefs();
   await loadLangPref();
-  renderBackendStatus();
-
-  // división por ruta: company-settings / account-settings / todo (sin ruta)
-  await applySettingsRoute(orgId);
 });
-
-// ─── División por ruta (company-settings / account-settings) ───
-// Sin ruta (undefined): se muestra TODO como hoy (tabs Mi cuenta / Taller).
-async function applySettingsRoute(orgId) {
-  if (ROUTE === 'company-settings') {
-    const tabs = document.querySelector('.tabs');
-    if (tabs) tabs.style.display = 'none';
-    const cuenta = document.getElementById('tab-cuenta');
-    if (cuenta) { cuenta.classList.remove('active'); cuenta.style.display = 'none'; }
-    const taller = document.getElementById('tab-taller');
-    if (taller) taller.classList.add('active');
-    const sub = document.querySelector('.settings-shell .sub');
-    if (sub) sub.textContent = 'Configuración de la compañía';
-    // Sin permiso de gestión de usuarios las tarjetas de miembros quedan
-    // sin cargar (el gate de arriba no corrió): ocultarlas en vez de dejar
-    // los "Cargando…" colgados.
-    if (!_can('userManagement')) {
-      document.querySelectorAll('.company-member-card').forEach(c => { c.style.display = 'none'; });
-    }
-    await setupCompanyCards(orgId);
-  } else if (ROUTE === 'account-settings') {
-    const tabs = document.querySelector('.tabs');
-    if (tabs) tabs.style.display = 'none';
-    const taller = document.getElementById('tab-taller');
-    if (taller) { taller.classList.remove('active'); taller.style.display = 'none'; }
-    const sub = document.querySelector('.settings-shell .sub');
-    if (sub) sub.textContent = 'Configuración de tu cuenta';
-    // el panel "Mi cuenta" ya viene activo en el HTML
-  }
-}
-
-let _companyOrgId = null;
-const _isOwner = () => !!(currentUserData && currentUserData.role === 'owner');
-
-function coStatus(elId, kind, text) {
-  const el = document.getElementById(elId);
-  if (!el) return;
-  el.className = 'status-line ' + kind;
-  el.textContent = text;
-}
-
-// Tarjetas nuevas de company-settings: perfil de la compañía y ajustes de
-// cotización. Se insertan al inicio del panel (que en esta ruta ya contiene
-// las tarjetas de miembros). Edición solo para el dueño; los demás las ven
-// de solo lectura.
-async function setupCompanyCards(orgId) {
-  _companyOrgId = orgId;
-  if (document.getElementById('card-company-profile')) return; // ya insertadas
-  const taller = document.getElementById('tab-taller');
-  if (!taller) return;
-  taller.insertAdjacentHTML('afterbegin', `
-    <div class="card" id="card-company-profile">
-      <div class="card-title">Perfil de la compañía</div>
-      <div class="card-desc">Nombre de la compañía como aparece en la app.</div>
-      <div class="backend-field"><label>Nombre de la compañía</label><input id="co-name" type="text" autocomplete="off" /></div>
-      <p id="co-profile-note" style="font-size:12px;color:#868e96;display:none;margin:0 0 12px;">Solo el dueño puede editar el perfil.</p>
-      <button class="btn-primary" id="btn-co-profile-save" onclick="saveCompanyProfile()">Guardar perfil</button>
-      <div class="status-line" id="co-profile-status"></div>
-    </div>
-    <div class="card" id="card-quote-settings">
-      <div class="card-title">Ajustes de cotización</div>
-      <div class="card-desc">Valores por defecto al crear cotizaciones nuevas.</div>
-      <div class="backend-field"><label>Prefijo de folio</label><input id="co-prefijo" type="text" placeholder="NIV" autocomplete="off" /></div>
-      <div class="backend-field"><label>Tasa de IVU (0.115 = 11.5%)</label><input id="co-tasaivu" type="number" step="0.001" min="0" /></div>
-      <div class="backend-field"><label>Validez (días)</label><input id="co-validez" type="number" step="1" min="1" /></div>
-      <p id="co-quote-note" style="font-size:12px;color:#868e96;display:none;margin:0 0 12px;">Solo el dueño puede editar los ajustes.</p>
-      <button class="btn-primary" id="btn-co-quote-save" onclick="saveQuoteSettings()">Guardar ajustes</button>
-      <div class="status-line" id="co-quote-status"></div>
-    </div>
-  `);
-  await loadCompanyProfile();
-  await loadQuoteSettings();
-}
-
-async function loadCompanyProfile() {
-  const owner = _isOwner();
-  try {
-    const snap = await getDoc(doc(db, 'orgs', _companyOrgId));
-    document.getElementById('co-name').value = snap.exists() ? (snap.data().name || '') : '';
-  } catch (e) {
-    coStatus('co-profile-status', 'err', 'No se pudo leer el perfil: ' + (e.message || 'error desconocido'));
-  }
-  if (!owner) {
-    document.getElementById('co-name').disabled = true;
-    document.getElementById('btn-co-profile-save').style.display = 'none';
-    document.getElementById('co-profile-note').style.display = 'block';
-  }
-}
-
-window.saveCompanyProfile = async () => {
-  const name = document.getElementById('co-name').value.trim();
-  if (!name) { coStatus('co-profile-status', 'err', 'El nombre no puede estar vacío.'); return; }
-  const btn = document.getElementById('btn-co-profile-save');
-  btn.disabled = true;
-  try {
-    // las reglas solo permiten al dueño actualizar el doc de la org
-    await updateDoc(doc(db, 'orgs', _companyOrgId), { name });
-    coStatus('co-profile-status', 'ok', 'Perfil guardado.');
-  } catch (e) {
-    coStatus('co-profile-status', 'err', 'No se pudo guardar: ' + (e.message || 'error desconocido'));
-  } finally {
-    btn.disabled = false;
-  }
-};
-
-async function loadQuoteSettings() {
-  const owner = _isOwner();
-  try {
-    const snap = await getDoc(doc(db, 'companies', _companyOrgId));
-    const ajustes = (snap.exists() && snap.data().ajustes) || {};
-    document.getElementById('co-prefijo').value = ajustes.prefijoFolio || '';
-    document.getElementById('co-tasaivu').value = ajustes.tasaIVU != null ? ajustes.tasaIVU : 0.115;
-    document.getElementById('co-validez').value = ajustes.validezDias != null ? ajustes.validezDias : 30;
-  } catch (e) {
-    coStatus('co-quote-status', 'err', 'No se pudieron leer los ajustes: ' + (e.message || 'error desconocido'));
-  }
-  if (!owner) {
-    ['co-prefijo', 'co-tasaivu', 'co-validez'].forEach(id => { document.getElementById(id).disabled = true; });
-    document.getElementById('btn-co-quote-save').style.display = 'none';
-    document.getElementById('co-quote-note').style.display = 'block';
-  }
-}
-
-window.saveQuoteSettings = async () => {
-  const prefijo = document.getElementById('co-prefijo').value.trim();
-  const tasa = Number(document.getElementById('co-tasaivu').value);
-  const validez = Math.round(Number(document.getElementById('co-validez').value));
-  if (!Number.isFinite(tasa) || tasa < 0) { coStatus('co-quote-status', 'err', 'La tasa de IVU debe ser 0 o más (0.115 = 11.5%).'); return; }
-  if (!Number.isFinite(validez) || validez < 1) { coStatus('co-quote-status', 'err', 'La validez debe ser al menos 1 día.'); return; }
-  const btn = document.getElementById('btn-co-quote-save');
-  btn.disabled = true;
-  try {
-    // notación de puntos: no pisa otros campos que pueda tener ajustes
-    await updateDoc(doc(db, 'companies', _companyOrgId), {
-      'ajustes.prefijoFolio': prefijo,
-      'ajustes.tasaIVU': tasa,
-      'ajustes.validezDias': validez,
-    });
-    coStatus('co-quote-status', 'ok', 'Ajustes guardados.');
-  } catch (e) {
-    coStatus('co-quote-status', 'err', 'No se pudo guardar: ' + (e.message || 'error desconocido'));
-  } finally {
-    btn.disabled = false;
-  }
-};
 
 async function loadNotifPrefs() {
   let prefs = { ...NOTIF_DEFAULTS };
@@ -529,183 +338,6 @@ async function saveLangPref(l) {
   }
 }
 
-// API de 2FA (nivel compañía): un solo campo, guardado en el doc de la org.
-async function loadTfaApi(orgId) {
-  try {
-    const snap = await getDoc(doc(db, 'orgs', orgId));
-    const url = snap.data()?.twoFactorApiUrl || '';
-    document.getElementById('tfa-url').value = url;
-  } catch (_) { /* best effort */ }
-}
-
-function tfaStatus(kind, text) {
-  const el = document.getElementById('tfa-status');
-  el.className = 'status-line ' + kind;
-  el.textContent = text;
-}
-
-window.saveTfaApi = async () => {
-  const url = document.getElementById('tfa-url').value.trim();
-  if (url && !/^https?:\/\//i.test(url)) {
-    tfaStatus('err', 'La URL debe empezar con https://');
-    return;
-  }
-  const btn = document.getElementById('btn-tfa-save');
-  btn.disabled = true;
-  try {
-    await updateDoc(doc(db, 'orgs', currentUserData.orgId), { twoFactorApiUrl: url });
-    tfaStatus('ok', 'API de 2FA guardada.');
-  } catch (e) {
-    console.error('[Nivelato] save 2FA API failed:', e);
-    tfaStatus('err', 'No se pudo guardar. Intenta de nuevo.');
-  } finally {
-    btn.disabled = false;
-  }
-};
-
-async function loadOrgMembers(orgId) {
-  const q = query(collection(db, 'users'), where('orgId', '==', orgId));
-  const snap = await getDocs(q);
-  orgMembers = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
-}
-
-function renderPermissions() {
-  const container = document.getElementById('permissions-list');
-  // orgs sin quoting (QGC): los permisos de precios/cotizaciones no se muestran
-  const visiblePerms = orgHasQuotes(currentUserData) ? PERM_DEFS : PERM_DEFS.filter(p => !['managePriceList', 'createQuotes', 'approveQuotes'].includes(p.key));
-  container.innerHTML = orgMembers.map(m => {
-    const perms = m.permissions || {};
-    const roleLabel = { owner: 'Dueño / Admin', cotizador: 'Cotizador', supervisor: 'Supervisor', medidor: 'Técnico medidor' }[m.role] || m.role || '—';
-    return `
-      <div class="perm-member" data-uid="${escapeHtml(m.uid)}">
-        <div class="perm-member-header">${escapeHtml(m.name) || 'Sin nombre'} <span class="perm-member-role">${escapeHtml(roleLabel)}</span></div>
-        <div class="perm-grid">
-          ${visiblePerms.map(p => `
-            <label>
-              <input type="checkbox" class="perm-check" data-perm="${p.key}" ${!!perms[p.key] ? 'checked' : ''} ${m.role === 'owner' ? 'disabled' : ''} />
-              ${p.label}
-            </label>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  // attach change listeners
-  container.querySelectorAll('.perm-check:not([disabled])').forEach(cb => {
-    cb.addEventListener('change', async (e) => {
-      const memberEl = e.target.closest('.perm-member');
-      const uid = memberEl.dataset.uid;
-      const permKey = e.target.dataset.perm;
-      const checked = e.target.checked;
-      try {
-        const userRef = doc(db, 'users', uid);
-        await updateDoc(userRef, { [`permissions.${permKey}`]: checked });
-        document.getElementById('perm-saved').style.display = 'block';
-        setTimeout(() => document.getElementById('perm-saved').style.display = 'none', 2500);
-      } catch(err) {
-        alert('Error al guardar permiso: ' + err.message);
-        e.target.checked = !checked; // revert
-      }
-    });
-  });
-}
-
-async function loadRequests(orgId) {
-  const container = document.getElementById('requests-list');
-  const pending = orgMembers.filter(m => m.disabled === true);
-  if (pending.length === 0) {
-    container.innerHTML = '<p style="color:#868e96;font-size:13px;">No hay solicitudes pendientes.</p>';
-    return;
-  }
-  container.innerHTML = pending.map(m => `
-    <div class="request-card" data-uid="${escapeHtml(m.uid)}">
-      <div>
-        <div class="request-name">${escapeHtml(m.name) || 'Sin nombre'}</div>
-        <div class="request-email">${escapeHtml(m.email) || ''}</div>
-      </div>
-      <div class="request-actions">
-        <button class="btn-sm approve" onclick="approveRequest('${escapeHtml(m.uid)}')">Aprobar</button>
-        <button class="btn-sm reject" onclick="rejectRequest('${escapeHtml(m.uid)}')">Rechazar</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-window.approveRequest = async (uid) => {
-  try {
-    await updateDoc(doc(db, 'users', uid), { disabled: false });
-    // remove the card from DOM
-    const card = document.querySelector(`.request-card[data-uid="${uid}"]`);
-    if (card) card.remove();
-    // also update in-memory
-    const m = orgMembers.find(x => x.uid === uid);
-    if (m) m.disabled = false;
-  } catch(e) {
-    alert('Error al aprobar: ' + e.message);
-  }
-};
-
-window.rejectRequest = async (uid) => {
-  if (!confirm('¿Rechazar a este usuario? Su cuenta será eliminada.')) return;
-  try {
-    // For real rejection we'd delete the user doc; for now just disable permanently
-    await updateDoc(doc(db, 'users', uid), { disabled: 'rejected' });
-    const card = document.querySelector(`.request-card[data-uid="${uid}"]`);
-    if (card) card.remove();
-  } catch(e) {
-    alert('Error al rechazar: ' + e.message);
-  }
-};
-
-async function loadDeleteRequests() {
-  const container = document.getElementById('delete-requests-list');
-  const drs = orgMembers.filter(m => !!m.deleteRequestedAt);
-  document.getElementById('delete-requests-card').style.display = drs.length ? 'block' : 'none';
-  if (drs.length === 0) {
-    container.innerHTML = '<p style="color:#868e96;font-size:13px;">No hay solicitudes de eliminación pendientes.</p>';
-    return;
-  }
-  container.innerHTML = drs.map(m => `
-    <div class="request-card" data-uid="${escapeHtml(m.uid)}">
-      <div>
-        <div class="request-name">${escapeHtml(m.name) || 'Sin nombre'}</div>
-        <div class="request-email">${escapeHtml(m.email) || ''} · Solicitado ${escapeHtml(new Date(m.deleteRequestedAt).toLocaleDateString('es-PR'))}</div>
-      </div>
-      <div class="request-actions">
-        <button class="btn-sm approve" onclick="processDeleteRequest('${escapeHtml(m.uid)}', true)">Eliminar cuenta</button>
-        <button class="btn-sm reject" onclick="processDeleteRequest('${escapeHtml(m.uid)}', false)">Rechazar</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-window.processDeleteRequest = async (uid, approved) => {
-  if (!approved && !confirm('¿Rechazar esta solicitud? La cuenta permanecerá activa.')) return;
-  if (approved && !confirm('⚠️ ¿Eliminar permanentemente esta cuenta? Se borrarán su perfil, sus mediciones y su acceso. Esta acción NO se puede deshacer.')) return;
-  try {
-    if (approved) {
-      // Admin approval: stamps deleteApprovedAt. The processAccountDeletion
-      // Cloud Function watches that flag and performs the actual wipe
-      // (profile doc, jobs + photos, Firebase Auth account). Clients can
-      // never delete user docs directly (firestore.rules: allow delete: false).
-      await updateDoc(doc(db, 'users', uid), { deleteApprovedAt: new Date().toISOString() });
-    } else {
-      // Reject: clear the request, the account stays active.
-      await updateDoc(doc(db, 'users', uid), { deleteRequestedAt: null });
-    }
-    const card = document.querySelector(`#delete-requests-list .request-card[data-uid="${uid}"]`);
-    if (card) card.remove();
-    // recheck if empty
-    if (!document.querySelector('#delete-requests-list .request-card')) {
-      document.getElementById('delete-requests-card').style.display = 'none';
-      document.getElementById('delete-requests-list').innerHTML = '<p style="color:#868e96;font-size:13px;">No hay solicitudes de eliminación pendientes.</p>';
-    }
-  } catch(e) {
-    alert('Error: ' + e.message);
-  }
-};
-
 window.requestDeleteAccount = async () => {
   if (!confirm('¿Solicitar la eliminación de tu cuenta y todos tus datos? Un administrador revisará tu solicitud.')) return;
   try {
@@ -742,12 +374,6 @@ window.doLogout = async () => {
   window.location.href = 'https://login.nivelatolabs.com/';
 };
 
-window.switchTab = (name) => {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelector(`.tab-btn[onclick*="${name}"]`)?.classList.add('active');
-  document.getElementById(`tab-${name}`)?.classList.add('active');
-};
 </script>
 </body>
 </html>

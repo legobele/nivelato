@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<script src="../company-theme.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#121212" />
+<link rel="manifest" href="../manifest.json" />
+<title>Nivelato — Ajustes de la compañía</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../autism.css" />
+<script src="../testing.js" defer></script>
+<style>
+  .settings-shell { max-width: 640px; margin: 0 auto; padding: 24px 20px; }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .sub { font-size: 14px; color: #868e96; margin-bottom: 24px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: #f1f3f5; border-radius: 14px; padding: 4px; }
+  .tab-btn { flex: 1; padding: 10px 16px; min-height: 44px; border: none; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; background: transparent; color: #495057; transition: all 0.15s; }
+  .tab-btn.active { background: #fff; color: #1971c2; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.06); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .card { background: #fff; border: 1px solid #e9ecef; border-radius: 18px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.06); }
+  .card-title { font-size: 15px; font-weight: 700; color: #212529; margin-bottom: 4px; }
+  .card-desc { font-size: 13px; color: #868e96; margin-bottom: 16px; }
+  .perm-member { border-bottom: 1px solid #f1f3f5; padding: 14px 0; }
+  .perm-member:last-child { border-bottom: none; }
+  .perm-member-header { font-size: 14px; font-weight: 600; color: #212529; margin-bottom: 8px; }
+  .perm-member-role { font-size: 12px; color: #868e96; font-weight: 500; }
+  .perm-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .perm-grid label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: #495057; cursor: pointer; padding: 4px 10px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6; }
+  .perm-grid label:has(input:checked) { background: #e7f5ff; border-color: #1971c2; color: #1971c2; }
+  .perm-grid input { width: 14px; height: 14px; accent-color: #1971c2; }
+  .request-card { background: #fff; border: 1px solid #e9ecef; border-radius: 14px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .request-name { font-size: 14px; font-weight: 600; }
+  .request-email { font-size: 12px; color: #868e96; }
+  .request-actions { display: flex; gap: 8px; }
+  .btn-sm { padding: 7px 16px; min-height: 44px; display: inline-flex; align-items: center; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .btn-sm.approve { background: #2f9e44; color: #fff; }
+  .btn-sm.reject { background: #e03131; color: #fff; }
+  .btn-back { display: inline-block; margin-bottom: 16px; font-size: 13px; color: #1971c2; text-decoration: none; font-weight: 600; cursor: pointer; }
+  .btn-back:hover { text-decoration: underline; }
+  .info-row { display: flex; padding: 10px 0; border-bottom: 1px solid #f1f3f5; font-size: 14px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { font-weight: 600; color: #495057; min-width: 120px; }
+  .info-value { color: #212529; }
+  .saved-msg { font-size: 13px; color: #2f9e44; font-weight: 600; text-align: center; padding: 8px; display: none; }
+  .btn-secondary.lang-active { border-color: #1971c2; color: #1971c2; background: #e7f1fb; }
+  .btn-delete-account { width: 100%; margin-top: 16px; padding: 12px 16px; min-height: 44px; background: #fff; border: 1.5px solid #ffc9c9; border-radius: 12px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; color: #c92a2a; transition: background 0.15s; }
+  .btn-delete-account:hover { background: #fff5f5; }
+  .btn-delete-account:disabled { opacity: 0.5; cursor: default; }
+  /* toggles de notificaciones */
+  .notif-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f1f3f5; }
+  .notif-row:last-child { border-bottom: none; }
+  .notif-label { font-size: 14px; font-weight: 600; color: #212529; }
+  .notif-desc { font-size: 12px; color: #868e96; margin-top: 2px; }
+  .switch { position: relative; width: 48px; height: 28px; flex: none; cursor: pointer; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch .track { position: absolute; inset: 0; background: #dee2e6; border-radius: 9999px; transition: background 0.2s; }
+  .switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; background: #fff; border-radius: 9999px; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.06); transition: transform 0.2s; }
+  .switch input:checked + .track { background: #1971c2; }
+  .switch input:checked + .track::after { transform: translateX(20px); }
+  /* backend personalizado */
+  .backend-field { margin-bottom: 10px; }
+  .backend-field label { display: block; font-size: 12px; font-weight: 600; color: #495057; margin-bottom: 4px; }
+  .backend-field input { width: 100%; padding: 10px 12px; font-size: 13px; font-family: monospace; border: 1.5px solid #dee2e6; border-radius: 12px; box-sizing: border-box; }
+  .backend-field input:focus { outline: none; border-color: #1971c2; box-shadow: 0 0 0 3px #e7f5ff; }
+  .btn-primary { width: 100%; padding: 12px 16px; min-height: 48px; background: #1971c2; color: #fff; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .btn-primary:active { transform: scale(0.98); background: #1864ab; }
+  .btn-primary:disabled { opacity: 0.6; cursor: default; }
+  .btn-secondary { width: 100%; margin-top: 8px; padding: 12px 16px; min-height: 48px; background: #fff; color: #495057; border: 1.5px solid #dee2e6; border-radius: 12px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .status-line { font-size: 13px; padding: 10px 14px; border-radius: 12px; margin-top: 12px; display: none; }
+  .status-line.ok { display: block; background: #ebfbee; color: #2f9e44; }
+  .status-line.warn { display: block; background: #fff3bf; color: #e67700; }
+  .status-line.err { display: block; background: #fff5f5; color: #c92a2a; }
+  .backend-current { font-size: 13px; color: #495057; background: #f8f9fa; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
+  .backend-current b { color: #212529; }
+</style></head>
+<body>
+<div class="settings-shell">
+  <a class="btn-back" href="dashboard.html" onclick="if (history.length > 1) { history.back(); return false; }">← Volver</a>
+  <h1>Ajustes de la compañía</h1>
+  <div class="sub">Configuración del taller. Solo usuarios con permiso de gestión.</div>
+  <div id="company-denied" style="display:none;" class="card">
+    <div class="card-title">Sin acceso</div>
+    <div class="card-desc">No tienes permiso para ver los ajustes de la compañía.</div>
+  </div>
+  <div id="company-area">
+
+  <div class="card" id="card-company-profile">
+    <div class="card-title">Perfil de la compañía</div>
+    <div class="card-desc">Nombre de la compañía como aparece en la app.</div>
+    <div class="backend-field"><label>Nombre de la compañía</label><input id="co-name" type="text" autocomplete="off" /></div>
+    <p id="co-profile-note" style="font-size:12px;color:#868e96;display:none;margin:0 0 12px;">Solo el dueño puede editar el perfil.</p>
+    <button class="btn-primary" id="btn-co-profile-save" onclick="saveCompanyProfile()">Guardar perfil</button>
+    <div class="status-line" id="co-profile-status"></div>
+  </div>
+  <div class="card" id="card-quote-settings">
+    <div class="card-title">Ajustes de cotización</div>
+    <div class="card-desc">Valores por defecto al crear cotizaciones nuevas.</div>
+    <div class="backend-field"><label>Prefijo de folio</label><input id="co-prefijo" type="text" placeholder="NIV" autocomplete="off" /></div>
+    <div class="backend-field"><label>Tasa de IVU (0.115 = 11.5%)</label><input id="co-tasaivu" type="number" step="0.001" min="0" /></div>
+    <div class="backend-field"><label>Validez (días)</label><input id="co-validez" type="number" step="1" min="1" /></div>
+    <p id="co-quote-note" style="font-size:12px;color:#868e96;display:none;margin:0 0 12px;">Solo el dueño puede editar los ajustes.</p>
+    <button class="btn-primary" id="btn-co-quote-save" onclick="saveQuoteSettings()">Guardar ajustes</button>
+    <div class="status-line" id="co-quote-status"></div>
+  </div>
+<div class="card company-member-card">
+      <div class="card-title">API de 2FA</div>
+      <div class="card-desc">Dominio o URL del API que el taller usa para el segundo factor de autenticación. Nivel de compañía, no por usuario.</div>
+      <div class="backend-field"><label>URL del API de 2FA</label><input id="tfa-url" type="url" placeholder="https://taller.example.com/api/2fa" autocomplete="off" /></div>
+      <button class="btn-primary" id="btn-tfa-save" onclick="saveTfaApi()">Guardar</button>
+      <div class="status-line" id="tfa-status"></div>
+    </div>
+    <div class="card company-member-card">
+      <div class="card-title">Permisos de miembros</div>
+      <div class="card-desc">Gestiona las capacidades de cada miembro del taller.</div>
+      <div id="permissions-list"><p style="color:#868e96;font-size:13px;">Cargando miembros…</p></div>
+      <div class="saved-msg" id="perm-saved">✓ Cambios guardados</div>
+    </div>
+
+    <div class="card company-member-card">
+      <div class="card-title">Solicitudes de acceso</div>
+      <div class="card-desc">Cuentas pendientes de aprobación para unirse al taller.</div>
+      <div id="requests-list"><p style="color:#868e96;font-size:13px;">Cargando solicitudes…</p></div>
+    </div>
+
+    <div class="card company-member-card" id="delete-requests-card" style="display:none;">
+      <div class="card-title">🗑 Solicitudes de eliminación</div>
+      <div class="card-desc">Usuarios que han solicitado eliminar su cuenta.</div>
+      <div id="delete-requests-list"><p style="color:#868e96;font-size:13px;">Cargando…</p></div>
+    </div>
+
+  </div>
+</div>
+<script type="module">
+import { auth, db } from '../firebase-config.js';
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { getDoc, doc, setDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { makePermChecker } from '../permissions.js';
+import { PERM_DEFS, orgHasQuotes } from '../permissions.js';
+import { ensureFlowClaims } from '../geo.js';
+let currentUser = null;
+let currentUserData = null;
+let orgMembers = [];
+let _can = () => false;
+const escapeHtml = (s) => String(s ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+let _companyOrgId = null;
+const _isOwner = () => !!(currentUserData && currentUserData.role === 'owner');
+function coStatus(elId, kind, text) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.className = 'status-line ' + kind;
+  el.textContent = text;
+}
+
+// Tarjetas nuevas de company-settings: perfil de la compañía y ajustes de
+// cotización. Se insertan al inicio del panel (que en esta ruta ya contiene
+// las tarjetas de miembros). Edición solo para el dueño; los demás las ven
+// de solo lectura.
+
+async function loadCompanyProfile() {
+  const owner = _isOwner();
+  try {
+    const snap = await getDoc(doc(db, 'orgs', _companyOrgId));
+    document.getElementById('co-name').value = snap.exists() ? (snap.data().name || '') : '';
+  } catch (e) {
+    coStatus('co-profile-status', 'err', 'No se pudo leer el perfil: ' + (e.message || 'error desconocido'));
+  }
+  if (!owner) {
+    document.getElementById('co-name').disabled = true;
+    document.getElementById('btn-co-profile-save').style.display = 'none';
+    document.getElementById('co-profile-note').style.display = 'block';
+  }
+}
+
+window.saveCompanyProfile = async () => {
+  const name = document.getElementById('co-name').value.trim();
+  if (!name) { coStatus('co-profile-status', 'err', 'El nombre no puede estar vacío.'); return; }
+  const btn = document.getElementById('btn-co-profile-save');
+  btn.disabled = true;
+  try {
+    // las reglas solo permiten al dueño actualizar el doc de la org
+    await updateDoc(doc(db, 'orgs', _companyOrgId), { name });
+    coStatus('co-profile-status', 'ok', 'Perfil guardado.');
+  } catch (e) {
+    coStatus('co-profile-status', 'err', 'No se pudo guardar: ' + (e.message || 'error desconocido'));
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+async function loadQuoteSettings() {
+  const owner = _isOwner();
+  try {
+    const snap = await getDoc(doc(db, 'companies', _companyOrgId));
+    const ajustes = (snap.exists() && snap.data().ajustes) || {};
+    document.getElementById('co-prefijo').value = ajustes.prefijoFolio || '';
+    document.getElementById('co-tasaivu').value = ajustes.tasaIVU != null ? ajustes.tasaIVU : 0.115;
+    document.getElementById('co-validez').value = ajustes.validezDias != null ? ajustes.validezDias : 30;
+  } catch (e) {
+    coStatus('co-quote-status', 'err', 'No se pudieron leer los ajustes: ' + (e.message || 'error desconocido'));
+  }
+  if (!owner) {
+    ['co-prefijo', 'co-tasaivu', 'co-validez'].forEach(id => { document.getElementById(id).disabled = true; });
+    document.getElementById('btn-co-quote-save').style.display = 'none';
+    document.getElementById('co-quote-note').style.display = 'block';
+  }
+}
+
+window.saveQuoteSettings = async () => {
+  const prefijo = document.getElementById('co-prefijo').value.trim();
+  const tasa = Number(document.getElementById('co-tasaivu').value);
+  const validez = Math.round(Number(document.getElementById('co-validez').value));
+  if (!Number.isFinite(tasa) || tasa < 0) { coStatus('co-quote-status', 'err', 'La tasa de IVU debe ser 0 o más (0.115 = 11.5%).'); return; }
+  if (!Number.isFinite(validez) || validez < 1) { coStatus('co-quote-status', 'err', 'La validez debe ser al menos 1 día.'); return; }
+  const btn = document.getElementById('btn-co-quote-save');
+  btn.disabled = true;
+  try {
+    // notación de puntos: no pisa otros campos que pueda tener ajustes
+    await updateDoc(doc(db, 'companies', _companyOrgId), {
+      'ajustes.prefijoFolio': prefijo,
+      'ajustes.tasaIVU': tasa,
+      'ajustes.validezDias': validez,
+    });
+    coStatus('co-quote-status', 'ok', 'Ajustes guardados.');
+  } catch (e) {
+    coStatus('co-quote-status', 'err', 'No se pudo guardar: ' + (e.message || 'error desconocido'));
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+async function loadTfaApi(orgId) {
+  try {
+    const snap = await getDoc(doc(db, 'orgs', orgId));
+    const url = snap.data()?.twoFactorApiUrl || '';
+    document.getElementById('tfa-url').value = url;
+  } catch (_) { /* best effort */ }
+}
+
+function tfaStatus(kind, text) {
+  const el = document.getElementById('tfa-status');
+  el.className = 'status-line ' + kind;
+  el.textContent = text;
+}
+
+window.saveTfaApi = async () => {
+  const url = document.getElementById('tfa-url').value.trim();
+  if (url && !/^https?:\/\//i.test(url)) {
+    tfaStatus('err', 'La URL debe empezar con https://');
+    return;
+  }
+  const btn = document.getElementById('btn-tfa-save');
+  btn.disabled = true;
+  try {
+    await updateDoc(doc(db, 'orgs', currentUserData.orgId), { twoFactorApiUrl: url });
+    tfaStatus('ok', 'API de 2FA guardada.');
+  } catch (e) {
+    console.error('[Nivelato] save 2FA API failed:', e);
+    tfaStatus('err', 'No se pudo guardar. Intenta de nuevo.');
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+async function loadOrgMembers(orgId) {
+  const q = query(collection(db, 'users'), where('orgId', '==', orgId));
+  const snap = await getDocs(q);
+  orgMembers = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+}
+
+function renderPermissions() {
+  const container = document.getElementById('permissions-list');
+  // orgs sin quoting (QGC): los permisos de precios/cotizaciones no se muestran
+  const visiblePerms = orgHasQuotes(currentUserData) ? PERM_DEFS : PERM_DEFS.filter(p => !['managePriceList', 'createQuotes', 'approveQuotes'].includes(p.key));
+  container.innerHTML = orgMembers.map(m => {
+    const perms = m.permissions || {};
+    const roleLabel = { owner: 'Dueño / Admin', cotizador: 'Cotizador', supervisor: 'Supervisor', medidor: 'Técnico medidor' }[m.role] || m.role || '—';
+    return `
+      <div class="perm-member" data-uid="${escapeHtml(m.uid)}">
+        <div class="perm-member-header">${escapeHtml(m.name) || 'Sin nombre'} <span class="perm-member-role">${escapeHtml(roleLabel)}</span></div>
+        <div class="perm-grid">
+          ${visiblePerms.map(p => `
+            <label>
+              <input type="checkbox" class="perm-check" data-perm="${p.key}" ${!!perms[p.key] ? 'checked' : ''} ${m.role === 'owner' ? 'disabled' : ''} />
+              ${p.label}
+            </label>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // attach change listeners
+  container.querySelectorAll('.perm-check:not([disabled])').forEach(cb => {
+    cb.addEventListener('change', async (e) => {
+      const memberEl = e.target.closest('.perm-member');
+      const uid = memberEl.dataset.uid;
+      const permKey = e.target.dataset.perm;
+      const checked = e.target.checked;
+      try {
+        const userRef = doc(db, 'users', uid);
+        await updateDoc(userRef, { [`permissions.${permKey}`]: checked });
+        document.getElementById('perm-saved').style.display = 'block';
+        setTimeout(() => document.getElementById('perm-saved').style.display = 'none', 2500);
+      } catch(err) {
+        alert('Error al guardar permiso: ' + err.message);
+        e.target.checked = !checked; // revert
+      }
+    });
+  });
+}
+
+async function loadRequests(orgId) {
+  const container = document.getElementById('requests-list');
+  const pending = orgMembers.filter(m => m.disabled === true);
+  if (pending.length === 0) {
+    container.innerHTML = '<p style="color:#868e96;font-size:13px;">No hay solicitudes pendientes.</p>';
+    return;
+  }
+  container.innerHTML = pending.map(m => `
+    <div class="request-card" data-uid="${escapeHtml(m.uid)}">
+      <div>
+        <div class="request-name">${escapeHtml(m.name) || 'Sin nombre'}</div>
+        <div class="request-email">${escapeHtml(m.email) || ''}</div>
+      </div>
+      <div class="request-actions">
+        <button class="btn-sm approve" onclick="approveRequest('${escapeHtml(m.uid)}')">Aprobar</button>
+        <button class="btn-sm reject" onclick="rejectRequest('${escapeHtml(m.uid)}')">Rechazar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.approveRequest = async (uid) => {
+  try {
+    await updateDoc(doc(db, 'users', uid), { disabled: false });
+    // remove the card from DOM
+    const card = document.querySelector(`.request-card[data-uid="${uid}"]`);
+    if (card) card.remove();
+    // also update in-memory
+    const m = orgMembers.find(x => x.uid === uid);
+    if (m) m.disabled = false;
+  } catch(e) {
+    alert('Error al aprobar: ' + e.message);
+  }
+};
+
+window.rejectRequest = async (uid) => {
+  if (!confirm('¿Rechazar a este usuario? Su cuenta será eliminada.')) return;
+  try {
+    // For real rejection we'd delete the user doc; for now just disable permanently
+    await updateDoc(doc(db, 'users', uid), { disabled: 'rejected' });
+    const card = document.querySelector(`.request-card[data-uid="${uid}"]`);
+    if (card) card.remove();
+  } catch(e) {
+    alert('Error al rechazar: ' + e.message);
+  }
+};
+
+async function loadDeleteRequests() {
+  const container = document.getElementById('delete-requests-list');
+  const drs = orgMembers.filter(m => !!m.deleteRequestedAt);
+  document.getElementById('delete-requests-card').style.display = drs.length ? 'block' : 'none';
+  if (drs.length === 0) {
+    container.innerHTML = '<p style="color:#868e96;font-size:13px;">No hay solicitudes de eliminación pendientes.</p>';
+    return;
+  }
+  container.innerHTML = drs.map(m => `
+    <div class="request-card" data-uid="${escapeHtml(m.uid)}">
+      <div>
+        <div class="request-name">${escapeHtml(m.name) || 'Sin nombre'}</div>
+        <div class="request-email">${escapeHtml(m.email) || ''} · Solicitado ${escapeHtml(new Date(m.deleteRequestedAt).toLocaleDateString('es-PR'))}</div>
+      </div>
+      <div class="request-actions">
+        <button class="btn-sm approve" onclick="processDeleteRequest('${escapeHtml(m.uid)}', true)">Eliminar cuenta</button>
+        <button class="btn-sm reject" onclick="processDeleteRequest('${escapeHtml(m.uid)}', false)">Rechazar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.processDeleteRequest = async (uid, approved) => {
+  if (!approved && !confirm('¿Rechazar esta solicitud? La cuenta permanecerá activa.')) return;
+  if (approved && !confirm('⚠️ ¿Eliminar permanentemente esta cuenta? Se borrarán su perfil, sus mediciones y su acceso. Esta acción NO se puede deshacer.')) return;
+  try {
+    if (approved) {
+      // Admin approval: stamps deleteApprovedAt. The processAccountDeletion
+      // Cloud Function watches that flag and performs the actual wipe
+      // (profile doc, jobs + photos, Firebase Auth account). Clients can
+      // never delete user docs directly (firestore.rules: allow delete: false).
+      await updateDoc(doc(db, 'users', uid), { deleteApprovedAt: new Date().toISOString() });
+    } else {
+      // Reject: clear the request, the account stays active.
+      await updateDoc(doc(db, 'users', uid), { deleteRequestedAt: null });
+    }
+    const card = document.querySelector(`#delete-requests-list .request-card[data-uid="${uid}"]`);
+    if (card) card.remove();
+    // recheck if empty
+    if (!document.querySelector('#delete-requests-list .request-card')) {
+      document.getElementById('delete-requests-card').style.display = 'none';
+      document.getElementById('delete-requests-list').innerHTML = '<p style="color:#868e96;font-size:13px;">No hay solicitudes de eliminación pendientes.</p>';
+    }
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+};
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
+  try { await ensureFlowClaims(); } catch (_) { /* fails soft */ }
+  if (window.applyCompanyThemeFromAuth) { try { window.applyCompanyThemeFromAuth(auth); } catch (_) {} }
+  currentUser = user;
+  import('./../presence.js').then(m => m.startPresence(user.uid)).catch(() => {});
+  const userSnap = await getDoc(doc(db, 'users', user.uid));
+  if (window.applyCompanyTheme) { try { window.applyCompanyTheme(userSnap.data()); } catch (_) {} }
+  if (!userSnap.exists()) {
+    alert('No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.');
+    window.location.href = 'login.html?missingProfile=1';
+    return;
+  }
+  currentUserData = userSnap.data();
+  _can = makePermChecker(currentUserData);
+  const orgId = currentUserData.orgId;
+  _companyOrgId = orgId;
+
+  // Company settings require userManagement. Non-managers get bounced.
+  if (!_can('userManagement')) {
+    document.getElementById('company-area').style.display = 'none';
+    document.getElementById('company-denied').style.display = 'block';
+    return;
+  }
+
+  await loadOrgMembers(orgId);
+  renderPermissions();
+  await loadRequests(orgId);
+  await loadDeleteRequests();
+  await loadTfaApi(orgId);
+  await loadCompanyProfile();
+  await loadQuoteSettings();
+});
+
+</script>
+</body>
+</html>
