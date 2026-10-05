@@ -133,4 +133,4 @@ export function resetBackendConfig() {
 
 // Compat: el resto del código importa `firebaseConfig` en algunos lados.
 export const firebaseConfig = activeConfig;
-export { defaultConfigCopy as defaultFirebaseConfig };
+export { defaultConfig as defaultFirebaseConfig };
