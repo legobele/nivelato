@@ -392,6 +392,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { startPresence, getOnlineUsers } from './presence.js';
 import { PERM_DEFS, makePermChecker } from './permissions.js';
+import { ensureFlowClaims } from './geo.js';
 
 const escapeHtml = (s) => String(s ?? '')
   .replace(/&/g, '&amp;')
@@ -676,6 +677,8 @@ async function refreshOnline() {
 // ---- auth + data ----
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
+  // Mint flow claims: rules require them for org data reads.
+  try { await ensureFlowClaims(); } catch (_) { /* fails soft */ }
   currentUser = user;
 
   // Backup theme pass: in case the fast path or doc-based check could not run.

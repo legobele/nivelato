@@ -183,6 +183,7 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { getDoc, doc, setDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { makePermChecker } from './permissions.js';
 import { PERM_DEFS } from './permissions.js';
+import { ensureFlowClaims } from './geo.js';
 
 const NOTIF_KEYS = ['welcomeEmail', 'newProject', 'projectEdit', 'quoteReady'];
 const NOTIF_DEFAULTS = { welcomeEmail: true, newProject: true, projectEdit: true, quoteReady: true };
@@ -207,6 +208,8 @@ const escapeHtml = (s) => String(s ?? '')
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
+  // Mint flow claims: rules require them for org data reads.
+  try { await ensureFlowClaims(); } catch (_) { /* fails soft */ }
   // backup: theme from ID-token claims if user doc path changes
   if (window.applyCompanyThemeFromAuth) { try { window.applyCompanyThemeFromAuth(auth); } catch (_) {} }
   currentUser = user;

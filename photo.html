@@ -123,6 +123,7 @@
 <script type="module">
 import { auth } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { ensureFlowClaims } from './geo.js';
 
 const canvas = document.getElementById('photo-canvas');
 const ctx = canvas.getContext('2d');
@@ -385,10 +386,12 @@ function resetCorners() {
 }
 
 // ── image loading ──
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   // QGC gray theme fallback via ID-token claims (claims.flow === 'qgi')
   if (window.applyCompanyThemeFromAuth) { try { window.applyCompanyThemeFromAuth(auth); } catch (_) {} }
   if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
+  // Mint flow claims: rules require them for org data reads.
+  try { await ensureFlowClaims(); } catch (_) { /* fails soft */ }
 });
 
 document.getElementById('btn-camera').addEventListener('click', () => {
