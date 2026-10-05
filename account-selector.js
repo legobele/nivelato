@@ -180,7 +180,7 @@ function buildMenu({ user, userData }) {
   dropdown.querySelector("#acct-signout").addEventListener("click", async () => {
     closeMenu();
     await hardSignOut();
-    window.location.href = "https://login.nivelatolabs.com/";
+    window.location.href = "https://login.nivelatolabs.com/?signout=1";
   });
 
   document.addEventListener("click", (e) => {

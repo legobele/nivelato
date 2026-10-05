@@ -3180,8 +3180,20 @@
   // (a) Already signed in? Send them to the app. Ignores the initial
   // null-fire while the persisted session restores, and stays out of the
   // way of in-flight login/signup submits and the pending-approval screen.
+  // ?signout=1 (from the app's sign-out): kill this page's session too and
+  // land on the saved-accounts picker instead of auto-handing back in.
+  var _signoutLanding = new URLSearchParams(location.search).get('signout') === '1';
+  if (_signoutLanding) {
+    try {
+      var _su = new URL(location.href);
+      _su.searchParams.delete('signout');
+      history.replaceState({ nivelatoView: 'main' }, '', _su.toString());
+    } catch (_) {}
+    try { signOut(auth).catch(function () {}); } catch (_) {}
+  }
   onAuthStateChanged(auth, (user) => {
     if (authInitDone || authBusy || pendingShown) return;
+    if (_signoutLanding) { _signoutLanding = false; authInitDone = true; renderView('main'); return; }
     if (user) { authInitDone = true; postAuthRedirect(); }
   });
 
