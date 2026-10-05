@@ -445,6 +445,12 @@
       line-height: 1.5;
       color: var(--muted);
     }
+    .company-travel-notice {
+      margin-top: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--amber2);
+    }
     .company-head {
       display: flex;
       align-items: center;
@@ -457,6 +463,7 @@
     body.qgc-theme .company-head .account-pill:hover { border-color: #55555c; }
     body.qgc-theme .company-employee-notice { color: #f2f1ec; }
     body.qgc-theme .company-inquiry { color: #b9b9c2; }
+    body.qgc-theme .company-travel-notice { color: #f5b83d; }
     /* View-transition slide animations (navigation only, never on re-render) */
     @keyframes niv-slide-fwd {
       from { transform: translateX(48px); opacity: 0; }
@@ -603,6 +610,7 @@
         find_company: 'Buscar empresa',
         nearby: 'Cercanas',
         field_required: 'Este campo es obligatorio.',
+        outside_pr_notice: 'No se te ha detectado dentro de PR, puedes iniciar sesión para recibir un enlace y usar Nivelato hasta 30 días fuera de PR.',
         label_email: 'Correo electrónico',
         label_password: 'Contraseña',
         label_name: 'Nombre completo',
@@ -703,6 +711,7 @@
         find_company: 'Find company',
         nearby: 'Nearby',
         field_required: 'This field is required.',
+        outside_pr_notice: 'You have not been detected within PR, you may sign in to receive a link to use Nivelato for up to 30 days outside PR',
         label_email: 'Email',
         label_password: 'Password',
         label_name: 'Full name',
@@ -1441,6 +1450,7 @@
         en: 'Sign into Quality Glazing Contractors'
       },
       signinWebhook: null, // optional: URL for webhook-driven custom signin UI (see contract below)
+      travelNotice: true, // show the outside-PR travel notice on this company's signin screen
     }
   };
   function companyText(company, field) {
@@ -1943,6 +1953,28 @@
     return true;
   }
 
+  // Outside-PR detection for the company travel notice. Uses the same geo
+  // signal that drives QGC mode: PR timezone counts as inside PR; otherwise
+  // the resolved country (Cloudflare-injected or background lookup) decides.
+  // Returns true when resolved as outside PR, false when inside, null while
+  // geo is still unresolved (the notice stays hidden until then).
+  function outsidePRState() {
+    if (_tzIsPR) return false;
+    const cc = (country != null) ? country : _injectedCc;
+    if (cc == null) return null;
+    return cc !== 'PR';
+  }
+
+  // Shows/hides the outside-PR travel notice on the company signin screen
+  // without touching the form (safe to call when background geo settles).
+  function updateCompanyTravelNotice() {
+    const el = document.getElementById('company-travel-notice');
+    if (!el || !companyShown) return;
+    const company = COMPANIES[companyShown];
+    const show = !!company && company.travelNotice !== false && outsidePRState() === true;
+    el.style.display = show ? '' : 'none';
+  }
+
   function renderCompanyUI() {
     const t = window.nivT;
     const card = document.getElementById('app-card');
@@ -1957,6 +1989,7 @@
       + '<div class="tagline">' + escapeHtml(companyText(company, 'signinText')) + '</div>'
       + '<div class="company-employee-notice">' + escapeHtml(company.employeeNotice || '') + '</div>'
       + '<div class="company-inquiry">' + escapeHtml(companyText(company, 'inquiryText')) + '</div>'
+      + '<div class="company-travel-notice" id="company-travel-notice" style="display:none">' + t('outside_pr_notice') + '</div>'
       + '</div>'
       + '<div class="main-panel">'
       + '<div class="company-head">'
@@ -1972,6 +2005,7 @@
     window.nivApplyLang();
     document.getElementById('company-back').addEventListener('click', goBackView);
     renderCompanyFormArea();
+    updateCompanyTravelNotice();
   }
 
   // Decides which form goes in the area: webhook spec (cached or fetched),
@@ -2054,6 +2088,29 @@
     if (first) first.focus();
   }
 
+  // Outside-PR company signin: the Nivelato account is established, then the
+  // user requests the travel link instead of going straight to the dashboard.
+  // The 30-day window in the notice is the travel grant duration: the emailed
+  // link redeems into a 30-day grant (see storeTravelGrant / qgcTravelValid).
+  async function routeCompanyTravelFlow(user) {
+    try {
+      const email = (user && user.email) || '';
+      const _dn = (user && user.displayName) || '';
+      saveUsedAccount(email, _dn, QGI ? 'qgc' : 'personal');
+    } catch (_) { /* ignore */ }
+    authBusy = false;
+    companyShown = null;
+    showTravelUI();
+  }
+
+  // True when a company signin should detour through the travel link flow:
+  // geo resolved outside PR, the company didn't opt out, and the device
+  // doesn't already hold a valid travel grant.
+  function companyNeedsTravel(company) {
+    return !!company && company.travelNotice !== false
+      && outsidePRState() === true && !qgcTravelValid();
+  }
+
   // Company signin submit: email/password, then the shared QGC post-signin path
   // (isQGC check, cant-add error for non-QGC in QGC mode, save-login prompt).
   // With pendingSpec (baseAuth 'nivelato'), success flows into the webhook's
@@ -2079,6 +2136,10 @@
         authBusy = false;
         const area = document.getElementById('company-form-area');
         if (area && company) renderCustomCompanyForm(area, company, pendingSpec, cred.user);
+        return;
+      }
+      if (companyNeedsTravel(company)) {
+        await routeCompanyTravelFlow(cred.user);
         return;
       }
       companyShown = null;
@@ -2135,6 +2196,10 @@
         return;
       }
       const cred = await signInWithCustomToken(auth, res.customToken);
+      if (companyNeedsTravel(company)) {
+        await routeCompanyTravelFlow(cred.user);
+        return;
+      }
       companyShown = null;
       await finishAddAccountSignIn(cred.user);
     } catch (err) {
@@ -2335,6 +2400,9 @@
       ]);
   countryPromise.then((cc) => {
     country = cc;
+    // The company signin screen stays up when geo settles; just flip its
+    // outside-PR travel notice without wiping the form.
+    if (companyShown) updateCompanyTravelNotice();
     var effectivePR = (cc === 'PR') || tzIsPR;
     if (trustedDev) {
       // A travel grant acquired after boot (e.g. via link redeem) supersedes geo.
