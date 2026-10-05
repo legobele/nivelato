@@ -262,8 +262,16 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
+/* ============================================================
+   FIREBASE WEB API KEY — INSERT THE REAL KEY HERE.
+   Firebase Console → Project Settings → General → Your apps →
+   "nivelato" (Web) → Web API Key. It starts with "AIza".
+   (This key is public by design; Firestore security rules —
+   not the key — protect the data.)
+   ============================================================ */
+const FIREBASE_API_KEY = "REPLACE_WITH_FIREBASE_WEB_API_KEY";
 const firebaseConfig = {
-  apiKey: "AIzaSyBvX1yQeJ8vK3mN5pL7qR9sT2uV4wX6yZ8a",
+  apiKey: FIREBASE_API_KEY,
   authDomain: "nivelato-app.firebaseapp.com",
   projectId: "nivelato-app",
   storageBucket: "nivelato-app.firebasestorage.app",
