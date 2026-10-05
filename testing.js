@@ -6,6 +6,7 @@
   // Only show on non-production domains
   var host = window.location.hostname;
   if (host === 'legobele.github.io' || host === 'nivelato.app' || host === 'www.nivelato.app') return;
+  if (host === 'nivelatolabs.com' || host.endsWith('.nivelatolabs.com')) return;
 
   if (document.getElementById('testing-watermark')) return;
 

@@ -501,7 +501,7 @@
   </style>
   <link rel="stylesheet" href="./qgc-theme.css" />
 </head>
-<body>
+<body class="has-sidebar">
 <canvas id="drawing-canvas" style="display:none;width:340px;height:420px"></canvas>
 
 <div class="niv-float-panel" id="niv-panel">
@@ -513,15 +513,15 @@
   <div class="org-badge" id="tier-badge" style="display:none;">Pro</div>
   <div class="niv-panel-body" id="niv-panel-body">
     <div class="niv-panel-sec">
-      <div class="niv-panel-sec-title" style="display:flex;align-items:center;justify-content:space-between;">Projects<button class="niv-plus-btn" onclick="openNewProject()" title="Nuevo proyecto">+</button></div>
+      <div class="niv-panel-sec-title" style="display:flex;align-items:center;justify-content:space-between;">Proyectos<button class="niv-plus-btn" onclick="openNewProject()" title="Nuevo proyecto">+</button></div>
       <div id="niv-panel-projects"><div class="niv-panel-empty">Sin proyectos</div></div>
     </div>
     <div class="niv-panel-sec">
-      <div class="niv-panel-sec-title">Customers</div>
+      <div class="niv-panel-sec-title">Clientes</div>
       <div id="niv-panel-customers"><div class="niv-panel-empty">Sin clientes</div></div>
     </div>
     <div class="niv-panel-sec">
-      <div class="niv-panel-sec-title">Measurements</div>
+      <div class="niv-panel-sec-title">Medidas</div>
       <div id="niv-panel-measures"><div class="niv-panel-empty">Sin medidas</div></div>
     </div>
     <div class="niv-panel-actions">
@@ -529,9 +529,11 @@
       <button class="niv-nav-btn" id="btn-pricelist" onclick="togglePriceListView()" style="display:none">Precios</button>
       <button class="niv-nav-btn" id="btn-quotes" onclick="toggleQuotesView()" style="display:none">Cotizaciones</button>
       <button class="niv-nav-btn niv-btn-primary" id="btn-new-measure" onclick="window.location.href='index.html'" style="display:none">Nueva medida</button>
-      <a class="niv-nav-btn" id="nav-users" href="company/settings.html" style="display:none">Users</a>
-      <a class="niv-nav-btn" href="account/settings.html">Mi cuenta</a>
+      <a class="niv-nav-btn" id="nav-users" href="company/settings.html" style="display:none">Usuarios</a>
     </div>
+  </div>
+  <div class="niv-panel-bottom">
+    <a class="niv-nav-btn" href="account/settings.html">Mi cuenta</a>
   </div>
 </div>
 
@@ -2996,7 +2998,7 @@ let currentUser;
     }
   };
 
-  // ---- floating panel: drag + collapse ----
+  // ---- sidebar: collapse ----
   (() => {
     const panel = document.getElementById('niv-panel');
     const head = document.getElementById('niv-panel-head');
@@ -3005,41 +3007,9 @@ let currentUser;
     collapseBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       panel.classList.toggle('collapsed');
+      document.body.classList.toggle('sidebar-collapsed', panel.classList.contains('collapsed'));
       collapseBtn.textContent = panel.classList.contains('collapsed') ? '+' : '–';
     });
-    let sx = 0, sy = 0, ox = 0, oy = 0, dragging = false;
-    head.addEventListener('mousedown', (e) => {
-      if (e.target === collapseBtn) return;
-      dragging = true;
-      sx = e.clientX; sy = e.clientY;
-      const r = panel.getBoundingClientRect();
-      ox = r.left; oy = r.top;
-      panel.style.top = oy + 'px'; panel.style.left = ox + 'px';
-      panel.style.bottom = 'auto'; panel.style.right = 'auto';
-      e.preventDefault();
-    });
-    window.addEventListener('mousemove', (e) => {
-      if (!dragging) return;
-      panel.style.left = Math.max(0, Math.min(window.innerWidth - 80, ox + e.clientX - sx)) + 'px';
-      panel.style.top = Math.max(0, Math.min(window.innerHeight - 60, oy + e.clientY - sy)) + 'px';
-    });
-    window.addEventListener('mouseup', () => { dragging = false; });
-    // touch support
-    head.addEventListener('touchstart', (e) => {
-      if (e.target === collapseBtn) return;
-      const tc = e.touches[0];
-      dragging = true; sx = tc.clientX; sy = tc.clientY;
-      const r = panel.getBoundingClientRect(); ox = r.left; oy = r.top;
-      panel.style.top = oy + 'px'; panel.style.left = ox + 'px';
-      panel.style.bottom = 'auto'; panel.style.right = 'auto';
-    }, { passive: true });
-    window.addEventListener('touchmove', (e) => {
-      if (!dragging) return;
-      const tc = e.touches[0];
-      panel.style.left = Math.max(0, Math.min(window.innerWidth - 80, ox + tc.clientX - sx)) + 'px';
-      panel.style.top = Math.max(0, Math.min(window.innerHeight - 60, oy + tc.clientY - sy)) + 'px';
-    }, { passive: true });
-    window.addEventListener('touchend', () => { dragging = false; });
   })();
 </script>
 <div id="qpdf-print-area" aria-hidden="true"></div>
