@@ -264,12 +264,11 @@ exports.reportQuoteEvent = onCall({ region: 'us-central1', memory: '256MiB' }, a
 });
 
 // ---------------------------------------------------------------------------
-// IP intelligence provider (pluggable).
-// Default: ipinfo.io — free tier 50k lookups/mo, returns privacy flags
-// (vpn/proxy/tor/relay/hosting) in one call. Set IPINFO_TOKEN env var
-// (use `firebase functions:config` / .env). Phase 2 wires the paid tier.
-// If no provider is configured, lookups fail CLOSED to `review` — never
-// `allow`, never `block` (we can't prove anything without intel).
+// IP intelligence provider.
+// ip-api.com free tier (45 req/min, no key): countryCode + proxy/hosting flags.
+// IPINFO_TOKEN env var optionally overrides with ipinfo.io (paid tier).
+// If all providers fail, lookups fail CLOSED to `review` — never `allow`,
+// never `block` (we can't prove anything without intel).
 // ---------------------------------------------------------------------------
 const IPINFO_TOKEN = process.env.IPINFO_TOKEN || '';
 
@@ -279,22 +278,41 @@ async function ipIntel(ip) {
       ip.startsWith('192.168.') || ip.startsWith('172.16.')) {
     return { ok: false, reason: 'private-ip' };
   }
-  if (!IPINFO_TOKEN) return { ok: false, reason: 'no-provider-configured' };
+  // Paid override: ipinfo.io with privacy flags.
+  if (IPINFO_TOKEN) {
+    try {
+      const res = await fetch(`https://ipinfo.io/${encodeURIComponent(ip)}?token=${IPINFO_TOKEN}`);
+      if (!res.ok) return { ok: false, reason: `provider-http-${res.status}` };
+      const j = await res.json();
+      const p = j.privacy || {};
+      return {
+        ok: true,
+        country: j.country || null,
+        region: j.region || null,
+        untrusted: Boolean(p.vpn || p.proxy || p.tor || p.relay || p.hosting),
+        flags: {
+          vpn: Boolean(p.vpn), proxy: Boolean(p.proxy), tor: Boolean(p.tor),
+          relay: Boolean(p.relay), hosting: Boolean(p.hosting),
+        },
+        rawCountry: j.country || null,
+      };
+    } catch (e) {
+      return { ok: false, reason: 'provider-error' };
+    }
+  }
+  // Free default: ip-api.com (no key, countryCode + proxy/hosting).
   try {
-    const res = await fetch(`https://ipinfo.io/${encodeURIComponent(ip)}?token=${IPINFO_TOKEN}`);
+    const res = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,countryCode,region,proxy,hosting,query`);
     if (!res.ok) return { ok: false, reason: `provider-http-${res.status}` };
     const j = await res.json();
-    const p = j.privacy || {};
+    if (j.status !== 'success') return { ok: false, reason: 'provider-fail' };
     return {
       ok: true,
-      country: j.country || null,          // 'PR', 'US', ...
+      country: j.countryCode || null,      // 'PR', 'US', ...
       region: j.region || null,
-      untrusted: Boolean(p.vpn || p.proxy || p.tor || p.relay || p.hosting),
-      flags: {
-        vpn: Boolean(p.vpn), proxy: Boolean(p.proxy), tor: Boolean(p.tor),
-        relay: Boolean(p.relay), hosting: Boolean(p.hosting),
-      },
-      rawCountry: j.country || null,
+      untrusted: Boolean(j.proxy || j.hosting),
+      flags: { vpn: false, proxy: Boolean(j.proxy), tor: false, relay: false, hosting: Boolean(j.hosting) },
+      rawCountry: j.countryCode || null,
     };
   } catch (e) {
     return { ok: false, reason: 'provider-error' };

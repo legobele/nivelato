@@ -203,7 +203,7 @@
 
   <div class="tab-row" role="tablist" aria-label="Iniciar sesión o crear cuenta">
     <button type="button" role="tab" aria-selected="true" class="tab active" id="tab-login">Iniciar sesión</button>
-    <button type="button" role="tab" aria-selected="false" class="tab" id="tab-signup">Crear cuenta</button>
+    <button type="button" role="tab" aria-selected="false" class="tab" id="tab-signup">Request company access</button>
   </div>
 
   <div id="form-login">
@@ -240,10 +240,10 @@
         <label for="signup-orgname">Nombre del taller</label>
         <input type="text" id="signup-orgname" name="organization" placeholder="Vidriería Ejemplo" autocomplete="organization" />
       </div>
-      <button class="btn-primary" id="btn-signup" type="submit">Empezar prueba gratis</button>
+      <button class="btn-primary" id="btn-signup" type="submit">Request company access</button>
     </form>
     <div class="error-msg" id="signup-error" role="alert"></div>
-    <div class="signup-note">Al registrarte se crea tu taller con 30 días / 200 guardados de prueba.</div>
+    <div class="signup-note">Tu solicitud será revisada. Te avisaremos cuando tengas acceso.</div>
   </div>
 </div>
 
@@ -277,7 +277,10 @@
     updateProfile,
     signOut,
     onAuthStateChanged,
-    sendPasswordResetEmail
+    sendPasswordResetEmail,
+    setPersistence,
+    browserLocalPersistence,
+    browserSessionPersistence
   } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
   import {
     doc, setDoc, getDoc, serverTimestamp, Timestamp
@@ -376,7 +379,7 @@
 
     <div class="tab-row" role="tablist" aria-label="Iniciar sesión o crear cuenta">
       <button type="button" role="tab" aria-selected="true" class="tab active${qgi ? ' qgi-tab' : ''}" id="tab-login">Iniciar sesión</button>
-      <button type="button" role="tab" aria-selected="false" class="tab${qgi ? ' qgi-tab' : ''}" id="tab-signup">${qgi ? 'Soy empleado' : 'Crear cuenta'}</button>
+      <button type="button" role="tab" aria-selected="false" class="tab${qgi ? ' qgi-tab' : ''}" id="tab-signup">Request company access</button>
     </div>
 
     <div id="form-login">
@@ -418,12 +421,12 @@
           <label for="signup-orgname">Nombre del taller</label>
           <input type="text" id="signup-orgname" name="organization" placeholder="Vidriería Ejemplo" autocomplete="organization" />
         </div>`}
-        <button class="btn-primary${qgi ? ' qgi-btn' : ''}" id="btn-signup" type="submit">${qgi ? 'Solicitar acceso' : 'Empezar prueba gratis'}</button>
+        <button class="btn-primary${qgi ? ' qgi-btn' : ''}" id="btn-signup" type="submit">Request company access</button>
       </form>
       <div class="error-msg" id="signup-error" role="alert"></div>
       <div class="signup-note">${qgi
         ? 'Las cuentas nuevas las aprueba <b>Daniel Lebrón</b>. Te avisaremos cuando tengas acceso.'
-        : 'Al registrarte se crea tu taller con 30 días / 200 guardados de prueba.'}</div>
+        : 'Tu solicitud será revisada. Te avisaremos cuando tengas acceso.'}</div>
     </div>`;
   }
 
@@ -455,16 +458,18 @@
     card.prepend(note);
   }
 
-  // PR company-use notice: in Puerto Rico only QGC employees may use Nivelato
-  // as a company; everyone else gets pointed at the free Play Store app.
+  // PR company-use notice: QGC gray theme. In Puerto Rico only QGC employees
+  // may use Nivelato as a company; everyone else gets the free Play Store app.
   function showPrNotice() {
     const card = document.getElementById('app-card');
     if (!card || document.getElementById('pr-note')) return;
     const note = document.createElement('div');
     note.id = 'pr-note';
-    note.className = 'geo-note';
     note.setAttribute('role', 'alert');
-    note.innerHTML = 'En Puerto Rico, el uso empresarial de Nivelato es exclusivo para empleados de Quality Glass. Los demás pueden usar la app gratuita: <a href="https://play.google.com/store/apps/details?id=com.nivelato.app" style="font-weight:700;color:#ffcf5c">Descargar en Google Play</a>.';
+    note.style.cssText = 'background:#3a3a3e;border:1px solid #55555c;border-radius:12px;padding:14px;margin-bottom:20px;color:#f2f1ec;font-size:13px;line-height:1.6';
+    note.innerHTML = '<img src="./qgc-logo.jpg" alt="Quality Glazing Contractors" style="display:block;max-width:180px;border-radius:8px;margin-bottom:10px">'
+      + 'En Puerto Rico, el uso empresarial de Nivelato es exclusivo para empleados de Quality Glass. '
+      + 'Los demás pueden usar la app gratuita: <a href="https://play.google.com/store/apps/details?id=com.nivelato.app" style="font-weight:700;color:#ffffff;text-decoration:underline">Descargar en Google Play</a>.';
     card.prepend(note);
   }
 
@@ -575,7 +580,7 @@
       const email = document.getElementById('login-email').value.trim();
       const pass  = document.getElementById('login-pass').value;
       await signInWithEmailAndPassword(auth, email, pass);
-      await postAuthRedirect();
+      showSaveLoginPrompt();
     } catch(err) {
       errEl.textContent = friendlyError(err.code);
       errEl.classList.add('visible');
@@ -583,6 +588,27 @@
       btn.textContent = 'Entrar';
       authBusy = false;
     }
+  }
+
+  // Post-login: "save login on this device?" — local persistence keeps the
+  // session across restarts; session persistence drops it when the tab closes.
+  function showSaveLoginPrompt() {
+    const card = document.getElementById('app-card');
+    card.innerHTML = '<h1 class="logo">Nivelato<span class="adot">.</span></h1>'
+      + '<div class="tagline">Sesión iniciada</div>'
+      + '<p style="color:#a7a7b3;font-size:14px;line-height:1.6;margin:0 0 24px">¿Guardar la sesión en este dispositivo?</p>'
+      + '<button class="btn-primary" id="btn-save-yes" type="button">Guardar sesión</button>'
+      + '<button class="btn-primary" id="btn-save-no" type="button" style="background:transparent;border:1px solid #2c2c31;color:#f2f1ec;margin-top:10px">Solo esta vez</button>'
+      + '<div class="error-msg" id="login-error" role="alert"></div>';
+    document.getElementById('btn-save-yes').addEventListener('click', () => finishLoginWithPersistence(browserLocalPersistence));
+    document.getElementById('btn-save-no').addEventListener('click', () => finishLoginWithPersistence(browserSessionPersistence));
+  }
+
+  async function finishLoginWithPersistence(persistence) {
+    try {
+      await setPersistence(auth, persistence);
+    } catch (_) { /* best effort; default persistence still applies */ }
+    await postAuthRedirect();
   }
 
   async function doSignup(e) {
@@ -623,54 +649,34 @@
         return;
       }
 
-      // ---- External trial signup: 30 days / 200 saves, no card (Phase 3:
-      // Stripe Checkout replaces this with server-side provisioning) ----
+      // ---- External: request company access (no self-service signup) ----
+      // Creates the auth account disabled; an owner approves and assigns the org.
       const orgName = document.getElementById('signup-orgname').value.trim();
       if (!orgName) throw { code: 'missing-orgname' };
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
       await updateProfile(cred.user, { displayName: name });
-      const orgId = cred.user.uid.slice(0, 6).toUpperCase();
       try {
-        await setDoc(doc(db, 'orgs', orgId), {
-          name: orgName,
-          ownerId: cred.user.uid,
-          joinCode: orgId,
-          flow: 'external',
-          versionPolicy: 'external-hybrid',
-          licenseStatus: 'trialing',
-          trialEndsAt: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 3600 * 1000)),
-          trialSavesUsed: 0,
-          seats: 1,
-          homeRegion: country || 'unknown',
-          createdAt: serverTimestamp(),
-          userCount: 1
-        });
         await setDoc(doc(db, 'users', cred.user.uid), {
-          name, email, role: 'owner', orgId,
+          name, email, role: 'medidor',
+          disabled: true, geoStatus: 'pending',
+          requestedOrg: orgName,
+          homeRegion: country || 'unknown',
           createdAt: serverTimestamp()
         });
       } catch(fsErr) {
         console.error('Firestore write failed:', fsErr.code, fsErr.message);
-        alert(`¡Auth OK pero Firestore falló!\n\nError: ${fsErr.code}\n\nTu UID: ${cred.user.uid}\nTu código: ${orgId}\n\nRevisa las Rules en Firebase Console.`);
+        alert(`¡Auth OK pero Firestore falló!\n\nError: ${fsErr.code}\n\nTu UID: ${cred.user.uid}\n\nRevisa las Rules en Firebase Console.`);
         await ssoHandoff('/dashboard.html');
         return;
       }
-      const gate = await ensureFlowClaims();
-      if (gate.ok && routeAfterGate(gate.verdict, gate.reason)) return;
-      alert(`¡Cuenta creada!\n\nCódigo de tu taller: ${orgId}\n\nDáselo a tus empleados para que puedan registrarse.\n\nPrueba: 30 días o 200 guardados.`);
       await maybeSendWelcome(email, name, cred.user.uid);
-      if (!(await ssoHandoff('/dashboard.html'))) {
-        errEl.textContent = 'La cuenta se creó, pero no se pudo completar el inicio de sesión. Intenta entrar de nuevo.';
-        errEl.classList.add('visible');
-        btn.disabled = false;
-        btn.textContent = 'Empezar prueba gratis';
-        authBusy = false;
-      }
+      showPendingApproval();
+      return;
     } catch(err) {
       errEl.textContent = friendlyError(err.code);
       errEl.classList.add('visible');
       btn.disabled = false;
-      btn.textContent = QGI ? 'Solicitar acceso' : 'Empezar prueba gratis';
+      btn.textContent = 'Request company access';
       authBusy = false;
     }
   }
@@ -709,10 +715,16 @@
   // ---- Background geo (post-paint): swap the flow UI only if it differs.
   // Hard 7s cap so a hung lookup can never stall the page; on failure the
   // already-visible form stays, with a non-blocking notice. ----
-  Promise.race([
-    detectCountry(),
-    new Promise((resolve) => setTimeout(() => resolve(null), 7000)),
-  ]).then((cc) => {
+  // Country: prefer the Cloudflare-injected header (reliable, no API call);
+  // fall back to the IP lookup for direct GitHub Pages visits.
+  var injectedCc = (typeof window.NIVELATO_COUNTRY === 'string' && window.NIVELATO_COUNTRY) || null;
+  var countryPromise = injectedCc
+    ? Promise.resolve(injectedCc)
+    : Promise.race([
+        detectCountry(),
+        new Promise((resolve) => setTimeout(() => resolve(null), 7000)),
+      ]);
+  countryPromise.then((cc) => {
     country = cc;
     const mode = flowFromCookie() || flowModeForCountry(country);
     if (mode !== (QGI ? 'qgi' : 'external')) renderForm(mode, true);
