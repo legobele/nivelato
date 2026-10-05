@@ -1132,3 +1132,102 @@ exports.pendingUpdateWatcher = onSchedule(
   }
 );
 
+
+// ---------------------------------------------------------------------------
+// Travel verification - QGC employees outside PR.
+//
+// A QGC-trusted device outside Puerto Rico can request a 30-day travel grant
+// via an email verification link. Two callables:
+//
+//   requestTravelVerification({ email })
+//     - Auth required. The email must belong to the caller and the caller's
+//       users/{uid} doc must have isQGC: true.
+//     - Generates a single-use token (1h expiry), stores it in
+//       travel_tokens/{token}, and emails a magic link:
+//         https://login.nivelatolabs.com/?travel_verify=<token>
+//     - Rate-limited: 3 requests per user per day.
+//
+//   redeemTravelVerification({ token })
+//     - Public (the token IS the credential - it's a magic link).
+//     - Validates and burns the token in a transaction, then returns
+//       { validUntil } where validUntil = Date.now() + 30 days (epoch ms).
+//     - Records the grant on users/{uid}.travelGrant for server-side audit.
+// ---------------------------------------------------------------------------
+const TRAVEL_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
+const TRAVEL_GRANT_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+exports.requestTravelVerification = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth || !request.auth.uid) {
+    throw new HttpsError('unauthenticated', 'Inicia sesión primero.');
+  }
+  const uid = request.auth.uid;
+  const email = cleanEmail(request.data && request.data.email);
+
+  // The email must belong to the caller.
+  const callerEmail = (request.auth.token && request.auth.token.email || '').toLowerCase();
+  if (callerEmail !== email) {
+    throw new HttpsError('permission-denied', 'El correo no coincide con tu sesión.');
+  }
+
+  // Must be a QGC user.
+  const userSnap = await db.doc(`users/${uid}`).get();
+  if (!userSnap.exists || userSnap.data().isQGC !== true) {
+    throw new HttpsError('permission-denied', 'Solo empleados de QGC pueden solicitar acceso de viaje.');
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  await checkRateLimit(`travel:${uid}:${today}`, 3);
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const now = Date.now();
+  await db.doc(`travel_tokens/${token}`).set({
+    uid,
+    email,
+    createdAt: now,
+    expiresAt: now + TRAVEL_TOKEN_TTL_MS,
+    used: false,
+  });
+
+  const link = `https://login.nivelatolabs.com/?travel_verify=${token}`;
+  const html = emailShell('Acceso de viaje - Nivelato', `
+    <p>Hola,</p>
+    <p>Solicitaste un enlace de acceso para usar Nivelato fuera de Puerto Rico por hasta 30 días.</p>
+    <p style="text-align:center;margin:24px 0;"><a href="${esc(link)}" style="display:inline-block;background:#1971C2;color:#fff;text-decoration:none;font-weight:700;padding:12px 28px;border-radius:999px;">Activar acceso de viaje</a></p>
+    <p>Este enlace es de un solo uso y vence en 1 hora. Si no lo solicitaste, ignora este correo.</p>`);
+  await sendEmail({
+    to: email,
+    subject: 'Tu enlace de acceso de viaje - Nivelato',
+    html,
+    text: `Solicitaste acceso de viaje para Nivelato (30 días fuera de PR). Actívalo aquí (1 solo uso, vence en 1 hora): ${link}`,
+  });
+  return { ok: true };
+});
+
+exports.redeemTravelVerification = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  const token = String((request.data && request.data.token) || '').trim();
+  if (!/^[0-9a-f]{64}$/.test(token)) {
+    throw new HttpsError('invalid-argument', 'invalid-travel-token');
+  }
+  const ref = db.doc(`travel_tokens/${token}`);
+  const result = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return { ok: false };
+    const d = snap.data();
+    if (d.used === true) return { ok: false };
+    if (Date.now() > (d.expiresAt || 0)) return { ok: false };
+    tx.update(ref, { used: true, usedAt: Date.now() });
+    return { ok: true, uid: d.uid, email: d.email };
+  });
+  if (!result.ok) {
+    throw new HttpsError('invalid-argument', 'invalid-travel-token');
+  }
+  const validUntil = Date.now() + TRAVEL_GRANT_MS;
+  await db.doc(`users/${result.uid}`).set({
+    travelGrant: {
+      validUntil,
+      grantedAt: Date.now(),
+      tokenId: token.slice(0, 12),
+    },
+  }, { merge: true });
+  return { validUntil };
+});

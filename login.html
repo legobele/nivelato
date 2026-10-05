@@ -177,6 +177,13 @@
       line-height: 1.5;
     }
     .error-msg.visible { display: block; }
+    .niv-spinner {
+      width: 32px; height: 32px; margin: 32px auto;
+      border: 3px solid var(--line); border-top-color: var(--amber);
+      border-radius: 50%; animation: niv-spin 0.8s linear infinite;
+    }
+    @keyframes niv-spin { to { transform: rotate(360deg); } }
+    body.qgc-theme .niv-spinner { border-color: #55555c; border-top-color: #b9b9c2; }
     .signup-note {
       font-size: 12px;
       color: var(--dim);
@@ -548,11 +555,6 @@
       </div>
       <div class="pricing-note" data-i18n="pricing_note">Para Ultra, paga desde la app en tu teléfono (Google Play).</div>
 
-      <div class="tab-row" role="tablist" data-i18n-aria="tablist_label" aria-label="Iniciar sesión o solicitar acceso">
-    <button type="button" role="tab" aria-selected="true" class="tab active" id="tab-login" data-i18n="tab_login">Iniciar sesión</button>
-    <button type="button" role="tab" aria-selected="false" class="tab" id="tab-signup" data-i18n="tab_signup">Solicitar acceso</button>
-  </div>
-
   <div id="form-login">
     <form id="login-form" autocomplete="on" onsubmit="return false">
       <div class="field">
@@ -568,30 +570,6 @@
     <div style="text-align:center;margin-top:10px;"><a href="#" id="forgot-link" class="forgot-link" data-i18n="forgot">¿Olvidaste tu contraseña?</a></div>
     <div class="error-msg" id="login-error" role="alert"></div>
   </div>
-
-  <div id="form-signup" style="display:none">
-    <form id="signup-form" autocomplete="on" onsubmit="return false">
-      <div class="field">
-        <label for="signup-name" data-i18n="label_name">Nombre completo</label>
-        <input type="text" id="signup-name" name="name" data-i18n-ph="ph_name" placeholder="Juan Pérez" autocomplete="name" />
-      </div>
-      <div class="field">
-        <label for="signup-email" data-i18n="label_email">Correo electrónico</label>
-        <input type="email" id="signup-email" name="email" data-i18n-ph="ph_email" placeholder="correo@taller.com" autocomplete="email" />
-      </div>
-      <div class="field">
-        <label for="signup-pass" data-i18n="label_password">Contraseña</label>
-        <input type="password" id="signup-pass" name="password" data-i18n-ph="ph_pass_min" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
-      </div>
-      <div class="field">
-        <label for="signup-orgname" data-i18n="label_shop">Nombre del taller</label>
-        <input type="text" id="signup-orgname" name="organization" data-i18n-ph="ph_shop" placeholder="Vidriería Ejemplo" autocomplete="organization" />
-      </div>
-      <button class="btn-primary" id="btn-signup" type="submit" data-i18n="btn_signup">Solicitar acceso</button>
-    </form>
-    <div class="error-msg" id="signup-error" role="alert"></div>
-      <div class="signup-note" data-i18n="signup_note">Tu solicitud será revisada. Te avisaremos cuando tengas acceso.</div>
-      </div>
     </div>
   </div>
 </div>
@@ -630,8 +608,13 @@
         cant_add_msg: 'En Puerto Rico solo QGC puede usar el Panel y la app web',
         go_back: 'Volver',
         join_company: 'Unirse a una empresa',
-        choose_company: 'Elige tu empresa',
-        choose_company_sub: 'Selecciona tu empresa para iniciar sesión.',
+        choose_company: 'Añadir una cuenta de empresa',
+        or_signin_another: 'O inicia sesión en otra empresa',
+        company_not_found: 'Empresa no encontrada. Solo las empresas aprobadas aparecen aquí.',
+        company_domain_ph: 'empresa.com',
+        find_company: 'Buscar empresa',
+        nearby: 'Cercanas',
+        field_required: 'Este campo es obligatorio.',
         label_email: 'Correo electrónico',
         label_password: 'Contraseña',
         label_name: 'Nombre completo',
@@ -726,8 +709,13 @@
         cant_add_msg: 'In Puerto Rico only QGC can use Dashboard and Web app',
         go_back: 'Go back',
         join_company: 'Join a company',
-        choose_company: 'Choose your company',
-        choose_company_sub: 'Select your company to sign in.',
+        choose_company: 'Add a company account',
+        or_signin_another: 'Or sign into another company',
+        company_not_found: 'Company not found. Only approved companies are listed here.',
+        company_domain_ph: 'company.com',
+        find_company: 'Find company',
+        nearby: 'Nearby',
+        field_required: 'This field is required.',
         label_email: 'Email',
         label_password: 'Password',
         label_name: 'Full name',
@@ -871,28 +859,6 @@
     window.nivGetLang = function () { return lang; };
     window.setLang = setLang;
 
-    // ---- Pre-boot tab fallback ----
-    // The module rebinds the tabs to its own switchTab once loaded; until
-    // then this global keeps them working on first paint. The chosen tab is
-    // stashed so the module can honor it on boot.
-    window.switchTab = function (tab) {
-      window.__nivelatoTab = tab;
-      var fl = document.getElementById('form-login');
-      var fs = document.getElementById('form-signup');
-      var tl = document.getElementById('tab-login');
-      var ts = document.getElementById('tab-signup');
-      if (fl) fl.style.display = tab === 'login' ? '' : 'none';
-      if (fs) fs.style.display = tab === 'signup' ? '' : 'none';
-      if (tl) {
-        tl.classList.toggle('active', tab === 'login');
-        tl.setAttribute('aria-selected', tab === 'login' ? 'true' : 'false');
-      }
-      if (ts) {
-        ts.classList.toggle('active', tab === 'signup');
-        ts.setAttribute('aria-selected', tab === 'signup' ? 'true' : 'false');
-      }
-    };
-
     // Delegated: survives the module's innerHTML re-renders.
     document.addEventListener('click', function (e) {
       var el = e.target && e.target.closest ? e.target.closest('#lang-toggle') : null;
@@ -901,10 +867,6 @@
         setLang(lang === 'es' ? 'en' : 'es');
         return;
       }
-      var tl = e.target && e.target.closest ? e.target.closest('#tab-login') : null;
-      var ts = e.target && e.target.closest ? e.target.closest('#tab-signup') : null;
-      if (tl) window.switchTab('login');
-      else if (ts) window.switchTab('signup');
     });
 
     // Apply the stored/device language to the static HTML immediately.
@@ -958,7 +920,8 @@
     browserLocalPersistence,
     browserSessionPersistence,
     GoogleAuthProvider,
-    signInWithPopup
+    signInWithPopup,
+    signInWithCustomToken
   } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
   import {
     doc, setDoc, getDoc, serverTimestamp, Timestamp
@@ -969,22 +932,6 @@
   console.log('[Nivelato] Cargando backend... imports listos, inicializando');
 
   // Correo de bienvenida: la app lo pide explícito tras el signup para que
-  // funcione igual en el backend default y en backends propios (BYOB).
-  // Best effort, nunca bloquea el registro.
-  async function maybeSendWelcome(email, name, uid) {
-    try {
-      await setDoc(doc(db, 'notification_prefs', uid), {
-        welcomeEmail: true, newProject: true, projectEdit: true, quoteReady: true,
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-      const prefs = (await getDoc(doc(db, 'notification_prefs', uid))).data() || {};
-      if (prefs.welcomeEmail === false) return;
-      await httpsCallable(centralFunctions, 'requestWelcomeEmail')({ email, name });
-    } catch (e) {
-      console.warn('[Nivelato] welcome email skipped:', e.message);
-    }
-  }
-
   // Restablecer contraseña: primero el flujo propio (remitente
   // noreply@nivelatolabs.com); si la cuenta vive en un backend propio,
   // el servidor central no la conoce y caemos al correo default de Firebase.
@@ -1165,15 +1112,13 @@
 
   let QGI = false;        // currently rendered flow
   let country = null;     // resolved async; null until geo settles
-  let currentTab = window.__nivelatoTab || 'login';
   let pendingShown = false;
   let authInitDone = false;
   let authBusy = false;   // a login/signup submit is in flight
   let savePromptShown = false;  // the "save login?" prompt replaced the card
   let prNoticeOn = false, geoNoticeOn = false, profileNoticeOn = false;
 
-  const VALUE_IDS = ['login-email', 'login-pass', 'signup-name', 'signup-email',
-                     'signup-pass', 'signup-orgcode', 'signup-orgname'];
+  const VALUE_IDS = ['login-email', 'login-pass'];
   function collectValues() {
     const v = {};
     for (const id of VALUE_IDS) {
@@ -1203,11 +1148,6 @@
         ${qgi ? `<div class="exclusivity-note" data-i18n="exclusivity_note_html" data-i18n-html="1"></div>` : ''}
         ${!qgi ? `<div class="pricing-note" data-i18n="pricing_note"></div>` : ''}
 
-        <div class="tab-row" role="tablist" data-i18n-aria="tablist_label">
-      <button type="button" role="tab" aria-selected="true" class="tab active${qgi ? ' qgi-tab' : ''}" id="tab-login" data-i18n="tab_login"></button>
-      <button type="button" role="tab" aria-selected="false" class="tab${qgi ? ' qgi-tab' : ''}" id="tab-signup" data-i18n="tab_signup"></button>
-    </div>
-
     <div id="form-login">
       <form id="login-form" autocomplete="on" onsubmit="return false">
         <div class="field">
@@ -1223,42 +1163,12 @@
       <div style="text-align:center;margin-top:10px;"><a href="#" id="forgot-link" class="forgot-link" data-i18n="forgot"></a></div>
       <div class="error-msg" id="login-error" role="alert"></div>
     </div>
-
-    <div id="form-signup" style="display:none">
-      <form id="signup-form" autocomplete="on" onsubmit="return false">
-        <div class="field">
-          <label for="signup-name" data-i18n="label_name"></label>
-          <input type="text" id="signup-name" name="name" data-i18n-ph="ph_name" autocomplete="name" />
-        </div>
-        <div class="field">
-          <label for="signup-email" data-i18n="label_email"></label>
-          <input type="email" id="signup-email" name="email" data-i18n-ph="ph_email" autocomplete="email" />
-        </div>
-        <div class="field">
-          <label for="signup-pass" data-i18n="label_password"></label>
-          <input type="password" id="signup-pass" name="password" data-i18n-ph="ph_pass_min" autocomplete="new-password" />
-        </div>
-        ${qgi ? `
-        <div class="field">
-          <label for="signup-orgcode" data-i18n="label_empcode_html" data-i18n-html="1"></label>
-          <input type="text" id="signup-orgcode" data-i18n-ph="ph_empcode" autocomplete="off" style="text-transform:uppercase" />
-        </div>` : `
-        <div class="field">
-          <label for="signup-orgname" data-i18n="label_shop"></label>
-          <input type="text" id="signup-orgname" name="organization" data-i18n-ph="ph_shop" autocomplete="organization" />
-        </div>`}
-        <button class="btn-primary${qgi ? ' qgi-btn' : ''}" id="btn-signup" type="submit" data-i18n="btn_signup"></button>
-      </form>
-      <div class="error-msg" id="signup-error" role="alert"></div>
-        <div class="signup-note" data-i18n="${qgi ? 'signup_note_qgi_html' : 'signup_note'}"${qgi ? ' data-i18n-html="1"' : ''}></div>
-        </div>
       </div>
     </div>`;
   }
 
   function renderForm(mode, keepState = false) {
     const prev = keepState ? collectValues() : {};
-    const prevTab = currentTab;
     QGI = (mode === 'qgi');
     document.body.classList.toggle('qgc-theme', QGI);
     const _tc = document.querySelector('meta[name="theme-color"]');
@@ -1268,25 +1178,13 @@
       const el = document.getElementById(id);
       if (el) el.value = prev[id];
     }
-    // Tab clicks are handled by the delegated listener in the classic
-    // script, which calls window.switchTab — overridden below to the
-    // module's stateful version once the module is loaded.
     document.getElementById('login-form').addEventListener('submit', doLogin);
-    document.getElementById('signup-form').addEventListener('submit', doSignup);
     const acctList = document.getElementById('accounts-list');
     if (acctList) acctList.addEventListener('click', onAccountPillClick);
     const forgot = document.getElementById('forgot-link');
     if (forgot) forgot.addEventListener('click', (e) => { e.preventDefault(); doForgotPassword(); });
     window.nivApplyLang();
-    switchTab(prevTab);
   }
-
-  // Override the pre-boot global: the classic script's delegated tab clicks
-  // keep working, now routed through the module's stateful switchTab.
-  window.switchTab = function (tab) {
-    window.__nivelatoTab = tab;
-    switchTab(tab);
-  };
 
   function showGeoNotice() {
     geoNoticeOn = true;
@@ -1354,30 +1252,6 @@
     renderForm(QGI ? 'qgi' : 'external', true);
     refreshNotices();
   };
-
-  function switchTab(tab) {
-    currentTab = tab;
-    document.getElementById('form-login').style.display  = tab === 'login'  ? '' : 'none';
-    document.getElementById('form-signup').style.display = tab === 'signup' ? '' : 'none';
-    const tl = document.getElementById('tab-login');
-    const ts = document.getElementById('tab-signup');
-    tl.classList.toggle('active', tab === 'login');
-    ts.classList.toggle('active', tab === 'signup');
-    tl.setAttribute('aria-selected', tab === 'login' ? 'true' : 'false');
-    ts.setAttribute('aria-selected', tab === 'signup' ? 'true' : 'false');
-  }
-
-  function showPendingApproval() {
-    pendingShown = true;
-    const t = window.nivT;
-    document.body.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
-      + '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2>' + t('pending_title') + '</h2><p style="color:#a7a7b3;max-width:320px">' + t('pending_body') + '</p><button id="btn-logout" class="btn-primary" style="max-width:240px">' + t('pending_logout') + '</button></div>';
-    window.nivApplyLang();
-    document.getElementById('btn-logout').addEventListener('click', async () => {
-      try { await signOut(auth); } catch (_) { /* already signed out */ }
-      window.location.href = 'login.html';
-    });
-  }
 
   // ---- Cross-origin SSO handoff ----
   // This page lives on login.nivelatolabs.com; the app lives on
@@ -1496,76 +1370,6 @@
     await postAuthRedirect();
   }
 
-  async function doSignup(e) {
-    e.preventDefault();
-    authBusy = true;
-    const t = window.nivT;
-    const btn = document.getElementById('btn-signup');
-    const errEl = document.getElementById('signup-error');
-    btn.disabled = true;
-    btn.textContent = t('btn_signup_busy');
-    errEl.classList.remove('visible');
-    try {
-      const name  = document.getElementById('signup-name').value.trim();
-      const email = document.getElementById('signup-email').value.trim();
-      const pass  = document.getElementById('signup-pass').value;
-      if (!name) throw { code: 'missing-name' };
-
-      if (QGI) {
-        // ---- QGI employee join: invite code → Daniel's approval queue ----
-        const joinCode = document.getElementById('signup-orgcode').value.trim().toUpperCase();
-        if (!joinCode) throw { code: 'missing-code' };
-        const cred = await createUserWithEmailAndPassword(auth, email, pass);
-        await updateProfile(cred.user, { displayName: name });
-        // Auth is live, so the mid-signup org read is allowed by the rules.
-        const orgSnap = await getDoc(doc(db, 'orgs', joinCode));
-        if (!orgSnap.exists() || orgSnap.data().flow !== 'qgi') {
-          await cred.user.delete();
-          throw { code: 'invalid-code' };
-        }
-        await setDoc(doc(db, 'users', cred.user.uid), {
-          name, email, role: 'medidor', orgId: joinCode,
-          isQGC: true, disabled: true, geoStatus: 'pending',
-          createdAt: serverTimestamp()
-        });
-        await maybeSendWelcome(email, name, cred.user.uid);
-        const gate = await ensureFlowClaims();
-        if (gate.ok && routeAfterGate(gate.verdict, gate.reason)) return;
-        showPendingApproval();
-        return;
-      }
-
-      // ---- External: request company access (no self-service signup) ----
-      // Creates the auth account disabled; an owner approves and assigns the org.
-      const orgName = document.getElementById('signup-orgname').value.trim();
-      if (!orgName) throw { code: 'missing-orgname' };
-      const cred = await createUserWithEmailAndPassword(auth, email, pass);
-      await updateProfile(cred.user, { displayName: name });
-      try {
-        await setDoc(doc(db, 'users', cred.user.uid), {
-          name, email, role: 'medidor',
-          disabled: true, geoStatus: 'pending',
-          requestedOrg: orgName,
-          homeRegion: country || 'unknown',
-          createdAt: serverTimestamp()
-        });
-      } catch(fsErr) {
-        console.error('Firestore write failed:', fsErr.code, fsErr.message);
-        alert(t('fs_fail') + fsErr.code + t('fs_fail_uid') + cred.user.uid + t('fs_fail_rules'));
-        await ssoHandoff('/dashboard.html');
-        return;
-      }
-      await maybeSendWelcome(email, name, cred.user.uid);
-      showPendingApproval();
-      return;
-    } catch(err) {
-      errEl.textContent = friendlyError(err.code);
-      errEl.classList.add('visible');
-      btn.disabled = false;
-      btn.textContent = t('btn_signup');
-      authBusy = false;
-    }
-  }
 
   function friendlyError(code) {
     const t = window.nivT;
@@ -1601,8 +1405,8 @@
   //     https://login.nivelatolabs.com/?travel_verify=<token>
   //   - resolves on success, rejects with { code } on failure
   async function sendTravelVerificationEmail(email) {
-    // TODO: return (await requestTravelVerification({ email }));
-    throw { code: 'not-implemented' };
+    const { data } = await httpsCallable(centralFunctions, 'requestTravelVerification')({ email });
+    return data;
   }
   //
   // TODO(backend): implement redeemTravelVerification.
@@ -1612,8 +1416,8 @@
   //   - resolves { validUntil } where validUntil = Date.now() + 30 days (epoch ms)
   //   - rejects with { code: 'invalid-travel-token' } on bad/expired/used token
   async function redeemTravelVerification(token) {
-    // TODO: return (await redeemTravelVerification({ token }));
-    throw { code: 'not-implemented' };
+    const { data } = await httpsCallable(centralFunctions, 'redeemTravelVerification')({ token });
+    return data;
   }
 
   // ---- Travel verification UI ----
@@ -1633,11 +1437,13 @@
   // nouns); signinText, inquiryText and signinButton are per-language;
   // employeeNotice is a plain string (same in both languages, by design).
   // location is optional and used for nearest-first proximity sorting.
+  // domains is optional; used for manual company lookup by domain.
   const COMPANIES = {
     qgc: {
       name: 'Quality Glazing Contractors',
       logo: './qgc-logo.jpg',
       location: { lat: 18.4663, lng: -66.1057, label: 'San Juan, PR' },
+      domains: ['qgipr.com'],
       signinText: {
         es: 'Ingresa las credenciales de tu empresa para iniciar sesión.',
         en: 'Enter your company credentials to sign in.'
@@ -1650,7 +1456,8 @@
       signinButton: {
         es: 'Iniciar sesión en Quality Glazing Contractors',
         en: 'Sign into Quality Glazing Contractors'
-      }
+      },
+      signinWebhook: null, // optional: URL for webhook-driven custom signin UI (see contract below)
     }
   };
   function companyText(company, field) {
@@ -1949,6 +1756,27 @@
   // ---- "Join a company" selector view ----
   // Lists approved companies (COMPANIES only), nearest-first when user
   // coords are known. NOT PR-gated; the approval list itself is the gate.
+  // Manual domain entry at the bottom can only reach approved companies.
+  function normalizeDomain(raw) {
+    return (raw || '').toLowerCase().trim()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .split('/')[0]
+      .split('?')[0];
+  }
+  function findCompanyByDomain(domain) {
+    var d = normalizeDomain(domain);
+    if (!d) return null;
+    var ids = Object.keys(COMPANIES);
+    for (var i = 0; i < ids.length; i++) {
+      var c = COMPANIES[ids[i]];
+      var domains = c.domains || [];
+      for (var j = 0; j < domains.length; j++) {
+        if (normalizeDomain(domains[j]) === d) return ids[i];
+      }
+    }
+    return null;
+  }
   function renderCompanySelectUI() {
     const t = window.nivT;
     const card = document.getElementById('app-card');
@@ -1966,10 +1794,18 @@
       + '<div class="split">'
       + '<div class="brand-panel">'
       + '<h1 class="logo' + (qgi ? ' qgi' : '') + '" style="font-size:32px">' + t('choose_company') + '</h1>'
-      + '<div class="tagline">' + t('choose_company_sub') + '</div>'
       + '</div>'
       + '<div class="main-panel">'
+      + '<div class="accounts-title">' + t('nearby') + '</div>'
       + '<div id="company-select-list">' + pills + '</div>'
+      + '<button type="button" class="btn-google" id="btn-another-company" style="margin-top:16px"><span>' + t('or_signin_another') + '</span></button>'
+      + '<form id="company-domain-form" style="display:none;margin-top:12px" onsubmit="return false">'
+      + '<div class="field">'
+      + '<input type="text" id="company-domain-input" placeholder="' + escapeHtml(t('company_domain_ph')) + '" autocomplete="off" autocapitalize="off" spellcheck="false" />'
+      + '</div>'
+      + '<button type="submit" class="btn-primary' + (qgi ? ' qgi-btn' : '') + '" id="btn-find-company" style="margin-top:12px"><span>' + t('find_company') + '</span></button>'
+      + '<div class="error-msg" id="company-domain-error" role="alert"></div>'
+      + '</form>'
       + '</div>'
       + '</div>';
     window.nivApplyLang();
@@ -1979,6 +1815,28 @@
       if (!b) return;
       const id = b.getAttribute('data-select-company');
       if (id && COMPANIES[id]) showCompanyUI(id);
+    });
+    document.getElementById('btn-another-company').addEventListener('click', function () {
+      const f = document.getElementById('company-domain-form');
+      const showing = f.style.display !== 'none';
+      f.style.display = showing ? 'none' : 'block';
+      if (!showing) {
+        const inp = document.getElementById('company-domain-input');
+        const err = document.getElementById('company-domain-error');
+        err.classList.remove('visible'); err.textContent = '';
+        if (inp) inp.focus();
+      }
+    });
+    document.getElementById('company-domain-form').addEventListener('submit', function () {
+      const inp = document.getElementById('company-domain-input');
+      const err = document.getElementById('company-domain-error');
+      const id = findCompanyByDomain(inp ? inp.value : '');
+      if (id) {
+        showCompanyUI(id);
+      } else {
+        err.textContent = t('company_not_found');
+        err.classList.add('visible');
+      }
     });
     ensureUserCoords(); // lazy proximity; re-renders nearest-first when coords land
   }
@@ -1991,6 +1849,102 @@
     navigateTo('company:' + id);
   }
 
+  // ---- Webhook-driven custom company signin ----
+  //
+  // ARCHITECTURE (Giulia's rule): the Nivelato account ALWAYS stands as the
+  // identity, even with custom company steps. The webhook adds verification
+  // steps; it does NOT replace authentication. It must return a Firebase
+  // custom token for the user's Nivelato account.
+  //
+  // How a company integrates (hand this to the company dev):
+  // 1. We provision the approved company a Firebase Admin SDK service account
+  //    (or a Nivelato backend endpoint that mints on their behalf). With it
+  //    they mint Firebase custom tokens for their users' Nivelato accounts:
+  //    admin.auth().createCustomToken(nivelatoUid).
+  // 2. They implement two HTTPS endpoints (one URL may handle both):
+  //
+  //    SPEC (handshake): POST { company: "<id>", lang: "es"|"en", mode: "spec" }
+  //    returns, e.g.:
+  //    {
+  //      "steps": [
+  //        { "id": "email", "type": "email", "label": "Email" },
+  //        { "id": "password", "type": "password", "label": "Password" },
+  //        { "id": "employee_id", "type": "text", "label": "Employee ID",
+  //          "placeholder": "QGC-1234", "required": true }
+  //      ],
+  //      "baseAuth": "nivelato",
+  //      "submit": { "url": "https://company.com/api/verify", "method": "POST" },
+  //      "notice": "Optional extra notice text for this signin."
+  //    }
+  //    Supported step types: "email", "password", "text", "tel". Unknown
+  //    types are ignored with a console warning. All labels, placeholders
+  //    and notices come from the webhook; we do not localize custom fields.
+  //    "baseAuth": "nivelato" (optional) means: run our standard Firebase
+  //    email/password FIRST, then render these steps (e.g. a 2FA code on top
+  //    of email/password). Omit it when the company verifies fully on their
+  //    side (SAML/IdP handshake, employee-ID lookup, ...).
+  //
+  //    SUBMIT: POST { company, lang, uid, fields: { stepId: value } }
+  //      - uid is the Firebase uid when baseAuth ran first, else null.
+  //    returns { "ok": true, "customToken": "<firebase-custom-token>" }
+  //    or      { "ok": false, "error": "human-readable message" }.
+  //
+  // 3. The login page calls signInWithCustomToken(customToken). The resulting
+  //    Firebase user IS the Nivelato account: same users/{uid} doc, same
+  //    isQGC checks, same everything downstream. The webhook NEVER creates a
+  //    session by itself: no token, no signin.
+  //
+  // Failure semantics: the spec fetch times out after 8s, fails, or returns
+  // an invalid spec -> we fall back to the standard email/password form (a
+  // down webhook never hard-blocks signin). A failed submit shows the error
+  // inline; if baseAuth already signed the user in, we sign them back out so
+  // a failed extra step cannot leave a half-verified session behind.
+  var companySpecCache = {}; // companyId -> validated spec, or null when the fetch failed
+  var COMPANY_SPEC_TIMEOUT_MS = 8000;
+  var COMPANY_STEP_TYPES = { email: 'email', password: 'password', text: 'text', tel: 'tel' };
+
+  function fetchCompanySigninSpec(companyId) {
+    const company = COMPANIES[companyId];
+    if (!company || !company.signinWebhook) return Promise.resolve(null);
+    const lang = (window.nivGetLang && window.nivGetLang()) || 'es';
+    let timer = null;
+    let ctrl = null;
+    try { ctrl = new AbortController(); } catch (_) { ctrl = null; }
+    const fetchOpts = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company: companyId, lang: lang, mode: 'spec' })
+    };
+    if (ctrl) {
+      fetchOpts.signal = ctrl.signal;
+      timer = setTimeout(function () { try { ctrl.abort(); } catch (_) {} }, COMPANY_SPEC_TIMEOUT_MS);
+    }
+    const done = function () { if (timer) clearTimeout(timer); };
+    return fetch(company.signinWebhook, fetchOpts).then(function (r) {
+      done();
+      if (!r.ok) return null;
+      return r.json().catch(function () { return null; });
+    }).then(function (spec) {
+      return isValidCompanySpec(spec) ? spec : null;
+    }).catch(function () { done(); return null; });
+  }
+
+  function isValidCompanySpec(spec) {
+    if (!spec || typeof spec !== 'object' || Array.isArray(spec)) return false;
+    if (!Array.isArray(spec.steps)) return false;
+    if (!spec.submit || typeof spec.submit !== 'object' || typeof spec.submit.url !== 'string' || !spec.submit.url) return false;
+    const kept = [];
+    for (let i = 0; i < spec.steps.length; i++) {
+      const s = spec.steps[i];
+      if (!s || typeof s !== 'object' || typeof s.id !== 'string' || !s.id) continue;
+      if (!COMPANY_STEP_TYPES[s.type]) { try { console.warn('[nivelato] unknown company step type ignored:', s.type); } catch (_) {} continue; }
+      kept.push(s);
+    }
+    if (!kept.length) return false;
+    spec.steps = kept;
+    return true;
+  }
+
   function renderCompanyUI() {
     const t = window.nivT;
     const card = document.getElementById('app-card');
@@ -1998,7 +1952,6 @@
     const company = COMPANIES[companyShown];
     if (!company) return;
     const qgi = QGI;
-    const signinLabel = companyText(company, 'signinButton');
     card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
       + '<div class="split">'
       + '<div class="brand-panel">'
@@ -2015,7 +1968,50 @@
       + '<span class="account-meta"><span class="account-name">' + escapeHtml(company.name) + '</span></span>'
       + '</div>'
       + '</div>'
-      + '<form id="company-form" autocomplete="on" onsubmit="return false">'
+      + '<div id="company-form-area"></div>'
+      + '</div>'
+      + '</div>';
+    window.nivApplyLang();
+    document.getElementById('company-back').addEventListener('click', goBackView);
+    renderCompanyFormArea();
+  }
+
+  // Decides which form goes in the area: webhook spec (cached or fetched),
+  // falling back to the standard email/password form when there is no
+  // webhook or the spec fetch failed. Never throws; never blocks signin.
+  function renderCompanyFormArea() {
+    const area = document.getElementById('company-form-area');
+    const company = companyShown && COMPANIES[companyShown];
+    if (!area || !company) return;
+    const id = companyShown;
+    if (company.signinWebhook && companySpecCache[id] === undefined) {
+      area.innerHTML = '<div class="niv-spinner" role="status" aria-label="loading"></div>';
+      fetchCompanySigninSpec(id).then(function (spec) {
+        companySpecCache[id] = spec; // null on failure -> standard form fallback
+        if (companyShown === id && document.getElementById('company-form-area')) renderCompanyFormArea();
+      });
+      return;
+    }
+    const spec = (company.signinWebhook && companySpecCache[id]) || null;
+    if (spec && spec.baseAuth === 'nivelato') {
+      // Extra steps on top of email/password: standard form first; a
+      // successful password signin flows into the webhook's extra steps.
+      renderStandardCompanyForm(area, company, spec);
+    } else if (spec) {
+      renderCustomCompanyForm(area, company, spec, null);
+    } else {
+      renderStandardCompanyForm(area, company, null);
+    }
+  }
+
+  // Standard email/password form. When pendingSpec is set (spec.baseAuth ===
+  // 'nivelato'), a successful password signin flows into the webhook's extra
+  // steps instead of finishing the signin.
+  function renderStandardCompanyForm(area, company, pendingSpec) {
+    const t = window.nivT;
+    const qgi = QGI;
+    const signinLabel = companyText(company, 'signinButton');
+    area.innerHTML = '<form id="company-form" autocomplete="on" onsubmit="return false">'
       + '<div class="field">'
       + '<label for="company-email">' + t('label_email') + '</label>'
       + '<input type="email" id="company-email" name="email" placeholder="' + t('ph_email') + '" autocomplete="email" />'
@@ -2026,19 +2022,45 @@
       + '</div>'
       + '<button class="btn-primary' + (qgi ? ' qgi-btn' : '') + '" id="btn-company" type="submit">' + escapeHtml(signinLabel) + '</button>'
       + '<div class="error-msg" id="company-error" role="alert"></div>'
-      + '</form>'
-      + '</div>'
-      + '</div>';
-    window.nivApplyLang();
-    document.getElementById('company-form').addEventListener('submit', doCompanySubmit);
-    document.getElementById('company-back').addEventListener('click', goBackView);
+      + '</form>';
+    document.getElementById('company-form').addEventListener('submit', function (e) { doCompanySubmit(e, pendingSpec); });
     const emailEl = document.getElementById('company-email');
     if (emailEl) emailEl.focus();
   }
 
+  // Webhook-defined steps, rendered in order. All labels come from the spec
+  // (never localized here); every string is escaped, never raw innerHTML.
+  function renderCustomCompanyForm(area, company, spec, baseUser) {
+    const qgi = QGI;
+    const signinLabel = companyText(company, 'signinButton');
+    let html = '';
+    if (spec.notice) html += '<div class="company-inquiry">' + escapeHtml(String(spec.notice)) + '</div>';
+    html += '<form id="company-form" autocomplete="on" onsubmit="return false">';
+    spec.steps.forEach(function (s) {
+      const fid = 'cc-' + String(s.id).replace(/[^a-zA-Z0-9_-]/g, '_');
+      const inputType = COMPANY_STEP_TYPES[s.type] || 'text';
+      html += '<div class="field">'
+        + '<label for="' + escapeHtml(fid) + '">' + escapeHtml(String(s.label || s.id)) + '</label>'
+        + '<input type="' + inputType + '" id="' + escapeHtml(fid) + '"'
+        + ' placeholder="' + escapeHtml(String(s.placeholder || '')) + '"'
+        + (s.required ? ' required aria-required="true"' : '')
+        + ' data-step-id="' + escapeHtml(String(s.id)) + '" />'
+        + '</div>';
+    });
+    html += '<button class="btn-primary' + (qgi ? ' qgi-btn' : '') + '" id="btn-company" type="submit">' + escapeHtml(signinLabel) + '</button>'
+      + '<div class="error-msg" id="company-error" role="alert"></div>'
+      + '</form>';
+    area.innerHTML = html;
+    document.getElementById('company-form').addEventListener('submit', function (e) { doCompanyCustomSubmit(e, spec, baseUser); });
+    const first = area.querySelector('input');
+    if (first) first.focus();
+  }
+
   // Company signin submit: email/password, then the shared QGC post-signin path
   // (isQGC check, cant-add error for non-QGC in QGC mode, save-login prompt).
-  async function doCompanySubmit(e) {
+  // With pendingSpec (baseAuth 'nivelato'), success flows into the webhook's
+  // extra steps instead of finishing here.
+  async function doCompanySubmit(e, pendingSpec) {
     if (e) e.preventDefault();
     if (authBusy) return;
     authBusy = true;
@@ -2054,12 +2076,71 @@
       if (!email || email.indexOf('@') < 0) { throw { code: 'auth/missing-email' }; }
       if (!pass) { throw { code: 'auth/missing-password' }; }
       const cred = await signInWithEmailAndPassword(auth, email, pass);
+      if (pendingSpec) {
+        // baseAuth mode: Nivelato identity established; now the webhook's extra steps.
+        authBusy = false;
+        const area = document.getElementById('company-form-area');
+        if (area && company) renderCustomCompanyForm(area, company, pendingSpec, cred.user);
+        return;
+      }
       companyShown = null;
       await finishAddAccountSignIn(cred.user);
     } catch (err) {
       companyError(friendlyError(err && err.code));
       if (btn) { btn.disabled = false; btn.textContent = btnLabel; }
       authBusy = false;
+    }
+  }
+
+  // Webhook custom-step submit: POST the collected fields; the webhook must
+  // answer with a Firebase custom token for the user's Nivelato account.
+  async function doCompanyCustomSubmit(e, spec, baseUser) {
+    if (e) e.preventDefault();
+    if (authBusy) return;
+    authBusy = true;
+    const t = window.nivT;
+    const companyId = companyShown;
+    const company = companyId && COMPANIES[companyId];
+    const btnLabel = company ? companyText(company, 'signinButton') : t('btn_login');
+    const btn = document.getElementById('btn-company');
+    const errEl = document.getElementById('company-error');
+    if (errEl) errEl.classList.remove('visible');
+    if (btn) { btn.disabled = true; }
+    const fail = async function (msg) {
+      // A failed extra step must not leave a half-verified session behind.
+      try { await signOut(auth); } catch (_) { /* ignore */ }
+      companyError(msg);
+      if (btn) { btn.disabled = false; btn.textContent = btnLabel; }
+      authBusy = false;
+    };
+    try {
+      if (!company || !spec || !spec.submit || !spec.submit.url) throw new Error('bad-spec');
+      const fields = {};
+      for (let i = 0; i < spec.steps.length; i++) {
+        const s = spec.steps[i];
+        const el = document.querySelector('[data-step-id="' + String(s.id).replace(/"/g, '') + '"]');
+        const val = ((el && el.value) || '').trim();
+        if (s.required && !val) { await fail(t('field_required')); return; }
+        fields[s.id] = val;
+      }
+      const uid = (baseUser && baseUser.uid) || (auth.currentUser && auth.currentUser.uid) || null;
+      const lang = (window.nivGetLang && window.nivGetLang()) || 'es';
+      const r = await fetch(spec.submit.url, {
+        method: (spec.submit.method || 'POST').toUpperCase(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company: companyId, lang: lang, uid: uid, fields: fields })
+      });
+      if (!r.ok) throw new Error('submit-failed');
+      const res = await r.json().catch(function () { return null; });
+      if (!res || res.ok !== true || typeof res.customToken !== 'string' || !res.customToken) {
+        await fail((res && res.error) ? String(res.error) : friendlyError('auth/webhook-verify-failed'));
+        return;
+      }
+      const cred = await signInWithCustomToken(auth, res.customToken);
+      companyShown = null;
+      await finishAddAccountSignIn(cred.user);
+    } catch (err) {
+      await fail(friendlyError(err && err.code));
     }
   }
 
