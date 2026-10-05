@@ -435,6 +435,24 @@
     body.qgc-theme .account-name { color: #f2f1ec; }
     body.qgc-theme .account-kind { color: #b9b9c2; }
     body.qgc-theme .qgc-only-notice { color: #f2f1ec; }
+    /* Company-branded signin view */
+    .company-disclaimer {
+      margin-top: 16px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+    .company-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .company-head .back-btn { position: static; flex: none; }
+    .company-head .account-pill { flex: 1; margin-bottom: 0; cursor: default; }
+    .company-head .account-pill:hover { border-color: var(--line); }
+    body.qgc-theme .company-head .account-pill:hover { border-color: #55555c; }
+    body.qgc-theme .company-disclaimer { color: #b9b9c2; }
     /* Add-account view: Google outlined pill, "or" separator, back chevron */
     .or-sep {
       display: flex; align-items: center; gap: 12px;
@@ -1088,10 +1106,8 @@
   function onAccountPillClick(e) {
     const qgcPill = e.target && e.target.closest ? e.target.closest('[data-qgc-pill]') : null;
     if (qgcPill) {
-      // QGC pill: no stored email, just go to the QGC signin tab and focus email.
-      switchTab('login');
-      const emailEl = document.getElementById('login-email');
-      if (emailEl) emailEl.focus();
+      // QGC pill: open the company-branded signin screen.
+      showCompanyUI('qgc');
       return;
     }
     const addBtn = e.target && e.target.closest ? e.target.closest('[data-add-account]') : null;
@@ -1299,6 +1315,7 @@
     if (travelShown) { renderTravelUI(); return; }
     if (addAccountShown) { renderAddAccountUI(); return; }
     if (cantAddShown) { renderCantAddUI(); return; }
+    if (companyShown) { renderCompanyUI(); return; }
     renderForm(QGI ? 'qgi' : 'external', true);
     refreshNotices();
   };
@@ -1572,16 +1589,42 @@
   let travelSent = false;     // the verification link was sent
   let travelLinkError = false; // a ?travel_verify link was invalid/expired
 
+  // ---- Company-branded signin ----
+  // Per-company signin screens (mockup). More companies can be added later;
+  // QGC is the only one for now. name/logo are shown as-is (proper nouns);
+  // signinText and disclaimer are per-language.
+  const COMPANIES = {
+    qgc: {
+      name: 'Quality Glazing Contractors',
+      logo: './qgc-logo.jpg',
+      signinText: {
+        es: 'Inicia sesión con tu cuenta de Quality Glazing Contractors.',
+        en: 'Sign in with your Quality Glazing Contractors account.'
+      },
+      disclaimer: {
+        es: 'Solo empleados de QGC pueden usar el Panel y la app web en Puerto Rico.',
+        en: 'Only QGC employees may use the Dashboard and web app in Puerto Rico.'
+      }
+    }
+  };
+  function companyText(company, field) {
+    const lang = (window.nivGetLang && window.nivGetLang()) || 'es';
+    const v = company[field] || {};
+    return v[lang] || v.es || '';
+  }
+
   // ---- Add-account + cant-add views (mockup) ----
   // Dedicated screens reached from the "Añadir otra cuenta" picker button.
   // In QGC mode, an added account must be QGC-verified (users/{uid}.isQGC);
   // otherwise the cant-add error screen is shown instead.
   let addAccountShown = false; // add-account screen is visible
   let cantAddShown = false;    // cant-add error screen is visible
+  let companyShown = null;     // company-branded signin screen is visible (company id)
 
   function backToMainView() {
     addAccountShown = false;
     cantAddShown = false;
+    companyShown = null;
     renderForm(QGI ? 'qgi' : 'external', true);
     refreshNotices();
   }
@@ -1744,6 +1787,91 @@
     const go = function () { backToMainView(); };
     document.getElementById('cantadd-back').addEventListener('click', go);
     document.getElementById('btn-cantadd-back').addEventListener('click', go);
+  }
+
+  // ---- Company-branded signin view ----
+  // Left: company name + custom signin text + custom disclaimer.
+  // Right: back chevron + company pill (context, not tappable) + email/password form.
+  function showCompanyUI(id) {
+    if (!COMPANIES[id]) return;
+    companyShown = id;
+    addAccountShown = false;
+    cantAddShown = false;
+    renderCompanyUI();
+  }
+
+  function renderCompanyUI() {
+    const t = window.nivT;
+    const card = document.getElementById('app-card');
+    if (!card || !companyShown) return;
+    const company = COMPANIES[companyShown];
+    if (!company) return;
+    const qgi = QGI;
+    card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
+      + '<div class="split">'
+      + '<div class="brand-panel">'
+      + '<h1 class="logo' + (qgi ? ' qgi' : '') + '" style="font-size:32px">' + escapeHtml(company.name) + '</h1>'
+      + '<div class="tagline">' + escapeHtml(companyText(company, 'signinText')) + '</div>'
+      + '<div class="company-disclaimer">' + escapeHtml(companyText(company, 'disclaimer')) + '</div>'
+      + '</div>'
+      + '<div class="main-panel">'
+      + '<div class="company-head">'
+      + '<button type="button" class="back-btn" id="company-back" aria-label="' + t('go_back') + '">&#8249;</button>'
+      + '<div class="account-pill">'
+      + '<span class="account-avatar account-avatar-logo"><img src="' + escapeHtml(company.logo) + '" alt="' + escapeHtml(company.name) + '" /></span>'
+      + '<span class="account-meta"><span class="account-name">' + escapeHtml(company.name) + '</span></span>'
+      + '</div>'
+      + '</div>'
+      + '<form id="company-form" autocomplete="on" onsubmit="return false">'
+      + '<div class="field">'
+      + '<label for="company-email">' + t('label_email') + '</label>'
+      + '<input type="email" id="company-email" name="email" placeholder="' + t('ph_email') + '" autocomplete="email" />'
+      + '</div>'
+      + '<div class="field">'
+      + '<label for="company-pass">' + t('label_password') + '</label>'
+      + '<input type="password" id="company-pass" name="password" placeholder="' + t('ph_password') + '" autocomplete="current-password" />'
+      + '</div>'
+      + '<button class="btn-primary' + (qgi ? ' qgi-btn' : '') + '" id="btn-company" type="submit">' + t('btn_login') + '</button>'
+      + '<div class="error-msg" id="company-error" role="alert"></div>'
+      + '</form>'
+      + '</div>'
+      + '</div>';
+    window.nivApplyLang();
+    document.getElementById('company-form').addEventListener('submit', doCompanySubmit);
+    document.getElementById('company-back').addEventListener('click', backToMainView);
+    const emailEl = document.getElementById('company-email');
+    if (emailEl) emailEl.focus();
+  }
+
+  // Company signin submit: email/password, then the shared QGC post-signin path
+  // (isQGC check, cant-add error for non-QGC in QGC mode, save-login prompt).
+  async function doCompanySubmit(e) {
+    if (e) e.preventDefault();
+    if (authBusy) return;
+    authBusy = true;
+    const t = window.nivT;
+    const btn = document.getElementById('btn-company');
+    const errEl = document.getElementById('company-error');
+    if (errEl) errEl.classList.remove('visible');
+    if (btn) { btn.disabled = true; btn.textContent = t('btn_login_busy'); }
+    try {
+      const email = (document.getElementById('company-email').value || '').trim();
+      const pass = (document.getElementById('company-pass').value || '') || '';
+      if (!email || email.indexOf('@') < 0) { throw { code: 'auth/missing-email' }; }
+      if (!pass) { throw { code: 'auth/missing-password' }; }
+      const cred = await signInWithEmailAndPassword(auth, email, pass);
+      companyShown = null;
+      await finishAddAccountSignIn(cred.user);
+    } catch (err) {
+      companyError(friendlyError(err && err.code));
+      if (btn) { btn.disabled = false; btn.textContent = t('btn_login'); }
+      authBusy = false;
+    }
+  }
+
+  function companyError(msg) {
+    const errEl = document.getElementById('company-error');
+    if (errEl) { errEl.textContent = msg; errEl.classList.add('visible'); }
   }
 
   function showTravelUI() {
@@ -1922,8 +2050,8 @@
     if (trustedDev) {
       // A travel grant acquired after boot (e.g. via link redeem) supersedes geo.
       if (qgcTravelValid()) return;
-      // Transient add-account / cant-add views: never interrupt them.
-      if (addAccountShown || cantAddShown) return;
+      // Transient add-account / cant-add / company views: never interrupt them.
+      if (addAccountShown || cantAddShown || companyShown) return;
       if (effectivePR) {
         travelShown = false;
         travelSent = false;
@@ -1937,9 +2065,9 @@
     }
     var effectiveCountry = effectivePR ? 'PR' : cc;
     const mode = flowFromCookie() || flowModeForCountry(effectiveCountry);
-    // Don't yank the user out of the transient add-account / cant-add views
-    // when background geo settles.
-    if (addAccountShown || cantAddShown) return;
+    // Don't yank the user out of the transient add-account / cant-add / company
+    // views when background geo settles.
+    if (addAccountShown || cantAddShown || companyShown) return;
     if (mode !== (QGI ? 'qgi' : 'external')) renderForm(mode, true);
     if (cc === null && !flowFromCookie() && !tzIsPR) showGeoNotice();
     if (effectivePR) showPrNotice();
