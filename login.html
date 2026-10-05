@@ -580,7 +580,9 @@
       margin-bottom: 20px;
     }
     .company-head .back-btn { position: static; flex: none; }
-    .company-head .account-pill { flex: 1; margin-bottom: 0; cursor: default; }
+    .company-head .account-pill { flex: 1; min-width: 0; margin-bottom: 0; cursor: default; }
+    .company-head .account-pill .account-meta { min-width: 0; }
+    .company-head .account-pill .account-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .company-head .account-pill:hover { border-color: var(--line); }
     body.qgc-theme .company-head .account-pill:hover { border-color: #55555c; }
     body.qgc-theme .company-employee-notice { color: #f2f1ec; }
