@@ -1305,6 +1305,12 @@
     }
   }
   function ssoFailed(errEl) {
+    if (!errEl) {
+      // The main form's error element may not exist in company/travel views.
+      // Fall back to any visible error container.
+      errEl = document.querySelector('.error-msg');
+    }
+    if (!errEl) return;
     errEl.textContent = window.nivT('sso_failed');
     errEl.classList.add('visible');
   }
@@ -1454,6 +1460,7 @@
       logo: './qgc-logo.jpg',
       location: { lat: 18.4663, lng: -66.1057, label: 'San Juan, PR' },
       domains: ['qgipr.com'],
+      domainPlaceholder: 'qgipr.com', // shown in the manual "sign into another company" domain input
       signinText: {
         es: 'Ingresa las credenciales de tu empresa para iniciar sesión.',
         en: 'Enter your company credentials to sign in.'
@@ -2346,6 +2353,13 @@
   // Travel verification link (?travel_verify=<token>): redeemed below.
   var _travelToken = null;
   try { _travelToken = new URLSearchParams(location.search).get('travel_verify'); } catch (_) {}
+  // Company deep link (/company/XXXXXX): open that company's signin screen
+  // directly. The worker serves login.html for /company/* paths.
+  var _deepLinkCompany = null;
+  try {
+    var _m = location.pathname.match(/^\/company\/([A-Za-z0-9_-]+)\/?$/);
+    if (_m) _deepLinkCompany = _m[1].toLowerCase();
+  } catch (_) {}
   // QGC device trust is checked FIRST, before any geo signal.
   // - trusted + valid travel grant: straight to QGC mode, no geo at all.
   // - trusted + sync signals say PR: QGC mode (background geo refines).
@@ -2363,7 +2377,13 @@
   else if (_trusted && _syncNotPR) _initialMode = 'travel';
   else if (_trusted) _initialMode = 'qgi';
   else _initialMode = flowFromCookie() || flowModeForCountry(_initialCc);
-  if (_initialMode === 'travel') {
+  // Company deep link takes precedence: open the company's signin screen
+  // directly, regardless of geo mode.
+  if (_deepLinkCompany && COMPANIES[_deepLinkCompany]) {
+    loadCompanyFlags(_deepLinkCompany).finally(function () {
+      showCompanyUI(_deepLinkCompany);
+    });
+  } else if (_initialMode === 'travel') {
     showTravelUI();
     // Seed the history entry for the login view stack: the first back press
     // from a sub-view returns to main instead of leaving the page.
