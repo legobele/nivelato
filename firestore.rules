@@ -261,14 +261,15 @@ service cloud.firestore {
       // Odometer for the easter eggs. Any signed-in user may bump exactly one
       // known counter by exactly 1. (The whimsy must be accounted for.)
       allow create: if isSignedIn()
-        && request.resource.data.keys().hasOnly(['gay', 'crab', 'oldManYellsAtCloud', 'ao3'])
+        && request.resource.data.keys().hasOnly(['gay', 'crab', 'oldManYellsAtCloud', 'ao3', 'irs'])
         && request.resource.data.keys().size() == 1
         && (request.resource.data.get('gay', 0) == 1
           || request.resource.data.get('crab', 0) == 1
           || request.resource.data.get('oldManYellsAtCloud', 0) == 1
-          || request.resource.data.get('ao3', 0) == 1);
+          || request.resource.data.get('ao3', 0) == 1
+          || request.resource.data.get('irs', 0) == 1);
       allow update: if isSignedIn()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gay', 'crab', 'oldManYellsAtCloud', 'ao3'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gay', 'crab', 'oldManYellsAtCloud', 'ao3', 'irs'])
         && request.resource.data.diff(resource.data).affectedKeys().size() == 1
         && (
           (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gay'])
@@ -282,6 +283,9 @@ service cloud.firestore {
           ||
           (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ao3'])
             && request.resource.data.ao3 == resource.data.get('ao3', 0) + 1)
+          ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['irs'])
+            && request.resource.data.irs == resource.data.get('irs', 0) + 1)
         );
     }
 

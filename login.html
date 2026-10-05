@@ -643,6 +643,7 @@
   <script src="pride.js"></script>
   <script type="module" src="oldman.js"></script>
   <script type="module" src="ao3.js"></script>
+  <script type="module" src="irs.js"></script>
 </head>
 <body>
 <!-- M17: the default (external) form is STATIC HTML — first paint never waits
@@ -1016,6 +1017,18 @@
     console.log('%c the offsets are leveled but the vibes are not ',
       'color: #1b9aaa; font-style: italic; font-size: 13px;');
   } catch (_) { /* whimsy is optional */ }
+  // Self-XSS warning: never paste commands here. Ever.
+  try {
+    console.log('%cSTOP!', 'color:#ff3b30;font-size:56px;font-weight:900;');
+    console.log('%cPasting commands into this console can let attackers steal your account. ' +
+      'No real Nivelato feature will ever ask you to paste anything here.
+' +
+      'Learn why: https://faq.nivelatolabs.com/console',
+      'font-size:14px;line-height:1.6;');
+    console.log('%c ', 'padding:70px 90px;background:url("data:image/png;base64,' + qr + '") no-repeat center;background-size:contain;');
+    console.log('%c^ scan for the FAQ: why you never paste console commands',
+      'color:#a7a7b3;font-size:12px;font-style:italic;');
+  } catch (_) { /* the warning is load-bearing, the styling is not */ }
   // M17 watchdog (classic script — arms at parse time, needs no imports):
   // if the module below hasn't booted within 9s (stalled CDN / blocked
   // network), show a non-blocking warning instead of hanging silently.
