@@ -210,6 +210,25 @@
     .accounts-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
     .accounts-head .accounts-title { margin-bottom: 0; }
     .accounts-head .lang-toggle, .company-head .lang-toggle { margin: 0 0 0 auto; flex: none; }
+    /* ---- Password-only re-auth view ---- */
+    .reauth-acct {
+      display: flex; align-items: center; gap: 12px;
+      border: 1px solid #2c2c31; border-radius: 14px; padding: 12px 14px;
+      margin-bottom: 18px; background: #1a1a1e;
+    }
+    .reauth-acct .account-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: #2c2c31; color: #f2f1ec;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 15px; flex: none;
+    }
+    .reauth-acct .account-meta { display: flex; flex-direction: column; min-width: 0; }
+    .reauth-acct .account-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .reauth-acct .account-email { font-size: 12px; color: #a7a7b3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .btn-link {
+      display: block; width: 100%; background: none; border: 0; cursor: pointer;
+      color: #1b9aaa; font-size: 13px; font-family: inherit; margin-top: 14px; padding: 8px;
+    }
     /* ---- Dev options (hidden panel, Giulia only) ---- */
     #dev-badge {
       position: fixed; top: 12px; left: 12px; z-index: 9990; display: none;
@@ -712,6 +731,10 @@
         add_account_title: 'Añadir otra cuenta',
         add_account_sub: 'Añade otra cuenta personal o de empresa.',
         add_account_submit: 'Añadir cuenta',
+        reauth_title: 'Bienvenido de nuevo',
+        reauth_sub: 'Ingresa tu contraseña para continuar.',
+        reauth_submit: 'Iniciar sesión',
+        reauth_switch: 'Usar otra cuenta',
         signin_google: 'Iniciar sesión con Google',
         or_sep: 'o',
         cant_add_title: 'No se puede añadir la cuenta',
@@ -815,6 +838,10 @@
         add_account_title: 'Add another account',
         add_account_sub: 'Add another personal or company account.',
         add_account_submit: 'Add account',
+        reauth_title: 'Welcome back',
+        reauth_sub: 'Enter your password to continue.',
+        reauth_submit: 'Sign in',
+        reauth_switch: 'Use a different account',
         signin_google: 'Sign in with Google',
         or_sep: 'or',
         cant_add_title: 'Unable to add account',
@@ -1258,10 +1285,9 @@
     // A QGC account forces QGC mode (upgrade only, never downgrade):
     // QGC mode opens directly on the domain selector.
     if (acct.kind === 'qgc' && !QGI) { enterQgiDomainSelector(); return; }
-    const emailEl = document.getElementById('login-email');
-    const passEl = document.getElementById('login-pass');
-    if (emailEl) emailEl.value = acct.email;
-    if (passEl) passEl.focus();
+    // Password-only re-auth: the account is fixed, only the password is asked.
+    reauthShown = acct;
+    navigateTo('reauth');
   }
 
   let QGI = false;        // currently rendered flow
@@ -2130,16 +2156,17 @@
   let cantAddShown = false;    // cant-add error screen is visible
   let companyShown = null;     // company-branded signin screen is visible (company id)
   let companySelectShown = false; // "join a company" selector is visible
+  let reauthShown = null;      // password-only re-auth screen is visible (account object)
 
   // ---- View navigation: slide animations + history ----
   // slides. history. the back button works. we checked.
-  // Views: 'main' | 'add-account' | 'company-select' | 'cant-add' | 'company:<id>'.
+  // Views: 'main' | 'add-account' | 'company-select' | 'cant-add' | 'reauth' | 'company:<id>'.
   // Forward navigation: slide in from the right + pushState. Back (chevron or
   // device back button): slide in from the left via the popstate handler.
   // Language-toggle and geo-settle re-renders call render*UI() directly, so
   // they never animate and never touch history.
   let currentView = 'main';
-  const VIEW_ORDER = { 'main': 0, 'add-account': 1, 'company-select': 2, 'cant-add': 2 };
+  const VIEW_ORDER = { 'main': 0, 'add-account': 1, 'company-select': 2, 'cant-add': 2, 'reauth': 1 };
   function viewOrder(v) {
     if (typeof v === 'string' && v.indexOf('company:') === 0) return 3;
     return VIEW_ORDER[v] !== undefined ? VIEW_ORDER[v] : 0;
@@ -2155,22 +2182,27 @@
   }
   function renderView(view) {
     if (view === 'main') {
-      addAccountShown = false; cantAddShown = false; companyShown = null; companySelectShown = false;
+      addAccountShown = false; cantAddShown = false; companyShown = null; companySelectShown = false; reauthShown = null;
       renderForm(QGI ? 'qgi' : 'external', true);
       refreshNotices();
     } else if (view === 'add-account') {
       addAccountShown = true; cantAddShown = false; companyShown = null; companySelectShown = false;
       renderAddAccountUI();
     } else if (view === 'company-select') {
-      companySelectShown = true; addAccountShown = false; cantAddShown = false; companyShown = null;
+      companySelectShown = true; addAccountShown = false; cantAddShown = false; companyShown = null; reauthShown = null;
       renderCompanySelectUI();
     } else if (view === 'cant-add') {
-      cantAddShown = true; addAccountShown = false; companyShown = null; companySelectShown = false;
+      cantAddShown = true; addAccountShown = false; companyShown = null; companySelectShown = false; reauthShown = null;
       renderCantAddUI();
+    } else if (view === 'reauth') {
+      // Password-only re-auth: the account is fixed, only the password is asked.
+      if (!reauthShown || !reauthShown.email) { backToMainView(); return; }
+      addAccountShown = false; cantAddShown = false; companyShown = null; companySelectShown = false;
+      renderReauthUI();
     } else if (typeof view === 'string' && view.indexOf('company:') === 0) {
       const id = view.slice('company:'.length);
       if (!COMPANIES[id]) return; // unknown company: ignore stale state
-      companyShown = id; addAccountShown = false; cantAddShown = false; companySelectShown = false;
+      companyShown = id; addAccountShown = false; cantAddShown = false; companySelectShown = false; reauthShown = null;
       renderCompanyUI();
     } else {
       return;
@@ -2201,6 +2233,8 @@
     addAccountShown = false;
     cantAddShown = false;
     companyShown = null;
+    companySelectShown = false;
+    reauthShown = null;
     renderForm(QGI ? 'qgi' : 'external', true);
     refreshNotices();
   }
@@ -2265,6 +2299,84 @@
     if (joinBtn) joinBtn.addEventListener('click', function () { navigateTo('company-select'); });
     const emailEl = document.getElementById('addaccount-email');
     if (emailEl) emailEl.focus();
+  }
+
+  // ---- Password-only re-auth ----
+  // A sign-in case linked directly to one account: the email is fixed and
+  // shown (not editable), only the password is asked. Used when tapping a
+  // used-account pill, and available for any flow that needs re-auth.
+  function renderReauthUI() {
+    const t = window.nivT;
+    const acct = reauthShown || {};
+    const card = document.getElementById('app-card');
+    if (!card) return;
+    const qgi = QGI;
+    const label = acct.displayName || acct.email || '';
+    card.innerHTML = '<button type="button" class="back-btn" id="reauth-back" aria-label="' + t('go_back') + '">&#8249;</button>'
+      + '<div class="split">'
+      + '<div class="brand-panel">'
+      + '<h1 class="logo' + (qgi ? ' qgi' : '') + '" style="font-size:32px">' + t('reauth_title') + '</h1>'
+      + '<div class="tagline">' + t('reauth_sub') + '</div>'
+      + '</div>'
+      + '<div class="main-panel">'
+      + '<div class="reauth-acct">'
+      + '<span class="account-avatar">' + escapeHtml(initialsOf(label)) + '</span>'
+      + '<span class="account-meta">'
+      + '<span class="account-name">' + escapeHtml(acct.displayName || acct.email || '') + '</span>'
+      + (acct.displayName ? '<span class="account-email">' + escapeHtml(acct.email || '') + '</span>' : '')
+      + '</span>'
+      + '</div>'
+      + '<form id="reauth-form" autocomplete="on" onsubmit="return false">'
+      + '<div class="field">'
+      + '<label for="reauth-pass">' + t('label_password') + '</label>'
+      + '<input type="password" id="reauth-pass" name="password" placeholder="' + t('ph_password') + '" autocomplete="current-password" />'
+      + '</div>'
+      + '<button class="btn-primary' + (qgi ? ' qgi-btn' : '') + '" id="btn-reauth" type="submit">' + t('reauth_submit') + '</button>'
+      + '</form>'
+      + '<button type="button" class="btn-link" id="reauth-switch">' + t('reauth_switch') + '</button>'
+      + '<div class="error-msg" id="reauth-error" role="alert"></div>'
+      + '</div>'
+      + '</div>';
+    window.nivApplyLang();
+    document.getElementById('reauth-form').addEventListener('submit', doReauthSubmit);
+    document.getElementById('reauth-back').addEventListener('click', goBackView);
+    document.getElementById('reauth-switch').addEventListener('click', backToMainView);
+    const passEl = document.getElementById('reauth-pass');
+    if (passEl) passEl.focus();
+  }
+
+  function reauthError(msg) {
+    const errEl = document.getElementById('reauth-error');
+    if (errEl) { errEl.textContent = msg; errEl.classList.add('visible'); }
+  }
+
+  async function doReauthSubmit(e) {
+    if (e) e.preventDefault();
+    if (authBusy) return;
+    const acct = reauthShown;
+    if (!acct || !acct.email) { backToMainView(); return; }
+    authBusy = true;
+    const t = window.nivT;
+    const btn = document.getElementById('btn-reauth');
+    const errEl = document.getElementById('reauth-error');
+    if (errEl) errEl.classList.remove('visible');
+    if (btn) { btn.disabled = true; btn.textContent = t('btn_login_busy'); }
+    try {
+      const pass = document.getElementById('reauth-pass').value || '';
+      if (!pass) { throw { code: 'auth/missing-password' }; }
+      const cred = await signInWithEmailAndPassword(auth, acct.email, pass);
+      try {
+        const _dn = (cred.user && cred.user.displayName) || '';
+        saveUsedAccount(acct.email, _dn, QGI ? 'qgc' : 'personal');
+      } catch (_) { /* ignore */ }
+      reauthShown = null;
+      authBusy = false;
+      showSaveLoginPrompt();
+    } catch (err) {
+      reauthError(friendlyError(err && err.code));
+      if (btn) { btn.disabled = false; btn.textContent = t('reauth_submit'); }
+      authBusy = false;
+    }
   }
 
   // QGC check for added accounts: the signed-in user must be QGC-verified
@@ -3071,7 +3183,7 @@
       // A travel grant acquired after boot (e.g. via link redeem) supersedes geo.
       if (qgcTravelValid()) return;
       // Transient add-account / cant-add / company / company-select views: never interrupt them.
-      if (addAccountShown || cantAddShown || companyShown || companySelectShown) return;
+      if (addAccountShown || cantAddShown || companyShown || companySelectShown || reauthShown) return;
       if (effectivePR) {
         travelShown = false;
         travelSent = false;
@@ -3087,7 +3199,7 @@
     const mode = flowFromCookie() || flowModeForCountry(effectiveCountry);
     // Don't yank the user out of the transient add-account / cant-add / company / company-select
     // views when background geo settles.
-    if (addAccountShown || cantAddShown || companyShown || companySelectShown) return;
+    if (addAccountShown || cantAddShown || companyShown || companySelectShown || reauthShown) return;
     if (mode !== (QGI ? 'qgi' : 'external')) {
       if (mode === 'qgi') enterQgiDomainSelector();
       else renderForm(mode, true);
