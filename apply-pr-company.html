@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solicitar cuenta de empresa — Nivelato</title>
+<meta name="description" content="Solicita una cuenta de empresa de Nivelato para tu compañía en Puerto Rico.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0b0e; --bg2:#121216; --card:#16161c; --line:#232329;
+    --ink:#f2f1ec; --muted:#a7a7b3; --dim:#6d6d78;
+    --amber:#f5a524; --amber2:#ffcf5c; --laser:#c8f542; --red:#e5484d;
+    --radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--amber);color:#111}
+  a{color:inherit}
+  .wrap{max-width:760px;margin:0 auto;padding:0 24px}
+  /* nav */
+  nav{position:sticky;top:0;z-index:50;background:rgba(11,11,14,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .brand{font-family:'Space Grotesk';font-weight:700;font-size:1.15rem;letter-spacing:.02em;display:flex;align-items:center;gap:10px;text-decoration:none}
+  .brand .tick{width:26px;height:26px;border:2px solid var(--amber);border-radius:6px;position:relative;flex:none}
+  .brand .tick::after{content:"";position:absolute;left:5px;top:5px;width:12px;height:6px;border-left:3px solid var(--amber);border-bottom:3px solid var(--amber);transform:rotate(-45deg)}
+  /* hero */
+  header{padding:72px 0 32px;position:relative;overflow:hidden}
+  header::before{content:"";position:absolute;top:-120px;right:-120px;width:480px;height:480px;background:radial-gradient(circle,rgba(245,165,36,.12),transparent 65%);pointer-events:none}
+  .kicker{font-family:'JetBrains Mono',monospace;font-size:.78rem;letter-spacing:.28em;color:var(--amber);text-transform:uppercase;margin-bottom:18px}
+  h1{font-family:'Space Grotesk';font-size:clamp(2rem,5vw,3.2rem);line-height:1.06;font-weight:700;letter-spacing:-.02em}
+  .lede{margin-top:16px;font-size:1.05rem;color:var(--muted);max-width:58ch}
+  /* form */
+  form{padding:24px 0 90px}
+  fieldset{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:28px;margin:0 0 22px;min-width:0}
+  legend{font-family:'Space Grotesk';font-weight:600;font-size:1.12rem;padding:0 12px}
+  .field{margin-bottom:18px}
+  .field:last-child{margin-bottom:0}
+  label{display:block;font-size:.92rem;font-weight:500;margin-bottom:7px}
+  label .req{color:var(--amber);font-weight:600}
+  .hint{font-size:.82rem;color:var(--dim);margin-top:5px}
+  input[type=text],input[type=email],input[type=tel],input[type=number],select,textarea{
+    width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:10px;
+    color:var(--ink);font-family:inherit;font-size:.95rem;padding:12px 14px;outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,165,36,.18)}
+  input.invalid,select.invalid,textarea.invalid{border-color:var(--red);box-shadow:0 0 0 3px rgba(229,72,77,.15)}
+  textarea{resize:vertical;min-height:96px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  @media(max-width:620px){.row2,.row3{grid-template-columns:1fr}}
+  .radio-group{display:flex;flex-direction:column;gap:10px}
+  .radio-card{display:flex;align-items:flex-start;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:13px 15px;cursor:pointer;transition:border-color .15s}
+  .radio-card:hover{border-color:var(--dim)}
+  .radio-card input{accent-color:var(--amber);margin-top:4px;flex:none;width:17px;height:17px}
+  .radio-card .rt{font-weight:600;font-size:.95rem}
+  .radio-card .rd{font-size:.85rem;color:var(--muted)}
+  .radio-card.selected{border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,165,36,.12)}
+  .err{font-size:.83rem;color:var(--red);margin-top:6px;display:none}
+  .err.show{display:block}
+  .form-error{background:rgba(229,72,77,.1);border:1px solid rgba(229,72,77,.4);color:#ff9a9e;border-radius:10px;padding:13px 16px;font-size:.92rem;margin-bottom:20px;display:none}
+  .form-error.show{display:block}
+  .btn{display:inline-block;background:var(--amber);color:#141414;font-weight:600;padding:14px 34px;border-radius:999px;font-size:1rem;border:none;cursor:pointer;font-family:inherit;transition:transform .15s,box-shadow .15s,opacity .15s;width:100%}
+  .btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 24px rgba(245,165,36,.35)}
+  .btn:disabled{opacity:.55;cursor:wait}
+  /* success */
+  #success{display:none;text-align:center;padding:80px 0 100px}
+  #success.show{display:block}
+  #success .check{width:76px;height:76px;border:3px solid var(--laser);border-radius:50%;margin:0 auto 26px;position:relative}
+  #success .check::after{content:"";position:absolute;left:22px;top:20px;width:24px;height:14px;border-left:4px solid var(--laser);border-bottom:4px solid var(--laser);transform:rotate(-45deg)}
+  #success h2{font-family:'Space Grotesk';font-size:1.9rem;margin-bottom:14px}
+  #success p{color:var(--muted);max-width:52ch;margin:0 auto 8px}
+  footer{border-top:1px solid var(--line);padding:28px 0;color:var(--dim);font-size:.85rem}
+  footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  footer a{color:var(--muted);text-decoration:none}
+  footer a:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="https://nivelatolabs.com/"><span class="tick"></span>Nivelato</a>
+  </div>
+</nav>
+
+<div class="wrap" id="form-wrap">
+  <header>
+    <div class="kicker">Puerto Rico · Cuentas de empresa</div>
+    <h1>Solicita una cuenta para tu empresa</h1>
+    <p class="lede">Actualmente las cuentas de empresa en Puerto Rico se activan por solicitud. Completa el formulario y evaluamos tu caso. Si todo está en orden, te contactamos con los próximos pasos.</p>
+  </header>
+
+  <form id="apply-form" novalidate>
+    <div class="form-error" id="form-error" role="alert"></div>
+
+    <fieldset>
+      <legend>La empresa</legend>
+      <div class="field">
+        <label for="legalName">Nombre legal de la empresa <span class="req">*</span></label>
+        <input type="text" id="legalName" name="legalName" autocomplete="organization" maxlength="160">
+        <div class="err" id="err-legalName">El nombre legal es obligatorio.</div>
+      </div>
+      <div class="field">
+        <label for="dba">Nombre comercial (DBA)</label>
+        <input type="text" id="dba" name="dba" maxlength="160" placeholder="Si opera con un nombre distinto al legal">
+      </div>
+      <div class="field">
+        <label>Tipo de negocio <span class="req">*</span></label>
+        <div class="radio-group" id="bizType-group">
+          <label class="radio-card"><input type="radio" name="bizType" value="glass"><span><span class="rt">Taller de cristales</span><br><span class="rd">Instalación, fabricación o venta de cristales y aluminio</span></span></label>
+          <label class="radio-card"><input type="radio" name="bizType" value="contractor"><span><span class="rt">Contratista general</span><br><span class="rd">Construcción, remodelación o proyectos generales</span></span></label>
+          <label class="radio-card"><input type="radio" name="bizType" value="other"><span><span class="rt">Otro oficio</span><br><span class="rd">Especifica abajo</span></span></label>
+        </div>
+        <div class="err" id="err-bizType">Selecciona el tipo de negocio.</div>
+        <div class="field" id="bizTypeOther-wrap" style="display:none;margin-top:12px;margin-bottom:0">
+          <label for="bizTypeOther">Especifica el oficio <span class="req">*</span></label>
+          <input type="text" id="bizTypeOther" name="bizTypeOther" maxlength="120">
+          <div class="err" id="err-bizTypeOther">Especifica el oficio.</div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="addrStreet">Dirección física — Calle <span class="req">*</span></label>
+        <input type="text" id="addrStreet" name="addrStreet" autocomplete="street-address" maxlength="160">
+        <div class="err" id="err-addrStreet">La dirección es obligatoria.</div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="addrCity">Ciudad / Pueblo <span class="req">*</span></label>
+          <input type="text" id="addrCity" name="addrCity" autocomplete="address-level2" maxlength="80">
+          <div class="err" id="err-addrCity">La ciudad es obligatoria.</div>
+        </div>
+        <div class="field">
+          <label for="addrZip">Código postal <span class="req">*</span></label>
+          <input type="text" id="addrZip" name="addrZip" inputmode="numeric" autocomplete="postal-code" maxlength="10" placeholder="00901">
+          <div class="err" id="err-addrZip">Un ZIP válido de 5 dígitos.</div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Persona de contacto</legend>
+      <div class="field">
+        <label for="contactName">Nombre completo <span class="req">*</span></label>
+        <input type="text" id="contactName" name="contactName" autocomplete="name" maxlength="120">
+        <div class="err" id="err-contactName">El nombre es obligatorio.</div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="contactRole">Puesto / Cargo <span class="req">*</span></label>
+          <input type="text" id="contactRole" name="contactRole" autocomplete="organization-title" maxlength="80" placeholder="Ej. Dueño, Gerente, Estimador">
+          <div class="err" id="err-contactRole">El puesto es obligatorio.</div>
+        </div>
+        <div class="field">
+          <label for="contactPhone">Teléfono <span class="req">*</span></label>
+          <input type="tel" id="contactPhone" name="contactPhone" autocomplete="tel" maxlength="20" placeholder="787-555-0100">
+          <div class="err" id="err-contactPhone">Un teléfono válido (10 dígitos).</div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="contactEmail">Correo electrónico <span class="req">*</span></label>
+        <input type="email" id="contactEmail" name="contactEmail" autocomplete="email" maxlength="160">
+        <div class="err" id="err-contactEmail">Un correo electrónico válido.</div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Operación</legend>
+      <div class="row2">
+        <div class="field">
+          <label for="employees">Total de empleados <span class="req">*</span></label>
+          <input type="number" id="employees" name="employees" min="1" max="100000" inputmode="numeric">
+          <div class="err" id="err-employees">Indica el número de empleados.</div>
+        </div>
+        <div class="field">
+          <label for="technicians">Técnicos de campo que usarían la app <span class="req">*</span></label>
+          <input type="number" id="technicians" name="technicians" min="1" max="100000" inputmode="numeric">
+          <div class="err" id="err-technicians">Indica cuántos técnicos usarían Nivelato.</div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="currentProcess">¿Cómo miden actualmente? <span class="req">*</span></label>
+        <textarea id="currentProcess" name="currentProcess" maxlength="2000" placeholder="Ej. Cinta métrica y papel, luego pasamos las medidas a Excel..."></textarea>
+        <div class="hint">Cuéntanos tu proceso actual: papel, hojas de cálculo, otras herramientas, etc.</div>
+        <div class="err" id="err-currentProcess">Describe tu proceso actual de medición.</div>
+      </div>
+      <div class="field">
+        <label for="volume">Volumen estimado de medidas <span class="req">*</span></label>
+        <select id="volume" name="volume">
+          <option value="">Selecciona…</option>
+          <option value="lt10week">Menos de 10 por semana</option>
+          <option value="10to30week">10 a 30 por semana</option>
+          <option value="30to100week">30 a 100 por semana</option>
+          <option value="gt100week">Más de 100 por semana</option>
+        </select>
+        <div class="err" id="err-volume">Selecciona el volumen estimado.</div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Interés</legend>
+      <div class="field">
+        <label>Plan de interés <span class="req">*</span></label>
+        <div class="radio-group" id="tier-group">
+          <label class="radio-card"><input type="radio" name="tier" value="pro"><span><span class="rt">Pro</span><br><span class="rd">Dashboard limitado: cada técnico ve sus propias medidas</span></span></label>
+          <label class="radio-card"><input type="radio" name="tier" value="ultra"><span><span class="rt">Ultra</span><br><span class="rd">Dashboard completo: todas las medidas, cotizaciones y equipo</span></span></label>
+        </div>
+        <div class="err" id="err-tier">Selecciona un plan.</div>
+      </div>
+      <div class="field">
+        <label for="timeline">¿Cuán pronto lo necesitan? <span class="req">*</span></label>
+        <select id="timeline" name="timeline">
+          <option value="">Selecciona…</option>
+          <option value="asap">Inmediatamente</option>
+          <option value="1to3">En 1 a 3 meses</option>
+          <option value="3to6">En 3 a 6 meses</option>
+          <option value="exploring">Solo estamos explorando</option>
+        </select>
+        <div class="err" id="err-timeline">Selecciona una opción.</div>
+      </div>
+      <div class="field">
+        <label for="hearAbout">¿Cómo se enteraron de Nivelato? <span class="req">*</span></label>
+        <select id="hearAbout" name="hearAbout">
+          <option value="">Selecciona…</option>
+          <option value="referral">Recomendación de otra empresa</option>
+          <option value="search">Búsqueda en internet</option>
+          <option value="social">Redes sociales</option>
+          <option value="qgc">A través de Quality Glazing Contractors</option>
+          <option value="other">Otro</option>
+        </select>
+        <div class="err" id="err-hearAbout">Selecciona una opción.</div>
+      </div>
+      <div class="field">
+        <label for="notes">Notas adicionales</label>
+        <textarea id="notes" name="notes" maxlength="2000" placeholder="Cualquier otra cosa que debamos saber…"></textarea>
+      </div>
+    </fieldset>
+
+    <button type="submit" class="btn" id="submit-btn">Enviar solicitud</button>
+    <p class="hint" style="text-align:center;margin-top:14px">Revisamos cada solicitud manualmente. Te contactamos al correo o teléfono indicado.</p>
+  </form>
+</div>
+
+<div class="wrap" id="success">
+  <div class="check"></div>
+  <h2>Solicitud recibida</h2>
+  <p>Gracias por tu interés en Nivelato. Revisamos tu solicitud y te contactamos pronto con los próximos pasos.</p>
+  <p style="margin-top:18px"><a href="https://nivelatolabs.com/" style="color:var(--amber)">Volver a nivelatolabs.com</a></p>
+</div>
+
+<footer>
+  <div class="wrap">
+    <span>Nivelato · San Juan, Puerto Rico</span>
+    <span><a href="https://nivelatolabs.com/">nivelatolabs.com</a></span>
+  </div>
+</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBvX1yQeJ8vK3mN5pL7qR9sT2uV4wX6yZ8a",
+  authDomain: "nivelato-app.firebaseapp.com",
+  projectId: "nivelato-app",
+  storageBucket: "nivelato-app.firebasestorage.app",
+  messagingSenderId: "759893408531",
+  appId: "1:759893408531:web:696e2da5f004a3bac5f8e6"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const form = document.getElementById('apply-form');
+const formError = document.getElementById('form-error');
+const submitBtn = document.getElementById('submit-btn');
+
+// radio card selected styling + conditional "otro oficio"
+document.querySelectorAll('.radio-card input[type=radio]').forEach(r => {
+  r.addEventListener('change', () => {
+    document.querySelectorAll(`input[name="${r.name}"]`).forEach(x =>
+      x.closest('.radio-card').classList.toggle('selected', x.checked));
+    if (r.name === 'bizType') {
+      document.getElementById('bizTypeOther-wrap').style.display =
+        document.querySelector('input[name=bizType]:checked')?.value === 'other' ? 'block' : 'none';
+    }
+  });
+});
+
+const val = id => document.getElementById(id).value.trim();
+const setErr = (id, on) => {
+  document.getElementById('err-' + id)?.classList.toggle('show', on);
+  document.getElementById(id)?.classList.toggle('invalid', on);
+};
+const emailOk = v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+const phoneOk = v => (v.replace(/\D/g, '').length >= 10);
+const zipOk = v => /^\d{5}(-\d{4})?$/.test(v);
+
+function validate() {
+  let ok = true;
+  const need = (id, good) => { setErr(id, !good); if (!good) ok = false; };
+  need('legalName', val('legalName').length >= 2);
+  const biz = document.querySelector('input[name=bizType]:checked')?.value;
+  setErr('bizType', !biz); if (!biz) ok = false;
+  if (biz === 'other') need('bizTypeOther', val('bizTypeOther').length >= 2);
+  need('addrStreet', val('addrStreet').length >= 4);
+  need('addrCity', val('addrCity').length >= 2);
+  need('addrZip', zipOk(val('addrZip')));
+  need('contactName', val('contactName').length >= 2);
+  need('contactRole', val('contactRole').length >= 2);
+  need('contactPhone', phoneOk(val('contactPhone')));
+  need('contactEmail', emailOk(val('contactEmail')));
+  const emp = parseInt(val('employees'), 10);
+  need('employees', Number.isInteger(emp) && emp >= 1);
+  const tech = parseInt(val('technicians'), 10);
+  need('technicians', Number.isInteger(tech) && tech >= 1);
+  need('currentProcess', val('currentProcess').length >= 10);
+  need('volume', !!val('volume'));
+  const tier = document.querySelector('input[name=tier]:checked')?.value;
+  setErr('tier', !tier); if (!tier) ok = false;
+  need('timeline', !!val('timeline'));
+  need('hearAbout', !!val('hearAbout'));
+  return { ok, biz, tier };
+}
+
+// clear error on input
+form.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id) setErr(t.id, false);
+  if (t.name === 'bizType' || t.name === 'tier') setErr(t.name, false);
+});
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  formError.classList.remove('show');
+  const { ok, biz, tier } = validate();
+  if (!ok) {
+    formError.textContent = 'Revisa los campos marcados en rojo.';
+    formError.classList.add('show');
+    document.querySelector('.invalid, .err.show')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Enviando…';
+  const doc = {
+    legalName: val('legalName'),
+    dba: val('dba') || null,
+    bizType: biz,
+    bizTypeOther: biz === 'other' ? val('bizTypeOther') : null,
+    addrStreet: val('addrStreet'),
+    addrCity: val('addrCity'),
+    addrZip: val('addrZip'),
+    contactName: val('contactName'),
+    contactRole: val('contactRole'),
+    contactPhone: val('contactPhone'),
+    contactEmail: val('contactEmail').toLowerCase(),
+    employees: parseInt(val('employees'), 10),
+    technicians: parseInt(val('technicians'), 10),
+    currentProcess: val('currentProcess'),
+    volume: val('volume'),
+    tier,
+    timeline: val('timeline'),
+    hearAbout: val('hearAbout'),
+    notes: val('notes') || null,
+    status: 'pending',
+    locale: 'pr',
+    submittedAt: serverTimestamp(),
+    userAgent: navigator.userAgent.slice(0, 300)
+  };
+  try {
+    await addDoc(collection(db, 'companyApplications'), doc);
+    document.getElementById('form-wrap').style.display = 'none';
+    document.getElementById('success').classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    console.error('[apply] submit failed:', err);
+    formError.textContent = 'No se pudo enviar la solicitud. Revisa tu conexión e inténtalo de nuevo.';
+    formError.classList.add('show');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Enviar solicitud';
+  }
+});
+</script>
+</body>
+</html>

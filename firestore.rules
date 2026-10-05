@@ -198,7 +198,11 @@ service cloud.firestore {
               'licenseStatus', 'trialSavesUsed', 'createdAt']);
       allow get: if isSignedIn() && (
         !hasUserDoc() ||
-        (canReadOrgData(orgId) && myOrgId() == orgId)
+        (canReadOrgData(orgId) && myOrgId() == orgId) ||
+        // Escape hatch: members always see their own company's basic
+        // details (name, settings) even when flow claims lag or perms
+        // are otherwise restricted. Subcollections keep strict rules.
+        (isActive() && hasUserDoc() && myOrgId() == orgId)
       );
       allow list: if isSignedIn() && isActive()
         && myOrgId() == resource.data.orgId;
