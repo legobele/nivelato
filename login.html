@@ -1805,7 +1805,6 @@
     // QGC mode entry: the selector is titled "Entrar con..." and shows only
     // the approved pills (clean, per the QGC mockup). Outside QGC mode it is
     // the "Join a company" flow with Nearby header + manual domain entry.
-    const selTitle = qgi ? t('signin_with') : t('choose_company');
     const pills = sortedCompanies().map(function (c) {
       const loc = c.location && c.location.label
         ? '<span class="account-kind">' + escapeHtml(c.location.label) + '</span>' : '';
@@ -1813,27 +1812,48 @@
         + '<span class="account-avatar account-avatar-logo"><img src="' + escapeHtml(c.logo) + '" alt="' + escapeHtml(c.name) + '" /></span>'
         + '<span class="account-meta"><span class="account-name">' + escapeHtml(c.name) + '</span>' + loc + '</span></button>';
     }).join('');
-    card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
-      + '<button type="button" class="back-btn" id="companyselect-back" aria-label="' + t('go_back') + '">&#8249;</button>'
-      + '<div class="split">'
-      + '<div class="brand-panel">'
-      + '<h1 class="logo' + (qgi ? ' qgi' : '') + '" style="font-size:32px">' + selTitle + '</h1>'
-      + '</div>'
-      + '<div class="main-panel">'
-      + (qgi ? '' : '<div class="accounts-title">' + t('nearby') + '</div>')
-      + '<div id="company-select-list">' + pills + '</div>'
-      + (qgi ? '' : '<button type="button" class="btn-google" id="btn-another-company" style="margin-top:16px"><span>' + t('or_signin_another') + '</span></button>'
-      + '<form id="company-domain-form" style="display:none;margin-top:12px" onsubmit="return false">'
-      + '<div class="field">'
-      + '<input type="text" id="company-domain-input" placeholder="' + escapeHtml(t('company_domain_ph')) + '" autocomplete="off" autocapitalize="off" spellcheck="false" />'
-      + '</div>'
-      + '<button type="submit" class="btn-primary' + (qgi ? ' qgi-btn' : '') + '" id="btn-find-company" style="margin-top:12px"><span>' + t('find_company') + '</span></button>'
-      + '<div class="error-msg" id="company-domain-error" role="alert"></div>'
-      + '</form>')
-      + '</div>'
-      + '</div>';
+    if (qgi) {
+      // QGC mockup layout: left = Nivelato branding + PR-only notice + logo,
+      // right = "Entrar con..." label + company pills. No back button (root view).
+      card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
+        + '<div class="split">'
+        + '<div class="brand-panel" style="text-align:center">'
+        + '<h1 class="logo qgi">Nivelato</h1>'
+        + '<div class="tagline">' + t('tagline_qgc_brand') + '</div>'
+        + '<div class="qgc-only-notice">' + t('qgc_only_msg') + '</div>'
+        + '<div class="brand-logo-box"><img src="./qgc-logo.jpg" alt="QGC" /></div>'
+        + '</div>'
+        + '<div class="main-panel">'
+        + '<div class="accounts-title">' + t('signin_with') + '</div>'
+        + '<div id="company-select-list">' + pills + '</div>'
+        + '</div>'
+        + '</div>';
+    } else {
+      const selTitle = t('choose_company');
+      card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
+        + '<button type="button" class="back-btn" id="companyselect-back" aria-label="' + t('go_back') + '">&#8249;</button>'
+        + '<div class="split">'
+        + '<div class="brand-panel">'
+        + '<h1 class="logo" style="font-size:32px">' + selTitle + '</h1>'
+        + '</div>'
+        + '<div class="main-panel">'
+        + '<div class="accounts-title">' + t('nearby') + '</div>'
+        + '<div id="company-select-list">' + pills + '</div>'
+        + '<button type="button" class="btn-google" id="btn-another-company" style="margin-top:16px"><span>' + t('or_signin_another') + '</span></button>'
+        + '<form id="company-domain-form" style="display:none;margin-top:12px" onsubmit="return false">'
+        + '<div class="field">'
+        + '<input type="text" id="company-domain-input" placeholder="' + escapeHtml(t('company_domain_ph')) + '" autocomplete="off" autocapitalize="off" spellcheck="false" />'
+        + '</div>'
+        + '<button type="submit" class="btn-primary" id="btn-find-company" style="margin-top:12px"><span>' + t('find_company') + '</span></button>'
+        + '<div class="error-msg" id="company-domain-error" role="alert"></div>'
+        + '</form>'
+        + '</div>'
+        + '</div>';
+    }
     window.nivApplyLang();
-    document.getElementById('companyselect-back').addEventListener('click', goBackView);
+    if (!qgi) {
+      document.getElementById('companyselect-back').addEventListener('click', goBackView);
+    }
     document.getElementById('company-select-list').addEventListener('click', function (e) {
       const b = e.target && e.target.closest ? e.target.closest('[data-select-company]') : null;
       if (!b) return;
