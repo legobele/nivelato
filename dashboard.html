@@ -374,6 +374,7 @@
   <div class="header-logo">Nivelato<span id="estradiol-indicator">E2</span></div>
   <div class="header-right">
     <div class="org-badge" id="org-name-badge">…</div>
+    <div class="org-badge" id="tier-badge" style="display:none;background:#e7f5ff;color:#1971c2;">Pro</div>
     <button id="btn-pricelist" onclick="togglePriceListView()" style="display:none;background:#fff;color:#1971c2;border:1.5px solid #1971c2;border-radius:8px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">📋 Precios</button>
     <button id="btn-quotes" onclick="toggleQuotesView()" style="display:none;background:#fff;color:#1971c2;border:1.5px solid #1971c2;border-radius:8px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">💲 Cotizaciones</button>
     <button id="btn-new-measure" onclick="window.location.href='index.html'" style="display:none;background:#1971c2;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Nueva medida</button>
@@ -659,6 +660,38 @@ const showMissingProfileScreen = () => {
   document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⚠️</div><h2 style="color:#212529">No se encontró tu perfil</h2><p style="color:#868e96;max-width:340px">Tu sesión es válida pero no hay un perfil de usuario asociado. Si acabas de registrarte, espera unos segundos y reintenta; si no, cierra sesión y pide a tu administrador un enlace de registro nuevo.</p><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button onclick="window._missingRetry()" style="padding:12px 28px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Reintentar</button><button onclick="window._missingSignOut()" style="padding:12px 28px;background:#f1f3f5;color:#495057;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div></div>';
 };
 
+// Upgrade popup for free-tier accounts: QR deep-links into the Android app
+// (nivelato://upgrade) where the purchase options pop up. The app syncs the
+// new tier to users/{uid} async; this watcher unlocks the dashboard live.
+const showUpgradePopup = (uid) => {
+  if (window._upgradeShown) return;
+  window._upgradeShown = true;
+  window._upgradeSignOut = async () => { await signOut(auth); window.location.href = 'https://login.nivelatolabs.com/?signout=1'; };
+  window._upgradeRetry = () => window.location.reload();
+  const overlay = document.createElement('div');
+  overlay.id = 'upgrade-overlay';
+  overlay.innerHTML =
+    '<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">'
+    + '<div style="background:#fff;border-radius:16px;padding:32px 28px;max-width:360px;width:100%;text-align:center;font-family:Inter,sans-serif;box-shadow:0 24px 60px rgba(0,0,0,.35)">'
+    + '<div style="font-size:44px;margin-bottom:8px">📊</div>'
+    + '<h2 style="color:#212529;margin:0 0 8px;font-size:20px">El dashboard necesita un plan</h2>'
+    + '<p style="color:#868e96;font-size:14px;margin:0 0 16px;line-height:1.5">Escanea el código con tu teléfono para abrir las opciones de suscripción en la app de Nivelato. Al completar la compra, esta pantalla se desbloquea sola.</p>'
+    + '<img src="./upgrade-qr.png" alt="Abrir opciones de suscripción en la app" style="width:200px;height:200px;border:1px solid #e9ecef;border-radius:12px;margin-bottom:16px" />'
+    + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
+    + '<button onclick="window._upgradeRetry()" style="padding:10px 22px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Ya compré, reintentar</button>'
+    + '<button onclick="window._upgradeSignOut()" style="padding:10px 22px;background:#f1f3f5;color:#495057;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Cerrar sesión</button>'
+    + '</div></div></div>';
+  document.body.appendChild(overlay);
+  // Watch for the tier sync from the app: unlock live, no refresh needed.
+  try {
+    const uref = doc(db, 'users', uid);
+    window._tierUnsub = onSnapshot(uref, (snap) => {
+      const t = (snap.data()?.tier || 'free').toLowerCase();
+      if (['ultra', 'pro', 'qgc'].includes(t)) window.location.reload();
+    });
+  } catch (_) { /* watcher is best-effort; the retry button covers it */ }
+};
+
 // redraw open modal graph when bread mode toggles
 document.addEventListener('breadchange', function () {
   const mc = document.getElementById('modal-canvas');
@@ -805,6 +838,25 @@ let currentUser;
       window.location.href = 'index.html'; return;
     }
     const orgId = userData.orgId;
+    // Tier gate: QGC orgs and Ultra get the full dashboard; Pro gets the
+    // limited form (own measurements only, enforced in makePermChecker);
+    // free accounts get the upgrade popup with a QR deep-link into the app.
+    // The tier syncs async from the Android app after purchase.
+    const _tier = (userData.tier || 'free').toLowerCase();
+    const _isQgcOrg = !orgHasQuotes(userData); // QGC org: no tiers, full access
+    if (!_isQgcOrg && !['ultra', 'pro', 'qgc'].includes(_tier)) {
+      showUpgradePopup(user.uid);
+      return;
+    }
+    if (_tier === 'pro' && !_isQgcOrg) {
+      const _pb = document.getElementById('tier-badge');
+      if (_pb) { _pb.style.display = 'inline-block'; _pb.textContent = 'Pro'; }
+    }
+    // Personal accounts may not belong to an org yet; don't crash on it.
+    if (!orgId) {
+      document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">🏢</div><h2 style="color:#212529">Sin organización</h2><p style="color:#868e96;max-width:320px">Tu cuenta no está vinculada a ninguna organización todavía.</p></div>';
+      return;
+    }
     // Nueva medida button - only if user can create measurements
     const btnNew = document.getElementById('btn-new-measure');
     if (btnNew && _can('createMeasurements')) btnNew.style.display = 'block';

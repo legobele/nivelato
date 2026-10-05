@@ -721,10 +721,11 @@
         tab_login: 'Iniciar sesión',
         tab_signup: 'Solicitar acceso',
         used_accounts: 'Cuentas usadas',
+        personal_account: 'Añadir cuenta personal',
         signin_with: 'Entrar con...',
         select_language: 'Seleccionar idioma',
         change_language: 'Cambiar idioma',
-        qgc_only_msg: 'Solo puedes iniciar sesión en Quality Glazing Contractors ya que estás en Puerto Rico',
+        qgc_only_msg: 'Solo puedes iniciar sesión en Quality Glazing Contractors ya que estás en Puerto Rico. También puedes usar una cuenta personal (solo Pro)',
         tagline_qgc_brand: 'Medidas de campo, niveladas.',
         account_kind_qgc: 'Quality Glass - Trabajo',
         account_kind_work: 'Trabajo',
@@ -828,10 +829,11 @@
         tab_login: 'Sign in',
         tab_signup: 'Request access',
         used_accounts: 'Used accounts',
+        personal_account: 'Add personal account',
         signin_with: 'Sign in with...',
         select_language: 'Select language',
         change_language: 'Change language',
-        qgc_only_msg: 'You may only sign into Quality Glazing Contractors since you are in Puerto Rico',
+        qgc_only_msg: 'You may only sign into Quality Glazing Contractors since you are in Puerto Rico. However you can also use a personal account (Pro only)',
         tagline_qgc_brand: 'Field measurements, leveled.',
         account_kind_qgc: 'Quality Glass - Work',
         account_kind_work: 'Work',
@@ -1941,19 +1943,28 @@
     const gate = await ensureFlowClaims();
     if (gate.ok && !gate.cached && routeAfterGate(gate.verdict, gate.reason)) return;
     const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
-    const role = userDoc.data()?.role;
+    const userData = userDoc.data() || {};
+    const role = userData.role;
+    const tier = (userData.tier || 'free').toLowerCase();
+    const isQgc = userData.orgId === 'NJBBG5';
     // Seed the company-theme fast-path flag for the app pages (QGC = gray theme).
-    seedCompanyThemeFlag(userDoc.data());
+    seedCompanyThemeFlag(userData);
     // Adopt the DB-saved language, unless the user explicitly toggled the
     // language this session (their choice wins over a stale DB read; write
     // it through now in case the toggle happened while signed out).
-    const dbLang = userDoc.data()?.language;
+    const dbLang = userData.language;
     if (typeof sessionExplicitLang === 'string' && (sessionExplicitLang === 'es' || sessionExplicitLang === 'en')) {
       if (window.__nivelatoSaveLangDb) { try { window.__nivelatoSaveLangDb(sessionExplicitLang); } catch (_) {} }
     } else if ((dbLang === 'es' || dbLang === 'en') && window.__nivelatoAdoptDbLang) {
       try { window.__nivelatoAdoptDbLang(dbLang); } catch (_) { /* ignore */ }
     }
-    const dest = (role === 'owner' || role === 'cotizador') ? '/dashboard.html' : '/index.html';
+    // QGC orgs: role-based routing (existing behavior). Personal/external
+    // accounts: the dashboard is tier-gated against the current tier —
+    // free sees the upgrade popup there, Pro gets the limited form,
+    // Ultra gets the full dashboard.
+    const dest = isQgc
+      ? ((role === 'owner' || role === 'cotizador') ? '/dashboard.html' : '/index.html')
+      : '/dashboard.html';
     if (await ssoHandoff(dest)) return;
     // Token mint failed (e.g. functions not deployed yet): stay on the form.
     ssoFailed(document.getElementById('login-error'));
@@ -2264,6 +2275,15 @@
     try { history.replaceState({ nivelatoView: 'company-select' }, ''); } catch (_) { /* ignore */ }
   }
 
+  // Personal account escape hatch for PR: leave QGC mode and add a personal
+  // (external) account. The tier gate runs after sign-in against the
+  // account's current tier: Pro/Ultra get the dashboard, free gets the
+  // upgrade popup.
+  function switchToPersonalMode() {
+    renderForm('external', true);
+    navigateTo('add-account');
+  }
+
   const GOOGLE_G_SVG = '<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">'
     + '<path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.5 6.1 29.5 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/>'
     + '<path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>'
@@ -2570,7 +2590,11 @@
         + '</div>'
         + '<div class="main-panel">'
         + '<div class="accounts-title">' + t('signin_with') + '</div>'
-        + '<div id="company-select-list">' + pills + '</div>'
+        + '<div id="company-select-list">' + pills
+        + '<button type="button" class="account-pill" id="btn-personal-account" style="margin-top:16px">'
+        + '<span class="account-avatar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg></span>'
+        + '<span class="account-meta"><span class="account-name">' + t('personal_account') + '</span></span></button>'
+        + '</div>'
         + '</div>'
         + '</div>';
     } else {
@@ -2598,6 +2622,11 @@
     window.nivApplyLang();
     if (!qgi) {
       document.getElementById('companyselect-back').addEventListener('click', goBackView);
+    } else {
+      // Personal account option for PR: drop out of QGC mode into the
+      // standard external (personal) sign-in flow.
+      const pb = document.getElementById('btn-personal-account');
+      if (pb) pb.addEventListener('click', switchToPersonalMode);
     }
     document.getElementById('company-select-list').addEventListener('click', function (e) {
       const b = e.target && e.target.closest ? e.target.closest('[data-select-company]') : null;

@@ -49,9 +49,15 @@ export function makePermChecker(userData) {
   const role = userData?.role || userData?.installerRole;
   const perms = userData?.permissions || {};
   const quotesOff = !orgHasQuotes(userData);
+  // Pro tier (external billing): limited dashboard — own measurements only,
+  // even for owners. Ultra/QGC get the full dashboard.
+  const tier = (userData?.tier || '').toLowerCase();
+  const proLimited = tier === 'pro';
   return (permKey) => {
     // QGC-style orgs: no pricing/quoting at all, for anyone.
     if (quotesOff && QUOTE_PERMS.includes(permKey)) return false;
+    // Pro tier: no viewing others' measurements, hard limit.
+    if (proLimited && permKey === 'viewOthersMeasurements') return false;
     // explicit permission flag takes priority
     if (perms[permKey] !== undefined) return !!perms[permKey];
     // owners automatically get every permission
