@@ -425,6 +425,53 @@
     body.qgc-theme .account-add:hover .account-add-icon { border-color: #8e8e99; color: #f2f1ec; }
     body.qgc-theme .account-name { color: #f2f1ec; }
     body.qgc-theme .account-kind { color: #b9b9c2; }
+    /* Add-account view: Google outlined pill, "or" separator, back chevron */
+    .or-sep {
+      display: flex; align-items: center; gap: 12px;
+      color: var(--muted); font-size: 13px; margin: 18px 0;
+    }
+    .or-sep::before, .or-sep::after {
+      content: ""; flex: 1; height: 1px; background: #2c2c31;
+    }
+    .btn-google {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 15px 20px; border-radius: 999px;
+      background: transparent; border: 1px solid #3a3a42; color: var(--ink);
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: border-color .15s, background .15s;
+    }
+    .btn-google:hover { border-color: var(--amber); background: rgba(255,255,255,.03); }
+    .btn-google:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-google svg { flex: none; }
+    .back-btn {
+      position: absolute; top: 20px; left: 20px;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: transparent; border: 1px solid #2c2c31; color: var(--ink);
+      font-size: 20px; line-height: 1; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-family: inherit; padding: 0 0 2px;
+    }
+    .back-btn:hover { border-color: var(--amber); }
+    .card { position: relative; }
+    .cantadd-row {
+      display: flex; gap: 24px; align-items: center; justify-content: space-between;
+      padding-top: 28px;
+    }
+    .cantadd-row .btn-google { width: auto; flex: none; padding: 14px 28px; }
+    .cantadd-title { font-size: 30px; font-weight: 700; margin: 0 0 8px; color: var(--ink); }
+    .cantadd-msg { color: var(--muted); font-size: 15px; line-height: 1.6; margin: 0; }
+    @media (max-width: 560px) {
+      .cantadd-row { flex-direction: column; align-items: stretch; text-align: center; }
+      .cantadd-row .btn-google { width: 100%; }
+    }
+    body.qgc-theme .or-sep { color: #8e8e99; }
+    body.qgc-theme .or-sep::before, body.qgc-theme .or-sep::after { background: #55555c; }
+    body.qgc-theme .btn-google { border-color: #55555c; color: #f2f1ec; }
+    body.qgc-theme .btn-google:hover { border-color: #8e8e99; background: rgba(255,255,255,.04); }
+    body.qgc-theme .back-btn { border-color: #55555c; color: #f2f1ec; }
+    body.qgc-theme .back-btn:hover { border-color: #8e8e99; }
+    body.qgc-theme .cantadd-title { color: #f2f1ec; }
+    body.qgc-theme .cantadd-msg { color: #b9b9c2; }
     @media (max-width: 420px) {
       body { padding: 16px; }
       .card { padding: 32px 22px; }
@@ -522,6 +569,14 @@
         account_kind_work: 'Trabajo',
         account_kind_personal: 'Personal',
         add_another_account: 'Añadir otra cuenta',
+        add_account_title: 'Añadir otra cuenta',
+        add_account_sub: 'Añade otra cuenta personal o de empresa.',
+        add_account_submit: 'Añadir cuenta',
+        signin_google: 'Iniciar sesión con Google',
+        or_sep: 'o',
+        cant_add_title: 'No se puede añadir la cuenta',
+        cant_add_msg: 'En Puerto Rico solo QGC puede usar el Panel y la app web',
+        go_back: 'Volver',
         label_email: 'Correo electrónico',
         label_password: 'Contraseña',
         label_name: 'Nombre completo',
@@ -604,6 +659,14 @@
         account_kind_work: 'Work',
         account_kind_personal: 'Personal',
         add_another_account: 'Add another account',
+        add_account_title: 'Add another account',
+        add_account_sub: 'Add another personal or company account.',
+        add_account_submit: 'Add account',
+        signin_google: 'Sign in with Google',
+        or_sep: 'or',
+        cant_add_title: 'Unable to add account',
+        cant_add_msg: 'In Puerto Rico only QGC can use Dashboard and Web app',
+        go_back: 'Go back',
         label_email: 'Email',
         label_password: 'Password',
         label_name: 'Full name',
@@ -832,7 +895,9 @@
     sendPasswordResetEmail,
     setPersistence,
     browserLocalPersistence,
-    browserSessionPersistence
+    browserSessionPersistence,
+    GoogleAuthProvider,
+    signInWithPopup
   } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
   import {
     doc, setDoc, getDoc, serverTimestamp, Timestamp
@@ -996,12 +1061,7 @@
   function onAccountPillClick(e) {
     const addBtn = e.target && e.target.closest ? e.target.closest('[data-add-account]') : null;
     if (addBtn) {
-      switchTab('login');
-      const emailEl = document.getElementById('login-email');
-      const passEl = document.getElementById('login-pass');
-      if (emailEl) emailEl.value = '';
-      if (passEl) passEl.value = '';
-      if (emailEl) emailEl.focus();
+      showAddAccountUI();
       return;
     }
     const pill = e.target && e.target.closest ? e.target.closest('.account-pill') : null;
@@ -1198,6 +1258,8 @@
     if (pendingShown) { showPendingApproval(); return; }
     if (savePromptShown) { showSaveLoginPrompt(); return; }
     if (travelShown) { renderTravelUI(); return; }
+    if (addAccountShown) { renderAddAccountUI(); return; }
+    if (cantAddShown) { renderCantAddUI(); return; }
     renderForm(QGI ? 'qgi' : 'external', true);
     refreshNotices();
   };
@@ -1471,6 +1533,180 @@
   let travelSent = false;     // the verification link was sent
   let travelLinkError = false; // a ?travel_verify link was invalid/expired
 
+  // ---- Add-account + cant-add views (mockup) ----
+  // Dedicated screens reached from the "Añadir otra cuenta" picker button.
+  // In QGC mode, an added account must be QGC-verified (users/{uid}.isQGC);
+  // otherwise the cant-add error screen is shown instead.
+  let addAccountShown = false; // add-account screen is visible
+  let cantAddShown = false;    // cant-add error screen is visible
+
+  function backToMainView() {
+    addAccountShown = false;
+    cantAddShown = false;
+    renderForm(QGI ? 'qgi' : 'external', true);
+    refreshNotices();
+  }
+
+  const GOOGLE_G_SVG = '<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">'
+    + '<path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.5 6.1 29.5 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/>'
+    + '<path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>'
+    + '<path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>'
+    + '<path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/>'
+    + '</svg>';
+
+  function showAddAccountUI() {
+    addAccountShown = true;
+    cantAddShown = false;
+    renderAddAccountUI();
+  }
+
+  function renderAddAccountUI() {
+    const t = window.nivT;
+    const card = document.getElementById('app-card');
+    if (!card) return;
+    const qgi = QGI;
+    card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
+      + '<button type="button" class="back-btn" id="addaccount-back" aria-label="' + t('go_back') + '">&#8249;</button>'
+      + '<div class="split">'
+      + '<div class="brand-panel">'
+      + '<h1 class="logo' + (qgi ? ' qgi' : '') + '" style="font-size:32px">' + t('add_account_title') + '</h1>'
+      + '<div class="tagline">' + t('add_account_sub') + '</div>'
+      + '</div>'
+      + '<div class="main-panel">'
+      + '<form id="addaccount-form" autocomplete="on" onsubmit="return false">'
+      + '<div class="field">'
+      + '<label for="addaccount-email">' + t('label_email') + '</label>'
+      + '<input type="email" id="addaccount-email" name="email" placeholder="' + t('ph_email') + '" autocomplete="email" />'
+      + '</div>'
+      + '<div class="field">'
+      + '<label for="addaccount-pass">' + t('label_password') + '</label>'
+      + '<input type="password" id="addaccount-pass" name="password" placeholder="' + t('ph_password') + '" autocomplete="current-password" />'
+      + '</div>'
+      + '<button class="btn-primary' + (qgi ? ' qgi-btn' : '') + '" id="btn-addaccount" type="submit">' + t('add_account_submit') + '</button>'
+      + '</form>'
+      + '<div class="or-sep"><span>' + t('or_sep') + '</span></div>'
+      + '<button type="button" class="btn-google" id="btn-google">' + GOOGLE_G_SVG + '<span>' + t('signin_google') + '</span></button>'
+      + '<div class="error-msg" id="addaccount-error" role="alert"></div>'
+      + '</div>'
+      + '</div>';
+    window.nivApplyLang();
+    document.getElementById('addaccount-form').addEventListener('submit', doAddAccountSubmit);
+    document.getElementById('btn-google').addEventListener('click', doGoogleSignIn);
+    document.getElementById('addaccount-back').addEventListener('click', backToMainView);
+    const emailEl = document.getElementById('addaccount-email');
+    if (emailEl) emailEl.focus();
+  }
+
+  // QGC check for added accounts: the signed-in user must be QGC-verified
+  // (users/{uid}.isQGC, the same flag the QGI signup flow writes).
+  async function isQgcVerified(uid) {
+    try {
+      const snap = await getDoc(doc(db, 'users/' + uid));
+      return !!(snap.exists() && snap.data() && snap.data().isQGC === true);
+    } catch (_) { return false; }
+  }
+
+  // Shared post-signin path for the add-account screen (email or Google).
+  async function finishAddAccountSignIn(user) {
+    const t = window.nivT;
+    const email = (user && user.email) || '';
+    if (QGI) {
+      const ok = await isQgcVerified(user.uid);
+      if (!ok) {
+        try { await signOut(auth); } catch (_) { /* ignore */ }
+        authBusy = false;
+        addAccountShown = false;
+        cantAddShown = true;
+        renderCantAddUI();
+        return;
+      }
+      markQgcAuthed();
+    }
+    try {
+      const _dn = (user && user.displayName) || '';
+      saveUsedAccount(email, _dn, QGI ? 'qgc' : 'personal');
+    } catch (_) { /* ignore */ }
+    addAccountShown = false;
+    authBusy = false;
+    showSaveLoginPrompt();
+  }
+
+  function addAccountError(msg) {
+    const errEl = document.getElementById('addaccount-error');
+    if (errEl) { errEl.textContent = msg; errEl.classList.add('visible'); }
+  }
+
+  async function doAddAccountSubmit(e) {
+    if (e) e.preventDefault();
+    if (authBusy) return;
+    authBusy = true;
+    const t = window.nivT;
+    const btn = document.getElementById('btn-addaccount');
+    const errEl = document.getElementById('addaccount-error');
+    if (errEl) errEl.classList.remove('visible');
+    if (btn) { btn.disabled = true; btn.textContent = t('btn_login_busy'); }
+    try {
+      const email = (document.getElementById('addaccount-email').value || '').trim();
+      const pass = document.getElementById('addaccount-pass').value || '';
+      if (!email || email.indexOf('@') < 0) { throw { code: 'auth/missing-email' }; }
+      if (!pass) { throw { code: 'auth/missing-password' }; }
+      const cred = await signInWithEmailAndPassword(auth, email, pass);
+      await finishAddAccountSignIn(cred.user);
+    } catch (err) {
+      addAccountError(friendlyError(err && err.code));
+      if (btn) { btn.disabled = false; btn.textContent = t('add_account_submit'); }
+      authBusy = false;
+    }
+  }
+
+  async function doGoogleSignIn() {
+    if (authBusy) return;
+    authBusy = true;
+    const t = window.nivT;
+    const btn = document.getElementById('btn-google');
+    const errEl = document.getElementById('addaccount-error');
+    if (errEl) errEl.classList.remove('visible');
+    if (btn) btn.disabled = true;
+    try {
+      const provider = new GoogleAuthProvider();
+      const cred = await signInWithPopup(auth, provider);
+      await finishAddAccountSignIn(cred.user);
+    } catch (err) {
+      const code = err && err.code;
+      // User dismissed the popup: not an error worth surfacing.
+      if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
+        addAccountError(friendlyError(code));
+      }
+      if (btn) btn.disabled = false;
+      authBusy = false;
+    }
+  }
+
+  function showCantAddUI() {
+    cantAddShown = true;
+    addAccountShown = false;
+    renderCantAddUI();
+  }
+
+  function renderCantAddUI() {
+    const t = window.nivT;
+    const card = document.getElementById('app-card');
+    if (!card) return;
+    card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
+      + '<button type="button" class="back-btn" id="cantadd-back" aria-label="' + t('go_back') + '">&#8249;</button>'
+      + '<div class="cantadd-row">'
+      + '<div>'
+      + '<h1 class="cantadd-title">' + t('cant_add_title') + '</h1>'
+      + '<p class="cantadd-msg">' + t('cant_add_msg') + '</p>'
+      + '</div>'
+      + '<button type="button" class="btn-google" id="btn-cantadd-back"><span>' + t('go_back') + '</span></button>'
+      + '</div>';
+    window.nivApplyLang();
+    const go = function () { backToMainView(); };
+    document.getElementById('cantadd-back').addEventListener('click', go);
+    document.getElementById('btn-cantadd-back').addEventListener('click', go);
+  }
+
   function showTravelUI() {
     travelShown = true;
     document.body.classList.add('qgc-theme');
@@ -1647,6 +1883,8 @@
     if (trustedDev) {
       // A travel grant acquired after boot (e.g. via link redeem) supersedes geo.
       if (qgcTravelValid()) return;
+      // Transient add-account / cant-add views: never interrupt them.
+      if (addAccountShown || cantAddShown) return;
       if (effectivePR) {
         travelShown = false;
         travelSent = false;
@@ -1660,6 +1898,9 @@
     }
     var effectiveCountry = effectivePR ? 'PR' : cc;
     const mode = flowFromCookie() || flowModeForCountry(effectiveCountry);
+    // Don't yank the user out of the transient add-account / cant-add views
+    // when background geo settles.
+    if (addAccountShown || cantAddShown) return;
     if (mode !== (QGI ? 'qgi' : 'external')) renderForm(mode, true);
     if (cc === null && !flowFromCookie() && !tzIsPR) showGeoNotice();
     if (effectivePR) showPrNotice();
