@@ -625,6 +625,44 @@ exports.provisionBundleKey = onCall(
 );
 
 // ---------------------------------------------------------------------------
+// mintSsoToken — cross-origin SSO handoff for login.nivelatolabs.com.
+//
+// The web login page lives on login.nivelatolabs.com but the app lives on
+// app.nivelatolabs.com, and Firebase Auth sessions are origin-scoped. After
+// a successful sign-in on the login page, the client calls this with its
+// session and gets back a short-lived custom token for the SAME uid, which
+// it hands to app.nivelatolabs.com/sso.html; that page signs in there with
+// signInWithCustomToken. Rate-limited: 10 mints per uid per day.
+// ---------------------------------------------------------------------------
+exports.mintSsoToken = onCall(
+  { region: 'us-central1', memory: '256MiB' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Sign in first.');
+    }
+    const uid = request.auth.uid;
+    const today = new Date().toISOString().slice(0, 10);
+    const grantRef = db.doc(`ssoGrants/${uid}`);
+    const granted = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(grantRef);
+      const d = snap.exists ? snap.data() : {};
+      if (d.date === today && (d.count || 0) >= 10) return false;
+      tx.set(grantRef, {
+        date: today,
+        count: d.date === today ? (d.count || 0) + 1 : 1,
+        lastMintAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+      return true;
+    });
+    if (!granted) {
+      throw new HttpsError('resource-exhausted', 'Too many sign-in handoffs today.');
+    }
+    const customToken = await admin.auth().createCustomToken(uid);
+    return { customToken };
+  }
+);
+
+// ---------------------------------------------------------------------------
 // processAccountDeletion — executes APPROVED account-deletion requests (B2).
 //
 // End-to-end flow:

@@ -637,7 +637,7 @@ const syncDatePlaceholder = () => {
 const showPendingScreen = () => {
   if (window._pendingShown) return;
   window._pendingShown = true;
-  window._pendingSignOut = async () => { await signOut(auth); window.location.href = 'login.html'; };
+  window._pendingSignOut = async () => { await signOut(auth); window.location.href = 'https://login.nivelatolabs.com/'; };
   document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2 style="color:#212529">Cuenta pendiente de aprobación</h2><p style="color:#868e96;max-width:320px">Tu cuenta está siendo revisada. El administrador del taller te dará acceso en breve.</p><button onclick="window._pendingSignOut()" style="padding:12px 28px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div>';
 };
 
@@ -648,7 +648,7 @@ const showMissingProfileScreen = () => {
   if (window._pendingShown) return;
   window._pendingShown = true;
   window._missingRetry = () => window.location.reload();
-  window._missingSignOut = async () => { await signOut(auth); window.location.href = 'login.html'; };
+  window._missingSignOut = async () => { await signOut(auth); window.location.href = 'https://login.nivelatolabs.com/'; };
   document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⚠️</div><h2 style="color:#212529">No se encontró tu perfil</h2><p style="color:#868e96;max-width:340px">Tu sesión es válida pero no hay un perfil de usuario asociado. Si acabas de registrarte, espera unos segundos y reintenta; si no, cierra sesión y pide a tu administrador un enlace de registro nuevo.</p><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button onclick="window._missingRetry()" style="padding:12px 28px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Reintentar</button><button onclick="window._missingSignOut()" style="padding:12px 28px;background:#f1f3f5;color:#495057;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div></div>';
 };
 
@@ -750,7 +750,7 @@ async function initCompanyView(user) {
 // La ruta /company usa su propio init; el callback del dashboard normal se salta abajo.
 if (NIV_ROUTE === 'company') {
   onAuthStateChanged(auth, (user) => {
-    if (!user) { window.location.href = 'login.html'; return; }
+    if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
     initCompanyView(user);
   });
 }
@@ -760,7 +760,7 @@ let currentUser;
 
   onAuthStateChanged(auth, async (user) => {
     if (NIV_ROUTE === 'company') return; // la ruta /company usa initCompanyView (arriba)
-    if (!user) { window.location.href = 'login.html'; return; }
+    if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
     // check if account is pending approval
     const userSnap = await getDoc(doc(db, 'users', user.uid));
     if (userSnap.exists() && userSnap.data().disabled === true) {

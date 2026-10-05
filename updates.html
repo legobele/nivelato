@@ -579,7 +579,7 @@ async function onCancelUpdate() {
 
 // ---- auth + data ----
 onAuthStateChanged(auth, async (user) => {
-  if (!user) { window.location.href = 'login.html'; return; }
+  if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
   currentUser = user;
 
   const userSnap = await getDoc(doc(db, 'users', user.uid));

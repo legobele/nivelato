@@ -92,19 +92,23 @@
 
 <script type="module">
 import { auth } from './firebase-config.js';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+import { GoogleAuthProvider, signInWithPopup, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
 import { getDoc, doc } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
 import { db } from './firebase-config.js';
 
 const params = new URLSearchParams(window.location.search);
 const redirectUri = params.get('redirect_uri');
 const clientId = params.get('client_id') || 'Aplicación externa';
+const ctoken = params.get('ctoken');
+const nextParam = params.get('next');
 
 // Origins the product actually lives on — anything else is denied so a
 // fresh ID token can never be shipped to an attacker's site via an open
 // redirect. Relative paths are allowed (same-origin redirects only).
 const ALLOWED_REDIRECT_ORIGINS = new Set([
   'https://legobele.github.io',            // GitHub Pages project site (/nivelato/)
+  'https://app.nivelatolabs.com',          // canonical app (SSO handoff target)
+  'https://dashboard.nivelatolabs.com',    // dashboard subdomain
   'https://nivelato-app.firebaseapp.com',  // Firebase hosting default domain
   'https://nivelato-app.web.app',          // Firebase hosting twin domain
 ]);
@@ -127,6 +131,52 @@ function redirectUriIsAllowed(uri) {
   return true;
 }
 
+// ---- Consumer mode: SSO handoff from login.nivelatolabs.com ----
+// The login page minted a short-lived custom token for the signed-in user.
+// Sign in with it here (this establishes the session on THIS origin), then
+// land on `next`. The token is never logged.
+const SSO_NEXT_ORIGINS = [
+  'https://app.nivelatolabs.com',
+  'https://dashboard.nivelatolabs.com',
+];
+function sanitizeNext(n) {
+  if (typeof n !== 'string' || !(n = n.trim())) return null;
+  if (n.charAt(0) === '/') {
+    if (n.charAt(1) === '/' || /[\s\\]/.test(n)) return null;
+    return n;
+  }
+  try {
+    const u = new URL(n);
+    if (u.protocol !== 'https:') return null;
+    if (SSO_NEXT_ORIGINS.indexOf(u.origin) === -1) return null;
+    return u.toString();
+  } catch (_) { return null; }
+}
+
+if (ctoken) {
+  document.getElementById('sso-app-name').textContent = 'Completando el inicio de sesión…';
+  const cbtn = document.getElementById('sso-btn');
+  const cerr = document.getElementById('sso-error');
+  cbtn.disabled = true;
+  cbtn.textContent = 'Completando…';
+  cbtn.onclick = null;
+  document.querySelector('.info').style.display = 'none';
+  (async () => {
+    try {
+      await signInWithCustomToken(auth, ctoken);
+      window.location.replace(sanitizeNext(nextParam) || '/dashboard.html');
+    } catch (e) {
+      cerr.textContent = 'No se pudo completar el inicio de sesión. Vuelve a login.nivelatolabs.com e inténtalo de nuevo.';
+      cerr.style.display = 'block';
+      cbtn.disabled = false;
+      cbtn.textContent = 'Volver al inicio de sesión';
+      cbtn.onclick = () => { window.location.href = 'https://login.nivelatolabs.com/'; };
+    }
+  })();
+}
+
+// Legacy flow: "sign in with Nivelato" for external apps (redirect_uri).
+if (!ctoken) {
 const redirectAllowed = !redirectUri || redirectUriIsAllowed(redirectUri);
 
 document.getElementById('sso-app-name').textContent = 'Solicitado por: ' + clientId;
@@ -206,6 +256,7 @@ window.signIn = async () => {
     btn.textContent = 'Continuar con Nivelato';
   }
 };
+} // end legacy redirect_uri flow
 </script>
 </body>
 </html>

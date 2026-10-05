@@ -193,7 +193,7 @@ const escapeHtml = (s) => String(s ?? '')
   .replace(/'/g, '&#39;');
 
 onAuthStateChanged(auth, async (user) => {
-  if (!user) { window.location.href = 'login.html'; return; }
+  if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
   currentUser = user;
   // presencia realtime (presence.js la crea una tarea hermana; silencioso si el archivo falta)
   import('./presence.js').then(m => m.startPresence(user.uid)).catch(() => {});
@@ -646,7 +646,7 @@ window.doLogout = async () => {
       doomed.forEach((k) => store.removeItem(k));
     }
   } catch (_) { /* storage unavailable — nothing to purge */ }
-  window.location.href = 'login.html';
+  window.location.href = 'https://login.nivelatolabs.com/';
 };
 
 window.switchTab = (name) => {

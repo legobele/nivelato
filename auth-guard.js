@@ -59,7 +59,7 @@ function purgeAuthRemnants() {
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    window.location.href = 'login.html';
+    window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href);
     return;
   }
   // Never silently continue on an identity switch: warn loudly instead.
@@ -149,7 +149,7 @@ window._doLogout = async () => {
     ]);
   } catch (_) { /* fall through to purge + navigate */ }
   purgeAuthRemnants();
-  window.location.href = 'login.html';
+  window.location.href = 'https://login.nivelatolabs.com/';
 };
 
 // data URL → Blob: evita el ~33% de sobrecarga base64 de uploadString en

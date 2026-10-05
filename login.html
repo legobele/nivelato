@@ -287,7 +287,12 @@
   // what's rendered, the UI is swapped then. Enforcement stays server-side
   // in the flowGate callable — the client lookup is routing-only, so
   // render-first is safe. Unknown geo → external (§6.3).
+  // Web login (login.nivelatolabs.com) is always generic Nivelato branding:
+  // no QGC-specific options, flows, or mentions. The QGI employee flow
+  // stays in the codebase, but this page never renders it.
+  const WEB_LOGIN_GENERIC = true;
   function flowFromCookie() {
+    if (WEB_LOGIN_GENERIC) return 'external';
     const m = document.cookie.match(/(?:^|;\s*)nl_flow=(qgi|external)/);
     return m ? m[1] : null;
   }
@@ -434,13 +439,65 @@
     });
   }
 
+  // ---- Cross-origin SSO handoff ----
+  // This page lives on login.nivelatolabs.com; the app lives on
+  // app.nivelatolabs.com (and dashboard.nivelatolabs.com). Firebase Auth
+  // sessions are origin-scoped, so after a successful sign-in here we mint
+  // a short-lived custom token for the same uid and hand it to the app's
+  // sso.html, which signs in there and lands on `next`.
+  const APP_ORIGIN = 'https://app.nivelatolabs.com';
+  const SSO_ORIGINS = [APP_ORIGIN, 'https://dashboard.nivelatolabs.com'];
+  function sanitizeNext(n) {
+    if (typeof n !== 'string' || !(n = n.trim())) return null;
+    if (n.charAt(0) === '/') {
+      if (n.charAt(1) === '/' || /[\s\\]/.test(n)) return null;
+      return n;
+    }
+    try {
+      const u = new URL(n);
+      if (u.protocol !== 'https:') return null;
+      if (SSO_ORIGINS.indexOf(u.origin) === -1) return null;
+      return u.toString();
+    } catch (_) { return null; }
+  }
+  // Returns true when the handoff navigation started, false when minting
+  // the token failed (caller shows the form error; the user stays put).
+  async function ssoHandoff(defaultNext) {
+    const next = sanitizeNext(new URLSearchParams(window.location.search).get('next')) || defaultNext;
+    if (window.location.origin === APP_ORIGIN) {
+      window.location.href = next;
+      return true;
+    }
+    try {
+      const { data } = await httpsCallable(centralFunctions, 'mintSsoToken')({});
+      const token = data && data.customToken;
+      if (!token) throw new Error('empty-token');
+      window.location.href = APP_ORIGIN + '/sso.html?ctoken=' + encodeURIComponent(token)
+        + '&next=' + encodeURIComponent(next);
+      return true;
+    } catch (e) {
+      console.error('[Nivelato] SSO handoff failed:', (e && e.code) || e);
+      return false;
+    }
+  }
+  function ssoFailed(errEl) {
+    errEl.textContent = 'No se pudo completar el inicio de sesión. Intenta de nuevo.';
+    errEl.classList.add('visible');
+  }
+
   async function postAuthRedirect() {
-    // flowGate → claims → verdict routing, then legacy role redirect.
+    // flowGate → claims → verdict routing, then SSO handoff to the app.
     const gate = await ensureFlowClaims();
     if (gate.ok && !gate.cached && routeAfterGate(gate.verdict, gate.reason)) return;
     const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
     const role = userDoc.data()?.role;
-    window.location.href = (role === 'owner' || role === 'cotizador') ? 'dashboard.html' : 'index.html';
+    const dest = (role === 'owner' || role === 'cotizador') ? '/dashboard.html' : '/index.html';
+    if (await ssoHandoff(dest)) return;
+    // Token mint failed (e.g. functions not deployed yet): stay on the form.
+    ssoFailed(document.getElementById('login-error'));
+    const btn = document.getElementById('btn-login');
+    if (btn) { btn.disabled = false; btn.textContent = 'Entrar'; }
+    authBusy = false;
   }
 
   async function doLogin(e) {
@@ -532,14 +589,20 @@
       } catch(fsErr) {
         console.error('Firestore write failed:', fsErr.code, fsErr.message);
         alert(`¡Auth OK pero Firestore falló!\n\nError: ${fsErr.code}\n\nTu UID: ${cred.user.uid}\nTu código: ${orgId}\n\nRevisa las Rules en Firebase Console.`);
-        window.location.href = 'dashboard.html';
+        await ssoHandoff('/dashboard.html');
         return;
       }
       const gate = await ensureFlowClaims();
       if (gate.ok && routeAfterGate(gate.verdict, gate.reason)) return;
       alert(`¡Cuenta creada!\n\nCódigo de tu taller: ${orgId}\n\nDáselo a tus empleados para que puedan registrarse.\n\nPrueba: 30 días o 200 guardados.`);
       await maybeSendWelcome(email, name, cred.user.uid);
-      window.location.href = 'dashboard.html';
+      if (!(await ssoHandoff('/dashboard.html'))) {
+        errEl.textContent = 'La cuenta se creó, pero no se pudo completar el inicio de sesión. Intenta entrar de nuevo.';
+        errEl.classList.add('visible');
+        btn.disabled = false;
+        btn.textContent = 'Empezar prueba gratis';
+        authBusy = false;
+      }
     } catch(err) {
       errEl.textContent = friendlyError(err.code);
       errEl.classList.add('visible');
