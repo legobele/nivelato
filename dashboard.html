@@ -434,6 +434,29 @@
   .niv-nav-btn.active { background: linear-gradient(135deg, #0ea5a5, #1971c2); }
 
 
+
+  /* measurement detail view */
+  .niv-back-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid var(--niv-border); background: transparent;
+    color: var(--niv-text); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-family: inherit; flex: none;
+  }
+  .niv-back-btn:hover { background: var(--niv-surface-2); }
+  .niv-measure-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .niv-measure-grid { grid-template-columns: 1fr; } }
+  .niv-detail-row { display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; }
+  .niv-detail-row .k { color: var(--niv-text); font-weight: 500; }
+  .niv-detail-row .v { color: var(--niv-text-dim); text-align: right; }
+  #measure-photo-wrap img { width: 100%; border-radius: 10px; display: block; }
+  .niv-photo-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 1px solid var(--niv-border); font-size: 12px;
+    margin-left: 8px; color: var(--niv-text-dim);
+  }
+
   /* project detail view */
   .niv-proj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 700px) { .niv-proj-grid { grid-template-columns: 1fr; } }
@@ -632,6 +655,26 @@
       <div class="niv-users-grid" id="proj-users"></div>
       <button class="niv-btn-pill" style="width:100%;margin-top:16px;" onclick="openAssignUsers()">Add more</button>
     </div>
+  </div>
+ </div>
+ <div id="view-measure" style="display:none">
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+    <button class="niv-back-btn" id="measure-back-btn" onclick="measureBack()">◁</button>
+    <h1 style="margin:0;">Measure</h1>
+  </div>
+  <div class="niv-measure-grid">
+    <div class="niv-card">
+      <div class="niv-card-title" style="font-size:20px;margin-bottom:16px;">Dimensions</div>
+      <canvas id="measure-canvas" width="340" height="420" style="width:100%;border-radius:10px;display:block;"></canvas>
+    </div>
+    <div class="niv-card">
+      <div class="niv-card-title" style="font-size:20px;margin-bottom:16px;">Photo</div>
+      <div id="measure-photo-wrap"><div class="niv-panel-empty">Sin foto</div></div>
+    </div>
+  </div>
+  <div class="niv-card" style="margin-top:16px;">
+    <div class="niv-card-title" style="font-size:16px;margin-bottom:16px;color:var(--niv-text-dim);">Details</div>
+    <div id="measure-details"></div>
   </div>
  </div>
 </main>
@@ -1123,7 +1166,7 @@ let currentUser;
     if (measEl) {
       const recent = jobs.slice(0, 5);
       measEl.innerHTML = recent.length
-        ? recent.map((j, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}"><span>${esc(j.customer || j.project || 'Medida')}</span><span class="dots">...</span></div>`).join('')
+        ? recent.map((j, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="openMeasure('${j.id}', 'measures')"><span>${esc(j.customer || j.project || 'Medida')}${j.annotatedPhoto ? ' 📷' : ''}</span><span class="dots">...</span></div>`).join('')
         : '<div class="niv-panel-empty">Sin medidas</div>';
     }
   };
@@ -1916,7 +1959,7 @@ let currentUser;
   window.showDashView = (name) => {
     // orgs sin quoting (QGC): las vistas de precios/cotizaciones no existen
     if (!orgHasQuotes(window._currentUserData) && ['pricelist', 'quotes', 'builder'].includes(name)) name = 'measures';
-    const views = { measures: 'view-measures', pricelist: 'view-pricelist', quotes: 'view-quotes', builder: 'view-builder', project: 'view-project' };
+    const views = { measures: 'view-measures', pricelist: 'view-pricelist', quotes: 'view-quotes', builder: 'view-builder', project: 'view-project', measure: 'view-measure' };
     Object.keys(views).forEach(k => {
       const el = document.getElementById(views[k]);
       if (el) el.style.display = (k === name) ? '' : 'none';
@@ -2821,7 +2864,7 @@ let currentUser;
     const meas = allJobs.filter(j => j.projectId === projectId);
     const measEl = document.getElementById('proj-measures');
     measEl.innerHTML = meas.length
-      ? meas.map(j => { const idx = window._jobs ? window._jobs.findIndex(x => x.id === j.id) : -1; return `<div class="niv-proj-measure" onclick="window.openJob(${idx})"><span>${escapeHtml(j.customer || j.project || 'Medida')}</span><span class="dots">...</span></div>`; }).join('')
+      ? meas.map(j => `<div class="niv-proj-measure" onclick="openMeasure('${j.id}', 'project')"><span>${escapeHtml(j.customer || j.project || 'Medida')}${j.annotatedPhoto ? '<span class="niv-photo-badge">📷</span>' : ''}</span><span class="dots">...</span></div>`).join('')
       : '<div class="niv-panel-empty">Sin medidas en este proyecto.</div>';
     // assigned users
     renderProjectUsers(p);
@@ -2846,6 +2889,51 @@ let currentUser;
   window.openAssignUsers = () => {
     // TODO: member picker modal — for now, jump to company users
     window.location.href = 'company/settings.html';
+  };
+
+
+  // ---- measurement detail view ----
+  let _measureReturnView = 'measures';
+
+  window.openMeasure = (jobId, returnView) => {
+    const job = allJobs.find(j => j.id === jobId);
+    if (!job) return;
+    _measureReturnView = returnView || 'measures';
+    // dimensions graph (graph system untouched - just calling embedGraph)
+    const cvs = document.getElementById('measure-canvas');
+    if (cvs && window.embedGraph) {
+      window.embedGraph(cvs, {
+        anchoBot: job.hueco?.anchoBot || 36,
+        altoIzq: job.hueco?.altoIzq || 84,
+        pIL: job.desniveles?.paredIzq || 'Nivel',
+        pDL: job.desniveles?.paredDer || 'Nivel',
+        tL: job.desniveles?.techo || 'Nivel',
+        pL: job.desniveles?.piso || 'Nivel'
+      });
+    }
+    // photo
+    const pw = document.getElementById('measure-photo-wrap');
+    pw.innerHTML = job.annotatedPhoto
+      ? `<img src="${escapeHtml(job.annotatedPhoto)}" alt="Foto con medidas" />`
+      : '<div class="niv-panel-empty">Sin foto</div>';
+    // details
+    const date = job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now());
+    const dateStr = date.toLocaleDateString('es-PR', { timeZone: 'America/Puerto_Rico', day:'2-digit', month:'2-digit', year:'numeric' }) + ' ' +
+      date.toLocaleTimeString('es-PR', { timeZone: 'America/Puerto_Rico', hour:'2-digit', minute:'2-digit', hour12: true });
+    const projName = _currentProject ? (_currentProject.name || '') : (job.project || '');
+    const rows = [
+      ['Taken at', dateStr],
+      ['Location', job.location || '-'],
+      ['Project', projName || '-'],
+      ['Taken by', job.installerName || '-'],
+    ];
+    document.getElementById('measure-details').innerHTML = rows.map(([k, v]) =>
+      `<div class="niv-detail-row"><span class="k">${escapeHtml(k)}</span><span class="v">${escapeHtml(v)}</span></div>`).join('');
+    window.showDashView('measure');
+  };
+
+  window.measureBack = () => {
+    window.showDashView(_measureReturnView === 'measure' ? 'measures' : _measureReturnView);
   };
 
   // ---- floating panel: drag + collapse ----
