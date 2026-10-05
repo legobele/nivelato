@@ -412,6 +412,19 @@
     card.prepend(note);
   }
 
+  // PR company-use notice: in Puerto Rico only QGC employees may use Nivelato
+  // as a company; everyone else gets pointed at the free Play Store app.
+  function showPrNotice() {
+    const card = document.getElementById('app-card');
+    if (!card || document.getElementById('pr-note')) return;
+    const note = document.createElement('div');
+    note.id = 'pr-note';
+    note.className = 'geo-note';
+    note.setAttribute('role', 'alert');
+    note.innerHTML = 'En Puerto Rico, el uso empresarial de Nivelato es exclusivo para empleados de Quality Glass. Los demás pueden usar la app gratuita: <a href="https://play.google.com/store/apps/details?id=com.nivelato.app" style="font-weight:700;color:#1971c2">Descargar en Google Play</a>.';
+    card.prepend(note);
+  }
+
   // settings.html redirects here with ?missingProfile=1 when the signed-in
   // account has no users/{uid} doc — surface it instead of failing silently.
   function showMissingProfileNotice() {
@@ -661,6 +674,7 @@
     const mode = flowFromCookie() || flowModeForCountry(country);
     if (mode !== (QGI ? 'qgi' : 'external')) renderForm(mode, true);
     if (country === null && !flowFromCookie()) showGeoNotice();
+    if (country === 'PR') showPrNotice();
   });
 </script>
 </body>
