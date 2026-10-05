@@ -341,6 +341,41 @@
     .account-pill:last-child { margin-bottom: 0; }
     .account-pill:hover { border-color: var(--dim); }
     .account-pill:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+    .account-add {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 10px 16px 10px 10px;
+      margin-bottom: 0;
+      background: transparent;
+      border: 1px dashed var(--line);
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--dim);
+      text-align: left;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .account-add:hover { border-color: var(--dim); color: var(--ink); }
+    .account-add:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+    .account-add-icon {
+      flex: 0 0 auto;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 400;
+      line-height: 1;
+      color: var(--dim);
+    }
+    .account-add:hover .account-add-icon { border-color: var(--dim); color: var(--ink); }
     .account-avatar {
       flex: 0 0 auto;
       width: 44px;
@@ -383,6 +418,11 @@
     body.qgc-theme .account-pill:hover { border-color: #8e8e99; }
     body.qgc-theme .account-pill:focus-visible { outline-color: #8e8e99; }
     body.qgc-theme .account-avatar { background: #55555c; color: #f2f1ec; }
+    body.qgc-theme .account-add { border-color: #55555c; color: #b9b9c2; }
+    body.qgc-theme .account-add:hover { border-color: #8e8e99; color: #f2f1ec; }
+    body.qgc-theme .account-add:focus-visible { outline-color: #8e8e99; }
+    body.qgc-theme .account-add-icon { border-color: #55555c; color: #b9b9c2; }
+    body.qgc-theme .account-add:hover .account-add-icon { border-color: #8e8e99; color: #f2f1ec; }
     body.qgc-theme .account-name { color: #f2f1ec; }
     body.qgc-theme .account-kind { color: #b9b9c2; }
     @media (max-width: 420px) {
@@ -408,7 +448,7 @@
     <div class="main-panel">
       <div class="accounts-section" id="accounts-section" style="display:none">
         <div class="accounts-title" data-i18n="used_accounts">Cuentas usadas</div>
-        <div id="accounts-list"></div>
+        <div id="accounts-list"><button type="button" class="account-add" data-add-account><span class="account-add-icon" aria-hidden="true">+</span><span data-i18n="add_another_account">Añadir otra cuenta</span></button></div>
       </div>
       <div class="pricing-note" data-i18n="pricing_note">Para Ultra, paga desde la app en tu teléfono (Google Play).</div>
 
@@ -481,6 +521,7 @@
         account_kind_qgc: 'Quality Glass - Trabajo',
         account_kind_work: 'Trabajo',
         account_kind_personal: 'Personal',
+        add_another_account: 'Añadir otra cuenta',
         label_email: 'Correo electrónico',
         label_password: 'Contraseña',
         label_name: 'Nombre completo',
@@ -562,6 +603,7 @@
         account_kind_qgc: 'Quality Glass - Work',
         account_kind_work: 'Work',
         account_kind_personal: 'Personal',
+        add_another_account: 'Add another account',
         label_email: 'Email',
         label_password: 'Password',
         label_name: 'Full name',
@@ -944,11 +986,24 @@
         + '<span class="account-kind">' + escapeHtml(accountKindLabel(a.kind)) + '</span>'
         + '</span></button>';
     }).join('');
+    const addBtn = '<button type="button" class="account-add" data-add-account">'
+      + '<span class="account-add-icon" aria-hidden="true">+</span>'
+      + '<span data-i18n="add_another_account"></span></button>';
     return '<div class="accounts-section" id="accounts-section"' + (accounts.length ? '' : ' style="display:none"') + '>'
       + '<div class="accounts-title" data-i18n="used_accounts"></div>'
-      + '<div id="accounts-list">' + pills + '</div></div>';
+      + '<div id="accounts-list">' + pills + addBtn + '</div></div>';
   }
   function onAccountPillClick(e) {
+    const addBtn = e.target && e.target.closest ? e.target.closest('[data-add-account]') : null;
+    if (addBtn) {
+      switchTab('login');
+      const emailEl = document.getElementById('login-email');
+      const passEl = document.getElementById('login-pass');
+      if (emailEl) emailEl.value = '';
+      if (passEl) passEl.value = '';
+      if (emailEl) emailEl.focus();
+      return;
+    }
     const pill = e.target && e.target.closest ? e.target.closest('.account-pill') : null;
     if (!pill) return;
     const accounts = getUsedAccounts();
