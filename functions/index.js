@@ -440,8 +440,110 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
   };
   await admin.auth().setCustomUserClaims(uid, claims);
 
-  return { verdict, flow, geoOk, licenseStatus, reason };
+  // UI version tag for this org (feeds the client's update heuristics).
+  const uiVersionDoc = await readOrgUiVersion(orgId);
+  const uiVersion = uiVersionDoc ? uiVersionDoc.tag : null;
+
+  return { verdict, flow, geoOk, licenseStatus, reason, uiVersion };
 });
+
+// ---------------------------------------------------------------------------
+// UI version tagging — backend updates version-tag the UI scheme per org.
+// Tag format: v{semver}-{theme}-{orgId}  (e.g. v1.1.1-darkmode-qgc)
+// See UI_VERSIONING.md for the full spec.
+// ---------------------------------------------------------------------------
+
+const UI_THEMES = ['darkmode', 'light'];
+
+function buildUiTag(semver, theme, orgId) {
+  const v = String(semver || '').trim().replace(/^v/, '');
+  const t = UI_THEMES.includes(theme) ? theme : 'darkmode';
+  const o = String(orgId || '').trim();
+  return `v${v}-${t}-${o}`;
+}
+
+function parseUiTag(tag) {
+  const m = String(tag || '').trim().match(/^v([^-]+)-([^-]+)-(.+)$/);
+  if (!m) return null;
+  return { semver: m[1], theme: m[2], orgId: m[3] };
+}
+
+async function readOrgUiVersion(orgId) {
+  try {
+    const snap = await db.doc(`config/ui_versions/orgs/${orgId}`).get();
+    return snap.exists ? snap.data() : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+// setUiVersion — callable, owner role required. Sets the UI version tag for
+// an org. Called by the backend deploy pipeline after a release.
+// Params: { orgId, semver, theme }
+exports.setUiVersion = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'setUiVersion requires a signed-in user.');
+  }
+  const uid = request.auth.uid;
+  const data = request.data || {};
+  const orgId = typeof data.orgId === 'string' ? data.orgId.trim() : '';
+  const semver = typeof data.semver === 'string' ? data.semver.trim().replace(/^v/, '') : '';
+  const theme = typeof data.theme === 'string' ? data.theme.trim() : 'darkmode';
+
+  if (!orgId) throw new HttpsError('invalid-argument', 'orgId is required.');
+  if (!/^\d+\.\d+\.\d+$/.test(semver)) {
+    throw new HttpsError('invalid-argument', 'semver must look like 1.1.1.');
+  }
+  if (!UI_THEMES.includes(theme)) {
+    throw new HttpsError('invalid-argument', 'theme must be darkmode or light.');
+  }
+
+  // Owner-only: the caller must own the org.
+  const userSnap = await db.doc(`users/${uid}`).get();
+  if (!userSnap.exists) throw new HttpsError('failed-precondition', 'No user profile.');
+  const user = userSnap.data();
+  if (user.orgId !== orgId) {
+    throw new HttpsError('permission-denied', 'You do not belong to this org.');
+  }
+  const orgSnap = await db.doc(`orgs/${orgId}`).get();
+  if (!orgSnap.exists) throw new HttpsError('failed-precondition', 'Org not found.');
+  if (orgSnap.data().ownerId !== uid && user.role !== 'owner') {
+    throw new HttpsError('permission-denied', 'Only the org owner can set the UI version.');
+  }
+
+  const tag = buildUiTag(semver, theme, orgId);
+  const doc = {
+    tag, semver, theme, orgId,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: uid,
+  };
+  await db.doc(`config/ui_versions/orgs/${orgId}`).set(doc, { merge: true });
+
+  // Keep the global latest pointer fresh.
+  const globalRef = db.doc('config/ui_versions');
+  const globalSnap = await globalRef.get();
+  const cur = globalSnap.exists ? globalSnap.data().latestSemver : null;
+  if (!cur || compareSemver(semver, cur) > 0) {
+    await globalRef.set({
+      latestSemver: semver,
+      releasedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+  }
+
+  return { tag, semver, theme, orgId };
+});
+
+// Numeric semver compare: returns 1 if a > b, -1 if a < b, 0 if equal.
+function compareSemver(a, b) {
+  const pa = String(a || '').split('.').map(Number);
+  const pb = String(b || '').split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    const x = pa[i] || 0, y = pb[i] || 0;
+    if (x > y) return 1;
+    if (x < y) return -1;
+  }
+  return 0;
+}
 
 // ---------------------------------------------------------------------------
 // homeRegionMonitor — scheduled exclusivity watchdog (§8.2).
@@ -1029,3 +1131,16 @@ exports.pendingUpdateWatcher = onSchedule(
     return { processed, migrated };
   }
 );
+
+// TEMP: Get user count for migration email (to be removed after)
+exports.getMigrationUserCount = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  const snap = await admin.firestore().collection('users').get();
+  const users = [];
+  snap.forEach(doc => {
+    const d = doc.data();
+    if (d.email && d.email.includes('@') && !d.disabled) {
+      users.push(d.email);
+    }
+  });
+  return { count: users.length, emails: users };
+});
