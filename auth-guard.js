@@ -101,19 +101,10 @@ onAuthStateChanged(auth, async (user) => {
   const logo = document.getElementById('app-logo');
   if (logo) logo.textContent = 'Nivelato';
 
-  // show dashboard link if user has viewDashboard permission.
-  // Dedupe: this callback can re-fire, and blindly appending piles up links.
-  if (_can('viewDashboard')) {
-    const header = document.getElementById('app-header');
-    if (header && !header.querySelector('#nivelato-dashboard-link, a[href="dashboard.html"]')) {
-      const dashBtn = document.createElement('a');
-      dashBtn.id = 'nivelato-dashboard-link';
-      dashBtn.href = 'dashboard.html';
-      dashBtn.style.cssText = 'font-size:12px;color:#1971c2;text-decoration:none;font-weight:600;margin-right:4px;';
-      dashBtn.textContent = 'Dashboard';
-      header.insertBefore(dashBtn, header.lastChild);
-    }
-  }
+  // Dashboard lives in the account menu now (account-selector.js), not as a
+  // standalone header link. Remove any legacy injected link.
+  const _legacyDash = document.getElementById('nivelato-dashboard-link');
+  if (_legacyDash) _legacyDash.remove();
 
   // account selector (replaces old bare "Salir" pill — single sign-out now)
   if (typeof window.initAccountSelector === 'function') {

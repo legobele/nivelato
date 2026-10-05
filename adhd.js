@@ -678,8 +678,8 @@ function resizeCanvas() {
 }
 
 const STEP_VIEWS = [
-  { focusX: 0.5, focusY: 0.5, zoom: 0.72 }, // step 0 - cliente
-  { focusX: 0.5, focusY: 0.5, zoom: 0.72 }, // step 1 - hueco
+  { focusX: 0.5, focusY: 0.5, zoom: 1.0 }, // step 0 - cliente
+  { focusX: 0.5, focusY: 0.5, zoom: 1.0 }, // step 1 - hueco
   { focusX: 0.0, focusY: 0.5, zoom: 3.2  }, // step 2 - pared izq
   { focusX: 1.0, focusY: 0.5, zoom: 3.2  }, // step 3 - pared der
   { focusX: 0.5, focusY: 0.0, zoom: 3.2  }, // step 4 - arriba

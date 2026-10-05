@@ -3,6 +3,7 @@
 // window.initAccountSelector({ user, userData }) once Firebase auth resolves.
 import { signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { auth } from "./firebase-config.js";
+import { makePermChecker } from "./permissions.js";
 
 let _menuOpen = false;
 
@@ -66,6 +67,7 @@ function injectStyles() {
     background: var(--accent, #1971c2); color: #fff;
     display: inline-flex; align-items: center; justify-content: center;
     font-size: 11px; font-weight: 700; flex-shrink: 0;
+    overflow: hidden;
   }
   .acct-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .acct-caret { font-size: 9px; opacity: 0.7; }
@@ -141,10 +143,15 @@ function buildMenu({ user, userData }) {
 
   const displayName = userData?.name || user.displayName || user.email || "Usuario";
   const email = user.email || "";
+  const photoURL = userData?.photoURL || user.photoURL || "";
+  const avatarHTML = photoURL
+    ? `<img src="${escapeHtml(photoURL)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
+    : escapeHtml(initials(displayName, email));
+  const canDashboard = makePermChecker(userData)("viewDashboard");
 
   wrap.innerHTML = `
     <button class="acct-trigger" id="acct-trigger" aria-haspopup="true" aria-expanded="false">
-      <span class="acct-avatar">${escapeHtml(initials(displayName, email))}</span>
+      <span class="acct-avatar">${avatarHTML}</span>
       <span class="acct-name">${escapeHtml(displayName.split(" ")[0])}</span>
       <span class="acct-caret">▼</span>
     </button>
@@ -154,6 +161,7 @@ function buildMenu({ user, userData }) {
         ${email ? `<div class="em">${escapeHtml(email)}</div>` : ""}
         <div class="rl">${escapeHtml(roleLabel(userData?.role))}</div>
       </div>
+      ${canDashboard ? `<button class="acct-item" id="acct-dashboard" role="menuitem" onclick="window.location.href='dashboard.html'">📊 Dashboard</button>` : ""}
       <button class="acct-item" id="acct-settings" role="menuitem" onclick="window.location.href='settings.html'">⚙️ Ajustes</button>
       <button class="acct-item danger" id="acct-signout" role="menuitem">Cerrar sesión</button>
     </div>

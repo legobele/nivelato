@@ -222,10 +222,6 @@
 <h2 class="step-title">Foto con medidas</h2>
 <p class="step-hint">Opcional: agrega una foto del hueco y márcala con las medidas para que el taller la vea.</p>
 <div id="photo-panel">
-  <div style="display:flex;gap:10px;flex-wrap:wrap;">
-    <button class="btn-primary" id="btn-open-photo" style="flex:1;min-width:140px;" onclick="openPhotoEditor()">📷 Agregar foto</button>
-    <button class="btn-secondary" style="flex:1;min-width:140px;" onclick="skipPhoto()">Omitir</button>
-  </div>
   <div id="photo-preview" style="display:none;margin-top:14px;background:var(--white);border:1px solid var(--grey-200);border-radius:12px;padding:10px;box-shadow:var(--shadow);">
     <img id="photo-preview-img" alt="Foto con medidas" style="width:100%;border-radius:8px;display:block;" />
     <div style="display:flex;gap:10px;margin-top:10px;">
@@ -236,8 +232,9 @@
 </div>
 <div class="step-error" role="alert"></div>
 <div class="btn-row">
-<button class="btn-secondary" onclick="prevStep()">← Atrás</button>
-<button class="btn-primary" onclick="nextStep()">Siguiente →</button>
+<button class="btn-secondary" onclick="prevStep()" style="flex:0 0 auto;">← Atrás</button>
+<button class="btn-primary" id="btn-open-photo" onclick="openPhotoEditor()">📷 Agregar foto</button>
+<button class="btn-secondary" onclick="skipPhoto()" style="flex:0 0 auto;">Omitir</button>
 </div>
 </section>
 
