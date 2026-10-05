@@ -280,5 +280,13 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
     }
+
+    // Dev allowlist — emails enrolled in closed testing, allowed past the
+    // dev-options Google gate. Any signed-in user may check their own entry;
+    // writes are console-only (Giulia keeps it in sync with Play Console).
+    match /devAllowlist/{email} {
+      allow get: if isSignedIn();
+      allow list, create, update, delete: if false;
+    }
   }
 }

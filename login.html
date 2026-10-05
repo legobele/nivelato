@@ -210,6 +210,62 @@
     .accounts-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
     .accounts-head .accounts-title { margin-bottom: 0; }
     .accounts-head .lang-toggle, .company-head .lang-toggle { margin: 0 0 0 auto; flex: none; }
+    /* ---- Dev options (hidden panel, Giulia only) ---- */
+    #dev-badge {
+      position: fixed; top: 12px; left: 12px; z-index: 9990; display: none;
+      background: #1a1a1e; border: 1px solid #55555c; color: #f2f1ec;
+      border-radius: 8px; padding: 6px 12px; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.5px; cursor: pointer; font-family: inherit;
+    }
+    #dev-overlay {
+      position: fixed; inset: 0; z-index: 9999; display: none;
+      background: rgba(0,0,0,0.72); align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    #dev-overlay.open { display: flex; }
+    .dev-modal {
+      background: #141416; border: 1px solid #2c2c31; border-radius: 20px;
+      padding: 28px; max-width: 460px; width: 100%; max-height: 88vh; overflow-y: auto;
+      color: #f2f1ec;
+    }
+    .dev-modal h2 { margin: 0 0 8px; font-size: 28px; font-weight: 700; }
+    .dev-hint { font-size: 12px; color: #a7a7b3; line-height: 1.6; margin-bottom: 20px; }
+    .dev-card {
+      border: 1px solid #2c2c31; border-radius: 16px; padding: 20px; margin-bottom: 12px;
+      background: #1a1a1e;
+    }
+    .dev-card-title { font-size: 17px; font-weight: 600; line-height: 1.45; margin-bottom: 6px; }
+    .dev-card-sub { font-size: 12px; color: #a7a7b3; margin-bottom: 16px; }
+    .dev-btn {
+      display: block; width: 100%; padding: 13px; border-radius: 999px; font-size: 14px;
+      font-weight: 600; font-family: inherit; cursor: pointer; margin-bottom: 10px;
+      background: transparent; border: 1px solid #55555c; color: #f2f1ec;
+    }
+    .dev-btn.primary { background: #1b9aaa; border-color: #1b9aaa; color: #fff; }
+    .dev-btn:disabled { opacity: 0.45; cursor: default; }
+    .dev-err { font-size: 12px; color: #ff8787; min-height: 16px; margin-top: 4px; }
+    .dev-sec-btn {
+      display: block; width: 100%; padding: 15px; border-radius: 14px; font-size: 15px;
+      font-weight: 500; font-family: inherit; cursor: pointer; margin-bottom: 10px;
+      background: #1a1a1e; border: 1px solid #3a3a40; color: #f2f1ec;
+    }
+    .dev-sec-btn .soon {
+      display: block; font-size: 11px; color: #6c6c76; font-weight: 400; margin-top: 2px;
+    }
+    .dev-sec-body { border: 1px solid #2c2c31; border-radius: 14px; padding: 16px; margin: -2px 0 12px; background: #101012; }
+    .dev-sec-body .dev-desc { font-size: 12px; color: #a7a7b3; margin-bottom: 12px; line-height: 1.5; }
+    .dev-geo-opt {
+      display: block; width: 100%; text-align: left; padding: 11px 14px; border-radius: 10px;
+      background: transparent; border: 1px solid #3a3a40; color: #f2f1ec; font-size: 13px;
+      font-family: inherit; cursor: pointer; margin-bottom: 8px;
+    }
+    .dev-geo-opt.active { border-color: #1b9aaa; color: #7de3f0; }
+    .dev-geo-custom { display: flex; gap: 8px; margin-top: 4px; }
+    .dev-geo-custom input {
+      flex: 1; background: #1a1a1e; border: 1px solid #3a3a40; border-radius: 10px;
+      color: #f2f1ec; padding: 11px 14px; font-size: 13px; font-family: inherit;
+      text-transform: uppercase;
+    }
     /* ---- QGC "depressing gray" theme ----
        Applied to <body> whenever QGI mode is active. Everything goes gray:
        page, card, tabs, inputs, buttons. The QGC logo is stretched
@@ -948,7 +1004,8 @@
 </script>
 
 <script type="module">
-  import { auth, db, centralFunctions } from './firebase-config.js';
+  import { auth, db, centralFunctions, defaultFirebaseConfig } from './firebase-config.js';
+  import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
   import {
     signInWithEmailAndPassword,
     signOut,
@@ -959,10 +1016,11 @@
     browserSessionPersistence,
     GoogleAuthProvider,
     signInWithPopup,
-    signInWithCustomToken
+    signInWithCustomToken,
+    getAuth
   } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
   import {
-    doc, setDoc, getDoc, serverTimestamp, Timestamp
+    doc, setDoc, getDoc, serverTimestamp, Timestamp, getFirestore
   } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
   import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
   import { detectCountry, flowModeForCountry, ensureFlowClaims, routeAfterGate } from './geo.js';
@@ -1306,6 +1364,186 @@
       return true;
     } catch (_) { return false; }
   };
+
+  // ---- Dev options (hidden panel, Giulia only) ----
+  // Ctrl+Alt+D: open (Google gate on first unlock per browser); if the panel
+  //   is open, revert all dev settings and close.
+  // Ctrl+Alt+Shift+H: hide the panel (settings kept).
+  // Settings persist in localStorage (nl_dev_*). Regional flags override the
+  // detected country for geo-gated UI testing.
+  var DEV_GEO_KEY = 'nl_dev_geo';
+  var DEV_UNLOCK_KEY = 'nl_dev_unlocked';
+  function devGet(k) { try { return localStorage.getItem(k); } catch (_) { return null; } }
+  function devSet(k, v) { try { localStorage.setItem(k, v); } catch (_) { /* ignore */ } }
+  function devDel(k) { try { localStorage.removeItem(k); } catch (_) { /* ignore */ } }
+
+  function devEnsureDom() {
+    if (document.getElementById('dev-overlay')) return;
+    var badge = document.createElement('button');
+    badge.id = 'dev-badge';
+    badge.type = 'button';
+    badge.textContent = '!! DEV !!';
+    badge.addEventListener('click', devToggle);
+    document.body.appendChild(badge);
+    var ov = document.createElement('div');
+    ov.id = 'dev-overlay';
+    ov.innerHTML =
+      '<div class="dev-modal" role="dialog" aria-label="Dev options">'
+      + '<h2>Dev options</h2>'
+      + '<div class="dev-hint">Press Ctrl+Alt+D to revert all changes and close or Ctrl+Alt+Shift+H to hide.<br>Settings will persist inside the browser level. Some settings may change the backend data.</div>'
+      + '<div id="dev-gate">'
+      + '<div class="dev-card">'
+      + '<div class="dev-card-title">Sign in with Google to an account enrolled in closed-testing to continue</div>'
+      + '<div class="dev-card-sub">For added security this step is required</div>'
+      + '<button class="dev-btn" id="dev-google-btn" type="button">Sign in with Google</button>'
+      + '<button class="dev-btn primary" id="dev-signin-btn" type="button">Sign in</button>'
+      + '<div class="dev-err" id="dev-gate-err"></div>'
+      + '</div>'
+      + '</div>'
+      + '<div id="dev-sections" style="display:none">'
+      + '<button class="dev-sec-btn" id="devsec-regional-btn" type="button">Regional flags</button>'
+      + '<div class="dev-sec-body" id="devsec-regional" style="display:none">'
+      + '<div class="dev-desc">Override the detected country for geo-gated UI (PR banner, QGC mode). Applies on reload.</div>'
+      + '<div id="dev-geo-opts"></div>'
+      + '<div class="dev-geo-custom"><input id="dev-geo-custom" maxlength="2" placeholder="Custom (e.g. CA)" aria-label="Custom country code" /><button class="dev-btn" id="dev-geo-apply" type="button" style="width:auto;margin:0;padding:11px 18px;">Set</button></div>'
+      + '</div>'
+      + '<button class="dev-sec-btn" type="button" disabled>Database<span class="soon">soon</span></button>'
+      + '<button class="dev-sec-btn" type="button" disabled>UI<span class="soon">soon</span></button>'
+      + '<button class="dev-sec-btn" type="button" disabled>Backend<span class="soon">soon</span></button>'
+      + '</div>'
+      + '</div>';
+    ov.addEventListener('click', function (e) { if (e.target === ov) devHide(); });
+    document.body.appendChild(ov);
+    document.getElementById('dev-google-btn').addEventListener('click', devGoogleGate);
+    document.getElementById('dev-signin-btn').addEventListener('click', devGoogleGate);
+    document.getElementById('devsec-regional-btn').addEventListener('click', function () {
+      var b = document.getElementById('devsec-regional');
+      var open = b.style.display === 'none';
+      b.style.display = open ? 'block' : 'none';
+      if (open) devRenderGeoOpts();
+    });
+    document.getElementById('dev-geo-apply').addEventListener('click', function () {
+      var v = (document.getElementById('dev-geo-custom').value || '').trim().toUpperCase();
+      if (!/^[A-Z]{2}$/.test(v)) return;
+      devSet(DEV_GEO_KEY, v);
+      location.reload();
+    });
+    if (devGet(DEV_UNLOCK_KEY) === '1') devShowBadge(true);
+  }
+
+  function devShowBadge(show) {
+    var b = document.getElementById('dev-badge');
+    if (b) b.style.display = show ? 'block' : 'none';
+  }
+  function devShowSections() {
+    document.getElementById('dev-gate').style.display = 'none';
+    document.getElementById('dev-sections').style.display = 'block';
+  }
+  function devOpen() {
+    devEnsureDom();
+    document.getElementById('dev-overlay').classList.add('open');
+    if (devGet(DEV_UNLOCK_KEY) === '1') devShowSections();
+  }
+  function devHide() {
+    var ov = document.getElementById('dev-overlay');
+    if (ov) ov.classList.remove('open');
+  }
+  function devIsOpen() {
+    var ov = document.getElementById('dev-overlay');
+    return !!(ov && ov.classList.contains('open'));
+  }
+  function devRevertClose() {
+    // Revert all dev settings (keep the unlock itself).
+    try {
+      var rm = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('nl_dev_') === 0 && k !== DEV_UNLOCK_KEY) rm.push(k);
+      }
+      rm.forEach(function (k) { try { localStorage.removeItem(k); } catch (_) {} });
+    } catch (_) { /* ignore */ }
+    devHide();
+    devShowBadge(devGet(DEV_UNLOCK_KEY) === '1');
+  }
+  function devToggle() {
+    devEnsureDom();
+    if (devIsOpen()) { devRevertClose(); return; }
+    devOpen();
+  }
+
+  // Google gate: secondary app instance so the login page's own auth session
+  // is never disturbed. The email must be in the devAllowlist collection
+  // (kept in sync with the Play Console closed-testing list).
+  var _devApp = null, _devAuth = null;
+  async function devGoogleGate() {
+    var errEl = document.getElementById('dev-gate-err');
+    errEl.textContent = '';
+    try {
+      if (!_devApp) {
+        try { _devApp = initializeApp(defaultFirebaseConfig, 'nivelato-dev-gate'); }
+        catch (_) { _devApp = getApp('nivelato-dev-gate'); }
+        _devAuth = getAuth(_devApp);
+      }
+      var cred = await signInWithPopup(_devAuth, new GoogleAuthProvider());
+      var email = (cred.user && cred.user.email ? cred.user.email : '').toLowerCase();
+      if (!email) throw new Error('no-email');
+      var devDb = getFirestore(_devApp);
+      var snap = await getDoc(doc(devDb, 'devAllowlist', email));
+      await signOut(_devAuth).catch(function () {});
+      if (!snap.exists()) {
+        errEl.textContent = 'This account is not enrolled in closed testing.';
+        return;
+      }
+      devSet(DEV_UNLOCK_KEY, '1');
+      devShowBadge(true);
+      devShowSections();
+    } catch (e) {
+      var code = (e && e.code) || '';
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
+      errEl.textContent = 'Sign-in failed. Try again.';
+    }
+  }
+
+  function devRenderGeoOpts() {
+    var cur = devGet(DEV_GEO_KEY) || '';
+    var opts = [
+      { v: '', label: 'Auto (detect)' },
+      { v: 'PR', label: 'Puerto Rico' },
+      { v: 'US', label: 'United States' },
+    ];
+    var box = document.getElementById('dev-geo-opts');
+    box.innerHTML = '';
+    opts.forEach(function (o) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'dev-geo-opt' + (cur === o.v ? ' active' : '');
+      b.textContent = o.label + (cur === o.v ? ' ✓' : '');
+      b.addEventListener('click', function () {
+        if (o.v) devSet(DEV_GEO_KEY, o.v); else devDel(DEV_GEO_KEY);
+        location.reload();
+      });
+      box.appendChild(b);
+    });
+    if (cur && opts.every(function (o) { return o.v !== cur; })) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'dev-geo-opt active';
+      b.textContent = cur + ' ✓';
+      b.addEventListener('click', function () { devDel(DEV_GEO_KEY); location.reload(); });
+      box.appendChild(b);
+    }
+  }
+
+  window.addEventListener('keydown', function (e) {
+    if (!(e.ctrlKey && e.altKey && !e.metaKey)) return;
+    var k = (e.key || '').toLowerCase();
+    if (k === 'd' && !e.shiftKey) { e.preventDefault(); devToggle(); }
+    else if (k === 'h' && e.shiftKey) { e.preventDefault(); devHide(); }
+  });
+  // Badge reflects an existing unlock on load (DOM may not be ready yet).
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', devEnsureDom);
+  } else { devEnsureDom(); }
 
   // ---- Cross-origin SSO handoff ----
   // This page lives on login.nivelatolabs.com; the app lives on
@@ -2416,7 +2654,13 @@
     // getTimezoneOffset returns minutes west of GMT, so GMT-4 = 240.
     _tzIsPR = (_tzName === 'America/Puerto_Rico') || (new Date().getTimezoneOffset() === 240);
   } catch (_) {}
-  var _injectedCc = (typeof window.NIVELATO_COUNTRY === 'string' && window.NIVELATO_COUNTRY) || null;
+  // DEV override (Regional flags): force a country for testing geo-gated UI.
+  // Set via the hidden dev options panel (Ctrl+Alt+D); stored in localStorage.
+  var _devGeo = null;
+  try { _devGeo = localStorage.getItem('nl_dev_geo') || null; } catch (_) { /* ignore */ }
+  if (_devGeo && !/^[A-Za-z]{2}$/.test(_devGeo)) _devGeo = null;
+  if (_devGeo) _devGeo = _devGeo.toUpperCase();
+  var _injectedCc = _devGeo || (typeof window.NIVELATO_COUNTRY === 'string' && window.NIVELATO_COUNTRY) || null;
   var _initialCc = _injectedCc || (_tzIsPR ? 'PR' : null);
   // Travel verification link (?travel_verify=<token>): redeemed below.
   var _travelToken = null;
