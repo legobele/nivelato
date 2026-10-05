@@ -258,12 +258,16 @@ service cloud.firestore {
     // here); signed-in users may only increment the counter by exactly 1.
     match /stats/easter-eggs {
       allow read: if true;
+      // Odometer for the easter eggs. Any signed-in user may bump exactly one
+      // known counter by exactly 1. (The whimsy must be accounted for.)
       allow create: if isSignedIn()
-        && request.resource.data.keys().hasOnly(['gay', 'crab'])
+        && request.resource.data.keys().hasOnly(['gay', 'crab', 'oldManYellsAtCloud'])
         && request.resource.data.keys().size() == 1
-        && (request.resource.data.get('gay', 0) == 1 || request.resource.data.get('crab', 0) == 1);
+        && (request.resource.data.get('gay', 0) == 1
+          || request.resource.data.get('crab', 0) == 1
+          || request.resource.data.get('oldManYellsAtCloud', 0) == 1);
       allow update: if isSignedIn()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gay', 'crab'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gay', 'crab', 'oldManYellsAtCloud'])
         && request.resource.data.diff(resource.data).affectedKeys().size() == 1
         && (
           (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gay'])
@@ -271,6 +275,9 @@ service cloud.firestore {
           ||
           (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['crab'])
             && request.resource.data.crab == resource.data.get('crab', 0) + 1)
+          ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['oldManYellsAtCloud'])
+            && request.resource.data.oldManYellsAtCloud == resource.data.get('oldManYellsAtCloud', 0) + 1)
         );
     }
 
