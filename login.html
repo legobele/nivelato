@@ -1307,9 +1307,11 @@
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
         body: JSON.stringify({ data: {} })
       });
-      const body = await resp.json();
+      const text = await resp.text();
+      let body = null;
+      try { body = JSON.parse(text); } catch (_) { /* non-JSON body */ }
       const token = body && body.result && body.result.customToken;
-      if (!token) throw new Error('empty-token');
+      if (!token) throw new Error('no-custom-token s' + resp.status + ' ' + text.slice(0, 160));
       window.location.href = APP_ORIGIN + '/sso.html?ctoken=' + encodeURIComponent(token)
         + '&next=' + encodeURIComponent(next);
       return true;
