@@ -505,7 +505,7 @@
 <canvas id="drawing-canvas" style="display:none;width:340px;height:420px"></canvas>
 
 <div class="niv-float-panel" id="niv-panel">
-  <div class="niv-panel-head" id="niv-panel-head">
+  <div class="niv-panel-head" id="niv-panel-head" onclick="openCompanyDialog(event)" style="cursor:pointer" title="Ajustes de la empresa">
     <div class="niv-company-avatar" id="sidebar-avatar">N</div>
     <div class="niv-company-name" id="org-name-badge">…<span id="estradiol-indicator">E2</span></div>
     <button class="niv-panel-collapse" id="niv-panel-collapse" title="Colapsar">–</button>
@@ -529,11 +529,11 @@
       <button class="niv-nav-btn" id="btn-pricelist" onclick="togglePriceListView()" style="display:none">Precios</button>
       <button class="niv-nav-btn" id="btn-quotes" onclick="toggleQuotesView()" style="display:none">Cotizaciones</button>
       <button class="niv-nav-btn niv-btn-primary" id="btn-new-measure" onclick="window.location.href='index.html'" style="display:none">Nueva medida</button>
-      <a class="niv-nav-btn" id="nav-users" href="company/settings.html" style="display:none">Usuarios</a>
+      <a class="niv-nav-btn" id="nav-users" href="/company/settings" style="display:none">Usuarios</a>
     </div>
   </div>
   <div class="niv-panel-bottom">
-    <a class="niv-nav-btn" href="account/settings.html">Mi cuenta</a>
+    <a class="niv-nav-btn" href="/account/settings">Mi cuenta</a>
   </div>
 </div>
 
@@ -800,6 +800,16 @@
 
 
 <!-- NEW PROJECT MODAL -->
+<div class="modal-overlay" id="company-modal-overlay" role="dialog" aria-modal="true" onclick="closeCompanyDialog(event)">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title" id="company-dialog-title">Empresa</div>
+    <div id="company-dialog-body">
+      <button class="btn-save" onclick="window.location.href='/company/settings'">Ajustes de la empresa</button>
+      <button class="btn-save" id="company-dialog-users" onclick="window.location.href='/company/users'" style="display:none;margin-top:8px">Usuarios</button>
+    </div>
+    <button class="btn-cancel" onclick="closeCompanyDialog()">Cerrar</button>
+  </div>
+</div>
 <div class="modal-overlay" id="np-modal-overlay" role="dialog" aria-modal="true" onclick="closeNewProject(event)">
   <div class="modal" style="max-width:440px">
     <div class="modal-title">Nuevo proyecto</div>
@@ -2915,7 +2925,7 @@ let currentUser;
 
   window.openAssignUsers = () => {
     // TODO: member picker modal — for now, jump to company users
-    window.location.href = 'company/settings.html';
+    window.location.href = '/company/settings';
   };
 
 
@@ -2996,6 +3006,20 @@ let currentUser;
       errEl.textContent = 'No se pudo crear: ' + (e.message || 'error');
       errEl.style.display = 'block';
     }
+  };
+
+  // ---- company dialog ----
+  window.openCompanyDialog = (e) => {
+    if (e && e.target && e.target.id === 'niv-panel-collapse') return;
+    if (!window._can || !window._can('userManagement')) return; // no perms: no dialog
+    const orgName = document.getElementById('org-name-badge')?.textContent?.replace('E2','').trim() || 'Empresa';
+    document.getElementById('company-dialog-title').textContent = orgName;
+    document.getElementById('company-dialog-users').style.display = 'block';
+    document.getElementById('company-modal-overlay').classList.add('open');
+  };
+  window.closeCompanyDialog = (e) => {
+    if (e && e.type === 'click' && e.target && !e.target.classList.contains('modal-overlay') && e.target.textContent.trim() !== 'Cerrar') return;
+    document.getElementById('company-modal-overlay').classList.remove('open');
   };
 
   // ---- sidebar: collapse ----
