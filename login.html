@@ -205,6 +205,11 @@
     }
     .lang-toggle:hover { color: var(--ink); border-color: var(--dim); }
     .lang-toggle:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+    /* Header-row pill: the language toggle lives in the panel header
+       (accounts title row / company-head), right-aligned in-flow. */
+    .accounts-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .accounts-head .accounts-title { margin-bottom: 0; }
+    .accounts-head .lang-toggle, .company-head .lang-toggle { margin: 0 0 0 auto; flex: none; }
     /* ---- QGC "depressing gray" theme ----
        Applied to <body> whenever QGI mode is active. Everything goes gray:
        page, card, tabs, inputs, buttons. The QGC logo is stretched
@@ -555,7 +560,6 @@
      below hydrates it, then swaps the flow UI in the background if geo says
      otherwise. -->
 <div class="card split-card" id="app-card">
-  <button type="button" id="lang-toggle" class="lang-toggle" aria-label="Switch to English">🌐 EN</button>
   <div class="split">
     <div class="brand-panel">
       <h1 class="logo">Nivelato<span class="adot">.</span></h1>
@@ -564,7 +568,7 @@
     </div>
     <div class="main-panel">
       <div class="accounts-section" id="accounts-section" style="display:none">
-        <div class="accounts-title" data-i18n="used_accounts">Cuentas usadas</div>
+        <div class="accounts-head"><div class="accounts-title" data-i18n="used_accounts">Cuentas usadas</div><button type="button" id="lang-toggle" class="lang-toggle" aria-label="Switch to English">Select language</button></div>
         <div id="accounts-list"><button type="button" class="account-add" data-add-account><span class="account-add-icon" aria-hidden="true">+</span><span data-i18n="add_another_account">Añadir otra cuenta</span></button></div>
       </div>
 
@@ -605,6 +609,8 @@
         tab_signup: 'Solicitar acceso',
         used_accounts: 'Cuentas usadas',
         signin_with: 'Entrar con...',
+        select_language: 'Seleccionar idioma',
+        change_language: 'Cambiar idioma',
         qgc_only_msg: 'Solo puedes iniciar sesión en Quality Glazing Contractors ya que estás en Puerto Rico',
         tagline_qgc_brand: 'Medidas de campo, niveladas.',
         account_kind_qgc: 'Quality Glass - Trabajo',
@@ -706,6 +712,8 @@
         tab_signup: 'Request access',
         used_accounts: 'Used accounts',
         signin_with: 'Sign in with...',
+        select_language: 'Select language',
+        change_language: 'Change language',
         qgc_only_msg: 'You may only sign into Quality Glazing Contractors since you are in Puerto Rico',
         tagline_qgc_brand: 'Field measurements, leveled.',
         account_kind_qgc: 'Quality Glass - Work',
@@ -821,7 +829,11 @@
       try { document.title = t('page_title'); } catch (_) {}
       var btn = document.getElementById('lang-toggle');
       if (btn) {
-        btn.innerHTML = '🌐 ' + (lang === 'es' ? 'EN' : 'ES');
+        // Label: "Select language" until a choice is saved to the DB, then
+        // "Change language" (nl_lang_db flag). Tapping always cycles es<->en.
+        var dbSaved = false;
+        try { dbSaved = localStorage.getItem('nl_lang_db') === '1'; } catch (_) {}
+        btn.textContent = t(dbSaved ? 'change_language' : 'select_language');
         var al = t(lang === 'es' ? 'lang_toggle_to_en' : 'lang_toggle_to_es');
         btn.setAttribute('aria-label', al);
         btn.setAttribute('title', al);
@@ -860,6 +872,8 @@
       if (l === lang) return;
       lang = l;
       try { localStorage.setItem(STORE_KEY, l); } catch (_) { /* ignore */ }
+      // Write-through to the DB when signed in (best effort; never blocks).
+      if (window.__nivelatoSaveLangDb) { try { window.__nivelatoSaveLangDb(l); } catch (_) {} }
       applyLang();
       // let the ES module re-render its dynamic strings (form, notices,
       // save-login prompt, pending screen) in the new language
@@ -867,6 +881,19 @@
         try { window.__nivelatoOnLangChange(l); } catch (_) { /* ignore */ }
       }
     }
+    // Adopt a language coming from the DB (no write-back; just switch to it).
+    function adoptDbLang(l) {
+      if (l !== 'es' && l !== 'en') return;
+      try { localStorage.setItem('nl_lang_db', '1'); } catch (_) { /* ignore */ }
+      if (l === lang) { applyLang(); return; }
+      lang = l;
+      try { localStorage.setItem(STORE_KEY, l); } catch (_) { /* ignore */ }
+      applyLang();
+      if (window.__nivelatoOnLangChange) {
+        try { window.__nivelatoOnLangChange(l); } catch (_) { /* ignore */ }
+      }
+    }
+    window.__nivelatoAdoptDbLang = adoptDbLang;
     window.nivT = t;
     window.nivApplyLang = applyLang;
     window.nivGetLang = function () { return lang; };
@@ -1077,7 +1104,8 @@
           + '</span></button>';
       }).join('');
       return '<div class="accounts-section" id="accounts-section">'
-        + '<div class="accounts-title" data-i18n="signin_with"></div>'
+        + '<div class="accounts-head"><div class="accounts-title" data-i18n="signin_with"></div>'
+        + '<button type="button" id="lang-toggle" class="lang-toggle"></button></div>'
         + '<div id="accounts-list">' + pills + addBtn + '</div></div>';
     }
     const accounts = getUsedAccounts();
@@ -1090,9 +1118,10 @@
         + '<span class="account-kind">' + escapeHtml(accountKindLabel(a.kind)) + '</span>'
         + '</span></button>';
     }).join('');
-    return '<div class="accounts-section" id="accounts-section"' + (accounts.length ? '' : ' style="display:none"') + '>'
-      + '<div class="accounts-title" data-i18n="used_accounts"></div>'
-      + '<div id="accounts-list">' + pills + addBtn + '</div></div>';
+    return '<div class="accounts-section" id="accounts-section">'
+      + '<div class="accounts-head"><div class="accounts-title" data-i18n="used_accounts"></div>'
+      + '<button type="button" id="lang-toggle" class="lang-toggle"></button></div>'
+      + '<div id="accounts-list"' + (accounts.length ? '' : ' style="display:none"') + '>' + pills + addBtn + '</div></div>';
   }
   function onAccountPillClick(e) {
     const coPill = e.target && e.target.closest ? e.target.closest('[data-company-pill]') : null;
@@ -1143,7 +1172,6 @@
     const logoSrc = qgi ? './qgc-logo.jpg' : './icon-192.png';
     const logoAlt = qgi ? 'Quality Glass' : 'Nivelato';
     return `
-    <button type="button" id="lang-toggle" class="lang-toggle"></button>
     <div class="split">
       <div class="brand-panel">
         ${qgi
@@ -1155,7 +1183,7 @@
         <div class="brand-logo-box"><img src="${logoSrc}" alt="${logoAlt}" /></div>
       </div>
       <div class="main-panel">
-        ${accountsSectionHTML()}
+        ${accountsSectionHTML() || '<div class="accounts-head"><button type="button" id="lang-toggle" class="lang-toggle"></button></div>'}
         ${qgi ? `<div class="exclusivity-note" data-i18n="exclusivity_note_html" data-i18n-html="1"></div>` : ''}
 
     <div id="form-login">
@@ -1265,6 +1293,20 @@
     refreshNotices();
   };
 
+  // ---- Language preference persistence (users/{uid}.language) ----
+  // The login page keeps its own i18n in localStorage; when the user is
+  // signed in, the choice is also written to the DB so it follows them
+  // across devices, and the DB value wins on later sign-ins.
+  window.__nivelatoSaveLangDb = async function (l) {
+    try {
+      if (!auth.currentUser) return false;
+      if (l !== 'es' && l !== 'en') return false;
+      await setDoc(doc(db, 'users', auth.currentUser.uid), { language: l }, { merge: true });
+      try { localStorage.setItem('nl_lang_db', '1'); } catch (_) { /* ignore */ }
+      return true;
+    } catch (_) { return false; }
+  };
+
   // ---- Cross-origin SSO handoff ----
   // This page lives on login.nivelatolabs.com; the app lives on
   // app.nivelatolabs.com (and dashboard.nivelatolabs.com). Firebase Auth
@@ -1342,6 +1384,11 @@
     if (gate.ok && !gate.cached && routeAfterGate(gate.verdict, gate.reason)) return;
     const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
     const role = userDoc.data()?.role;
+    // Adopt the DB-saved language (it wins over localStorage once it exists).
+    const dbLang = userDoc.data()?.language;
+    if ((dbLang === 'es' || dbLang === 'en') && window.__nivelatoAdoptDbLang) {
+      try { window.__nivelatoAdoptDbLang(dbLang); } catch (_) { /* ignore */ }
+    }
     const dest = (role === 'owner' || role === 'cotizador') ? '/dashboard.html' : '/index.html';
     if (await ssoHandoff(dest)) return;
     // Token mint failed (e.g. functions not deployed yet): stay on the form.
@@ -2048,8 +2095,7 @@
     const company = COMPANIES[companyShown];
     if (!company) return;
     const qgi = QGI;
-    card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
-      + '<div class="split">'
+    card.innerHTML = '<div class="split">'
       + '<div class="brand-panel">'
       + '<h1 class="logo' + (qgi ? ' qgi' : '') + '" style="font-size:32px">' + escapeHtml(company.name) + '</h1>'
       + '<div class="tagline">' + escapeHtml(companyText(company, 'signinText')) + '</div>'
@@ -2064,6 +2110,7 @@
       + '<span class="account-avatar account-avatar-logo"><img src="' + escapeHtml(company.logo) + '" alt="' + escapeHtml(company.name) + '" /></span>'
       + '<span class="account-meta"><span class="account-name">' + escapeHtml(company.name) + '</span></span>'
       + '</div>'
+      + '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
       + '</div>'
       + '<div id="company-form-area"></div>'
       + '</div>'

@@ -43,6 +43,7 @@
   .info-label { font-weight: 600; color: #495057; min-width: 120px; }
   .info-value { color: #212529; }
   .saved-msg { font-size: 13px; color: #2f9e44; font-weight: 600; text-align: center; padding: 8px; display: none; }
+  .btn-secondary.lang-active { border-color: #1971c2; color: #1971c2; background: #e7f1fb; }
   .btn-delete-account { width: 100%; margin-top: 16px; padding: 12px 16px; min-height: 44px; background: #fff; border: 1.5px solid #ffc9c9; border-radius: 12px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; color: #c92a2a; transition: background 0.15s; }
   .btn-delete-account:hover { background: #fff5f5; }
   .btn-delete-account:disabled { opacity: 0.5; cursor: default; }
@@ -121,6 +122,16 @@
         <label class="switch"><input type="checkbox" id="ntf-quoteReady" checked /><span class="track"></span></label>
       </div>
       <div class="saved-msg" id="ntf-saved">✓ Preferencias guardadas</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Idioma</div>
+      <div class="card-desc">Idioma de la pantalla de inicio de sesión. Se guarda en tu cuenta y aplica en tus dispositivos.</div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button class="btn-secondary" id="lang-btn-es" style="margin-top:0">Español</button>
+        <button class="btn-secondary" id="lang-btn-en" style="margin-top:0">English</button>
+      </div>
+      <div class="saved-msg" id="lang-saved">✓ Idioma guardado</div>
     </div>
 
     <div class="card">
@@ -246,6 +257,7 @@ onAuthStateChanged(auth, async (user) => {
 
   // notification prefs + backend status (propio backend o default)
   await loadNotifPrefs();
+  await loadLangPref();
   renderBackendStatus();
 
   // división por ruta: company-settings / account-settings / todo (sin ruta)
@@ -427,6 +439,51 @@ async function saveNotifPrefs() {
     setTimeout(() => { msg.style.display = 'none'; }, 2500);
   } catch (e) {
     alert('No se pudieron guardar las preferencias: ' + (e.message || 'error desconocido'));
+  }
+}
+
+// ---- Idioma (users/{uid}.language; también lo lee el login) ----
+function markLangButtons(lang) {
+  for (const l of ['es', 'en']) {
+    const b = document.getElementById('lang-btn-' + l);
+    if (b) b.classList.toggle('lang-active', l === lang);
+  }
+}
+async function loadLangPref() {
+  let lang = 'es';
+  try {
+    const snap = await getDoc(doc(db, 'users', currentUser.uid));
+    const v = snap.exists() && snap.data() ? snap.data().language : null;
+    if (v === 'es' || v === 'en') lang = v;
+    else {
+      try {
+        const ls = localStorage.getItem('nivelato-login-lang');
+        if (ls === 'es' || ls === 'en') lang = ls;
+      } catch (_) { /* ignore */ }
+    }
+  } catch (e) {
+    console.warn('[Nivelato] no se pudo leer el idioma:', e.message);
+  }
+  markLangButtons(lang);
+  for (const l of ['es', 'en']) {
+    const b = document.getElementById('lang-btn-' + l);
+    if (b) b.addEventListener('click', () => saveLangPref(l));
+  }
+}
+async function saveLangPref(l) {
+  if (l !== 'es' && l !== 'en') return;
+  markLangButtons(l);
+  try {
+    await setDoc(doc(db, 'users', currentUser.uid), { language: l }, { merge: true });
+    try {
+      localStorage.setItem('nivelato-login-lang', l);
+      localStorage.setItem('nl_lang_db', '1');
+    } catch (_) { /* ignore */ }
+    const msg = document.getElementById('lang-saved');
+    msg.style.display = 'block';
+    setTimeout(() => { msg.style.display = 'none'; }, 2500);
+  } catch (e) {
+    alert('No se pudo guardar el idioma: ' + (e.message || 'error desconocido'));
   }
 }
 
