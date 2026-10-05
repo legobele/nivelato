@@ -1039,7 +1039,12 @@
   // device timezone) for the initial mode so PR users don't see a
   // generic→QGC flash when the background geo resolves.
   var _tzIsPR = false;
-  try { _tzIsPR = Intl.DateTimeFormat().resolvedOptions().timeZone === 'America/Puerto_Rico'; } catch (_) {}
+  try {
+    var _tzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    // GMT-4 covers PR (America/Puerto_Rico), Manaus, and other AST zones.
+    // getTimezoneOffset returns minutes west of GMT, so GMT-4 = 240.
+    _tzIsPR = (_tzName === 'America/Puerto_Rico') || (new Date().getTimezoneOffset() === 240);
+  } catch (_) {}
   var _injectedCc = (typeof window.NIVELATO_COUNTRY === 'string' && window.NIVELATO_COUNTRY) || null;
   var _initialCc = _injectedCc || (_tzIsPR ? 'PR' : null);
   renderForm(flowFromCookie() || flowModeForCountry(_initialCc), true);
