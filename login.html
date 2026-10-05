@@ -1894,7 +1894,7 @@
   let lastSsoError = null;
   async function ssoHandoff(defaultNext) {
     const next = sanitizeNext(new URLSearchParams(window.location.search).get('next')) || defaultNext;
-    if (window.location.origin === APP_ORIGIN) {
+    if (window.location.origin === APP_ORIGIN && next.charAt(0) === '/') {
       window.location.href = next;
       return true;
     }
@@ -1916,8 +1916,13 @@
       try { body = JSON.parse(text); } catch (_) { /* non-JSON body */ }
       const token = body && body.result && body.result.customToken;
       if (!token) throw new Error('no-custom-token s' + resp.status + ' ' + text.slice(0, 160));
-      window.location.href = APP_ORIGIN + '/sso.html?ctoken=' + encodeURIComponent(token)
-        + '&next=' + encodeURIComponent(next);
+      // SSO must complete on the destination's origin (Firebase Auth is per-origin).
+      // Dashboard dests use dashboard.nivelatolabs.com/sso.html; app dests use the app origin.
+      const destOrigin = next.indexOf('https://dashboard.nivelatolabs.com') === 0
+        ? 'https://dashboard.nivelatolabs.com' : APP_ORIGIN;
+      const destNext = destOrigin === APP_ORIGIN ? next : '/';
+      window.location.href = destOrigin + '/sso.html?ctoken=' + encodeURIComponent(token)
+        + '&next=' + encodeURIComponent(destNext);
       return true;
     } catch (e) {
       console.error('[Nivelato] SSO handoff failed:', (e && e.code) || e);
@@ -1963,8 +1968,8 @@
     // free sees the upgrade popup there, Pro gets the limited form,
     // Ultra gets the full dashboard.
     const dest = isQgc
-      ? ((role === 'owner' || role === 'cotizador') ? '/dashboard.html' : '/index.html')
-      : '/dashboard.html';
+      ? ((role === 'owner' || role === 'cotizador') ? 'https://dashboard.nivelatolabs.com/' : 'https://app.nivelatolabs.com/')
+      : 'https://dashboard.nivelatolabs.com/';
     if (await ssoHandoff(dest)) return;
     // Token mint failed (e.g. functions not deployed yet): stay on the form.
     ssoFailed(document.getElementById('login-error'));
