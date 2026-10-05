@@ -166,7 +166,7 @@ const MAX_MEASURE_IN = 20000;
 
 function _checkMeasure(prefix, label) {
   const v = readVal(prefix + '-whole', prefix + '-frac');
-  if (!(v > 0)) return '⚠️ ' + label + ': escribe una medida mayor que 0 pa\' poder seguir.';
+  if (!(v > 0)) return '⚠️ ' + label + ': escribe una medida mayor que 0 para poder seguir.';
   if (v > MAX_MEASURE_IN) return '⚠️ ' + label + ': ese número está bien loco 😅 — revisa que sean pulgadas (máx 20,000").';
   return null;
 }
@@ -179,8 +179,8 @@ function validateStep(n) {
   if (n === 0) {
     const c = (document.getElementById('customer-name')?.value || '').trim();
     const p = (document.getElementById('project-name')?.value || '').trim();
-    if (!c) return '⚠️ Falta el nombre del cliente — escríbelo pa\' poder guardar la medida. 🙏';
-    if (!p) return '⚠️ Ponle nombre al proyecto pa\' identificar el trabajo.';
+    if (!c) return '⚠️ Falta el nombre del cliente — escríbelo para poder guardar la medida. 🙏';
+    if (!p) return '⚠️ Ponle nombre al proyecto para identificar el trabajo.';
     return null;
   }
   if (n === 1) return _checkPair('hueco-ancho-bot', 'hueco-alto-izq', 'Ancho abajo', 'Alto izquierda');
