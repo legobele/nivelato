@@ -3,77 +3,102 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#121212" />
+  <meta name="theme-color" content="#0b0b0e" />
   <title>Nivelato — Iniciar sesión</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <style>
+    :root{
+      --bg:#0b0b0e; --bg2:#121216; --card:#16161c; --line:#232329;
+      --ink:#f2f1ec; --muted:#a7a7b3; --dim:#6d6d78;
+      --amber:#f5a524; --amber2:#ffcf5c;
+      --red:#ff8787; --green:#69db7c; --green-deep:#2b8a3e;
+    }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { color-scheme: dark; }
     body {
-      font-family: 'Inter', sans-serif;
-      background: #f0f2f5;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
       min-height: 100dvh;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* amber radial glow, same language as the homepage hero */
+    body::before {
+      content: "";
+      position: fixed;
+      top: -140px;
+      right: -140px;
+      width: 480px;
+      height: 480px;
+      background: radial-gradient(circle, rgba(245,165,36,.13), transparent 65%);
+      pointer-events: none;
     }
     .card {
-      background: #fff;
+      background: var(--card);
+      border: 1px solid var(--line);
       border-radius: 16px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      box-shadow: 0 24px 60px rgba(0,0,0,.5);
       padding: 40px 32px;
       width: 100%;
       max-width: 380px;
+      position: relative;
+      z-index: 1;
     }
     .logo {
-      font-size: 28px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 30px;
       font-weight: 700;
-      color: #1971c2;
-      letter-spacing: -0.5px;
+      color: var(--ink);
+      letter-spacing: -0.01em;
       margin: 0 0 6px;
     }
-    .logo.qgi { color: #0c6b3c; }
+    .logo .adot { color: var(--amber); }
     .tagline {
       font-size: 13px;
-      color: #868e96;
-      margin-bottom: 32px;
+      color: var(--muted);
+      margin-bottom: 28px;
     }
     .exclusivity-note {
       font-size: 12px;
-      color: #0c6b3c;
-      background: #ebfbee;
-      border: 1px solid #b2d8b2;
-      border-radius: 8px;
+      color: var(--green);
+      background: rgba(105,219,124,.07);
+      border: 1px solid rgba(105,219,124,.32);
+      border-radius: 10px;
       padding: 10px 14px;
       margin-bottom: 20px;
       line-height: 1.5;
     }
     .pricing-note {
       font-size: 12px;
-      color: #495057;
-      background: #f8f9fa;
-      border: 1px solid #e9ecef;
-      border-radius: 8px;
+      color: var(--muted);
+      background: var(--bg2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
       padding: 10px 14px;
       margin-bottom: 20px;
       line-height: 1.6;
     }
-    .pricing-note b { color: #1971c2; }
     .geo-note {
       font-size: 12px;
-      color: #856404;
-      background: #fff9db;
-      border: 1px solid #ffec99;
-      border-radius: 8px;
+      color: var(--amber2);
+      background: rgba(245,165,36,.07);
+      border: 1px solid rgba(245,165,36,.32);
+      border-radius: 10px;
       padding: 10px 14px;
       margin-bottom: 16px;
       line-height: 1.5;
     }
+    .geo-note a { color: var(--amber2); }
+    .geo-note button { color: inherit; }
     .tab-row {
       display: flex;
-      border-bottom: 2px solid #e9ecef;
+      border-bottom: 1px solid var(--line);
       margin-bottom: 24px;
     }
     .tab {
@@ -82,10 +107,10 @@
       text-align: center;
       font-size: 14px;
       font-weight: 600;
-      color: #868e96;
+      color: var(--dim);
       cursor: pointer;
       border-bottom: 2px solid transparent;
-      margin-bottom: -2px;
+      margin-bottom: -1px;
       transition: color 0.15s, border-color 0.15s;
       /* button reset — tabs are real <button>s for keyboard access */
       background: none;
@@ -94,59 +119,77 @@
       border-right: none;
       font-family: inherit;
     }
-    .tab.active { color: #1971c2; border-bottom-color: #1971c2; }
-    .tab.active.qgi-tab { color: #0c6b3c; border-bottom-color: #0c6b3c; }
+    .tab:hover { color: var(--muted); }
+    .tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+    .tab.active.qgi-tab { color: var(--green); border-bottom-color: var(--green); }
     .field { margin-bottom: 16px; }
-    .field label { display: block; font-size: 12px; font-weight: 600; color: #495057; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
     .field input {
       width: 100%;
       padding: 12px 14px;
-      border: 1.5px solid #dee2e6;
-      border-radius: 8px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--ink);
       font-size: 15px;
       font-family: inherit;
       outline: none;
       transition: border-color 0.15s;
     }
-    .field input:focus { border-color: #1971c2; }
+    .field input::placeholder { color: var(--dim); }
+    .field input:focus { border-color: var(--amber); }
+    .field input:-webkit-autofill {
+      -webkit-text-fill-color: var(--ink);
+      -webkit-box-shadow: 0 0 0 1000px var(--bg) inset;
+      transition: background-color 5000s ease-in-out 0s;
+    }
     .btn-primary {
       width: 100%;
       padding: 14px;
-      background: #1971c2;
-      color: #fff;
+      background: var(--amber);
+      color: #141414;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       font-size: 15px;
-      font-weight: 600;
+      font-weight: 700;
       font-family: inherit;
       cursor: pointer;
       margin-top: 8px;
-      transition: background 0.15s;
+      transition: background 0.15s, transform 0.15s;
     }
-    .btn-primary:hover { background: #1864ab; }
-    .btn-primary:disabled { background: #a5d8ff; cursor: not-allowed; }
-    .btn-primary.qgi-btn { background: #0c6b3c; }
-    .btn-primary.qgi-btn:hover { background: #095c33; }
-    .btn-primary.qgi-btn:disabled { background: #a9d3b8; }
+    .btn-primary:hover { background: var(--amber2); }
+    .btn-primary:active { transform: translateY(1px); }
+    .btn-primary:disabled { background: #3a3a42; color: var(--dim); cursor: not-allowed; }
+    .btn-primary.qgi-btn { background: var(--green-deep); color: #fff; }
+    .btn-primary.qgi-btn:hover { background: #237a36; }
+    .btn-primary.qgi-btn:disabled { background: #3a3a42; color: var(--dim); }
+    .forgot-link { font-size: 13px; color: var(--amber2); text-decoration: none; }
+    .forgot-link:hover { text-decoration: underline; }
     .error-msg {
-      background: #fff5f5;
-      border: 1px solid #ffc9c9;
-      color: #c92a2a;
-      border-radius: 8px;
+      background: rgba(255,135,135,.08);
+      border: 1px solid rgba(255,135,135,.35);
+      color: var(--red);
+      border-radius: 10px;
       padding: 10px 14px;
       font-size: 13px;
       margin-top: 12px;
       display: none;
+      line-height: 1.5;
     }
     .error-msg.visible { display: block; }
     .signup-note {
       font-size: 12px;
-      color: #868e96;
+      color: var(--dim);
       margin-top: 16px;
       text-align: center;
       line-height: 1.5;
     }
+    @media (max-width: 420px) {
+      body { padding: 16px; }
+      .card { padding: 32px 22px; }
+    }
   </style>
+
 </head>
 <body>
 <!-- M17: the default (external) form is STATIC HTML — first paint never waits
@@ -154,7 +197,7 @@
      below hydrates it, then swaps the flow UI in the background if geo says
      otherwise. -->
 <div class="card" id="app-card">
-  <h1 class="logo">Nivelato</h1>
+  <h1 class="logo">Nivelato<span class="adot">.</span></h1>
   <div class="tagline">Mediciones de campo, niveladas.</div>
   <div class="pricing-note">Para Ultra, paga desde la app en tu teléfono (Google Play).</div>
 
@@ -175,7 +218,7 @@
       </div>
       <button class="btn-primary" id="btn-login" type="submit">Entrar</button>
     </form>
-    <div style="text-align:center;margin-top:10px;"><a href="#" id="forgot-link" style="font-size:13px;color:#1971c2;">¿Olvidaste tu contraseña?</a></div>
+    <div style="text-align:center;margin-top:10px;"><a href="#" id="forgot-link" class="forgot-link">¿Olvidaste tu contraseña?</a></div>
     <div class="error-msg" id="login-error" role="alert"></div>
   </div>
 
@@ -324,7 +367,7 @@
 
   function formHTML(qgi) {
     return `
-    <h1 class="logo${qgi ? ' qgi' : ''}">${qgi ? 'Quality Glass' : 'Nivelato'}</h1>
+    <h1 class="logo${qgi ? ' qgi' : ''}">${qgi ? 'Quality Glass' : 'Nivelato<span class="adot">.</span>'}</h1>
     <div class="tagline">${qgi
       ? 'Nivelato — exclusivo de Quality Glass en Puerto Rico'
       : 'Mediciones de campo, niveladas.'}</div>
@@ -348,7 +391,7 @@
         </div>
         <button class="btn-primary${qgi ? ' qgi-btn' : ''}" id="btn-login" type="submit">Entrar</button>
       </form>
-      <div style="text-align:center;margin-top:10px;"><a href="#" id="forgot-link" style="font-size:13px;color:#1971c2;">¿Olvidaste tu contraseña?</a></div>
+      <div style="text-align:center;margin-top:10px;"><a href="#" id="forgot-link" class="forgot-link">¿Olvidaste tu contraseña?</a></div>
       <div class="error-msg" id="login-error" role="alert"></div>
     </div>
 
@@ -421,7 +464,7 @@
     note.id = 'pr-note';
     note.className = 'geo-note';
     note.setAttribute('role', 'alert');
-    note.innerHTML = 'En Puerto Rico, el uso empresarial de Nivelato es exclusivo para empleados de Quality Glass. Los demás pueden usar la app gratuita: <a href="https://play.google.com/store/apps/details?id=com.nivelato.app" style="font-weight:700;color:#1971c2">Descargar en Google Play</a>.';
+    note.innerHTML = 'En Puerto Rico, el uso empresarial de Nivelato es exclusivo para empleados de Quality Glass. Los demás pueden usar la app gratuita: <a href="https://play.google.com/store/apps/details?id=com.nivelato.app" style="font-weight:700;color:#ffcf5c">Descargar en Google Play</a>.';
     card.prepend(note);
   }
 
@@ -452,7 +495,7 @@
 
   function showPendingApproval() {
     pendingShown = true;
-    document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2>Cuenta creada</h2><p style="color:#868e96;max-width:320px">Tu cuenta está pendiente de aprobación por el dueño del taller. Te avisarán cuando tengas acceso.</p><button id="btn-logout" class="btn-primary" style="max-width:240px">Cerrar sesión</button></div>';
+    document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2>Cuenta creada</h2><p style="color:#a7a7b3;max-width:320px">Tu cuenta está pendiente de aprobación por el dueño del taller. Te avisarán cuando tengas acceso.</p><button id="btn-logout" class="btn-primary" style="max-width:240px">Cerrar sesión</button></div>';
     document.getElementById('btn-logout').addEventListener('click', async () => {
       try { await signOut(auth); } catch (_) { /* already signed out */ }
       window.location.href = 'login.html';
