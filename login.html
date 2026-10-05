@@ -217,10 +217,13 @@
       w.id = 'boot-warn';
       w.className = 'geo-note';
       w.setAttribute('role', 'alert');
-      w.textContent = 'El inicio de sesión no terminó de cargar (¿conexión lenta o bloqueada?). Revisa tu red y recarga la página.';
+      w.innerHTML = 'El inicio de sesión está tardando más de lo normal (¿conexión lenta?). Puedes esperar o <button type="button" id="boot-retry" style="text-decoration:underline;background:none;border:none;color:inherit;font:inherit;cursor:pointer;padding:0">recargar la página</button>.';
       card.prepend(w);
+      document.getElementById('boot-retry').addEventListener('click', function () {
+        window.location.reload();
+      });
     }
-  }, 9000);
+  }, 20000);
 </script>
 
 <script type="module">
@@ -280,6 +283,10 @@
   }
 
   window.__nivelatoBooted = true;
+  // If the watchdog banner fired on a slow connection but we booted anyway,
+  // remove it — the page is fully functional now.
+  var bw = document.getElementById('boot-warn');
+  if (bw) bw.remove();
 
   // ---- Geo-gated UI (spec §6) ----
   // The default form is static HTML above, so geo NEVER gates first paint.
