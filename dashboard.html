@@ -533,13 +533,25 @@
     </div>
   </div>
   <div class="niv-panel-bottom">
-    <a class="niv-account-card" href="/account/settings" id="niv-account-card">
+    <button class="niv-account-card" id="niv-account-card" onclick="toggleAccountPopup(event)">
       <div class="niv-account-avatar" id="niv-account-avatar"></div>
       <div class="niv-account-meta">
         <div class="niv-account-name" id="niv-account-name">…</div>
         <div class="niv-account-email" id="niv-account-email">…</div>
       </div>
-    </a>
+    </button>
+    <div class="niv-account-popup" id="niv-account-popup" style="display:none">
+      <button class="niv-popup-btn" onclick="window.location.href='/account/settings'">Account settings</button>
+      <button class="niv-popup-btn" onclick="toggleAboutPopup(event)">About Nivelato</button>
+      <button class="niv-popup-btn" onclick="window.open('https://legobele.github.io/nivelato/ayuda.html','_blank')">Help</button>
+      <div class="niv-popup-user">
+        <div class="niv-account-avatar" id="niv-popup-avatar"></div>
+        <div class="niv-account-meta">
+          <div class="niv-account-name" id="niv-popup-name">…</div>
+          <div class="niv-account-email" id="niv-popup-email">…</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -3060,6 +3072,49 @@ let currentUser;
   })();
 </script>
 <div id="qpdf-print-area" aria-hidden="true"></div>
+
+<style>
+.niv-account-popup {
+  position: absolute; bottom: 90px; left: 16px; right: 16px;
+  background: #0b0b0e; border: 1px solid #e8e8e8; border-radius: 20px;
+  padding: 16px; z-index: 200; display: flex; flex-direction: column; gap: 12px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.5);
+}
+.niv-popup-btn {
+  display: block; width: 100%; padding: 18px;
+  background: transparent; color: #fff; font-size: 1.35rem; font-weight: 500;
+  border: 1px solid #e8e8e8; border-radius: 18px; cursor: pointer;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.niv-popup-btn:hover { background: rgba(255,255,255,.06); }
+.niv-popup-user {
+  display: flex; align-items: center; gap: 12px; padding: 8px 4px 0;
+}
+</style>
+<script>
+function toggleAccountPopup(e) {
+  e.stopPropagation();
+  const p = document.getElementById('niv-account-popup');
+  const open = p.style.display !== 'none';
+  // sync user info into popup
+  const av = document.getElementById('niv-account-avatar');
+  const nm = document.getElementById('niv-account-name');
+  const em = document.getElementById('niv-account-email');
+  if (av) document.getElementById('niv-popup-avatar').innerHTML = av.innerHTML;
+  if (nm) document.getElementById('niv-popup-name').textContent = nm.textContent;
+  if (em) document.getElementById('niv-popup-email').textContent = em.textContent;
+  p.style.display = open ? 'none' : 'flex';
+}
+document.addEventListener('click', function(e) {
+  const p = document.getElementById('niv-account-popup');
+  if (p && p.style.display !== 'none' && !p.contains(e.target)) p.style.display = 'none';
+});
+function toggleAboutPopup(e) {
+  e.stopPropagation();
+  document.getElementById('niv-account-popup').style.display = 'none';
+  alert('Nivelato v1.0.0\nField measurement for glass shops.\nNivelato Labs, Puerto Rico.');
+}
+</script>
 </body>
 </html>
 
