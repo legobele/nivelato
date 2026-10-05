@@ -74,16 +74,6 @@
       margin-bottom: 20px;
       line-height: 1.5;
     }
-    .pricing-note {
-      font-size: 12px;
-      color: var(--muted);
-      background: var(--bg2);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px 14px;
-      margin-bottom: 20px;
-      line-height: 1.6;
-    }
     .geo-note {
       font-size: 12px;
       color: var(--amber2);
@@ -553,7 +543,6 @@
         <div class="accounts-title" data-i18n="used_accounts">Cuentas usadas</div>
         <div id="accounts-list"><button type="button" class="account-add" data-add-account><span class="account-add-icon" aria-hidden="true">+</span><span data-i18n="add_another_account">Añadir otra cuenta</span></button></div>
       </div>
-      <div class="pricing-note" data-i18n="pricing_note">Para Ultra, paga desde la app en tu teléfono (Google Play).</div>
 
   <div id="form-login">
     <form id="login-form" autocomplete="on" onsubmit="return false">
@@ -586,7 +575,6 @@
         page_title: 'Nivelato - Iniciar sesión',
         tagline: 'Mediciones de campo, niveladas.',
         tagline_qgi: 'Nivelato, exclusivo de Quality Glass en Puerto Rico',
-        pricing_note: 'Para Ultra, paga desde la app en tu teléfono (Google Play).',
         exclusivity_note_html: 'En Puerto Rico, Nivelato es de uso <b>exclusivo de Quality Glass</b>. El registro es solo para empleados.',
         tablist_label: 'Iniciar sesión o solicitar acceso',
         tab_login: 'Iniciar sesión',
@@ -687,7 +675,6 @@
         page_title: 'Nivelato - Sign in',
         tagline: 'Field measurements, leveled.',
         tagline_qgi: 'Nivelato, exclusive to Quality Glass in Puerto Rico',
-        pricing_note: 'For Ultra, pay from the app on your phone (Google Play).',
         exclusivity_note_html: 'In Puerto Rico, Nivelato is for <b>Quality Glass</b> exclusive use. Registration is for employees only.',
         tablist_label: 'Sign in or request access',
         tab_login: 'Sign in',
@@ -911,8 +898,6 @@
   import { auth, db, centralFunctions } from './firebase-config.js';
   import {
     signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    updateProfile,
     signOut,
     onAuthStateChanged,
     sendPasswordResetEmail,
@@ -970,10 +955,10 @@
   // what's rendered, the UI is swapped then. Enforcement stays server-side
   // in the flowGate callable — the client lookup is routing-only, so
   // render-first is safe. Unknown geo → external (§6.3).
-  // Web login (login.nivelatolabs.com) is always generic Nivelato branding:
-  // no QGC-specific options, flows, or mentions. The QGI employee flow
-  // stays in the codebase, but this page never renders it.
-  const WEB_LOGIN_GENERIC = true;
+  // Web login QGC mode is enabled: PR visitors get the company domain
+  // selector and QGC flows per the company login redesign (Oct 2026).
+  // Enforcement stays server-side in the flowGate callable.
+  const WEB_LOGIN_GENERIC = false;
   function flowFromCookie() {
     if (WEB_LOGIN_GENERIC) return 'external';
     const m = document.cookie.match(/(?:^|;\s*)nl_flow=(qgi|external)/);
@@ -1101,9 +1086,9 @@
     const accounts = getUsedAccounts();
     const acct = accounts[parseInt(pill.getAttribute('data-acct-index'), 10)];
     if (!acct || !acct.email) return;
-    // A QGC account forces QGC mode (upgrade only, never downgrade).
-    if (acct.kind === 'qgc' && !QGI) renderForm('qgi', true);
-    switchTab('login');
+    // A QGC account forces QGC mode (upgrade only, never downgrade):
+    // QGC mode opens directly on the domain selector.
+    if (acct.kind === 'qgc' && !QGI) { enterQgiDomainSelector(); return; }
     const emailEl = document.getElementById('login-email');
     const passEl = document.getElementById('login-pass');
     if (emailEl) emailEl.value = acct.email;
@@ -1146,7 +1131,6 @@
       <div class="main-panel">
         ${accountsSectionHTML()}
         ${qgi ? `<div class="exclusivity-note" data-i18n="exclusivity_note_html" data-i18n-html="1"></div>` : ''}
-        ${!qgi ? `<div class="pricing-note" data-i18n="pricing_note"></div>` : ''}
 
     <div id="form-login">
       <form id="login-form" autocomplete="on" onsubmit="return false">
@@ -1242,7 +1226,6 @@
   // Called by the classic script's setLang after applyLang: re-render every
   // dynamic surface (form, notices, save-login prompt, pending screen).
   window.__nivelatoOnLangChange = function () {
-    if (pendingShown) { showPendingApproval(); return; }
     if (savePromptShown) { showSaveLoginPrompt(); return; }
     if (travelShown) { renderTravelUI(); return; }
     if (addAccountShown) { renderAddAccountUI(); return; }
@@ -1594,6 +1577,15 @@
     refreshNotices();
   }
 
+  // QGC mode entry: the domain selector IS the root view. renderForm('qgi')
+  // sets QGI + the gray theme (its main-view HTML is immediately replaced).
+  // Back from a company signin returns here; back from here exits the page.
+  function enterQgiDomainSelector() {
+    renderForm('qgi', true);
+    renderView('company-select');
+    try { history.replaceState({ nivelatoView: 'company-select' }, ''); } catch (_) { /* ignore */ }
+  }
+
   const GOOGLE_G_SVG = '<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">'
     + '<path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.5 6.1 29.5 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/>'
     + '<path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>'
@@ -1782,6 +1774,10 @@
     const card = document.getElementById('app-card');
     if (!card) return;
     const qgi = QGI;
+    // QGC mode entry: the selector is titled "Entrar con..." and shows only
+    // the approved pills (clean, per the QGC mockup). Outside QGC mode it is
+    // the "Join a company" flow with Nearby header + manual domain entry.
+    const selTitle = qgi ? t('signin_with') : t('choose_company');
     const pills = sortedCompanies().map(function (c) {
       const loc = c.location && c.location.label
         ? '<span class="account-kind">' + escapeHtml(c.location.label) + '</span>' : '';
@@ -1793,19 +1789,19 @@
       + '<button type="button" class="back-btn" id="companyselect-back" aria-label="' + t('go_back') + '">&#8249;</button>'
       + '<div class="split">'
       + '<div class="brand-panel">'
-      + '<h1 class="logo' + (qgi ? ' qgi' : '') + '" style="font-size:32px">' + t('choose_company') + '</h1>'
+      + '<h1 class="logo' + (qgi ? ' qgi' : '') + '" style="font-size:32px">' + selTitle + '</h1>'
       + '</div>'
       + '<div class="main-panel">'
-      + '<div class="accounts-title">' + t('nearby') + '</div>'
+      + (qgi ? '' : '<div class="accounts-title">' + t('nearby') + '</div>')
       + '<div id="company-select-list">' + pills + '</div>'
-      + '<button type="button" class="btn-google" id="btn-another-company" style="margin-top:16px"><span>' + t('or_signin_another') + '</span></button>'
+      + (qgi ? '' : '<button type="button" class="btn-google" id="btn-another-company" style="margin-top:16px"><span>' + t('or_signin_another') + '</span></button>'
       + '<form id="company-domain-form" style="display:none;margin-top:12px" onsubmit="return false">'
       + '<div class="field">'
       + '<input type="text" id="company-domain-input" placeholder="' + escapeHtml(t('company_domain_ph')) + '" autocomplete="off" autocapitalize="off" spellcheck="false" />'
       + '</div>'
       + '<button type="submit" class="btn-primary' + (qgi ? ' qgi-btn' : '') + '" id="btn-find-company" style="margin-top:12px"><span>' + t('find_company') + '</span></button>'
       + '<div class="error-msg" id="company-domain-error" role="alert"></div>'
-      + '</form>'
+      + '</form>')
       + '</div>'
       + '</div>';
     window.nivApplyLang();
@@ -1816,28 +1812,30 @@
       const id = b.getAttribute('data-select-company');
       if (id && COMPANIES[id]) showCompanyUI(id);
     });
-    document.getElementById('btn-another-company').addEventListener('click', function () {
-      const f = document.getElementById('company-domain-form');
-      const showing = f.style.display !== 'none';
-      f.style.display = showing ? 'none' : 'block';
-      if (!showing) {
+    if (!qgi) {
+      document.getElementById('btn-another-company').addEventListener('click', function () {
+        const f = document.getElementById('company-domain-form');
+        const showing = f.style.display !== 'none';
+        f.style.display = showing ? 'none' : 'block';
+        if (!showing) {
+          const inp = document.getElementById('company-domain-input');
+          const err = document.getElementById('company-domain-error');
+          err.classList.remove('visible'); err.textContent = '';
+          if (inp) inp.focus();
+        }
+      });
+      document.getElementById('company-domain-form').addEventListener('submit', function () {
         const inp = document.getElementById('company-domain-input');
         const err = document.getElementById('company-domain-error');
-        err.classList.remove('visible'); err.textContent = '';
-        if (inp) inp.focus();
-      }
-    });
-    document.getElementById('company-domain-form').addEventListener('submit', function () {
-      const inp = document.getElementById('company-domain-input');
-      const err = document.getElementById('company-domain-error');
-      const id = findCompanyByDomain(inp ? inp.value : '');
-      if (id) {
-        showCompanyUI(id);
-      } else {
-        err.textContent = t('company_not_found');
-        err.classList.add('visible');
-      }
-    });
+        const id = findCompanyByDomain(inp ? inp.value : '');
+        if (id) {
+          showCompanyUI(id);
+        } else {
+          err.textContent = t('company_not_found');
+          err.classList.add('visible');
+        }
+      });
+    }
     ensureUserCoords(); // lazy proximity; re-renders nearest-first when coords land
   }
 
@@ -2262,12 +2260,22 @@
   else if (_trusted && _syncNotPR) _initialMode = 'travel';
   else if (_trusted) _initialMode = 'qgi';
   else _initialMode = flowFromCookie() || flowModeForCountry(_initialCc);
-  if (_initialMode === 'travel') showTravelUI();
-  else renderForm(_initialMode, true);
-  // Seed the history entry for the login view stack: the first back press
-  // from a sub-view returns to main instead of leaving the page.
-  try { history.replaceState({ nivelatoView: 'main' }, ''); } catch (_) { /* ignore */ }
-  currentView = 'main';
+  if (_initialMode === 'travel') {
+    showTravelUI();
+    // Seed the history entry for the login view stack: the first back press
+    // from a sub-view returns to main instead of leaving the page.
+    try { history.replaceState({ nivelatoView: 'main' }, ''); } catch (_) { /* ignore */ }
+    currentView = 'main';
+  } else if (_initialMode === 'qgi') {
+    // QGC mode opens directly on the domain selector (it is the root view).
+    enterQgiDomainSelector();
+  } else {
+    renderForm(_initialMode, true);
+    // Seed the history entry for the login view stack: the first back press
+    // from a sub-view returns to main instead of leaving the page.
+    try { history.replaceState({ nivelatoView: 'main' }, ''); } catch (_) { /* ignore */ }
+    currentView = 'main';
+  }
   if (_initialCc === 'PR') showPrNotice();
   if (new URLSearchParams(location.search).get('missingProfile') === '1') showMissingProfileNotice();
 
@@ -2285,9 +2293,11 @@
         try {
           var _u = new URL(location.href);
           _u.searchParams.delete('travel_verify');
-          history.replaceState({ nivelatoView: 'main' }, '', _u.toString());
+          history.replaceState({ nivelatoView: 'company-select' }, '', _u.toString());
         } catch (_) {}
         renderForm('qgi', true);
+        renderView('company-select');
+        currentView = 'company-select';
         if (_initialCc === 'PR') showPrNotice();
       }
     }).catch(function () {
@@ -2334,7 +2344,7 @@
       if (effectivePR) {
         travelShown = false;
         travelSent = false;
-        if (!QGI) renderForm('qgi', true);
+        if (!QGI) enterQgiDomainSelector();
         showPrNotice();
       } else if (cc && cc !== 'PR') {
         if (!travelShown && !pendingShown && !savePromptShown && !authBusy) showTravelUI();
@@ -2347,7 +2357,10 @@
     // Don't yank the user out of the transient add-account / cant-add / company / company-select
     // views when background geo settles.
     if (addAccountShown || cantAddShown || companyShown || companySelectShown) return;
-    if (mode !== (QGI ? 'qgi' : 'external')) renderForm(mode, true);
+    if (mode !== (QGI ? 'qgi' : 'external')) {
+      if (mode === 'qgi') enterQgiDomainSelector();
+      else renderForm(mode, true);
+    }
     if (cc === null && !flowFromCookie() && !tzIsPR) showGeoNotice();
     if (effectivePR) showPrNotice();
   });
