@@ -534,7 +534,13 @@
     </div>
   </div>
   <div class="niv-panel-bottom">
-    <a class="niv-nav-btn" href="/account/settings">Mi cuenta</a>
+    <a class="niv-account-card" href="/account/settings" id="niv-account-card">
+      <div class="niv-account-avatar" id="niv-account-avatar"></div>
+      <div class="niv-account-meta">
+        <div class="niv-account-name" id="niv-account-name">…</div>
+        <div class="niv-account-email" id="niv-account-email">…</div>
+      </div>
+    </a>
   </div>
 </div>
 
@@ -1091,6 +1097,21 @@ let currentUser;
     // sidebar: company avatar initials + Users link for managers
     const _av = document.getElementById('sidebar-avatar');
     if (_av) _av.textContent = (orgName || 'N').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    // account card: avatar + name + email
+    try {
+      const _an = document.getElementById('niv-account-name');
+      const _ae = document.getElementById('niv-account-email');
+      const _aa = document.getElementById('niv-account-avatar');
+      const _dn = user.displayName || userData.displayName || userData.name || '';
+      const _em = user.email || userData.email || '';
+      if (_an) _an.textContent = _dn || _em.split('@')[0] || 'Usuario';
+      if (_ae) _ae.textContent = _em;
+      if (_aa) {
+        const _pu = user.photoURL || userData.photoURL;
+        if (_pu) { _aa.innerHTML = ''; const _img = document.createElement('img'); _img.src = _pu; _img.alt = ''; _aa.appendChild(_img); }
+        else _aa.textContent = ((_dn || _em || 'U')[0] || 'U').toUpperCase();
+      }
+    } catch (_) {}
     if (_can('userManagement')) {
       const _nu = document.getElementById('nav-users');
       if (_nu) _nu.style.display = 'block';
