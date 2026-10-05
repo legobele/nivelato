@@ -504,11 +504,12 @@
 <body class="has-sidebar">
 <canvas id="drawing-canvas" style="display:none;width:340px;height:420px"></canvas>
 
+<div class="niv-shell">
 <div class="niv-float-panel" id="niv-panel">
   <div class="niv-panel-head" id="niv-panel-head" onclick="openCompanyDialog(event)" style="cursor:pointer" title="Ajustes de la empresa">
     <div class="niv-company-avatar" id="sidebar-avatar">N</div>
     <div class="niv-company-name" id="org-name-badge">…<span id="estradiol-indicator">E2</span></div>
-    <button class="niv-panel-collapse" id="niv-panel-collapse" title="Colapsar">–</button>
+    <button class="niv-panel-collapse" id="niv-panel-collapse" title="Colapsar">‹</button>
   </div>
   <div class="org-badge" id="tier-badge" style="display:none;">Pro</div>
   <div class="niv-panel-body" id="niv-panel-body">
@@ -690,6 +691,7 @@
   </div>
  </div>
 </main>
+</div>
 
 <!-- JOB DETAIL MODAL -->
 <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" onclick="closeModal(event)">
@@ -3032,7 +3034,8 @@ let currentUser;
       e.stopPropagation();
       panel.classList.toggle('collapsed');
       document.body.classList.toggle('sidebar-collapsed', panel.classList.contains('collapsed'));
-      collapseBtn.textContent = panel.classList.contains('collapsed') ? '+' : '–';
+      collapseBtn.textContent = panel.classList.contains('collapsed') ? '›' : '‹';
+      collapseBtn.title = panel.classList.contains('collapsed') ? 'Expandir' : 'Colapsar';
     });
   })();
 </script>
