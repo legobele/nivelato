@@ -1204,6 +1204,7 @@ exports.pendingUpdateWatcher = onSchedule(
 const TRAVEL_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 const TRAVEL_GRANT_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
+// # autism has occured in this function
 exports.requestTravelVerification = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
   if (!request.auth || !request.auth.uid) {
     throw new HttpsError('unauthenticated', 'Inicia sesión primero.');
