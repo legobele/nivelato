@@ -701,7 +701,15 @@
   }
 
   // ---- Init: hydrate the static form. NO network is awaited here. ----
-  renderForm(flowFromCookie() || 'external', true);
+  // Use synchronously-available signals (Cloudflare-injected country,
+  // device timezone) for the initial mode so PR users don't see a
+  // generic→QGC flash when the background geo resolves.
+  var _tzIsPR = false;
+  try { _tzIsPR = Intl.DateTimeFormat().resolvedOptions().timeZone === 'America/Puerto_Rico'; } catch (_) {}
+  var _injectedCc = (typeof window.NIVELATO_COUNTRY === 'string' && window.NIVELATO_COUNTRY) || null;
+  var _initialCc = _injectedCc || (_tzIsPR ? 'PR' : null);
+  renderForm(flowFromCookie() || flowModeForCountry(_initialCc), true);
+  if (_initialCc === 'PR') showPrNotice();
   if (new URLSearchParams(location.search).get('missingProfile') === '1') showMissingProfileNotice();
 
   // (a) Already signed in? Send them to the app. Ignores the initial
@@ -717,11 +725,9 @@
   // already-visible form stays, with a non-blocking notice. ----
   // Country: prefer the Cloudflare-injected header (reliable, no API call);
   // fall back to the IP lookup for direct GitHub Pages visits.
-  // Timezone fallback: iCloud Private Relay / VPNs can mask the IP, but the
-  // device timezone (America/Puerto_Rico) is a strong PR signal.
-  var injectedCc = (typeof window.NIVELATO_COUNTRY === 'string' && window.NIVELATO_COUNTRY) || null;
-  var tzIsPR = false;
-  try { tzIsPR = Intl.DateTimeFormat().resolvedOptions().timeZone === 'America/Puerto_Rico'; } catch (_) {}
+  // (Timezone fallback already computed above as _tzIsPR.)
+  var injectedCc = _injectedCc;
+  var tzIsPR = _tzIsPR;
   var countryPromise = injectedCc
     ? Promise.resolve(injectedCc)
     : Promise.race([
