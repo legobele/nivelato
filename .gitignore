@@ -1,2 +1,3 @@
 .agents/.env
 incoming_files/
+functions/node_modules/
