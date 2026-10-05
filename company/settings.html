@@ -76,6 +76,9 @@
   .status-line.err { display: block; background: #fff5f5; color: #c92a2a; }
   .backend-current { font-size: 13px; color: #495057; background: #f8f9fa; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
   .backend-current b { color: #212529; }
+.notif-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--niv-accent, #f5a524); flex: none; box-shadow: 0 0 8px var(--niv-accent, #f5a524); }
+.updates-link:hover span:first-child { text-decoration: underline; }
+html, body { overflow-y: auto !important; }
 </style></head>
 <body>
 <div class="niv-shell">
@@ -95,7 +98,10 @@
     <a class="niv-nav-btn linklike" href="#" onclick="return false;">Billing</a>
     <div class="niv-card" style="margin:0;">
       <div class="niv-card-title">Updates</div>
-      <div class="niv-card-desc" style="margin:0;"><u>New version available</u> ○</div>
+      <a href="#" id="updates-link" class="updates-link" style="margin:0; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <span>New version available</span>
+        <span class="notif-dot"></span>
+      </a>
     </div>
   </nav>
 </aside>

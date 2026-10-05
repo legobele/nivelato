@@ -1,0 +1,35 @@
+// PROPOSED — DO NOT DEPLOY without Giulia's review.
+// Insert inside: match /databases/{database}/documents { ... }
+// (e.g. right after the /devAllowlist block, before the closing braces)
+
+    // Company applications — apply.nivelatolabs.com/pr/company.
+    // - create: anyone (unauthenticated form submissions). Field allowlist
+    //   + type/size checks so the collection can't be used as a junk drawer.
+    // - read/update/delete: console-only (admins review in Firebase Console;
+    //   a review UI can add an owner-gated read later).
+    match /companyApplications/{appId} {
+      allow create: if request.resource.data.keys().hasOnly([
+          'legalName', 'dba', 'bizType', 'bizTypeOther',
+          'addrStreet', 'addrCity', 'addrZip',
+          'contactName', 'contactRole', 'contactPhone', 'contactEmail',
+          'employees', 'technicians', 'currentProcess', 'volume',
+          'tier', 'timeline', 'hearAbout', 'notes',
+          'status', 'locale', 'submittedAt', 'userAgent'
+        ])
+        && request.resource.data.legalName is string
+        && request.resource.data.legalName.size() >= 2
+        && request.resource.data.legalName.size() <= 160
+        && request.resource.data.contactEmail is string
+        && request.resource.data.contactEmail.size() <= 160
+        && request.resource.data.contactPhone is string
+        && request.resource.data.contactPhone.size() <= 20
+        && request.resource.data.status == 'pending'
+        && request.resource.data.submittedAt is timestamp
+        && (!('notes' in request.resource.data)
+            || request.resource.data.notes is string
+            && request.resource.data.notes.size() <= 2000)
+        && (!('currentProcess' in request.resource.data)
+            || request.resource.data.currentProcess is string
+            && request.resource.data.currentProcess.size() <= 2000);
+      allow read, update, delete: if false;
+    }
