@@ -940,6 +940,9 @@
       return 'es';
     }
     var lang = detectLang();
+    // Language explicitly chosen by the user this session (via the toggle).
+    // postAuthRedirect must not let a stale DB value override it.
+    var sessionExplicitLang = null;
     function t(key) {
       var d = DICT[lang] || DICT.es;
       if (d && d[key] !== undefined) return d[key];
@@ -992,6 +995,9 @@
       if (l !== 'es' && l !== 'en') return;
       if (l === lang) return;
       lang = l;
+      // Explicit user choice this session: beats any stale DB value adopted
+      // later in postAuthRedirect (toggle-then-sign-in race).
+      sessionExplicitLang = l;
       try { localStorage.setItem(STORE_KEY, l); } catch (_) { /* ignore */ }
       // Write-through to the DB when signed in (best effort; never blocks).
       if (window.__nivelatoSaveLangDb) { try { window.__nivelatoSaveLangDb(l); } catch (_) {} }
@@ -1938,9 +1944,13 @@
     const role = userDoc.data()?.role;
     // Seed the company-theme fast-path flag for the app pages (QGC = gray theme).
     seedCompanyThemeFlag(userDoc.data());
-    // Adopt the DB-saved language (it wins over localStorage once it exists).
+    // Adopt the DB-saved language, unless the user explicitly toggled the
+    // language this session (their choice wins over a stale DB read; write
+    // it through now in case the toggle happened while signed out).
     const dbLang = userDoc.data()?.language;
-    if ((dbLang === 'es' || dbLang === 'en') && window.__nivelatoAdoptDbLang) {
+    if (typeof sessionExplicitLang === 'string' && (sessionExplicitLang === 'es' || sessionExplicitLang === 'en')) {
+      if (window.__nivelatoSaveLangDb) { try { window.__nivelatoSaveLangDb(sessionExplicitLang); } catch (_) {} }
+    } else if ((dbLang === 'es' || dbLang === 'en') && window.__nivelatoAdoptDbLang) {
       try { window.__nivelatoAdoptDbLang(dbLang); } catch (_) { /* ignore */ }
     }
     const dest = (role === 'owner' || role === 'cotizador') ? '/dashboard.html' : '/index.html';
