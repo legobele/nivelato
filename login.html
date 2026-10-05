@@ -1286,6 +1286,8 @@
   }
   // Returns true when the handoff navigation started, false when minting
   // the token failed (caller shows the form error; the user stays put).
+  // lastSsoError carries the failure reason for the visible diagnostic.
+  let lastSsoError = null;
   async function ssoHandoff(defaultNext) {
     const next = sanitizeNext(new URLSearchParams(window.location.search).get('next')) || defaultNext;
     if (window.location.origin === APP_ORIGIN) {
@@ -1313,6 +1315,7 @@
       return true;
     } catch (e) {
       console.error('[Nivelato] SSO handoff failed:', (e && e.code) || e);
+      lastSsoError = (e && (e.code || e.message)) || String(e);
       return false;
     }
   }
@@ -1323,7 +1326,9 @@
       errEl = document.querySelector('.error-msg');
     }
     if (!errEl) return;
-    errEl.textContent = window.nivT('sso_failed');
+    // TEMP-DIAG: surface the failure reason visibly until the SSO 401 saga is resolved.
+    const diag = lastSsoError ? ' [dbg:' + lastSsoError + ']' : '';
+    errEl.textContent = window.nivT('sso_failed') + diag;
     errEl.classList.add('visible');
   }
 
