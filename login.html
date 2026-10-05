@@ -203,7 +203,7 @@
 
   <div class="tab-row" role="tablist" aria-label="Iniciar sesión o crear cuenta">
     <button type="button" role="tab" aria-selected="true" class="tab active" id="tab-login">Iniciar sesión</button>
-    <button type="button" role="tab" aria-selected="false" class="tab" id="tab-signup">Request company access</button>
+    <button type="button" role="tab" aria-selected="false" class="tab" id="tab-signup">Solicitar acceso</button>
   </div>
 
   <div id="form-login">
@@ -240,7 +240,7 @@
         <label for="signup-orgname">Nombre del taller</label>
         <input type="text" id="signup-orgname" name="organization" placeholder="Vidriería Ejemplo" autocomplete="organization" />
       </div>
-      <button class="btn-primary" id="btn-signup" type="submit">Request company access</button>
+      <button class="btn-primary" id="btn-signup" type="submit">Solicitar acceso</button>
     </form>
     <div class="error-msg" id="signup-error" role="alert"></div>
     <div class="signup-note">Tu solicitud será revisada. Te avisaremos cuando tengas acceso.</div>
@@ -379,7 +379,7 @@
 
     <div class="tab-row" role="tablist" aria-label="Iniciar sesión o crear cuenta">
       <button type="button" role="tab" aria-selected="true" class="tab active${qgi ? ' qgi-tab' : ''}" id="tab-login">Iniciar sesión</button>
-      <button type="button" role="tab" aria-selected="false" class="tab${qgi ? ' qgi-tab' : ''}" id="tab-signup">Request company access</button>
+      <button type="button" role="tab" aria-selected="false" class="tab${qgi ? ' qgi-tab' : ''}" id="tab-signup">Solicitar acceso</button>
     </div>
 
     <div id="form-login">
@@ -421,7 +421,7 @@
           <label for="signup-orgname">Nombre del taller</label>
           <input type="text" id="signup-orgname" name="organization" placeholder="Vidriería Ejemplo" autocomplete="organization" />
         </div>`}
-        <button class="btn-primary${qgi ? ' qgi-btn' : ''}" id="btn-signup" type="submit">Request company access</button>
+        <button class="btn-primary${qgi ? ' qgi-btn' : ''}" id="btn-signup" type="submit">Solicitar acceso</button>
       </form>
       <div class="error-msg" id="signup-error" role="alert"></div>
       <div class="signup-note">${qgi
@@ -676,7 +676,7 @@
       errEl.textContent = friendlyError(err.code);
       errEl.classList.add('visible');
       btn.disabled = false;
-      btn.textContent = 'Request company access';
+      btn.textContent = 'Solicitar acceso';
       authBusy = false;
     }
   }
@@ -717,7 +717,11 @@
   // already-visible form stays, with a non-blocking notice. ----
   // Country: prefer the Cloudflare-injected header (reliable, no API call);
   // fall back to the IP lookup for direct GitHub Pages visits.
+  // Timezone fallback: iCloud Private Relay / VPNs can mask the IP, but the
+  // device timezone (America/Puerto_Rico) is a strong PR signal.
   var injectedCc = (typeof window.NIVELATO_COUNTRY === 'string' && window.NIVELATO_COUNTRY) || null;
+  var tzIsPR = false;
+  try { tzIsPR = Intl.DateTimeFormat().resolvedOptions().timeZone === 'America/Puerto_Rico'; } catch (_) {}
   var countryPromise = injectedCc
     ? Promise.resolve(injectedCc)
     : Promise.race([
@@ -726,10 +730,12 @@
       ]);
   countryPromise.then((cc) => {
     country = cc;
-    const mode = flowFromCookie() || flowModeForCountry(country);
+    var effectivePR = (country === 'PR') || tzIsPR;
+    var effectiveCountry = effectivePR ? 'PR' : country;
+    const mode = flowFromCookie() || flowModeForCountry(effectiveCountry);
     if (mode !== (QGI ? 'qgi' : 'external')) renderForm(mode, true);
-    if (country === null && !flowFromCookie()) showGeoNotice();
-    if (country === 'PR') showPrNotice();
+    if (country === null && !flowFromCookie() && !tzIsPR) showGeoNotice();
+    if (effectivePR) showPrNotice();
   });
 </script>
 </body>
