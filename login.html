@@ -1302,6 +1302,7 @@
   }
 
   let QGI = false;        // currently rendered flow
+  let qgcEscape = false;  // true when personal mode was entered from the QGC screen
   let country = null;     // resolved async; null until geo settles
   let pendingShown = false;
   let authInitDone = false;
@@ -2227,6 +2228,7 @@
   function renderView(view) {
     if (view === 'main') {
       addAccountShown = false; cantAddShown = false; companyShown = null; companySelectShown = false; reauthShown = null;
+      if (QGI) qgcEscape = false;
       renderForm(QGI ? 'qgi' : 'external', true);
       refreshNotices();
     } else if (view === 'add-account') {
@@ -2234,6 +2236,7 @@
       renderAddAccountUI();
     } else if (view === 'company-select') {
       companySelectShown = true; addAccountShown = false; cantAddShown = false; companyShown = null; reauthShown = null;
+      if (QGI) qgcEscape = false;
       renderCompanySelectUI();
     } else if (view === 'cant-add') {
       cantAddShown = true; addAccountShown = false; companyShown = null; companySelectShown = false; reauthShown = null;
@@ -2254,7 +2257,7 @@
     currentView = view;
   }
   function navigateTo(view) {
-    try { history.pushState({ nivelatoView: view }, ''); } catch (_) { /* ignore */ }
+    try { history.pushState({ nivelatoView: view, qgi: QGI, qgcEscape: qgcEscape }, ''); } catch (_) { /* ignore */ }
     renderView(view);
     animateView('forward');
   }
@@ -2267,6 +2270,8 @@
     if (travelShown || pendingShown || savePromptShown) return; // auth flows own the back button
     const st = e && e.state;
     if (!st || typeof st.nivelatoView !== 'string') return; // leaving the page / foreign state
+    if (typeof st.qgi === 'boolean') QGI = st.qgi;
+    if (typeof st.qgcEscape === 'boolean') qgcEscape = st.qgcEscape;
     const view = st.nivelatoView;
     const dir = viewOrder(view) < viewOrder(currentView) ? 'back' : 'forward';
     renderView(view);
@@ -2289,7 +2294,7 @@
   function enterQgiDomainSelector() {
     renderForm('qgi', true);
     renderView('company-select');
-    try { history.replaceState({ nivelatoView: 'company-select' }, ''); } catch (_) { /* ignore */ }
+    try { history.replaceState({ nivelatoView: 'company-select', qgi: true, qgcEscape: false }, ''); } catch (_) { /* ignore */ }
   }
 
   // Personal account escape hatch for PR: leave QGC mode and add a personal
@@ -2297,6 +2302,7 @@
   // account's current tier: Pro/Ultra get the dashboard, free gets the
   // upgrade popup.
   function switchToPersonalMode() {
+    qgcEscape = QGI; // remember we came from the QGC screen
     renderForm('external', true);
     navigateTo('add-account');
   }
@@ -2338,7 +2344,7 @@
       + '</form>'
       + '<div class="or-sep"><span>' + t('or_sep') + '</span></div>'
       + '<button type="button" class="btn-google" id="btn-google">' + GOOGLE_G_SVG + '<span>' + t('signin_google') + '</span></button>'
-      + (Object.keys(COMPANIES).length
+      + (Object.keys(COMPANIES).length && !qgcEscape
           ? '<button type="button" class="btn-google" id="btn-join-company" style="margin-top:12px"><span>' + t('join_company') + '</span></button>'
           : '')
       + '<div class="error-msg" id="addaccount-error" role="alert"></div>'
