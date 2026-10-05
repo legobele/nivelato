@@ -182,7 +182,7 @@ import { getBackendInfo, probeBackendConfig, saveBackendConfig, resetBackendConf
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getDoc, doc, setDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { makePermChecker } from './permissions.js';
-import { PERM_DEFS } from './permissions.js';
+import { PERM_DEFS, orgHasQuotes } from './permissions.js';
 import { ensureFlowClaims } from './geo.js';
 
 const NOTIF_KEYS = ['welcomeEmail', 'newProject', 'projectEdit', 'quoteReady'];
@@ -546,6 +546,8 @@ async function loadOrgMembers(orgId) {
 
 function renderPermissions() {
   const container = document.getElementById('permissions-list');
+  // orgs sin quoting (QGC): los permisos de precios/cotizaciones no se muestran
+  const visiblePerms = orgHasQuotes(currentUserData) ? PERM_DEFS : PERM_DEFS.filter(p => !['managePriceList', 'createQuotes', 'approveQuotes'].includes(p.key));
   container.innerHTML = orgMembers.map(m => {
     const perms = m.permissions || {};
     const roleLabel = { owner: 'Dueño / Admin', cotizador: 'Cotizador', supervisor: 'Supervisor', medidor: 'Técnico medidor' }[m.role] || m.role || '—';
@@ -553,7 +555,7 @@ function renderPermissions() {
       <div class="perm-member" data-uid="${escapeHtml(m.uid)}">
         <div class="perm-member-header">${escapeHtml(m.name) || 'Sin nombre'} <span class="perm-member-role">${escapeHtml(roleLabel)}</span></div>
         <div class="perm-grid">
-          ${PERM_DEFS.map(p => `
+          ${visiblePerms.map(p => `
             <label>
               <input type="checkbox" class="perm-check" data-perm="${p.key}" ${!!perms[p.key] ? 'checked' : ''} ${m.role === 'owner' ? 'disabled' : ''} />
               ${p.label}

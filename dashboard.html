@@ -610,7 +610,7 @@ import { auth, db, centralFunctions, isCustomBackend } from "./firebase-config.j
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getDoc, doc, setDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
-import { makePermChecker, canEditJob } from './permissions.js';
+import { makePermChecker, canEditJob, orgHasQuotes } from './permissions.js';
 import { ensureFlowClaims } from './geo.js';
 // Flow claims (flow/geoOk/licenseStatus) are minted server-side by flowGate.
 // The rules require them for all org data reads; the SSO custom token doesn't
@@ -808,18 +808,16 @@ let currentUser;
     // Nueva medida button - only if user can create measurements
     const btnNew = document.getElementById('btn-new-measure');
     if (btnNew && _can('createMeasurements')) btnNew.style.display = 'block';
-    // Lista de precios: lectura para todos los roles (matriz QUOTING_SCHEMA §1)
+    // Lista de precios y cotizaciones: no existen para orgs sin quoting (QGC)
+    const hasQuotes = orgHasQuotes(userData);
     const btnPl = document.getElementById('btn-pricelist');
-    if (btnPl) btnPl.style.display = 'block';
-    // Cotizaciones: lectura para todos los roles (matriz QUOTING_SCHEMA §1,
-    // el medidor también ve); el botón "Nueva cotización" se filtra por rol
-    // dentro de la vista.
+    if (btnPl && hasQuotes) btnPl.style.display = 'block';
     const btnQ = document.getElementById('btn-quotes');
-    if (btnQ) btnQ.style.display = 'block';
+    if (btnQ && hasQuotes) btnQ.style.display = 'block';
     const orgDoc = await getDoc(doc(db, 'orgs', orgId));
     const orgName = orgDoc.data()?.name || orgId;
     document.getElementById('org-name-badge').textContent = orgName;
-    document.getElementById('dash-subtitle').textContent = `${orgName} · ${_can('userManagement') ? 'Administrador' : 'Cotizaciones'}`;
+    document.getElementById('dash-subtitle').textContent = `${orgName} · ${_can('userManagement') ? 'Administrador' : (hasQuotes ? 'Cotizaciones' : 'Medidas')}`;
     // show join code only for user management
     if (_can('userManagement')) {
       const jcs = document.getElementById('join-code-section');
@@ -1698,6 +1696,8 @@ let currentUser;
 
   // Navegación entre las cuatro vistas del dashboard.
   window.showDashView = (name) => {
+    // orgs sin quoting (QGC): las vistas de precios/cotizaciones no existen
+    if (!orgHasQuotes(window._currentUserData) && ['pricelist', 'quotes', 'builder'].includes(name)) name = 'measures';
     const views = { measures: 'view-measures', pricelist: 'view-pricelist', quotes: 'view-quotes', builder: 'view-builder' };
     Object.keys(views).forEach(k => {
       const el = document.getElementById(views[k]);

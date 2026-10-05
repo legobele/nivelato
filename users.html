@@ -391,7 +391,7 @@ import {
   getDoc, doc, getDocs, collection, query, where, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { startPresence, getOnlineUsers } from './presence.js';
-import { PERM_DEFS, makePermChecker } from './permissions.js';
+import { PERM_DEFS, makePermChecker, orgHasQuotes } from './permissions.js';
 import { ensureFlowClaims } from './geo.js';
 
 const escapeHtml = (s) => String(s ?? '')
@@ -415,6 +415,7 @@ const PERM_LABELS_EN = {
   userManagement: 'Manage users'
 };
 const PERM_KEYS = PERM_DEFS.map(d => d.key);
+const QUOTE_KEYS = ['managePriceList', 'createQuotes', 'approveQuotes'];
 const PERMS_PREVIEW = 3;
 
 const AVATAR_COLORS = ['#e64980', '#1e9df0', '#51cf66', '#9775fa', '#f06595', '#ffa94d', '#3bc9db', '#748ffc'];
@@ -596,7 +597,9 @@ function renderPerms(m) {
   const body = document.getElementById('perms-body');
   if (!body) return;
   const checker = makePermChecker(m);
-  const keys = expandedPerms ? PERM_KEYS : PERM_KEYS.slice(0, PERMS_PREVIEW);
+  // orgs sin quoting (QGC): no se muestran los permisos de precios/cotizaciones
+  const allKeys = orgHasQuotes(m) ? PERM_KEYS : PERM_KEYS.filter(k => !QUOTE_KEYS.includes(k));
+  const keys = expandedPerms ? allKeys : allKeys.slice(0, PERMS_PREVIEW);
   const canEdit = isOwner();
   body.innerHTML = keys.map((k) => {
     const on = !!checker(k);
@@ -608,7 +611,7 @@ function renderPerms(m) {
       </button>
     </div>`;
   }).join('') +
-  (PERM_KEYS.length > PERMS_PREVIEW
+  (allKeys.length > PERMS_PREVIEW
     ? `<button class="btn" id="btn-all-perms">${expandedPerms ? 'Show less' : 'View all'}</button>`
     : '');
   const btnAll = document.getElementById('btn-all-perms');

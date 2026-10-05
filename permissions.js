@@ -27,6 +27,14 @@ const ROLE_FALLBACK = {
   userManagement:         ['owner'],
 };
 
+// Orgs where pricing/quoting is entirely unavailable (QGC doesn't quote).
+// Hard off: beats role fallback, explicit flags, and the owner auto-grant.
+export const QUOTES_DISABLED_ORGS = ['NJBBG5'];
+export function orgHasQuotes(userData) {
+  return !QUOTES_DISABLED_ORGS.includes(userData?.orgId);
+}
+const QUOTE_PERMS = ['managePriceList', 'createQuotes', 'approveQuotes'];
+
 // Check if a role is in a ROLE_FALLBACK list (or is truthy for `true`)
 function roleMatches(rule, role) {
   if (rule === true) return true;
@@ -40,9 +48,14 @@ function roleMatches(rule, role) {
 export function makePermChecker(userData) {
   const role = userData?.role || userData?.installerRole;
   const perms = userData?.permissions || {};
+  const quotesOff = !orgHasQuotes(userData);
   return (permKey) => {
+    // QGC-style orgs: no pricing/quoting at all, for anyone.
+    if (quotesOff && QUOTE_PERMS.includes(permKey)) return false;
     // explicit permission flag takes priority
     if (perms[permKey] !== undefined) return !!perms[permKey];
+    // owners automatically get every permission
+    if (role === 'owner') return true;
     // fall back to role-based default
     const fallback = ROLE_FALLBACK[permKey];
     return roleMatches(fallback, role);
