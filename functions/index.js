@@ -784,6 +784,49 @@ exports.mintSsoToken = onCall(
 );
 
 // ---------------------------------------------------------------------------
+// devPing — backend status for the dev options panel (login page).
+// Restricted to the closed-testing allowlist (same gate as the panel).
+// Returns server time + the deployed function inventory so the panel's
+// Backend section always reflects what's actually deployed.
+// NOTE: keep DEV_FUNCTION_INVENTORY in sync when adding/removing functions.
+const DEV_FUNCTION_INVENTORY = [
+  { name: 'mintSsoToken', type: 'callable', region: 'us-central1' },
+  { name: 'flowGate', type: 'callable', region: 'us-central1' },
+  { name: 'qgcLogin', type: 'callable', region: 'us-central1' },
+  { name: 'requestWelcomeEmail', type: 'callable', region: 'us-central1' },
+  { name: 'requestPasswordReset', type: 'callable', region: 'us-central1' },
+  { name: 'reportQuoteEvent', type: 'callable', region: 'us-central1' },
+  { name: 'setUiVersion', type: 'callable', region: 'us-central1' },
+  { name: 'provisionBundleKey', type: 'callable', region: 'us-central1' },
+  { name: 'applyCompanyUpdate', type: 'callable', region: 'us-central1' },
+  { name: 'requestTravelVerification', type: 'callable', region: 'us-central1' },
+  { name: 'redeemTravelVerification', type: 'callable', region: 'us-central1' },
+  { name: 'devPing', type: 'callable', region: 'us-central1' },
+  { name: 'processAccountDeletion', type: 'firestore-trigger', region: 'us-central1' },
+  { name: 'homeRegionMonitor', type: 'scheduled', region: 'us-central1' },
+  { name: 'pendingUpdateWatcher', type: 'scheduled', region: 'us-central1' },
+];
+exports.devPing = onCall(
+  { region: 'us-central1', memory: '256MiB' },
+  async (request) => {
+    const email = (request.auth && request.auth.token && request.auth.token.email || '').toLowerCase();
+    if (!request.auth || !email) {
+      throw new HttpsError('unauthenticated', 'Sign in first.');
+    }
+    const allow = await db.doc(`devAllowlist/${email}`).get();
+    if (!allow.exists) {
+      throw new HttpsError('permission-denied', 'Not enrolled in closed testing.');
+    }
+    return {
+      ok: true,
+      now: new Date().toISOString(),
+      project: 'nivelato-app',
+      functions: DEV_FUNCTION_INVENTORY,
+    };
+  }
+);
+
+// ---------------------------------------------------------------------------
 // processAccountDeletion — executes APPROVED account-deletion requests (B2).
 //
 // End-to-end flow:

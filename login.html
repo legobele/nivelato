@@ -266,6 +266,31 @@
       color: #f2f1ec; padding: 11px 14px; font-size: 13px; font-family: inherit;
       text-transform: uppercase;
     }
+    .dev-kv { font-size: 12px; line-height: 1.9; color: #c9c9d4; word-break: break-all; }
+    .dev-kv b { color: #f2f1ec; font-weight: 600; }
+    .dev-doc-item {
+      display: block; width: 100%; text-align: left; padding: 9px 12px; border-radius: 8px;
+      background: transparent; border: 1px solid #2c2c31; color: #7de3f0; font-size: 12px;
+      font-family: ui-monospace, monospace; cursor: pointer; margin-bottom: 6px;
+      word-break: break-all;
+    }
+    .dev-pre {
+      background: #0c0c0e; border: 1px solid #2c2c31; border-radius: 8px; padding: 12px;
+      font-size: 11px; line-height: 1.6; color: #c9c9d4; overflow-x: auto;
+      font-family: ui-monospace, monospace; white-space: pre-wrap; word-break: break-all;
+      max-height: 300px; overflow-y: auto; margin: 8px 0;
+    }
+    .dev-fn-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 9px 4px; border-bottom: 1px solid #222228; font-size: 12px;
+    }
+    .dev-fn-row:last-child { border-bottom: 0; }
+    .dev-fn-name { color: #f2f1ec; font-family: ui-monospace, monospace; }
+    .dev-fn-type { color: #6c6c76; font-size: 11px; }
+    #dev-hold-zone {
+      position: fixed; top: 0; right: 0; width: 64px; height: 64px; z-index: 9000;
+      background: transparent; touch-action: none;
+    }
     /* ---- QGC "depressing gray" theme ----
        Applied to <body> whenever QGI mode is active. Everything goes gray:
        page, card, tabs, inputs, buttons. The QGC logo is stretched
@@ -1020,9 +1045,10 @@
     getAuth
   } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
   import {
-    doc, setDoc, getDoc, serverTimestamp, Timestamp, getFirestore
+    doc, setDoc, getDoc, serverTimestamp, Timestamp, getFirestore,
+    collection, getDocs, query, limit
   } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-  import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
+  import { httpsCallable, getFunctions } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
   import { detectCountry, flowModeForCountry, ensureFlowClaims, routeAfterGate } from './geo.js';
 
   console.log('[Nivelato] Cargando backend... imports listos, inicializando');
@@ -1407,9 +1433,26 @@
       + '<div id="dev-geo-opts"></div>'
       + '<div class="dev-geo-custom"><input id="dev-geo-custom" maxlength="2" placeholder="Custom (e.g. CA)" aria-label="Custom country code" /><button class="dev-btn" id="dev-geo-apply" type="button" style="width:auto;margin:0;padding:11px 18px;">Set</button></div>'
       + '</div>'
-      + '<button class="dev-sec-btn" type="button" disabled>Database<span class="soon">soon</span></button>'
-      + '<button class="dev-sec-btn" type="button" disabled>UI<span class="soon">soon</span></button>'
-      + '<button class="dev-sec-btn" type="button" disabled>Backend<span class="soon">soon</span></button>'
+      + '<button class="dev-sec-btn" id="devsec-database-btn" type="button">Database</button>'
+      + '<div class="dev-sec-body" id="devsec-database" style="display:none">'
+      + '<div class="dev-desc">What the signed-in account can see. Reads go through security rules, so this is exactly the app&rsquo;s view of the DB.</div>'
+      + '<div id="dev-db-user"><div class="dev-desc">Loading&hellip;</div></div>'
+      + '<div class="dev-geo-custom"><input id="dev-db-path" placeholder="collection path (e.g. users)" aria-label="Collection path" /><button class="dev-btn" id="dev-db-browse" type="button" style="width:auto;margin:0;padding:11px 18px;">Browse</button></div>'
+      + '<div id="dev-db-results"></div>'
+      + '</div>'
+      + '<button class="dev-sec-btn" id="devsec-ui-btn" type="button">UI</button>'
+      + '<div class="dev-sec-body" id="devsec-ui" style="display:none">'
+      + '<div class="dev-desc">Preview the login page as a specific company: its branding, signin text and company functions. Applies on reload.</div>'
+      + '<div id="dev-company-opts"></div>'
+      + '</div>'
+      + '<button class="dev-sec-btn" id="devsec-backend-btn" type="button">Backend</button>'
+      + '<div class="dev-sec-body" id="devsec-backend" style="display:none">'
+      + '<div class="dev-desc">Project info and Cloud Functions status (inventory comes from the server, so it always matches what&rsquo;s deployed).</div>'
+      + '<div id="dev-backend-info"><div class="dev-desc">Loading&hellip;</div></div>'
+      + '<button class="dev-btn" id="dev-ping-btn" type="button">Ping backend</button>'
+      + '<div id="dev-ping-result"></div>'
+      + '<div id="dev-fn-list"></div>'
+      + '</div>'
       + '</div>'
       + '</div>';
     ov.addEventListener('click', function (e) { if (e.target === ov) devHide(); });
@@ -1417,18 +1460,68 @@
     document.getElementById('dev-google-btn').addEventListener('click', devGoogleGate);
     document.getElementById('dev-signin-btn').addEventListener('click', devGoogleGate);
     document.getElementById('devsec-regional-btn').addEventListener('click', function () {
-      var b = document.getElementById('devsec-regional');
-      var open = b.style.display === 'none';
-      b.style.display = open ? 'block' : 'none';
-      if (open) devRenderGeoOpts();
+      devToggleSection('regional', devRenderGeoOpts);
     });
+    document.getElementById('devsec-database-btn').addEventListener('click', function () {
+      devToggleSection('database', devRenderDbUser);
+    });
+    document.getElementById('devsec-ui-btn').addEventListener('click', function () {
+      devToggleSection('ui', devRenderCompanyOpts);
+    });
+    document.getElementById('devsec-backend-btn').addEventListener('click', function () {
+      devToggleSection('backend', devRenderBackendInfo);
+    });
+    document.getElementById('dev-db-browse').addEventListener('click', devBrowseCollection);
+    document.getElementById('dev-ping-btn').addEventListener('click', devPingBackend);
+    devEnsureDomGeoApply();
+    if (devGet(DEV_UNLOCK_KEY) === '1') devShowBadge(true);
+    devEnsureHoldZone();
+  }
+
+  // Mobile: long-press (1.5s) the top-right corner of the page = Ctrl+Alt+D.
+  var _holdTimer = null;
+  function devEnsureHoldZone() {
+    if (document.getElementById('dev-hold-zone')) return;
+    var z = document.createElement('div');
+    z.id = 'dev-hold-zone';
+    z.setAttribute('aria-hidden', 'true');
+    var start = function () {
+      if (_holdTimer) clearTimeout(_holdTimer);
+      _holdTimer = setTimeout(function () {
+        _holdTimer = null;
+        try { if (navigator.vibrate) navigator.vibrate(50); } catch (_) { /* ignore */ }
+        devToggle();
+      }, 1500);
+    };
+    var cancel = function () { if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; } };
+    z.addEventListener('pointerdown', start);
+    z.addEventListener('pointerup', cancel);
+    z.addEventListener('pointercancel', cancel);
+    z.addEventListener('pointerleave', cancel);
+    document.body.appendChild(z);
+  }
+
+  function devToggleSection(name, renderFn) {
+    var body = document.getElementById('devsec-' + name);
+    if (!body) return;
+    var open = body.style.display === 'none';
+    ['regional', 'database', 'ui', 'backend'].forEach(function (n) {
+      var b = document.getElementById('devsec-' + n);
+      if (b) b.style.display = 'none';
+    });
+    if (open) {
+      body.style.display = 'block';
+      if (renderFn) renderFn();
+    }
+  }
+
+  function devEnsureDomGeoApply() {
     document.getElementById('dev-geo-apply').addEventListener('click', function () {
       var v = (document.getElementById('dev-geo-custom').value || '').trim().toUpperCase();
       if (!/^[A-Z]{2}$/.test(v)) return;
       devSet(DEV_GEO_KEY, v);
       location.reload();
     });
-    if (devGet(DEV_UNLOCK_KEY) === '1') devShowBadge(true);
   }
 
   function devShowBadge(show) {
@@ -1489,11 +1582,13 @@
       if (!email) throw new Error('no-email');
       var devDb = getFirestore(_devApp);
       var snap = await getDoc(doc(devDb, 'devAllowlist', email));
-      await signOut(_devAuth).catch(function () {});
       if (!snap.exists()) {
+        await signOut(_devAuth).catch(function () {});
         errEl.textContent = 'This account is not enrolled in closed testing.';
         return;
       }
+      // Keep the dev-gate Google session: the Backend ping reuses it, and the
+      // login page's own auth session is untouched (separate app instance).
       devSet(DEV_UNLOCK_KEY, '1');
       devShowBadge(true);
       devShowSections();
@@ -1531,6 +1626,161 @@
       b.textContent = cur + ' ✓';
       b.addEventListener('click', function () { devDel(DEV_GEO_KEY); location.reload(); });
       box.appendChild(b);
+    }
+  }
+
+  function devEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // ---- Database section: the signed-in account's scope + a collection browser.
+  // Reads go through security rules, so this is exactly the app's view of the DB.
+  async function devRenderDbUser() {
+    var el = document.getElementById('dev-db-user');
+    var u = auth.currentUser;
+    if (!u) {
+      el.innerHTML = '<div class="dev-kv"><b>Not signed in</b> on this page. The browser below still works for public collections.</div>';
+      return;
+    }
+    el.innerHTML = '<div class="dev-desc">Loading&hellip;</div>';
+    var claims = {};
+    try { claims = (await u.getIdTokenResult()).claims || {}; } catch (_) { /* ignore */ }
+    var userDoc = null, userDocErr = null;
+    try {
+      var s = await getDoc(doc(db, 'users', u.uid));
+      userDoc = s.exists() ? s.data() : null;
+      if (!s.exists()) userDocErr = 'no users/{uid} doc';
+    } catch (e) { userDocErr = (e && e.code) || 'read failed'; }
+    var claimRows = Object.keys(claims).filter(function (k) {
+      return ['role', 'orgId', 'company', 'flow', 'geoOk', 'licenseStatus', 'email', 'email_verified'].indexOf(k) >= 0;
+    }).map(function (k) { return '<b>' + devEsc(k) + '</b>: ' + devEsc(JSON.stringify(claims[k])); }).join('<br>');
+    el.innerHTML = '<div class="dev-kv">'
+      + '<b>uid</b>: ' + devEsc(u.uid) + '<br>'
+      + '<b>email</b>: ' + devEsc(u.email || '(none)') + '<br>'
+      + (claimRows ? claimRows + '<br>' : '')
+      + '<b>users/{uid}</b>: ' + (userDocErr ? devEsc(userDocErr) : 'loaded below') + '</div>'
+      + (userDoc ? '<div class="dev-pre">' + devEsc(JSON.stringify(userDoc, null, 2)) + '</div>' : '');
+  }
+
+  async function devBrowseCollection() {
+    var path = (document.getElementById('dev-db-path').value || '').trim().replace(/^\/+|\/+$/g, '');
+    var resEl = document.getElementById('dev-db-results');
+    if (!path) return;
+    resEl.innerHTML = '<div class="dev-desc">Loading&hellip;</div>';
+    try {
+      var snap = await getDocs(query(collection(db, path), limit(25)));
+      if (snap.empty) { resEl.innerHTML = '<div class="dev-desc">No documents (or not readable).</div>'; return; }
+      resEl.innerHTML = '';
+      var head = document.createElement('div');
+      head.className = 'dev-desc';
+      head.textContent = snap.size + ' doc(s), tap to view:';
+      resEl.appendChild(head);
+      snap.forEach(function (d) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'dev-doc-item';
+        b.textContent = d.id;
+        b.addEventListener('click', async function () {
+          var old = b.nextSibling;
+          if (old && old.className === 'dev-pre') { old.remove(); return; }
+          try {
+            var ds = await getDoc(doc(db, path, d.id));
+            var pre = document.createElement('div');
+            pre.className = 'dev-pre';
+            pre.textContent = JSON.stringify(ds.exists() ? ds.data() : null, null, 2);
+            b.after(pre);
+          } catch (e) {
+            var pre2 = document.createElement('div');
+            pre2.className = 'dev-err';
+            pre2.textContent = 'Read failed: ' + ((e && e.code) || 'error');
+            b.after(pre2);
+          }
+        });
+        resEl.appendChild(b);
+      });
+    } catch (e) {
+      resEl.innerHTML = '<div class="dev-err">Browse failed: ' + devEsc((e && e.code) || 'error')
+        + ' — the path may not exist or rules deny it.</div>';
+    }
+  }
+
+  // ---- UI section: preview the page as a specific company.
+  var DEV_COMPANY_KEY = 'nl_dev_company';
+  function devRenderCompanyOpts() {
+    var cur = devGet(DEV_COMPANY_KEY) || '';
+    var box = document.getElementById('dev-company-opts');
+    box.innerHTML = '';
+    var ids = [''].concat(Object.keys(typeof COMPANIES !== 'undefined' ? COMPANIES : {}));
+    ids.forEach(function (id) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'dev-geo-opt' + (cur === id ? ' active' : '');
+      b.textContent = (id ? id : 'Auto (no forcing)') + (cur === id ? ' ✓' : '');
+      b.addEventListener('click', function () {
+        if (id) devSet(DEV_COMPANY_KEY, id); else devDel(DEV_COMPANY_KEY);
+        location.reload();
+      });
+      box.appendChild(b);
+    });
+    var note = document.createElement('div');
+    note.className = 'dev-desc';
+    note.textContent = 'Forces the company signin screen on load, like visiting its /company/ link.';
+    box.appendChild(note);
+  }
+
+  // ---- Backend section: project info + function inventory from the server.
+  function devRenderBackendInfo() {
+    var el = document.getElementById('dev-backend-info');
+    var cfg = defaultFirebaseConfig || {};
+    el.innerHTML = '<div class="dev-kv">'
+      + '<b>project</b>: ' + devEsc(cfg.projectId || '?') + '<br>'
+      + '<b>functions region</b>: us-central1<br>'
+      + '<b>auth domain</b>: ' + devEsc(cfg.authDomain || '?') + '</div>';
+    document.getElementById('dev-fn-list').innerHTML = '';
+    document.getElementById('dev-ping-result').innerHTML = '';
+  }
+
+  function devRenderFnList(fns) {
+    var el = document.getElementById('dev-fn-list');
+    el.innerHTML = '';
+    (fns || []).forEach(function (f) {
+      var row = document.createElement('div');
+      row.className = 'dev-fn-row';
+      row.innerHTML = '<span class="dev-fn-name">' + devEsc(f.name) + '</span>'
+        + '<span class="dev-fn-type">' + devEsc(f.type) + ' · ' + devEsc(f.region) + '</span>';
+      el.appendChild(row);
+    });
+  }
+
+  async function devPingBackend() {
+    var resEl = document.getElementById('dev-ping-result');
+    resEl.innerHTML = '<div class="dev-desc">Pinging&hellip;</div>';
+    try {
+      if (!_devApp) {
+        try { _devApp = initializeApp(defaultFirebaseConfig, 'nivelato-dev-gate'); }
+        catch (_) { _devApp = getApp('nivelato-dev-gate'); }
+        _devAuth = getAuth(_devApp);
+      }
+      if (!_devAuth.currentUser) {
+        await devGoogleGate();
+        if (!_devAuth.currentUser) throw new Error('Google sign-in needed first.');
+      }
+      var t0 = Date.now();
+      var res = await httpsCallable(getFunctions(_devApp, 'us-central1'), 'devPing')();
+      var ms = Date.now() - t0;
+      var d = res.data || {};
+      resEl.innerHTML = '<div class="dev-kv"><b>ok</b> · ' + ms + 'ms round-trip<br><b>server time</b>: '
+        + devEsc(d.now || '?') + '<br><b>project</b>: ' + devEsc(d.project || '?') + '</div>';
+      if (d.functions) devRenderFnList(d.functions);
+    } catch (e) {
+      var code = (e && e.code) || '';
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+        resEl.innerHTML = '<div class="dev-desc">Sign-in cancelled.</div>';
+        return;
+      }
+      resEl.innerHTML = '<div class="dev-err">Ping failed: ' + devEsc((e && e.message) || code || 'error') + '</div>';
     }
   }
 
@@ -2690,11 +2940,14 @@
   else if (_trusted) _initialMode = 'qgi';
   else _initialMode = flowFromCookie() || flowModeForCountry(_initialCc);
   // Company deep link takes precedence: open the company's signin screen
-  // directly, regardless of geo mode.
-  if (_deepLinkCompany && COMPANIES[_deepLinkCompany]) {
-    loadCompanyFlags(_deepLinkCompany).finally(function () {
-      showCompanyUI(_deepLinkCompany);
-    });
+  // directly, regardless of geo mode. The dev panel (UI section) can force a
+  // company the same way via localStorage (nl_dev_company).
+  var _devCompany = null;
+  try { _devCompany = localStorage.getItem('nl_dev_company') || null; } catch (_) { /* ignore */ }
+  var _forceCompany = (_devCompany && COMPANIES[_devCompany]) ? _devCompany
+    : (_deepLinkCompany && COMPANIES[_deepLinkCompany] ? _deepLinkCompany : null);
+  if (_forceCompany) {
+    showCompanyUI(_forceCompany);
   } else if (_initialMode === 'travel') {
     showTravelUI();
     // Seed the history entry for the login view stack: the first back press
