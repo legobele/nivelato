@@ -3272,6 +3272,9 @@
     // Users who want in enter credentials; no silent session adoption.
     authInitDone = true;
     renderView('main');
+    // Seed history state so back-from-company restores the form via popstate
+    // (without this, back lands on a stateless entry and the form never re-renders).
+    try { history.replaceState({ nivelatoView: 'main', qgi: QGI, qgcEscape: false }, ''); } catch (_) {}
   });
 
   // ---- Background geo (post-paint): swap the flow UI only if it differs.
