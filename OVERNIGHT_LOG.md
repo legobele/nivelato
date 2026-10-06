@@ -145,3 +145,57 @@ Worker issues FLAGGED FOR PARENT (need Cloudflare redeploy, cannot do from here)
 OPEN (needs user):
 - F-1 (quoting): no Firestore rules for companies/*/quotes|priceList. Quoting writes fail closed for ALL orgs. Needs her rules spec. Cannot deploy rules per boundary.
 - Apply form FIREBASE_API_KEY: placeholder still in place. Submissions cannot work until she pastes the key.
+
+# ============ MORNING DIGEST ============
+Overnight QA complete. 5 loops, 9 sweep agents, all reports reconciled.
+Base: b9f15e1 -> HEAD: 5b92631. All pushes verified on origin/main.
+Live check 22:00 AST: all 7 endpoints return 200.
+
+## Bugs fixed (with commits)
+| # | Bug | File:line | Commit |
+|---|-----|-----------|--------|
+| 1 | Nueva medida button 404'd (/index.html not on worker) | dashboard.html | 81abe62 |
+| 2 | Settings back link -> /dashboard.html (404) | settings.html:128 | 6a526fc |
+| 3 | Collapsed sidebar hid account card | niv-dark.css:313 | 6a526fc |
+| 4 | Save-permission root cause: flow claims never awaited pre-save | auth-guard.js:182 | 1596588 |
+| 5 | Raw FirebaseError shown to users | adhd.js:644 | 1596588 |
+| 6 | postMessage accepted from any origin (photo) | adhd.js:1520 | 1596588 |
+| 7 | postMessage to iframe used '*' (PII) | adhd.js:1500 | 45d847b |
+| 8 | Missing PHOTO_ACK (protocol half-implemented) | adhd.js:1534 | 45d847b |
+| 9 | Mobile drawer not closed by Precios/Cotizaciones | dashboard.html | 5ca99e2 |
+| 10 | users.html Team page ungated | users.html:697 | 1596588 |
+| 11 | Self-elevation via own perm row | company/settings.html:320 | 1596588 |
+| 12 | Quote UI leaked to QGC org (5 spots) | dashboard.html, company/settings.html | 08fede2 |
+| 13 | Realtime refresh discarded filters | dashboard.html:1244 | 45d847b |
+| 14 | Dark date input unreadable/overlapping | dashboard.html:381 | 45d847b |
+| 15 | Hamburger missing on 5 views (mobile dead-end) | dashboard.html | 45d847b |
+| 16 | About modal under drawer (z-index) | dashboard.html | 45d847b |
+| 17 | Photo line tool drew arrowheads | photo.html:288 | 45d847b |
+| 18 | Photo tool couldn't be deselected | photo.html:674 | 45d847b |
+| 19 | SSO ctoken in URL query (history/server logs) | login.html:1926, sso.html:104 | fb107cb |
+| 20 | Login showed personal names + phone numbers | login.html:2131 | fb107cb |
+| 21 | Debug [dbg:...] leak in SSO errors | login.html:1935 | fb107cb |
+| 22 | User-enumeration login errors | login.html:2053 | fb107cb |
+| 23 | Deep link dropped for dashboard SSO | login.html:1924 | fb107cb |
+| 24 | Presence beacons doubled per session | presence.js:33 | cd653c8 |
+| 25 | Theme flag leaked across users | account-selector.js:39 | cd653c8 |
+| 26 | Stale account menu on re-init | account-selector.js:138 | cd653c8 |
+| 27 | Em-dash purge (user-facing copy) | index/adhd/photo/settings/login | 1596588, fb107cb |
+| 28 | Personal names in code comments | index.html:188, adhd.js:1235 | 1596588 |
+| 29 | Apply form validation holes (F1-F8) | apply-pr-company.html | 9041bf3 |
+| 30 | Company settings Volver -> /dashboard (404) | company/settings.html:109 | 9041bf3 |
+| 31 | Photo preview arrowhead (regression) | photo.html:378 | c682efa |
+| 32 | Company route quote gate fail-open (regression) | dashboard.html:1009 | c682efa |
+| 33 | Collapse after manual resize broken | dashboard.html:3066 | 1596588 |
+| 34 | Estradiol easter-egg span wiped | dashboard.html:1111 | 1596588 |
+| 35 | Privacy/missingProfile dead links | settings.html, users.html | 1596588 |
+| 36 | Updates cards not clickable | settings pages | 1596588 |
+
+## Still open (need user or parent)
+1. **Quoting Firestore rules**: no rules for companies/*/quotes|priceList. Quoting dead for ALL orgs. Needs her rules spec. (boundary: cannot deploy rules)
+2. **Apply form API key**: FIREBASE_API_KEY placeholder still in place. Submissions cannot work until she pastes it.
+3. **Worker redeploys** (need parent via Cloudflare): W1 testing.js watermark on settings, W2 /dashboard.html nuke gap, W3 apply worker on stalled Pages, W4 1h edge cache.
+4. **Browser verification**: none of tonight's fixes are browser-verified (no browser-task tool at coordinator level). Full test plans in sweep reports.
+
+## Overall health
+Dashboard, settings, login, SSO, measurement flow, photo editor, and apply form are statically clean. The save-permission root cause is fixed (was the #1 user-facing bug). Quoting is the weakest area (needs rules). All endpoints 200.
