@@ -311,9 +311,10 @@
 
 .niv-float-panel.collapsed { width: 76px; min-width: 76px; max-width: 76px; resize: none; padding: 20px 10px 16px; }
 .niv-float-panel.collapsed .niv-panel-body,
-.niv-float-panel.collapsed .niv-panel-bottom,
 .niv-float-panel.collapsed .niv-company-name,
 .niv-float-panel.collapsed .org-badge { display: none; }
+.niv-float-panel.collapsed .niv-panel-bottom { display: block; padding: 0; }
+.niv-float-panel.collapsed .niv-account-popup { left: 84px; right: auto; width: 260px; bottom: 16px; }
 .niv-float-panel.collapsed .niv-panel-head { justify-content: center; }
 
 .niv-panel-head {
