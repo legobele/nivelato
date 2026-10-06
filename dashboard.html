@@ -881,7 +881,7 @@ import { auth, db, centralFunctions, isCustomBackend } from "./firebase-config.j
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getDoc, doc, setDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
-import { makePermChecker, canEditJob, orgHasQuotes } from './permissions.js';
+import { makePermChecker, canEditJob, orgHasQuotes, userCanQuote } from './permissions.js';
 import { ensureFlowClaims } from './geo.js';
 // Flow claims (flow/geoOk/licenseStatus) are minted server-side by flowGate.
 // The rules require them for all org data reads; the SSO custom token doesn't
@@ -1006,7 +1006,7 @@ async function initCompanyView(user) {
     members = ms.docs.map(d => ({ uid: d.id, ...d.data() })).filter(m => m.disabled !== true);
   } catch (e) { console.error('[Nivelato] vista compañía: no se pudieron leer miembros:', e); }
 
-  const _hasQuotes = orgHasQuotes(userData);
+  const _hasQuotes = userCanQuote(userData);
   let quotes = [];
   if (_hasQuotes) {
     try {
@@ -1136,7 +1136,7 @@ let currentUser;
     const btnNew = document.getElementById('btn-new-measure');
     if (btnNew && _can('createMeasurements')) btnNew.style.display = 'block';
     // Lista de precios y cotizaciones: no existen para orgs sin quoting (QGC)
-    const hasQuotes = orgHasQuotes(userData);
+    const hasQuotes = userCanQuote(userData);
     const btnPl = document.getElementById('btn-pricelist');
     if (btnPl && hasQuotes) btnPl.style.display = 'block';
     const btnQ = document.getElementById('btn-quotes');
@@ -1779,7 +1779,7 @@ let currentUser;
     return m[currentUser.uid] || (window._currentUserData && window._currentUserData.role) || '';
   };
   const plCanManage = () => {
-    if (!orgHasQuotes(window._currentUserData)) return false;
+    if (!userCanQuote(window._currentUserData)) return false;
     // el flag explícito (settings) gana, igual que makePermChecker
     const explicit = ((window._currentUserData && window._currentUserData.permissions) || {}).managePriceList;
     if (explicit !== undefined) return !!explicit;
@@ -2044,19 +2044,19 @@ let currentUser;
   // solo owner/supervisor aprueban, rechazan o eliminan. El flag explícito
   // (settings) gana sobre el rol, igual que makePermChecker.
   const qCanCreateQuote = () => {
-    if (!orgHasQuotes(window._currentUserData)) return false;
+    if (!userCanQuote(window._currentUserData)) return false;
     const e = qExplicit('createQuotes');
     if (e !== null) return e;
     return ['owner', 'supervisor', 'cotizador'].includes(qRole());
   };
   const qCanApproveQuote = () => {
-    if (!orgHasQuotes(window._currentUserData)) return false;
+    if (!userCanQuote(window._currentUserData)) return false;
     const e = qExplicit('approveQuotes');
     if (e !== null) return e;
     return ['owner', 'supervisor'].includes(qRole());
   };
   const qCanEditQuote = (q) => {
-    if (!orgHasQuotes(window._currentUserData)) return false;
+    if (!userCanQuote(window._currentUserData)) return false;
     if (qExplicit('createQuotes') === false) return false;
     if (!q || q.estado !== 'borrador') return false;
     const r = qRole();
@@ -2064,7 +2064,7 @@ let currentUser;
     return r === 'cotizador' && q.creadoPor === currentUser.uid;
   };
   const qCanSendQuote = (q) => {
-    if (!orgHasQuotes(window._currentUserData)) return false;
+    if (!userCanQuote(window._currentUserData)) return false;
     if (qExplicit('createQuotes') === false) return false;
     if (!q || q.estado !== 'borrador') return false;
     const r = qRole();
@@ -2076,7 +2076,7 @@ let currentUser;
   window.showDashView = (name) => {
     document.body.classList.remove('nav-open');
     // orgs sin quoting (QGC): las vistas de precios/cotizaciones no existen
-    if (!orgHasQuotes(window._currentUserData) && ['pricelist', 'quotes', 'builder'].includes(name)) name = 'measures';
+    if (!userCanQuote(window._currentUserData) && ['pricelist', 'quotes', 'builder'].includes(name)) name = 'measures';
     const views = { measures: 'view-measures', pricelist: 'view-pricelist', quotes: 'view-quotes', builder: 'view-builder', project: 'view-project', measure: 'view-measure' };
     Object.keys(views).forEach(k => {
       const el = document.getElementById(views[k]);

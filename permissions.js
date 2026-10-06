@@ -33,6 +33,12 @@ export const QUOTES_DISABLED_ORGS = ['NJBBG5'];
 export function orgHasQuotes(userData) {
   return !QUOTES_DISABLED_ORGS.includes(userData?.orgId);
 }
+// Quoting unlocks for external (non-QGI) orgs on Ultra tier.
+// QGI orgs never quote; Pro/lower tiers don't get quoting UI.
+export function userCanQuote(userData) {
+  return orgHasQuotes(userData)
+      && (userData?.tier || '').toLowerCase() === 'ultra';
+}
 const QUOTE_PERMS = ['managePriceList', 'createQuotes', 'approveQuotes'];
 
 // Check if a role is in a ROLE_FALLBACK list (or is truthy for `true`)
@@ -49,13 +55,15 @@ export function makePermChecker(userData) {
   const role = userData?.role || userData?.installerRole;
   const perms = userData?.permissions || {};
   const quotesOff = !orgHasQuotes(userData);
+  const quotesTierLocked = (userData?.tier || '').toLowerCase() !== 'ultra';
   // Pro tier (external billing): limited dashboard — own measurements only,
   // even for owners. Ultra/QGC get the full dashboard.
   const tier = (userData?.tier || '').toLowerCase();
   const proLimited = tier === 'pro';
   return (permKey) => {
     // QGC-style orgs: no pricing/quoting at all, for anyone.
-    if (quotesOff && QUOTE_PERMS.includes(permKey)) return false;
+    // External orgs: quoting requires Ultra tier.
+    if (QUOTE_PERMS.includes(permKey) && (quotesOff || quotesTierLocked)) return false;
     // Pro tier: no viewing others' measurements, hard limit.
     if (proLimited && permKey === 'viewOthersMeasurements') return false;
     // explicit permission flag takes priority
