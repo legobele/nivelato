@@ -205,6 +205,11 @@
     }
     .lang-toggle:hover { color: var(--ink); border-color: var(--dim); }
     .lang-toggle:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+    /* compact: globe icon only on small screens */
+    @media (max-width: 480px) {
+      .lang-toggle { font-size: 0 !important; width: 44px; min-width: 44px; padding: 10px 0; text-align: center; }
+      .lang-toggle::after { content: '\1F310'; font-size: 20px; }
+    }
     /* Header-row pill: the language toggle lives in the panel header
        (accounts title row / company-head), right-aligned in-flow. */
     .accounts-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
