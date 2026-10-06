@@ -375,7 +375,7 @@ function redraw() {
   }
   // in-progress shape
   if (drawingShape) {
-    drawArrowLine(ctx, drawingShape.a, drawingShape.b, null);
+    drawArrowLine(ctx, drawingShape.a, drawingShape.b, null, drawingShape.type === 'line');
   }
 }
 

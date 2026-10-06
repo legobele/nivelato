@@ -1006,7 +1006,7 @@ async function initCompanyView(user) {
     members = ms.docs.map(d => ({ uid: d.id, ...d.data() })).filter(m => m.disabled !== true);
   } catch (e) { console.error('[Nivelato] vista compañía: no se pudieron leer miembros:', e); }
 
-  const _hasQuotes = orgHasQuotes(window._currentUserData);
+  const _hasQuotes = orgHasQuotes(userData);
   let quotes = [];
   if (_hasQuotes) {
     try {
