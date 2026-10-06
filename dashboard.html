@@ -527,8 +527,8 @@
     </div>
     <div class="niv-panel-actions">
       <button class="niv-nav-btn" id="nav-measures" onclick="document.body.classList.remove('nav-open');window.showDashView('measures')">Medidas</button>
-      <button class="niv-nav-btn" id="btn-pricelist" onclick="togglePriceListView()" style="display:none">Precios</button>
-      <button class="niv-nav-btn" id="btn-quotes" onclick="toggleQuotesView()" style="display:none">Cotizaciones</button>
+      <button class="niv-nav-btn" id="btn-pricelist" onclick="document.body.classList.remove('nav-open');togglePriceListView()" style="display:none">Precios</button>
+      <button class="niv-nav-btn" id="btn-quotes" onclick="document.body.classList.remove('nav-open');toggleQuotesView()" style="display:none">Cotizaciones</button>
       <a class="niv-nav-btn" id="nav-users" href="/company/settings" style="display:none">Usuarios</a>
     </div>
   </div>
