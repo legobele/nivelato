@@ -102,3 +102,12 @@ From agent F report:
 - F7: hamburger added to pricelist/quotes/builder/project/measure view headers (was Medidas-only, mobile dead-end).
 - F8: About modal z-index 300 -> 700 (was under drawer/scrim on mobile); opening About closes drawer.
 - F9: showDashView closes the drawer on any programmatic view change.
+
+## Loop 3 — regression fixes committed (c682efa, pushed ~21:30 AST)
+From regression agent:
+- BUG-A: photo.html live line-preview now passes plain flag (was drawing arrowhead in preview).
+- BUG-B: dashboard /company route quote gate uses in-scope userData (was window._currentUserData = null there, fail-open).
+- Other 8 regression items: PASS. No new em dashes/names introduced. SW v7 verified.
+
+## Loop 4 — dispatched (~21:35 AST)
+- account-selector.js, presence.js, company-theme.js, geo.js (report-only)
