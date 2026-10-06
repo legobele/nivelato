@@ -7,7 +7,8 @@
   <meta name="theme-color" content="#121212" />
   <link rel="manifest" href="manifest.json" />
   <title>Nivelato - Dashboard</title>
-<script>console.log('nivelato v1.0.0 - commit 68fe412')</script>
+<script>
+console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-bearing.", "color:#f5a524;font-weight:bold;");console.log('nivelato v1.0.0 - commit 68fe412')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js?v=3"></script>
 <script type="module" src="gay.js"></script>
@@ -563,6 +564,19 @@
     <button id="btn-new-measure" onclick="window.location.href='https://app.nivelatolabs.com/'" style="display:none; margin-left:auto; background:var(--niv-accent,#f5a524); color:#000; border:none; border-radius:12px; padding:10px 20px; font-size:15px; font-weight:600; cursor:pointer; font-family:'Inter',system-ui,sans-serif;">+ Nueva medida</button>
   </div>
   <div class="subtitle" id="dash-subtitle">Cargando…</div>
+  <script>
+  // rotating loading whimsey
+  (function(){
+    const msgs = ["Cargando…", "Nivelando…", "Calibrando el nivel…", "Enderezando marcos…", "Puliendo vidrios…"];
+    let i = 0;
+    const el = document.getElementById("dash-subtitle");
+    const iv = setInterval(() => {
+      if (!el || !el.textContent.startsWith("Carg")) { clearInterval(iv); return; }
+      i = (i + 1) % msgs.length;
+      el.textContent = msgs[i];
+    }, 1800);
+  })();
+  </script>
   <div id="join-code-section" style="display:none; background:#e8f0fe; border-radius:12px; padding:14px 20px; margin:16px 0 8px; align-items:center; gap:16px; flex-wrap:wrap;">
     <span style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
     <span id="join-code-display" style="font-size:24px; font-weight:700; color:#1a73e8; letter-spacing:0.15em; font-family:monospace; margin-left:8px;">--</span>
@@ -976,11 +990,14 @@ async function initCompanyView(user) {
     members = ms.docs.map(d => ({ uid: d.id, ...d.data() })).filter(m => m.disabled !== true);
   } catch (e) { console.error('[Nivelato] vista compañía: no se pudieron leer miembros:', e); }
 
+  const _hasQuotes = orgHasQuotes(window._currentUserData);
   let quotes = [];
-  try {
-    const qs = await getDocs(query(collection(db, 'companies', orgId, 'quotes'), orderBy('creadoEl', 'desc')));
-    quotes = qs.docs.map(d => ({ id: d.id, ...d.data() }));
-  } catch (e) { console.error('[Nivelato] vista compañía: no se pudieron leer cotizaciones:', e); }
+  if (_hasQuotes) {
+    try {
+      const qs = await getDocs(query(collection(db, 'companies', orgId, 'quotes'), orderBy('creadoEl', 'desc')));
+      quotes = qs.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (e) { console.error('[Nivelato] vista compañía: no se pudieron leer cotizaciones:', e); }
+  }
 
   const nEstado = (s) => quotes.filter(q => (q.estado || 'borrador') === s).length;
 
@@ -1011,19 +1028,21 @@ async function initCompanyView(user) {
     '<h1>' + escapeHtml(orgName) + '</h1>' +
     '<p class="subtitle">Vista de compañía</p>' +
     '<div class="stats-row" style="grid-template-columns:repeat(2,1fr)">' +
-      '<div class="stat-card"><div class="stat-num">' + nEstado('borrador') + '</div><div class="stat-label">Cotizaciones en borrador</div></div>' +
-      '<div class="stat-card"><div class="stat-num">' + nEstado('aprobada') + '</div><div class="stat-label">Cotizaciones aprobadas</div></div>' +
-      '<div class="stat-card"><div class="stat-num">' + nEstado('enviada') + '</div><div class="stat-label">Cotizaciones enviadas</div></div>' +
+      (_hasQuotes ?
+        '<div class="stat-card"><div class="stat-num">' + nEstado('borrador') + '</div><div class="stat-label">Cotizaciones en borrador</div></div>' +
+        '<div class="stat-card"><div class="stat-num">' + nEstado('aprobada') + '</div><div class="stat-label">Cotizaciones aprobadas</div></div>' +
+        '<div class="stat-card"><div class="stat-num">' + nEstado('enviada') + '</div><div class="stat-label">Cotizaciones enviadas</div></div>' : '') +
       '<div class="stat-card"><div class="stat-num">' + members.length + '</div><div class="stat-label">Miembros del equipo</div></div>' +
     '</div>' +
     '<h2 style="font-size:16px;font-weight:700;color:#212529;margin:8px 0 12px">Equipo</h2>' +
     '<div style="' + cardStyle + '">' +
       (memberRows || '<p style="padding:16px 0;font-size:13px;color:#868e96">No hay miembros en esta compañía.</p>') +
     '</div>' +
-    '<h2 style="font-size:16px;font-weight:700;color:#212529;margin:8px 0 12px">Cotizaciones recientes</h2>' +
-    '<div style="' + cardStyle + '">' +
-      (recentRows || '<p style="padding:16px 0;font-size:13px;color:#868e96">Aún no hay cotizaciones.</p>') +
-    '</div>' +
+    (_hasQuotes ?
+      '<h2 style="font-size:16px;font-weight:700;color:#212529;margin:8px 0 12px">Cotizaciones recientes</h2>' +
+      '<div style="' + cardStyle + '">' +
+        (recentRows || '<p style="padding:16px 0;font-size:13px;color:#868e96">Aún no hay cotizaciones.</p>') +
+      '</div>' : '') +
     '</main>';
 }
 
@@ -1744,6 +1763,7 @@ let currentUser;
     return m[currentUser.uid] || (window._currentUserData && window._currentUserData.role) || '';
   };
   const plCanManage = () => {
+    if (!orgHasQuotes(window._currentUserData)) return false;
     // el flag explícito (settings) gana, igual que makePermChecker
     const explicit = ((window._currentUserData && window._currentUserData.permissions) || {}).managePriceList;
     if (explicit !== undefined) return !!explicit;
@@ -2008,22 +2028,28 @@ let currentUser;
   // solo owner/supervisor aprueban, rechazan o eliminan. El flag explícito
   // (settings) gana sobre el rol, igual que makePermChecker.
   const qCanCreateQuote = () => {
+    if (!orgHasQuotes(window._currentUserData)) return false;
     const e = qExplicit('createQuotes');
     if (e !== null) return e;
     return ['owner', 'supervisor', 'cotizador'].includes(qRole());
   };
   const qCanApproveQuote = () => {
+    if (!orgHasQuotes(window._currentUserData)) return false;
     const e = qExplicit('approveQuotes');
     if (e !== null) return e;
     return ['owner', 'supervisor'].includes(qRole());
   };
   const qCanEditQuote = (q) => {
+    if (!orgHasQuotes(window._currentUserData)) return false;
+    if (qExplicit('createQuotes') === false) return false;
     if (!q || q.estado !== 'borrador') return false;
     const r = qRole();
     if (r === 'owner' || r === 'supervisor') return true;
     return r === 'cotizador' && q.creadoPor === currentUser.uid;
   };
   const qCanSendQuote = (q) => {
+    if (!orgHasQuotes(window._currentUserData)) return false;
+    if (qExplicit('createQuotes') === false) return false;
     if (!q || q.estado !== 'borrador') return false;
     const r = qRole();
     if (r === 'owner' || r === 'supervisor') return true;
@@ -3159,6 +3185,8 @@ document.addEventListener('keydown', function(e) {
     <button class="niv-about-close" onclick="closeAboutModal()">Cerrar</button>
   </div>
 </div>
+  <!-- the measurements are leveled. the whimsy is load-bearing. 🦀 -->
+  <script type="module" src="/crab.js"></script>
 </body>
 </html>
 

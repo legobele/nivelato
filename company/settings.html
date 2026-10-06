@@ -472,7 +472,11 @@ onAuthStateChanged(auth, async (user) => {
   await loadDeleteRequests();
   await loadTfaApi(orgId);
   await loadCompanyProfile();
-  await loadQuoteSettings();
+  if (!orgHasQuotes(currentUserData)) {
+    document.getElementById('card-quote-settings').style.display = 'none';
+  } else {
+    await loadQuoteSettings();
+  }
   // sidebar company card
   try {
     const _cs = await getDoc(doc(db, 'orgs', orgId));
