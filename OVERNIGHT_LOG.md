@@ -120,3 +120,28 @@ From agent F (loop 4) report:
 - F5: closeMenu syncs aria-expanded=false.
 - geo.js: report-only (R1 no timeout on flowGate callable, R2 cached-claims freshness tradeoff, R3 single geo provider). No changes per boundary.
 - F2 (N+1 reads): not a bug, skipped.
+
+## Loop 5 — apply form + worker findings (9041bf3, pushed ~22:00 AST)
+From agent (loop 5) report. Repo-only fixes applied:
+- W6: apply form em dashes fixed (title, address label).
+- F8 (boundary): hearAbout option no longer names Quality ("Recomendación de otro taller de cristales", value qgc kept).
+- F1: firebase init wrapped in try/catch; visible error + disabled submit on failure (no silent dead form).
+- F2: submit errors branch on permission-denied (config message) vs network; API key NOT filled (do not have it; placeholder stays).
+- F3: employees/technicians require integer digits 1-100000 (was: 1.5 -> 1, huge values passed).
+- F4: phone requires exactly 10 digits (was >= 10).
+- F5: bizTypeOther value + error cleared when hidden.
+- F6: radio groups get .invalid-group highlight on error.
+- F7: privacy policy link + consent notice added under submit.
+- W7: company/settings Volver href /dashboard -> /company (was 404).
+
+Worker issues FLAGGED FOR PARENT (need Cloudflare redeploy, cannot do from here):
+- W1: testing.js watermark transform is dead code in dashboard worker (settings pages show watermark).
+- W2: app proxy nuke misses /dashboard.html.
+- W3: apply worker fetches from stalled GitHub Pages instead of raw.
+- W4: 1h static edge cache undercuts freshness.
+- W5: no CSP on dashboard subdomain (recommendation; not implemented - risky without testing).
+- W6 (worker part): 404 page em dashes in worker source.
+
+OPEN (needs user):
+- F-1 (quoting): no Firestore rules for companies/*/quotes|priceList. Quoting writes fail closed for ALL orgs. Needs her rules spec. Cannot deploy rules per boundary.
+- Apply form FIREBASE_API_KEY: placeholder still in place. Submissions cannot work until she pastes the key.
