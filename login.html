@@ -1291,10 +1291,12 @@
         + '<span class="account-kind">' + escapeHtml(accountKindLabel(a.kind)) + '</span>'
         + '</span></button>';
     }).join('');
+    // External mode (non-PR): no "Add personal account" button — that's a
+    // PR-only escape hatch. Non-PR users are already in the personal flow.
     return '<div class="accounts-section" id="accounts-section">'
       + '<div class="accounts-head"><div class="accounts-title" data-i18n="used_accounts"></div>'
       + '<button type="button" id="lang-toggle" class="lang-toggle"></button></div>'
-      + '<div id="accounts-list">' + pills + addBtn + '</div></div>';
+      + '<div id="accounts-list">' + pills + '</div></div>';
   }
   function onAccountPillClick(e) {
     const coPill = e.target && e.target.closest ? e.target.closest('[data-company-pill]') : null;
