@@ -387,6 +387,9 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   }
   .filter-row select:disabled { color: #6c757d; background-color: #17171a; }
   .date-input-wrap .date-placeholder { color: #a7a7ad; }
+  .date-input-wrap input[type="date"] { color: transparent; }
+  .date-input-wrap.has-value input[type="date"],
+  .date-input-wrap input[type="date"]:focus { color: #f5f5f7; }
 
   /* join code section */
   #join-code-section { background: #17171a !important; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; }
@@ -608,7 +611,10 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   </div>
  </div><!-- /view-measures -->
  <div id="view-pricelist" style="display:none">
-  <h1>Lista de precios</h1>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <button class="niv-hamburger" onclick="document.body.classList.toggle('nav-open')" aria-label="Menú">☰</button>
+  <h1 style="margin:0;">Lista de precios</h1>
+  </div>
   <div class="subtitle" id="pl-subtitle">Cargando…</div>
   <div class="pl-toolbar">
     <button class="btn-save pl-add" id="pl-add-btn" onclick="openPriceItemModal()" style="display:none">＋ Agregar ítem</button>
@@ -618,7 +624,10 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   <button class="btn-close" onclick="togglePriceListView()">📊 Volver a medidas</button>
  </div>
  <div id="view-quotes" style="display:none">
-  <h1>Cotizaciones</h1>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <button class="niv-hamburger" onclick="document.body.classList.toggle('nav-open')" aria-label="Menú">☰</button>
+  <h1 style="margin:0;">Cotizaciones</h1>
+  </div>
   <div class="subtitle" id="qt-subtitle">Cargando…</div>
   <div class="qt-toolbar">
     <button class="btn-save qt-add" id="qt-new-btn" onclick="openQuoteBuilder()" style="display:none">＋ Nueva cotización</button>
@@ -635,7 +644,10 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
  </div>
  <div id="view-builder" style="display:none">
   <button class="btn-cancel" style="width:auto;padding:8px 16px;margin:0 0 12px" onclick="showDashView('quotes')">← Volver a cotizaciones</button>
-  <h1 id="qb-title">Nueva cotización</h1>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <button class="niv-hamburger" onclick="document.body.classList.toggle('nav-open')" aria-label="Menú">☰</button>
+  <h1 id="qb-title" style="margin:0;">Nueva cotización</h1>
+  </div>
   <div class="subtitle" id="qb-subtitle"></div>
   <div class="detail-section-title">Cliente</div>
   <div class="qt-form-grid">
@@ -691,7 +703,10 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
  </div>
  <div id="view-project" style="display:none">
   <button class="btn-cancel" style="width:auto;padding:8px 16px;margin:0 0 12px" onclick="window.showDashView('measures')">← Volver</button>
-  <h1 id="proj-title">Proyecto</h1>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <button class="niv-hamburger" onclick="document.body.classList.toggle('nav-open')" aria-label="Menú">☰</button>
+  <h1 id="proj-title" style="margin:0;">Proyecto</h1>
+  </div>
   <div class="subtitle" id="proj-subtitle"></div>
   <div class="niv-proj-grid">
     <div class="niv-card">
@@ -708,6 +723,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
  <div id="view-measure" style="display:none">
   <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
     <button class="niv-back-btn" id="measure-back-btn" onclick="measureBack()">◁</button>
+    <button class="niv-hamburger" onclick="document.body.classList.toggle('nav-open')" aria-label="Menú">☰</button>
     <h1 style="margin:0;">Measure</h1>
   </div>
   <div class="niv-measure-grid">
@@ -1242,7 +1258,7 @@ let currentUser;
     });
     if ([...custSel.options].some(o => o.value === prevCust)) custSel.value = prevCust;
 
-    renderJobs(allJobs);
+    applyFilters();
       refreshFloatPanel(allJobs);
     };
 
@@ -2058,6 +2074,7 @@ let currentUser;
 
   // Navegación entre las cuatro vistas del dashboard.
   window.showDashView = (name) => {
+    document.body.classList.remove('nav-open');
     // orgs sin quoting (QGC): las vistas de precios/cotizaciones no existen
     if (!orgHasQuotes(window._currentUserData) && ['pricelist', 'quotes', 'builder'].includes(name)) name = 'measures';
     const views = { measures: 'view-measures', pricelist: 'view-pricelist', quotes: 'view-quotes', builder: 'view-builder', project: 'view-project', measure: 'view-measure' };
@@ -3143,6 +3160,7 @@ document.addEventListener('click', function(e) {
 function toggleAboutPopup(e) {
   e.stopPropagation();
   document.getElementById('niv-account-popup').style.display = 'none';
+  document.body.classList.remove('nav-open');
   document.getElementById('niv-about-modal').style.display = 'flex';
 }
 function closeAboutModal() {
@@ -3155,7 +3173,7 @@ document.addEventListener('keydown', function(e) {
 
 <style>
 .niv-about-modal {
-  position: fixed; inset: 0; z-index: 300;
+  position: fixed; inset: 0; z-index: 700;
   background: rgba(0,0,0,.6);
   display: flex; align-items: center; justify-content: center;
 }

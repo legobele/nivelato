@@ -285,7 +285,7 @@ function drawDimLinePx(c, a, b, off, label) {
   }
 }
 
-function drawArrowLine(c, a, b, label) {
+function drawArrowLine(c, a, b, label, plain) {
   const ang = Math.atan2(b.y - a.y, b.x - a.x);
   c.strokeStyle = LINE_COLOR;
   c.lineWidth = LINE_WIDTH;
@@ -294,14 +294,16 @@ function drawArrowLine(c, a, b, label) {
   c.moveTo(a.x, a.y);
   c.lineTo(b.x, b.y);
   c.stroke();
-  // arrowhead
-  const head = Math.max(14, labelFontSize() * 0.6);
-  c.beginPath();
-  c.moveTo(b.x, b.y);
-  c.lineTo(b.x - head * Math.cos(ang - 0.45), b.y - head * Math.sin(ang - 0.45));
-  c.moveTo(b.x, b.y);
-  c.lineTo(b.x - head * Math.cos(ang + 0.45), b.y - head * Math.sin(ang + 0.45));
-  c.stroke();
+  if (!plain) {
+    // arrowhead
+    const head = Math.max(14, labelFontSize() * 0.6);
+    c.beginPath();
+    c.moveTo(b.x, b.y);
+    c.lineTo(b.x - head * Math.cos(ang - 0.45), b.y - head * Math.sin(ang - 0.45));
+    c.moveTo(b.x, b.y);
+    c.lineTo(b.x - head * Math.cos(ang + 0.45), b.y - head * Math.sin(ang + 0.45));
+    c.stroke();
+  }
   if (label) {
     const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
     drawLabel(c, label, mid.x, mid.y, ang, labelFontSize());
@@ -368,8 +370,7 @@ function redraw() {
   if (corners) renderFrame(ctx, corners, { handles: true });
   // custom strokes
   for (const s of customStrokes) {
-    if (s.type === 'line') drawArrowLine(ctx, s.a, s.b, s.label);
-    else if (s.type === 'arrow') drawArrowLine(ctx, s.a, s.b, s.label);
+    if (s.type === 'line' || s.type === 'arrow') drawArrowLine(ctx, s.a, s.b, s.label, s.type === 'line');
     else if (s.type === 'text') drawTextAnno(ctx, s);
   }
   // in-progress shape
@@ -673,6 +674,12 @@ document.getElementById('btn-label-cancel').addEventListener('click', () => {
 // ── toolbar ──
 document.querySelectorAll('.tool-btn[data-tool]').forEach(b => {
   b.addEventListener('click', () => {
+    if (currentTool === b.dataset.tool) {
+      currentTool = 'none';
+      b.classList.remove('active');
+      setHint('Arrastra los puntos de las esquinas para alinear el marco. Usa las herramientas para añadir líneas o texto.');
+      return;
+    }
     currentTool = b.dataset.tool;
     document.querySelectorAll('.tool-btn[data-tool]').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
@@ -713,7 +720,7 @@ btnDone.addEventListener('click', () => {
   octx.drawImage(img, 0, 0, baseW, baseH);
   if (corners) renderFrame(octx, corners, { handles: false });
   for (const s of customStrokes) {
-    if (s.type === 'line' || s.type === 'arrow') drawArrowLine(octx, s.a, s.b, s.label);
+    if (s.type === 'line' || s.type === 'arrow') drawArrowLine(octx, s.a, s.b, s.label, s.type === 'line');
     else if (s.type === 'text') drawTextAnno(octx, s);
   }
   const dataUrl = out.toDataURL('image/jpeg', 0.9);

@@ -1497,7 +1497,7 @@ window.openPhotoEditor = function() {
   overlay.style.display = 'flex';
   document.body.style.overflow = 'hidden';
   frame.onload = function() {
-    try { frame.contentWindow.postMessage(payload, '*'); } catch (e) {}
+    try { frame.contentWindow.postMessage(payload, window.location.origin); } catch (e) {}
   };
   frame.src = 'photo.html';
 };
@@ -1531,6 +1531,7 @@ window.addEventListener('message', function(e) {
       prev.style.display = 'block';
       document.getElementById('btn-open-photo').textContent = '📷 Cambiar foto';
     }
+    try { e.source.postMessage({ type: 'NIVELATO_PHOTO_ACK' }, e.origin); } catch (_) {}
     if (typeof window.closePhotoEditor === 'function') window.closePhotoEditor();
     saveDraft(); // (e) la foto anotada entra al borrador en cuanto llega
   }
