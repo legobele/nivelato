@@ -31,9 +31,9 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       justify-content: space-between;
       position: sticky; top: 0; z-index: 200;
     }
-    .header-logo { font-size: 20px; font-weight: 700; color: #1971c2; }
+    .header-logo { font-size: 20px; font-weight: 700; color: #f5a524; }
     .header-right { display: flex; align-items: center; gap: 12px; }
-    .org-badge { font-size: 12px; background: #e7f5ff; color: #1971c2; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+    .org-badge { font-size: 12px; background: rgba(245,165,36,.12); color: #f5a524; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
     .btn-logout { font-size: 13px; color: #868e96; background: none; border: none; cursor: pointer; font-family: inherit; }
     .btn-logout:hover { color: #c92a2a; }
 
@@ -64,7 +64,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     /* STATS ROW */
     .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
     .stat-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-    .stat-num { font-size: 28px; font-weight: 700; color: #1971c2; }
+    .stat-num { font-size: 28px; font-weight: 700; color: #f5a524; }
     .stat-label { font-size: 12px; color: #868e96; margin-top: 2px; }
 
     /* FILTERS */
@@ -94,8 +94,8 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     }
     .filter-row select:hover { border-color: #adb5bd; }
     .filter-row input:focus, .filter-row select:focus {
-      border-color: #1971c2;
-      box-shadow: 0 0 0 3px #e7f5ff;
+      border-color: #f5a524;
+      box-shadow: 0 0 0 3px rgba(245,165,36,.12);
     }
     .filter-row select:disabled { color: #adb5bd; background-color: #f8f9fa; cursor: default; }
     .date-input-wrap {
@@ -112,8 +112,8 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       color-scheme: light;
     }
     .date-input-wrap input[type="date"]:focus {
-      border-color: #1971c2;
-      box-shadow: 0 0 0 3px #e7f5ff;
+      border-color: #f5a524;
+      box-shadow: 0 0 0 3px rgba(245,165,36,.12);
     }
     .date-input-wrap .date-placeholder {
       position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
@@ -220,13 +220,13 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     .btn-close { width: 100%; padding: 12px; margin-top: 8px; background: #f1f3f5; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
     .btn-delete { width: 100%; padding: 12px; margin-top: 16px; background: #fff5f5; border: 1.5px solid #ffc9c9; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; color: #c92a2a; }
     .btn-delete:hover { background: #ffe3e3; }
-    .btn-edit { width: 100%; padding: 12px; margin-top: 8px; background: #e7f5ff; border: 1.5px solid #1971c2; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; color: #1971c2; }
+    .btn-edit { width: 100%; padding: 12px; margin-top: 8px; background: rgba(245,165,36,.12); border: 1.5px solid #f5a524; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; color: #f5a524; }
     .btn-edit:hover { background: #d0ebff; }
-    .btn-save { width: 100%; padding: 12px; margin-top: 8px; background: #1971c2; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .btn-save { width: 100%; padding: 12px; margin-top: 8px; background: #f5a524; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
     .btn-save:hover { background: #1864ab; }
     .btn-cancel { width: 100%; padding: 12px; margin-top: 4px; background: #f1f3f5; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
     .modal-edit-input { width: 100%; padding: 8px 10px; border: 1.5px solid #dee2e6; border-radius: 6px; font-size: 13px; font-family: inherit; color: #212529; margin-top: 2px; }
-    .modal-edit-input:focus { outline: none; border-color: #1971c2; box-shadow: 0 0 0 3px #e7f5ff; }
+    .modal-edit-input:focus { outline: none; border-color: #f5a524; box-shadow: 0 0 0 3px rgba(245,165,36,.12); }
     .modal-edit-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #adb5bd; margin-top: 12px; display: block; }
     .modal-edit-label:first-of-type { margin-top: 0; }
 
@@ -263,7 +263,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     .pl-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
     .pl-add { width: auto; padding: 10px 18px; margin-top: 0; }
     .pl-inactive-toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #495057; cursor: pointer; }
-    .pl-inactive-toggle input { width: 16px; height: 16px; accent-color: #1971c2; cursor: pointer; }
+    .pl-inactive-toggle input { width: 16px; height: 16px; accent-color: #f5a524; cursor: pointer; }
     .pl-group { margin-bottom: 20px; }
     .pl-group-title { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #868e96; margin: 0 0 8px; }
     .pl-table-wrap { overflow-x: auto; background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
@@ -279,14 +279,14 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     .pl-tag-inactive { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: #f1f3f5; color: #868e96; margin-left: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
     .pl-btn { border: 1.5px solid #dee2e6; background: #fff; border-radius: 6px; padding: 5px 10px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; margin-left: 6px; color: #495057; }
     .pl-btn:hover { border-color: #adb5bd; }
-    .pl-btn-edit { border-color: #1971c2; color: #1971c2; }
-    .pl-btn-edit:hover { background: #e7f5ff; }
+    .pl-btn-edit { border-color: #f5a524; color: #f5a524; }
+    .pl-btn-edit:hover { background: rgba(245,165,36,.12); }
     .pl-btn-off { border-color: #ffc9c9; color: #c92a2a; }
     .pl-btn-off:hover { background: #fff5f5; }
     .pl-btn-on { border-color: #b2d8b2; color: #2f9e44; }
     .pl-btn-on:hover { background: #ebfbee; }
     .pl-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #495057; margin-top: 14px; cursor: pointer; }
-    .pl-check input { width: 16px; height: 16px; accent-color: #1971c2; cursor: pointer; }
+    .pl-check input { width: 16px; height: 16px; accent-color: #f5a524; cursor: pointer; }
     .pl-error { margin-top: 12px; padding: 10px 14px; background: #fff5f5; border: 1px solid #ffc9c9; border-radius: 8px; font-size: 13px; color: #c92a2a; }
     .pl-hint { font-size: 12px; color: #868e96; margin-top: 6px; }
     @media (max-width: 600px) {
@@ -300,7 +300,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     .qt-filter { padding: 9px 14px; border: 1.5px solid #dee2e6; border-radius: 8px; font-size: 13px; font-family: inherit; color: #495057; background: #fff; }
     .qt-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
     .qt-est-borrador { background: #f1f3f5; color: #868e96; }
-    .qt-est-enviada { background: #e7f5ff; color: #1971c2; }
+    .qt-est-enviada { background: rgba(245,165,36,.12); color: #f5a524; }
     .qt-est-aprobada { background: #ebfbee; color: #2f9e44; }
     .qt-est-rechazada { background: #ffe3e3; color: #c92a2a; }
     .qt-total { font-weight: 700; color: #212529; white-space: nowrap; }
@@ -310,10 +310,10 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     .qt-line-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
     .qt-line-desc { font-size: 14px; font-weight: 600; color: #212529; }
     .qt-line-detail { font-size: 12px; color: #868e96; margin-top: 2px; }
-    .qt-line-sub { font-size: 14px; font-weight: 700; color: #1971c2; white-space: nowrap; }
+    .qt-line-sub { font-size: 14px; font-weight: 700; color: #f5a524; white-space: nowrap; }
     .qt-line-actions { display: flex; gap: 6px; margin-top: 8px; }
     .qt-line-add-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 4px; }
-    .qt-med-badge { display: inline-block; font-size: 11px; font-weight: 600; background: #e7f5ff; color: #1971c2; border-radius: 4px; padding: 2px 8px; margin-left: 6px; }
+    .qt-med-badge { display: inline-block; font-size: 11px; font-weight: 600; background: rgba(245,165,36,.12); color: #f5a524; border-radius: 4px; padding: 2px 8px; margin-left: 6px; }
     .qt-totals { background: #fff; border-radius: 12px; padding: 6px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 12px; }
     .qt-total-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #495057; border-bottom: 1px solid #f8f9fa; }
     .qt-total-row:last-child { border-bottom: none; }
@@ -336,8 +336,8 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       body > *:not(#qpdf-print-area) { display: none !important; }
       #qpdf-print-area { display: block !important; }
       .qpdf { font-family: 'Inter', Arial, Helvetica, sans-serif; color: #111; font-size: 11pt; line-height: 1.45; }
-      .qpdf-head { border-bottom: 2px solid #1971c2; padding-bottom: 8pt; margin-bottom: 12pt; }
-      .qpdf-co { font-size: 18pt; font-weight: 700; color: #1971c2; margin-bottom: 2pt; }
+      .qpdf-head { border-bottom: 2px solid #f5a524; padding-bottom: 8pt; margin-bottom: 12pt; }
+      .qpdf-co { font-size: 18pt; font-weight: 700; color: #f5a524; margin-bottom: 2pt; }
       .qpdf-head div { font-size: 10pt; color: #333; }
       .qpdf-title { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 6pt; }
       .qpdf-title h1 { font-size: 20pt; letter-spacing: 0.06em; margin: 0; }
@@ -345,19 +345,19 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       .qpdf-meta { font-size: 10pt; color: #333; margin-bottom: 10pt; }
       .qpdf-meta span { font-weight: 600; color: #111; }
       .qpdf-sec { margin-bottom: 10pt; }
-      .qpdf-sec-title { font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #1971c2; border-bottom: 1px solid #dee2e6; padding-bottom: 2pt; margin-bottom: 5pt; }
+      .qpdf-sec-title { font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #f5a524; border-bottom: 1px solid #dee2e6; padding-bottom: 2pt; margin-bottom: 5pt; }
       .qpdf-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4pt; padding: 7pt 10pt; }
       .qpdf-cn { font-weight: 700; font-size: 12pt; }
       .qpdf-box div { font-size: 10pt; }
       .qpdf-table { width: 100%; border-collapse: collapse; margin-bottom: 10pt; font-size: 10pt; }
-      .qpdf-table th { background: #1971c2; color: #fff; text-align: left; padding: 5pt 7pt; font-size: 9.5pt; }
+      .qpdf-table th { background: #f5a524; color: #fff; text-align: left; padding: 5pt 7pt; font-size: 9.5pt; }
       .qpdf-table td { padding: 6pt 7pt; border-bottom: 1px solid #e9ecef; vertical-align: top; }
       .qpdf-table th.r, .qpdf-table td.r { text-align: right; white-space: nowrap; }
       .qpdf-line-desc { font-weight: 600; }
       .qpdf-line-det { font-size: 8.5pt; color: #555; margin-top: 2pt; }
       .qpdf-tot { margin-left: auto; width: 46%; font-size: 10.5pt; }
       .qpdf-tot .row { display: flex; justify-content: space-between; padding: 2.5pt 0; }
-      .qpdf-tot .row.grand { font-size: 13pt; font-weight: 700; border-top: 2px solid #1971c2; margin-top: 4pt; padding-top: 6pt; }
+      .qpdf-tot .row.grand { font-size: 13pt; font-weight: 700; border-top: 2px solid #f5a524; margin-top: 4pt; padding-top: 6pt; }
       .qpdf-notas { font-size: 10pt; color: #333; background: #fff; border: 1px solid #e9ecef; border-radius: 4pt; padding: 7pt 10pt; margin-bottom: 10pt; }
       .qpdf-validez { font-size: 9.5pt; color: #555; font-style: italic; margin-bottom: 16pt; }
       .qpdf-sig { display: flex; gap: 40pt; margin: 22pt 0 12pt; }
@@ -383,7 +383,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     background: #1e1e22; border: 1.5px solid rgba(255,255,255,0.14); color: #f5f5f7; color-scheme: dark;
   }
   .filter-row input:focus, .filter-row select:focus, .date-input-wrap input[type="date"]:focus {
-    border-color: #1971c2; box-shadow: 0 0 0 3px rgba(25,113,194,0.25);
+    border-color: #f5a524; box-shadow: 0 0 0 3px rgba(25,113,194,0.25);
   }
   .filter-row select:disabled { color: #6c757d; background-color: #17171a; }
   .date-input-wrap .date-placeholder { color: #a7a7ad; }
@@ -415,12 +415,12 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   .btn-close, .btn-cancel { background: #1e1e22; color: #f5f5f7; border: 1px solid rgba(255,255,255,0.14); }
   .btn-delete { background: rgba(229,72,77,0.12); border-color: rgba(229,72,77,0.5); color: #f87171; }
   .btn-delete:hover { background: rgba(229,72,77,0.2); }
-  .btn-edit { background: rgba(25,113,194,0.15); border-color: #1971c2; color: #60a5fa; }
+  .btn-edit { background: rgba(25,113,194,0.15); border-color: #f5a524; color: #60a5fa; }
   .btn-edit:hover { background: rgba(25,113,194,0.25); }
-  .btn-save { background: #1971c2; }
+  .btn-save { background: #f5a524; }
   .btn-save:hover { background: #1864ab; }
   .modal-edit-input { background: #1e1e22; border-color: rgba(255,255,255,0.14); color: #f5f5f7; }
-  .modal-edit-input:focus { border-color: #1971c2; box-shadow: 0 0 0 3px rgba(25,113,194,0.25); }
+  .modal-edit-input:focus { border-color: #f5a524; box-shadow: 0 0 0 3px rgba(25,113,194,0.25); }
   .modal-edit-label { color: #6c757d; }
   /* GRAPH CANVAS: untouched by design. background stays as the graph system renders it. */
   .empty-state, .loading { color: #a7a7ad; }
@@ -434,7 +434,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   .niv-sidebar .org-badge { background: rgba(25,113,194,0.2); color: #60a5fa; border: 1px solid rgba(25,113,194,0.5); }
 
   /* sidebar nav active state sync */
-  .niv-nav-btn.active { background: linear-gradient(135deg, #0ea5a5, #1971c2); }
+  .niv-nav-btn.active { background: linear-gradient(135deg, #0ea5a5, #f5a524); }
 
 
 
@@ -582,8 +582,8 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   </script>
   <div id="join-code-section" style="display:none; background:#e8f0fe; border-radius:12px; padding:14px 20px; margin:16px 0 8px; align-items:center; gap:16px; flex-wrap:wrap;">
     <span style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
-    <span id="join-code-display" style="font-size:24px; font-weight:700; color:#1a73e8; letter-spacing:0.15em; font-family:monospace; margin-left:8px;">--</span>
-    <button onclick="copyJoinCode()" id="copy-btn" style="margin-left:auto; background:#1a73e8; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;">📋 Copiar</button>
+    <span id="join-code-display" style="font-size:24px; font-weight:700; color:#f5a524; letter-spacing:0.15em; font-family:monospace; margin-left:8px;">--</span>
+    <button onclick="copyJoinCode()" id="copy-btn" style="margin-left:auto; background:#f5a524; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;">📋 Copiar</button>
     <span style="font-size:11px; color:#888; width:100%; margin-top:2px;">Dáselo a tus empleados para que se registren en Nivelato</span>
   </div>
 
@@ -758,11 +758,11 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
           <button class="btn-save" onclick="saveEdit()">💾 Guardar cambios</button>
           <button class="btn-cancel" onclick="cancelEdit()">Cancelar</button>
         </div>
-        <button class="btn-share-modal" id="modal-share-btn" onclick="toggleSharePanel()" style="display:none;margin-top:8px;background:#e7f5ff;color:#1971c2;border:1px solid #1971c2;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;">🔗 Compartir medida</button>
+        <button class="btn-share-modal" id="modal-share-btn" onclick="toggleSharePanel()" style="display:none;margin-top:8px;background:rgba(245,165,36,.12);color:#f5a524;border:1px solid #f5a524;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;">🔗 Compartir medida</button>
         <div id="share-panel" style="display:none;margin-top:8px;padding:12px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;">
           <div style="font-size:12px;font-weight:600;color:#495057;margin-bottom:8px;">Compartir con:</div>
           <div id="share-member-list"></div>
-          <button onclick="saveShare()" style="margin-top:8px;padding:6px 14px;background:#1971c2;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Guardar</button>
+          <button onclick="saveShare()" style="margin-top:8px;padding:6px 14px;background:#f5a524;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Guardar</button>
           <span id="share-status" style="font-size:12px;color:#2f9e44;margin-left:8px;display:none;">✓</span>
         </div>
         <button class="btn-close" onclick="closeModal()">Cerrar</button>
@@ -916,7 +916,7 @@ const showPendingScreen = () => {
   if (window._pendingShown) return;
   window._pendingShown = true;
   window._pendingSignOut = async () => { await signOut(auth); window.location.href = 'https://login.nivelatolabs.com/'; };
-  document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2 style="color:#212529">Cuenta pendiente de aprobación</h2><p style="color:#868e96;max-width:320px">Tu cuenta está siendo revisada. El administrador del taller te dará acceso en breve.</p><button onclick="window._pendingSignOut()" style="padding:12px 28px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div>';
+  document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2 style="color:#212529">Cuenta pendiente de aprobación</h2><p style="color:#868e96;max-width:320px">Tu cuenta está siendo revisada. El administrador del taller te dará acceso en breve.</p><button onclick="window._pendingSignOut()" style="padding:12px 28px;background:#f5a524;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div>';
 };
 
 // Pantalla de "perfil no encontrado": la cuenta existe en Auth pero no tiene
@@ -927,7 +927,7 @@ const showMissingProfileScreen = () => {
   window._pendingShown = true;
   window._missingRetry = () => window.location.reload();
   window._missingSignOut = async () => { await signOut(auth); window.location.href = 'https://login.nivelatolabs.com/'; };
-  document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⚠️</div><h2 style="color:#212529">No se encontró tu perfil</h2><p style="color:#868e96;max-width:340px">Tu sesión es válida pero no hay un perfil de usuario asociado. Si acabas de registrarte, espera unos segundos y reintenta; si no, cierra sesión y pide a tu administrador un enlace de registro nuevo.</p><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button onclick="window._missingRetry()" style="padding:12px 28px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Reintentar</button><button onclick="window._missingSignOut()" style="padding:12px 28px;background:#f1f3f5;color:#495057;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div></div>';
+  document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⚠️</div><h2 style="color:#212529">No se encontró tu perfil</h2><p style="color:#868e96;max-width:340px">Tu sesión es válida pero no hay un perfil de usuario asociado. Si acabas de registrarte, espera unos segundos y reintenta; si no, cierra sesión y pide a tu administrador un enlace de registro nuevo.</p><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button onclick="window._missingRetry()" style="padding:12px 28px;background:#f5a524;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Reintentar</button><button onclick="window._missingSignOut()" style="padding:12px 28px;background:#f1f3f5;color:#495057;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div></div>';
 };
 
 // Upgrade popup for free-tier accounts: QR deep-links into the Android app
@@ -948,7 +948,7 @@ const showUpgradePopup = (uid) => {
     + '<p style="color:#868e96;font-size:14px;margin:0 0 16px;line-height:1.5">Escanea el código con tu teléfono para abrir las opciones de suscripción en la app de Nivelato. Al completar la compra, esta pantalla se desbloquea sola.</p>'
     + '<img src="./upgrade-qr.png" alt="Abrir opciones de suscripción en la app" style="width:200px;height:200px;border:1px solid #e9ecef;border-radius:12px;margin-bottom:16px" />'
     + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
-    + '<button onclick="window._upgradeRetry()" style="padding:10px 22px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Ya compré, reintentar</button>'
+    + '<button onclick="window._upgradeRetry()" style="padding:10px 22px;background:#f5a524;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Ya compré, reintentar</button>'
     + '<button onclick="window._upgradeSignOut()" style="padding:10px 22px;background:#f1f3f5;color:#495057;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Cerrar sesión</button>'
     + '</div></div></div>';
   document.body.appendChild(overlay);
@@ -1025,7 +1025,7 @@ async function initCompanyView(user) {
     return '<div style="' + rowStyle + '">' +
       '<div><div style="font-size:14px;font-weight:600;color:#212529">' + escapeHtml(m.name || 'Sin nombre') + '</div>' +
       '<div style="font-size:12px;color:#868e96">' + escapeHtml(m.email || '') + '</div></div>' +
-      '<span style="font-size:12px;font-weight:600;color:#1971c2;background:#e7f5ff;padding:4px 10px;border-radius:20px;white-space:nowrap">' + escapeHtml(rl) + '</span></div>';
+      '<span style="font-size:12px;font-weight:600;color:#f5a524;background:rgba(245,165,36,.12);padding:4px 10px;border-radius:20px;white-space:nowrap">' + escapeHtml(rl) + '</span></div>';
   }).join('');
 
   const recentRows = quotes.slice(0, 10).map(q => {
