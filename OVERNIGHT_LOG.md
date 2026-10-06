@@ -111,3 +111,12 @@ From regression agent:
 
 ## Loop 4 — dispatched (~21:35 AST)
 - account-selector.js, presence.js, company-theme.js, geo.js (report-only)
+
+## Loop 4 — presence/account fixes committed (cd653c8, pushed ~21:45 AST)
+From agent F (loop 4) report:
+- F1: presence.js startPresence now idempotent per uid (module-level map; re-calling restarts instead of doubling 2-min beacon intervals).
+- F3: account-selector.js hardSignOut clears nivelato_company_theme flag (no stale QGC gray on shared devices).
+- F4: buildMenu rebuilds instead of early-returning (no stale account on in-page re-init); document listeners guarded by window.__acctDocListeners with current-wrap tracking.
+- F5: closeMenu syncs aria-expanded=false.
+- geo.js: report-only (R1 no timeout on flowGate callable, R2 cached-claims freshness tradeoff, R3 single geo provider). No changes per boundary.
+- F2 (N+1 reads): not a bug, skipped.
