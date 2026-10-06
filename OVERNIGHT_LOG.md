@@ -67,3 +67,14 @@ Sweep reports reconciled from 3 agents. All fixes applied, committed, pushed.
 - D: login.html + sso.html
 - E: quoting flow + quoter role perms
 - F: photo.html + filter JS + mobile drawer
+
+## Loop 2 — login/SSO fixes committed (fb107cb, pushed ~20:55 AST)
+From agent D report:
+- F4 (boundary): removed "Daniel Lebron (787) 764-9404 ext. 2 o Yenny Gonzalez (787) 764-9404 ext. 2" from login employeeNotice. Names + phone numbers no longer rendered.
+- F1: ctoken now rides in URL fragment (#ctoken=) via location.replace, sso.html reads from hash (falls back to query). Never hits server logs/history query.
+- F2: removed TEMP-DIAG [dbg:...] leak from visible SSO errors.
+- F3: user-not-found/wrong-password now map to generic invalid-credential (no user enumeration).
+- F6: deep links preserved for dashboard dests (was dropped to '/').
+- F7: generic fallbacks instead of raw Firebase error text (login + sso).
+- F5: sso.html em dashes fixed (title + placeholder).
+- F8 (dead branch), F9 (token TTL note): informational, no change.
