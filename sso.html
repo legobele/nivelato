@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <script src="./company-theme.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Iniciar sesión — Nivelato</title>
+<title>Iniciar sesión - Nivelato</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -86,7 +86,7 @@
 <div class="card">
   <div class="logo">Nivelato</div>
   <div class="tagline">Inicio de sesión único</div>
-  <div class="app-name" id="sso-app-name">Solicitado por: —</div>
+  <div class="app-name" id="sso-app-name">Solicitado por: -</div>
   <button class="btn" id="sso-btn" onclick="if(window.signIn){window.signIn()}else{var e=document.getElementById('sso-error');e.textContent='Cargando el inicio de sesión… espera un momento e inténtalo de nuevo.';e.style.display='block';}">Continuar con Nivelato</button>
   <div class="error" id="sso-error"></div>
   <div class="info">Al iniciar sesión, compartirás tu nombre, correo y afiliación con la aplicación solicitante.</div>
@@ -99,10 +99,11 @@ import { getDoc, doc } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase
 import { db } from './firebase-config.js';
 
 const params = new URLSearchParams(window.location.search);
+const fparams = new URLSearchParams(window.location.hash.slice(1));
 const redirectUri = params.get('redirect_uri');
 const clientId = params.get('client_id') || 'Aplicación externa';
-const ctoken = params.get('ctoken');
-const nextParam = params.get('next');
+const ctoken = fparams.get('ctoken') || params.get('ctoken');
+const nextParam = fparams.get('next') || params.get('next');
 
 // Origins the product actually lives on — anything else is denied so a
 // fresh ID token can never be shipped to an attacker's site via an open
@@ -215,7 +216,7 @@ async function doRedirect(user) {
     window.location.href = redirectUri + sep + 'nivelato_token=' + encodeURIComponent(JSON.stringify(payload));
   } catch (e) {
     // Never wedge on "Redirigiendo…" — show the error and reset the button.
-    err.textContent = 'No se pudo completar la redirección: ' + (e && e.message ? e.message : 'Intenta de nuevo.');
+    err.textContent = 'No se pudo completar la redirección. Intenta de nuevo.';
     err.style.display = 'block';
     btn.disabled = false;
     btn.textContent = 'Continuar con Nivelato';

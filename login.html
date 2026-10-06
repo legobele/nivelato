@@ -1921,10 +1921,10 @@
       // Dashboard dests use dashboard.nivelatolabs.com/sso.html; app dests use the app origin.
       const destOrigin = next.indexOf('https://dashboard.nivelatolabs.com') === 0
         ? 'https://dashboard.nivelatolabs.com' : APP_ORIGIN;
-      const destNext = destOrigin === APP_ORIGIN ? next : '/';
+      const destNext = next;
       try { sessionStorage.setItem('nivelato_last_handoff', String(Date.now())); } catch (_) {}
-      window.location.href = destOrigin + '/sso.html?ctoken=' + encodeURIComponent(token)
-        + '&next=' + encodeURIComponent(destNext);
+      window.location.replace(destOrigin + '/sso.html#ctoken=' + encodeURIComponent(token)
+        + '&next=' + encodeURIComponent(destNext));
       return true;
     } catch (e) {
       console.error('[Nivelato] SSO handoff failed:', (e && e.code) || e);
@@ -1939,9 +1939,7 @@
       errEl = document.querySelector('.error-msg');
     }
     if (!errEl) return;
-    // TEMP-DIAG: surface the failure reason visibly until the SSO 401 saga is resolved.
-    const diag = lastSsoError ? ' [dbg:' + lastSsoError + ']' : '';
-    errEl.textContent = window.nivT('sso_failed') + diag;
+    errEl.textContent = window.nivT('sso_failed');
     errEl.classList.add('visible');
   }
 
@@ -2052,8 +2050,8 @@
     const t = window.nivT;
     const map = {
       'auth/invalid-email':          t('err_invalid_email'),
-      'auth/user-not-found':         t('err_user_not_found'),
-      'auth/wrong-password':         t('err_wrong_password'),
+      'auth/user-not-found':         t('err_invalid_credential'),
+      'auth/wrong-password':         t('err_invalid_credential'),
       'auth/invalid-credential':     t('err_invalid_credential'),
       'auth/missing-password':       t('err_missing_password'),
       'auth/missing-email':          t('err_missing_email'),
@@ -2065,7 +2063,7 @@
       'missing-code':                t('err_missing_code'),
       'invalid-code':                t('err_invalid_code'),
     };
-    return map[code] || `Error: ${code}`;
+    return map[code] || t('err_invalid_credential');
   }
 
   // ---- Travel verification backend seam (TODO) ----
@@ -2128,7 +2126,7 @@
         es: 'Ingresa las credenciales de tu empresa para iniciar sesión.',
         en: 'Enter your company credentials to sign in.'
       },
-      employeeNotice: 'QUALITY GLAZING CONTRACTORS EMPLOYEES ONLY. Si no se sabe su usuario o ha perdido su password consulte Daniel Lebron (787) 764-9404 ext. 2 o Yenny Gonzalez (787) 764-9404 ext. 2.',
+      employeeNotice: 'QUALITY GLAZING CONTRACTORS EMPLOYEES ONLY. Si no sabe su usuario o perdio su contrasena, contacte a su administrador.',
       inquiryText: {
         es: 'Si eres una empresa y quieres usar Nivelato en PR, contáctanos por el correo en nivelatolabs.com > Contacto. Recibirás una respuesta dentro de 1 semana. Ten en cuenta que este acceso se otorga después de una reunión para asegurarnos de que obtengas las funciones adecuadas para tu empresa.',
         en: 'If you are a company wanting to use Nivelato in PR. Please contact using the email at nivelatolabs.com > Contact. You will get a response within 1 week. Please note that this access will be given after a meeting and contacting to make sure you get the right features for your company.'
