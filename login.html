@@ -1358,22 +1358,6 @@
       <div class="main-panel">
         ${accountsSectionHTML() || '<div class="accounts-head"><button type="button" id="lang-toggle" class="lang-toggle"></button></div>'}
         ${qgi ? `<div class="exclusivity-note" data-i18n="exclusivity_note_html" data-i18n-html="1"></div>` : ''}
-
-    <div id="form-login">
-      <form id="login-form" autocomplete="on" onsubmit="return false">
-        <div class="field">
-          <label for="login-email" data-i18n="label_email"></label>
-          <input type="email" id="login-email" name="email" data-i18n-ph="ph_email" autocomplete="email" />
-        </div>
-        <div class="field">
-          <label for="login-pass" data-i18n="label_password"></label>
-          <input type="password" id="login-pass" name="password" data-i18n-ph="ph_password" autocomplete="current-password" />
-        </div>
-        <button class="btn-primary${qgi ? ' qgi-btn' : ''}" id="btn-login" type="submit" data-i18n="btn_login"></button>
-      </form>
-      <div style="text-align:center;margin-top:10px;"><a href="#" id="forgot-link" class="forgot-link" data-i18n="forgot"></a></div>
-      <div class="error-msg" id="login-error" role="alert"></div>
-    </div>
       </div>
     </div>`;
   }
@@ -1389,7 +1373,8 @@
       const el = document.getElementById(id);
       if (el) el.value = prev[id];
     }
-    document.getElementById('login-form').addEventListener('submit', doLogin);
+    const lf = document.getElementById('login-form');
+    if (lf) lf.addEventListener('submit', doLogin);
     const acctList = document.getElementById('accounts-list');
     if (acctList) acctList.addEventListener('click', onAccountPillClick);
     const forgot = document.getElementById('forgot-link');
