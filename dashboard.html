@@ -548,13 +548,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       <button class="niv-popup-btn" onclick="window.location.href='/account/settings'">Account settings</button>
       <button class="niv-popup-btn" onclick="toggleAboutPopup(event)">About Nivelato</button>
       <button class="niv-popup-btn" onclick="window.open('https://legobele.github.io/nivelato/ayuda.html','_blank')">Help</button>
-      <div class="niv-popup-user">
-        <div class="niv-account-avatar" id="niv-popup-avatar"></div>
-        <div class="niv-account-meta">
-          <div class="niv-account-name" id="niv-popup-name">…</div>
-          <div class="niv-account-email" id="niv-popup-email">…</div>
-        </div>
-      </div>
+      <button class="niv-popup-btn niv-popup-logout" onclick="window._popupSignOut()">Cerrar sesión</button>
     </div>
   </div>
 </div>
@@ -916,6 +910,7 @@ const showPendingScreen = () => {
   if (window._pendingShown) return;
   window._pendingShown = true;
   window._pendingSignOut = async () => { await signOut(auth); window.location.href = 'https://login.nivelatolabs.com/'; };
+  window._popupSignOut = async () => { await signOut(auth); window.location.href = 'https://login.nivelatolabs.com/'; };
   document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2 style="color:#212529">Cuenta pendiente de aprobación</h2><p style="color:#868e96;max-width:320px">Tu cuenta está siendo revisada. El administrador del taller te dará acceso en breve.</p><button onclick="window._pendingSignOut()" style="padding:12px 28px;background:#f5a524;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div>';
 };
 
@@ -3135,6 +3130,7 @@ let currentUser;
   font-family: 'Inter', system-ui, sans-serif; text-align: left;
 }
 .niv-popup-btn:hover { background: rgba(255,255,255,.06); }
+.niv-popup-logout { color: #ff8787; }
 .niv-popup-user {
   display: flex; align-items: center; gap: 10px; padding: 6px 4px 2px;
 }
@@ -3144,13 +3140,6 @@ function toggleAccountPopup(e) {
   e.stopPropagation();
   const p = document.getElementById('niv-account-popup');
   const open = p.style.display !== 'none';
-  // sync user info into popup
-  const av = document.getElementById('niv-account-avatar');
-  const nm = document.getElementById('niv-account-name');
-  const em = document.getElementById('niv-account-email');
-  if (av) document.getElementById('niv-popup-avatar').innerHTML = av.innerHTML;
-  if (nm) document.getElementById('niv-popup-name').textContent = nm.textContent;
-  if (em) document.getElementById('niv-popup-email').textContent = em.textContent;
   p.style.display = open ? 'none' : 'flex';
 }
 document.addEventListener('click', function(e) {
