@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Solicitar cuenta de empresa — Nivelato</title>
+<title>Solicitar cuenta de empresa - Nivelato</title>
 <meta name="description" content="Solicita una cuenta de empresa de Nivelato para tu compañía en Puerto Rico.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,6 +49,7 @@
   }
   input:focus,select:focus,textarea:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,165,36,.18)}
   input.invalid,select.invalid,textarea.invalid{border-color:var(--red);box-shadow:0 0 0 3px rgba(229,72,77,.15)}
+  .radio-group.invalid-group .radio-card{border-color:var(--red)}
   textarea{resize:vertical;min-height:96px}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
@@ -123,7 +124,7 @@
         </div>
       </div>
       <div class="field">
-        <label for="addrStreet">Dirección física — Calle <span class="req">*</span></label>
+        <label for="addrStreet">Dirección física - Calle <span class="req">*</span></label>
         <input type="text" id="addrStreet" name="addrStreet" autocomplete="street-address" maxlength="160">
         <div class="err" id="err-addrStreet">La dirección es obligatoria.</div>
       </div>
@@ -228,7 +229,7 @@
           <option value="referral">Recomendación de otra empresa</option>
           <option value="search">Búsqueda en internet</option>
           <option value="social">Redes sociales</option>
-          <option value="qgc">A través de Quality Glazing Contractors</option>
+          <option value="qgc">Recomendación de otro taller de cristales</option>
           <option value="other">Otro</option>
         </select>
         <div class="err" id="err-hearAbout">Selecciona una opción.</div>
@@ -240,6 +241,7 @@
     </fieldset>
 
     <button type="submit" class="btn" id="submit-btn">Enviar solicitud</button>
+    <p class="hint" style="text-align:center;margin-top:14px">Al enviar aceptas que usemos estos datos para evaluar tu solicitud. <a href="https://legobele.github.io/nivelato/privacy.html" style="color:var(--amber)">Política de privacidad</a>.</p>
     <p class="hint" style="text-align:center;margin-top:14px">Revisamos cada solicitud manualmente. Te contactamos al correo o teléfono indicado.</p>
   </form>
 </div>
@@ -278,8 +280,17 @@ const firebaseConfig = {
   messagingSenderId: "759893408531",
   appId: "1:759893408531:web:696e2da5f004a3bac5f8e6"
 };
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+let db = null;
+try {
+  const app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+} catch (initErr) {
+  console.error('[apply] firebase init failed:', initErr);
+  const fe = document.getElementById('form-error');
+  if (fe) { fe.textContent = 'El formulario no pudo cargar. Recarga la página e inténtalo de nuevo.'; fe.classList.add('show'); }
+  const sb = document.getElementById('submit-btn');
+  if (sb) sb.disabled = true;
+}
 
 const form = document.getElementById('apply-form');
 const formError = document.getElementById('form-error');
@@ -291,8 +302,12 @@ document.querySelectorAll('.radio-card input[type=radio]').forEach(r => {
     document.querySelectorAll(`input[name="${r.name}"]`).forEach(x =>
       x.closest('.radio-card').classList.toggle('selected', x.checked));
     if (r.name === 'bizType') {
-      document.getElementById('bizTypeOther-wrap').style.display =
-        document.querySelector('input[name=bizType]:checked')?.value === 'other' ? 'block' : 'none';
+      const show = document.querySelector('input[name=bizType]:checked')?.value === 'other';
+      document.getElementById('bizTypeOther-wrap').style.display = show ? 'block' : 'none';
+      if (!show) {
+        document.getElementById('bizTypeOther').value = '';
+        setErr('bizTypeOther', false);
+      }
     }
   });
 });
@@ -301,9 +316,11 @@ const val = id => document.getElementById(id).value.trim();
 const setErr = (id, on) => {
   document.getElementById('err-' + id)?.classList.toggle('show', on);
   document.getElementById(id)?.classList.toggle('invalid', on);
+  const grp = document.getElementById(id + '-group');
+  if (grp) grp.classList.toggle('invalid-group', on);
 };
 const emailOk = v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
-const phoneOk = v => (v.replace(/\D/g, '').length >= 10);
+const phoneOk = v => (v.replace(/\D/g, '').length === 10);
 const zipOk = v => /^\d{5}(-\d{4})?$/.test(v);
 
 function validate() {
@@ -320,10 +337,10 @@ function validate() {
   need('contactRole', val('contactRole').length >= 2);
   need('contactPhone', phoneOk(val('contactPhone')));
   need('contactEmail', emailOk(val('contactEmail')));
-  const emp = parseInt(val('employees'), 10);
-  need('employees', Number.isInteger(emp) && emp >= 1);
-  const tech = parseInt(val('technicians'), 10);
-  need('technicians', Number.isInteger(tech) && tech >= 1);
+  const empRaw = val('employees'), emp = parseInt(empRaw, 10);
+  need('employees', /^\d+$/.test(empRaw) && emp >= 1 && emp <= 100000);
+  const techRaw = val('technicians'), tech = parseInt(techRaw, 10);
+  need('technicians', /^\d+$/.test(techRaw) && tech >= 1 && tech <= 100000);
   need('currentProcess', val('currentProcess').length >= 10);
   need('volume', !!val('volume'));
   const tier = document.querySelector('input[name=tier]:checked')?.value;
@@ -384,7 +401,10 @@ form.addEventListener('submit', async e => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {
     console.error('[apply] submit failed:', err);
-    formError.textContent = 'No se pudo enviar la solicitud. Revisa tu conexión e inténtalo de nuevo.';
+    const code = (err && err.code) || '';
+    formError.textContent = code === 'permission-denied'
+      ? 'No se pudo enviar la solicitud por un problema de configuración. Avísanos por el correo en nivelatolabs.com.'
+      : 'No se pudo enviar la solicitud. Revisa tu conexión e inténtalo de nuevo.';
     formError.classList.add('show');
     submitBtn.disabled = false;
     submitBtn.textContent = 'Enviar solicitud';
