@@ -90,3 +90,15 @@ From agent E (quoting) report. Code changes are in 08fede2 on remote (parent com
 
 ## Loop 2 — remaining
 - Agent F (photo/filter/drawer) still running.
+
+## Loop 2 — photo/filter/drawer fixes committed (45d847b, pushed ~21:15 AST)
+From agent F report:
+- F1: photo.html drawArrowLine gains `plain` flag; Línea tool draws plain lines (was arrowheads).
+- F2: re-clicking an active photo tool deselects it (corner dragging works again).
+- F3: adhd.js postMessage to photo iframe pinned to window.location.origin (was '*', payload carries customer PII).
+- F4: parent now sends NIVELATO_PHOTO_ACK (photo.html's 5s timeout contract honored).
+- F5: dashboard realtime refresh calls applyFilters() instead of renderJobs(allJobs) (filters no longer discarded on snapshot).
+- F6: dark-theme date input fixed: transparent when empty, light text when valued/focused (was unreadable/overlapping - the reported filter overlap).
+- F7: hamburger added to pricelist/quotes/builder/project/measure view headers (was Medidas-only, mobile dead-end).
+- F8: About modal z-index 300 -> 700 (was under drawer/scrim on mobile); opening About closes drawer.
+- F9: showDashView closes the drawer on any programmatic view change.
