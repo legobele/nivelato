@@ -22,7 +22,7 @@ function readVal(wholeId, fracId) {
 }
 
 function parseLabelValue(str) {
-  if (!str || str === 'Nivel' || str === '—') return 0;
+  if (!str || str === 'Nivel' || str === '-') return 0;
   var m = str.match(/([\d\/\. ]+)"/);
   if (!m) return 0;
   var parts = m[1].trim().split(' ');
@@ -167,7 +167,7 @@ const MAX_MEASURE_IN = 20000;
 function _checkMeasure(prefix, label) {
   const v = readVal(prefix + '-whole', prefix + '-frac');
   if (!(v > 0)) return '⚠️ ' + label + ': escribe una medida mayor que 0 para poder seguir.';
-  if (v > MAX_MEASURE_IN) return '⚠️ ' + label + ': ese número está bien loco 😅 — revisa que sean pulgadas (máx 20,000").';
+  if (v > MAX_MEASURE_IN) return '⚠️ ' + label + ': ese número está bien loco 😅 - revisa que sean pulgadas (máx 20,000").';
   return null;
 }
 
@@ -179,7 +179,7 @@ function validateStep(n) {
   if (n === 0) {
     const c = (document.getElementById('customer-name')?.value || '').trim();
     const p = (document.getElementById('project-name')?.value || '').trim();
-    if (!c) return '⚠️ Falta el nombre del cliente — escríbelo para poder guardar la medida. 🙏';
+    if (!c) return '⚠️ Falta el nombre del cliente - escríbelo para poder guardar la medida. 🙏';
     if (!p) return '⚠️ Ponle nombre al proyecto para identificar el trabajo.';
     return null;
   }
@@ -382,23 +382,23 @@ function runValidation() {
     const offsetIzq = pI_A - pI_B;
     const offsetDer = pD_A - pD_B;
     if (Math.abs(offsetIzq - offsetDer) > TOLERANCE)
-      warnings.push('⚠ Paredes no cuadran — el desnivel izq. (' + toFracStr(Math.abs(offsetIzq)) + ') no coincide con el der. (' + toFracStr(Math.abs(offsetDer)) + '). Revisa las medidas.');
+      warnings.push('⚠ Paredes no cuadran - el desnivel izq. (' + toFracStr(Math.abs(offsetIzq)) + ') no coincide con el der. (' + toFracStr(Math.abs(offsetDer)) + '). Revisa las medidas.');
   }
   if ((t_A > 0||t_B > 0) && (p_A > 0||p_B > 0)) {
     const offsetTecho = t_A - t_B;
     const offsetPiso  = p_A - p_B;
     if (Math.abs(offsetTecho - offsetPiso) > TOLERANCE)
-      warnings.push('⚠ Arriba/Abajo no cuadran — el desnivel de arriba (' + toFracStr(Math.abs(offsetTecho)) + ') no coincide con el de abajo (' + toFracStr(Math.abs(offsetPiso)) + '). Revisa las medidas.');
+      warnings.push('⚠ Arriba/Abajo no cuadran - el desnivel de arriba (' + toFracStr(Math.abs(offsetTecho)) + ') no coincide con el de abajo (' + toFracStr(Math.abs(offsetPiso)) + '). Revisa las medidas.');
   }
   if ((pI_A||pI_B||pD_A||pD_B||p_A||p_B) && t_A === 0 && t_B === 0)
-    warnings.push('⚠ Faltan niveles de arriba — mide del láser arriba en punto A (izq) y punto B (der)');
+    warnings.push('⚠ Faltan niveles de arriba - mide del láser arriba en punto A (izq) y punto B (der)');
   if (anyEntered && (anchoBot === 0 || altoIzq === 0))
-    warnings.push('⚠ Falta medida base del hueco — ingresa Ancho Abajo y Alto Izquierda');
+    warnings.push('⚠ Falta medida base del hueco - ingresa Ancho Abajo y Alto Izquierda');
   return warnings;
 }
 
 // ─── AUTO-FIX ACTIONS ──────────────────────────────────────────────────────
-// "Revisar" NUNCA reescribe medidas — solo lleva al trabajador al paso
+// "Revisar" NUNCA reescribe medidas - solo lleva al trabajador al paso
 // correspondiente para que mida de nuevo. (QA 2026-09-18: el autoFix
 // anterior inventaba datos copiando una pared sobre la otra.)
 function autoFix(warningText) {
@@ -438,8 +438,8 @@ function renderValidation() {
 // ─── SUMMARY ───────────────────────────────────────────────────────────────
 function _fmtPared(a, b, d) {
   const has = (a > 0 || b > 0);
-  const lbl = (d && d.label) ? d.label : '—';
-  if (!has) return '—';
+  const lbl = (d && d.label) ? d.label : '-';
+  if (!has) return '-';
   return toFracStr(a) + ' / ' + toFracStr(b) + ' → ' + lbl;
 }
 
@@ -447,7 +447,7 @@ function renderSummary() {
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
   const set = function(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; };
-  set('res-area', (anchoBot > 0 ? toFracStr(anchoBot) : '—') + ' × ' + (altoIzq > 0 ? toFracStr(altoIzq) : '—') + ' (base)');
+  set('res-area', (anchoBot > 0 ? toFracStr(anchoBot) : '-') + ' × ' + (altoIzq > 0 ? toFracStr(altoIzq) : '-') + ' (base)');
   set('res-pared-izq', _fmtPared(readVal('pI-a-whole','pI-a-frac'), readVal('pI-b-whole','pI-b-frac'), results.paredIzq));
   set('res-pared-der', _fmtPared(readVal('pD-a-whole','pD-a-frac'), readVal('pD-b-whole','pD-b-frac'), results.paredDer));
   set('res-techo',     _fmtPared(readVal('t-a-whole','t-a-frac'),  readVal('t-b-whole','t-b-frac'),  results.techo));
@@ -513,7 +513,7 @@ window.newMeasurement = function() {
   clearDraft(); // el goStep de arriba guardó un borrador vacío: no dejar rastro
 };
 
-// ─── TOAST — avisos livianos, ej. "Borrador restaurado" ─────────────────────
+// ─── TOAST - avisos livianos, ej. "Borrador restaurado" ─────────────────────
 let _toastTimer = null;
 function showToast(msg) {
   let t = document.getElementById('nv-toast');
@@ -572,7 +572,7 @@ function _doSaveJob(warnings) {
 
 function _saveCurrentJob(warnings) {
   if (typeof window.saveJobToFirestore !== 'function') {
-    console.error('[Nivelato] saveJobToFirestore no está disponible — ¿se cargó auth-guard.js?');
+    console.error('[Nivelato] saveJobToFirestore no está disponible - ¿se cargó auth-guard.js?');
     _saveState = 'idle';
     _setSaveBtn(false, '💾 Guardar medida');
     return;
@@ -616,7 +616,7 @@ function _saveCurrentJob(warnings) {
   const _saveWithTimeout = Promise.race([
     window.saveJobToFirestore(jobData),
     new Promise(function(_, reject) {
-      setTimeout(function() { reject(new Error('Se acabó el tiempo esperando la nube — revisa tu conexión e inténtalo de nuevo.')); }, 45000);
+      setTimeout(function() { reject(new Error('Se acabó el tiempo esperando la nube - revisa tu conexión e inténtalo de nuevo.')); }, 45000);
     })
   ]);
   _saveWithTimeout.then(function() {
@@ -641,7 +641,10 @@ function _saveCurrentJob(warnings) {
     console.error('[Nivelato] save failed:', e);
     _saveState = 'idle';
     _setSaveBtn(false, '💾 Guardar medida');
-    const reason = (e && e.message) ? e.message : String(e);
+    let reason = (e && e.message) ? e.message : String(e);
+    if (/permission-denied|Missing or insufficient permissions/i.test(reason)) {
+      reason = 'No tienes permiso para guardar. Cierra sesion y entra de nuevo; si persiste, avisa al administrador.';
+    }
     const overlay = document.createElement('div');
     overlay.id = 'nv-save-error';
     overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; background:rgba(220,53,69,0.94); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center;';
@@ -1232,7 +1235,7 @@ canvas.addEventListener('wheel', function(e) {
   applyZoom(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.03 : 0.97);
 }, { passive: false });
 
-// 🏳️‍⚧️ trans rights — built with love by benj & deepseek v4 flash
+// 🏳️‍⚧️ trans rights — built with love
 } // end if (canvas)
 
 // reset zoom button
@@ -1251,7 +1254,7 @@ window.embedGraph = function(cvs, data) {
   // Extract numeric magnitudes from labels like '⟩ 1/4"' or '47 1/4"'.
   // The fraction may have no whole part ("1/4"" = 0.25, NOT 1).
   function ev(s) {
-    if (!s || s === 'Nivel' || s === '—') return 0;
+    if (!s || s === 'Nivel' || s === '-') return 0;
     var m = s.match(/(?:(\d+)\s+)?(\d+)\/(\d+)|(\d+(?:\.\d+)?)/);
     if (!m) return 0;
     if (m[2] !== undefined) return (parseInt(m[1]) || 0) + (parseInt(m[2]) / parseInt(m[3]));
@@ -1342,7 +1345,7 @@ window.embedGraph = function(cvs, data) {
     // desnivel arrows (gap between level and rough, at the moving corner)
     // vertical edges → TOP end; horizontal edges → RIGHT end (keeps clear of centered dim labels)
     var drawArrow = function(p1, p2, off, horiz, label) {
-      if (!label || label === 'Nivel' || label === '—') return;
+      if (!label || label === 'Nivel' || label === '-') return;
       dctx.save();
       dctx.strokeStyle = '#e67700';
       dctx.fillStyle = '#e67700';
@@ -1359,11 +1362,11 @@ window.embedGraph = function(cvs, data) {
       dctx.restore();
     };
     // left/right edges: horizontal offset arrows at TOP (where the lean is)
-    if (data.pIL && data.pIL !== 'Nivel' && data.pIL !== '—') drawArrow({x: bx, y: by}, {x: bx + leftOffsetTop, y: by}, 0, true, data.pIL);
-    if (data.pDL && data.pDL !== 'Nivel' && data.pDL !== '—') drawArrow({x: bx + bw, y: by}, {x: bx + bw + rightOffsetTop, y: by}, 0, true, data.pDL);
+    if (data.pIL && data.pIL !== 'Nivel' && data.pIL !== '-') drawArrow({x: bx, y: by}, {x: bx + leftOffsetTop, y: by}, 0, true, data.pIL);
+    if (data.pDL && data.pDL !== 'Nivel' && data.pDL !== '-') drawArrow({x: bx + bw, y: by}, {x: bx + bw + rightOffsetTop, y: by}, 0, true, data.pDL);
     // top/bottom edges: vertical offset arrows at RIGHT end (where the tilt is)
-    if (data.tL && data.tL !== 'Nivel' && data.tL !== '—') drawArrow({x: bx + bw, y: by}, {x: bx + bw, y: by + topOffsetRight}, 0, false, data.tL);
-    if (data.pL && data.pL !== 'Nivel' && data.pL !== '—') drawArrow({x: bx + bw, y: by + bh}, {x: bx + bw, y: by + bh + bottomOffsetRight}, 0, false, data.pL);
+    if (data.tL && data.tL !== 'Nivel' && data.tL !== '-') drawArrow({x: bx + bw, y: by}, {x: bx + bw, y: by + topOffsetRight}, 0, false, data.tL);
+    if (data.pL && data.pL !== 'Nivel' && data.pL !== '-') drawArrow({x: bx + bw, y: by + bh}, {x: bx + bw, y: by + bh + bottomOffsetRight}, 0, false, data.pL);
 
     // dimension labels
     var anchoBot = data.anchoBot || 36;
@@ -1518,6 +1521,7 @@ window.removePhoto = function() {
 };
 
 window.addEventListener('message', function(e) {
+  if (e.origin !== window.location.origin) return;
   if (e.data && e.data.type === 'NIVELATO_ANNOTATED_PHOTO' && e.data.dataUrl) {
     annotatedPhotoDataUrl = e.data.dataUrl;
     const prev = document.getElementById('photo-preview');

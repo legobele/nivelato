@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#121212" />
 <link rel="manifest" href="../manifest.json" />
-<title>Nivelato — Ajustes de la compañía</title>
+<title>Nivelato - Ajustes de la compañía</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="../autism.css" />
 <link rel="stylesheet" href="../niv-dark.css" />
@@ -98,7 +98,7 @@ html, body { overflow-y: auto !important; }
     <a class="niv-nav-btn linklike" href="#" onclick="return false;">Billing</a>
     <div class="niv-card" style="margin:0;">
       <div class="niv-card-title">Updates</div>
-      <a href="#" id="updates-link" class="updates-link" style="margin:0; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px; cursor:pointer;">
+      <a href="/company/updates" id="updates-link" class="updates-link" style="margin:0; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px; cursor:pointer;">
         <span>New version available</span>
         <span class="notif-dot"></span>
       </a>
@@ -317,7 +317,7 @@ function renderPermissions() {
         <div class="perm-grid">
           ${visiblePerms.map(p => `
             <label>
-              <input type="checkbox" class="perm-check" data-perm="${p.key}" ${!!perms[p.key] ? 'checked' : ''} ${m.role === 'owner' ? 'disabled' : ''} />
+              <input type="checkbox" class="perm-check" data-perm="${p.key}" ${!!perms[p.key] ? 'checked' : ''} ${(m.role === 'owner' || (window._currentUser && m.uid === window._currentUser.uid)) ? 'disabled' : ''} />
               ${p.label}
             </label>
           `).join('')}
@@ -451,7 +451,7 @@ onAuthStateChanged(auth, async (user) => {
   if (window.applyCompanyTheme) { try { window.applyCompanyTheme(userSnap.data()); } catch (_) {} }
   if (!userSnap.exists()) {
     alert('No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.');
-    window.location.href = 'login.html?missingProfile=1';
+    window.location.href = 'https://login.nivelatolabs.com/?missingProfile=1';
     return;
   }
   currentUserData = userSnap.data();

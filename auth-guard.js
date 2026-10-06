@@ -182,6 +182,16 @@ function showPendingScreen() {
 window.saveJobToFirestore = async (jobData) => {
   if (!currentUser || !currentUserData) throw new Error('No autenticado');
   if (!_can('createMeasurements')) throw new Error('No tienes permiso para crear medidas');
+  // Las reglas exigen los claims de flowGate (fail-closed): garantizarlos antes de escribir.
+  // ensureFlowClaims corre fire-and-forget al cargar; aqui se espera de verdad.
+  const gate = await Promise.race([
+    ensureFlowClaims(),
+    new Promise((res) => setTimeout(() => res({ ok: false, timedOut: true }), 10000)),
+  ]);
+  if (!gate.ok) throw new Error('No se pudo verificar tu sesion, revisa tu conexion y vuelve a intentarlo.');
+  // El token en cache puede no traer claims recien acunados: forzar refresh.
+  const { getIdToken } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js");
+  await getIdToken(currentUser, true);
   const orgId = currentUserData.orgId;
   const jobsCol = collection(db, 'orgs', orgId, 'jobs');
 

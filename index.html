@@ -5,8 +5,8 @@
 <script src="./company-theme.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Nivelato</title>
-<script>console.log('nivelato v1.0.0 — commit 68fe412')</script>
 <link rel="manifest" href="/nivelato/manifest.json" />
+<meta name="theme-color" content="#121212" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-192.png" />
@@ -28,7 +28,7 @@
 #nv-modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
 </style>
 <link rel="stylesheet" href="./qgc-theme.css">
-<script type="module" src="auth-guard.js"></script>
+<script type="module" src="auth-guard.js?v=2"></script>
 <script type="module" src="account-selector.js"></script>
 <script type="module" src="grass.js"></script>
 <script src="testing.js" defer></script>
@@ -79,7 +79,7 @@
 <p class="step-hint">Ingresa las 2 medidas base: ancho abajo y alto izquierda. Las otras 2 se calculan automáticamente con los desniveles.</p>
 <div class="input-row">
 <div class="input-col">
-<label for="hueco-ancho-bot-whole">Ancho — Abajo (base)</label>
+<label for="hueco-ancho-bot-whole">Ancho - Abajo (base)</label>
 <div class="fraction-row">
 <input type="number" id="hueco-ancho-bot-whole" placeholder="0" min="0" step="1" />
 <select id="hueco-ancho-bot-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -87,7 +87,7 @@
 </div>
 </div>
 <div class="input-col">
-<label for="hueco-alto-izq-whole">Alto — Izquierda (base)</label>
+<label for="hueco-alto-izq-whole">Alto - Izquierda (base)</label>
 <div class="fraction-row">
 <input type="number" id="hueco-alto-izq-whole" placeholder="0" min="0" step="1" />
 <select id="hueco-alto-izq-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -105,7 +105,7 @@
 <p class="step-hint">Mide del láser a la pared izquierda: punto A (abajo) y punto B (arriba).</p>
 <div class="input-row">
 <div class="input-col">
-<label for="pI-a-whole">A — Abajo</label>
+<label for="pI-a-whole">A - Abajo</label>
 <div class="fraction-row">
 <input type="number" id="pI-a-whole" placeholder="0" min="0" step="1" />
 <select id="pI-a-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -113,7 +113,7 @@
 </div>
 </div>
 <div class="input-col">
-<label for="pI-b-whole">B — Arriba</label>
+<label for="pI-b-whole">B - Arriba</label>
 <div class="fraction-row">
 <input type="number" id="pI-b-whole" placeholder="0" min="0" step="1" />
 <select id="pI-b-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -134,7 +134,7 @@
 <p class="step-hint">Mide del láser a la pared derecha: punto A (abajo) y punto B (arriba).</p>
 <div class="input-row">
 <div class="input-col">
-<label for="pD-a-whole">A — Abajo</label>
+<label for="pD-a-whole">A - Abajo</label>
 <div class="fraction-row">
 <input type="number" id="pD-a-whole" placeholder="0" min="0" step="1" />
 <select id="pD-a-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -142,7 +142,7 @@
 </div>
 </div>
 <div class="input-col">
-<label for="pD-b-whole">B — Arriba</label>
+<label for="pD-b-whole">B - Arriba</label>
 <div class="fraction-row">
 <input type="number" id="pD-b-whole" placeholder="0" min="0" step="1" />
 <select id="pD-b-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -163,7 +163,7 @@
 <p class="step-hint">Mide del láser arriba: punto A (izquierda) y punto B (derecha).</p>
 <div class="input-row">
 <div class="input-col">
-<label for="t-a-whole">A — Izquierda</label>
+<label for="t-a-whole">A - Izquierda</label>
 <div class="fraction-row">
 <input type="number" id="t-a-whole" placeholder="0" min="0" step="1" />
 <select id="t-a-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -171,7 +171,7 @@
 </div>
 </div>
 <div class="input-col">
-<label for="t-b-whole">B — Derecha</label>
+<label for="t-b-whole">B - Derecha</label>
 <div class="fraction-row">
 <input type="number" id="t-b-whole" placeholder="0" min="0" step="1" />
 <select id="t-b-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -185,7 +185,7 @@
 <button class="btn-primary" onclick="nextStep()">Siguiente →</button>
 </div>
 </section>
-<!-- 🏳️‍⚧️ trans rights — built with love by benj & deepseek v4 flash -->
+<!-- trans rights -->
 
 <!-- ══ STEP 5 — ABAJO (was PISO) ══ -->
 <section class="step-panel" id="step-5">
@@ -193,7 +193,7 @@
 <p class="step-hint">Mide del láser abajo: punto A (izquierda) y punto B (derecha).</p>
 <div class="input-row">
 <div class="input-col">
-<label for="p-a-whole">A — Izquierda</label>
+<label for="p-a-whole">A - Izquierda</label>
 <div class="fraction-row">
 <input type="number" id="p-a-whole" placeholder="0" min="0" step="1" />
 <select id="p-a-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -201,7 +201,7 @@
 </div>
 </div>
 <div class="input-col">
-<label for="p-b-whole">B — Derecha</label>
+<label for="p-b-whole">B - Derecha</label>
 <div class="fraction-row">
 <input type="number" id="p-b-whole" placeholder="0" min="0" step="1" />
 <select id="p-b-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -245,11 +245,11 @@
 ⚠️ Verifique todas las medidas calculadas con mediciones manuales antes de cotizar o instalar.
 </div>
 <div class="summary-grid">
-<div class="summary-row"><span class="summary-label">Hueco</span><span class="summary-val" id="res-area">— × —</span></div>
-<div class="summary-row"><span class="summary-label">Pared Izq.</span><span class="summary-val" id="res-pared-izq">—</span></div>
-<div class="summary-row"><span class="summary-label">Pared Der.</span><span class="summary-val" id="res-pared-der">—</span></div>
-<div class="summary-row"><span class="summary-label">Arriba</span><span class="summary-val" id="res-techo">—</span></div>
-<div class="summary-row"><span class="summary-label">Abajo</span><span class="summary-val" id="res-piso">—</span></div>
+<div class="summary-row"><span class="summary-label">Hueco</span><span class="summary-val" id="res-area">- x -</span></div>
+<div class="summary-row"><span class="summary-label">Pared Izq.</span><span class="summary-val" id="res-pared-izq">-</span></div>
+<div class="summary-row"><span class="summary-label">Pared Der.</span><span class="summary-val" id="res-pared-der">-</span></div>
+<div class="summary-row"><span class="summary-label">Arriba</span><span class="summary-val" id="res-techo">-</span></div>
+<div class="summary-row"><span class="summary-label">Abajo</span><span class="summary-val" id="res-piso">-</span></div>
 </div>
 <div class="notas-block">
 <label for="notas-field">Notas</label>
@@ -278,7 +278,7 @@
   </div>
   <iframe id="photo-editor-frame" src="about:blank" style="flex:1;width:100%;border:none;background:#0f1216;"></iframe>
 </div>
-<script src="adhd.js"></script>
+<script src="adhd.js?v=2"></script>
 <script type="module" src="gay.js"></script>
 <script>
 // Populate fraction selects

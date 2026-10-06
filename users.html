@@ -690,12 +690,17 @@ onAuthStateChanged(auth, async (user) => {
   const userSnap = await getDoc(doc(db, 'users', user.uid));
   if (!userSnap.exists()) {
     alert('We could not find your user profile. Please sign in again to repair it.');
-    window.location.href = 'login.html?missingProfile=1';
+    window.location.href = 'https://login.nivelatolabs.com/?missingProfile=1';
     return;
   }
   if (window.applyCompanyTheme) { try { window.applyCompanyTheme(userSnap.data()); } catch (_) {} }
   currentUserData = userSnap.data();
   orgId = currentUserData.orgId;
+
+  if (!makePermChecker(currentUserData)('userManagement')) {
+    window.location.href = '/account/settings';
+    return;
+  }
 
   try { await startPresence(user.uid); } catch (e) {
     console.warn('[Nivelato] presence start failed:', e.message);

@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#121212" />
 <link rel="manifest" href="manifest.json" />
-<title>Nivelato — Foto con medidas</title>
+<title>Nivelato - Foto con medidas</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: #0f1216; color: #fff; overflow: hidden; }
@@ -774,7 +774,7 @@ window.addEventListener('message', (e) => {
     push(e.data.altoDer ? fmtInches(e.data.altoDer) + '"' : null);
     push(e.data.paredIzq); push(e.data.paredDer); push(e.data.techo); push(e.data.piso);
     if (e.data.customer) quickLabels.push(e.data.customer);
-    document.getElementById('header-sub').textContent = 'Medidas cargadas — alinea el marco';
+    document.getElementById('header-sub').textContent = 'Medidas cargadas - alinea el marco';
     frameNorm = computeFrameNorm(measurements);
     if (img) { resetCorners(); setHint('Arrastra los puntos de las esquinas para alinear el marco. Usa las herramientas para añadir líneas o texto.'); }
   }

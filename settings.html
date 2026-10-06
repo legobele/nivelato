@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#121212" />
 <link rel="manifest" href="manifest.json" />
-<title>Nivelato — Ajustes</title>
+<title>Nivelato - Ajustes</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="autism.css" />
 <link rel="stylesheet" href="niv-dark.css" />
@@ -77,6 +77,8 @@
   .backend-current { font-size: 13px; color: #495057; background: #f8f9fa; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
   .backend-current b { color: #212529; }
 html, body { overflow-y: auto !important; }
+.notif-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--niv-accent, #f5a524); flex: none; box-shadow: 0 0 8px var(--niv-accent, #f5a524); }
+.updates-link:hover span:first-child { text-decoration: underline; }
 </style>
 
   <style>
@@ -120,7 +122,10 @@ html, body { overflow-y: auto !important; }
     <a class="niv-nav-btn linklike" href="#" onclick="return false;">Billing</a>
     <div class="niv-card" style="margin:0;">
       <div class="niv-card-title">Updates</div>
-      <div class="niv-card-desc" style="margin:0;"><u>New version available</u> ○</div>
+      <a href="/company/updates" class="updates-link" style="margin:0; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <span>New version available</span>
+        <span class="notif-dot"></span>
+      </a>
     </div>
   </nav>
 </aside>
@@ -152,7 +157,7 @@ html, body { overflow-y: auto !important; }
       <button class="btn-delete-account" id="btn-delete-account" onclick="requestDeleteAccount()">🗑 Solicitar eliminación de cuenta</button>
       <button class="btn-delete-account" id="btn-logout" onclick="doLogout()" style="border-color:#dee2e6;color:#495057;">⏻ Cerrar sesión</button>
       <div id="company-link" style="margin-top:16px;text-align:center;display:none;"><a href="/company/settings" style="font-size:13px;color:#1971c2;">⚙ Ajustes de la compañía</a></div>
-    <div style="margin-top:16px;text-align:center;"><a href="privacy.html" style="font-size:13px;color:#1971c2;">Política de privacidad</a></div>
+    <div style="margin-top:16px;text-align:center;"><a href="https://legobele.github.io/nivelato/privacy.html" style="font-size:13px;color:#1971c2;">Política de privacidad</a></div>
     </div>
 
     <div class="niv-card">
@@ -232,7 +237,7 @@ onAuthStateChanged(auth, async (user) => {
     // Signed in, but no profile doc (orphaned auth account, interrupted
     // signup, or deleted profile): don't leave a dead skeleton page.
     alert('No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.');
-    window.location.href = 'login.html?missingProfile=1';
+    window.location.href = 'https://login.nivelatolabs.com/?missingProfile=1';
     return;
   }
   currentUserData = userSnap.data();
