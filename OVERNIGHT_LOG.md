@@ -56,3 +56,14 @@ Sweep reports reconciled from 3 agents. All fixes applied, committed, pushed.
 **Cache-busting:** niv-dark.css?v=3, adhd.js?v=2/3, auth-guard.js?v=2.
 
 **Still needs real-browser verification (parent to run via browser tasks):** all BROWSER TEST PLANS from the 3 sweep reports. None of the above is browser-verified.
+
+## Loop 1 — live verification (~20:40 AST)
+- Dashboard / serves Nueva medida -> https://app.nivelatolabs.com/ (fix live, no-store HTML).
+- /account/settings back link = href="/" (live).
+- /company/settings updates link = /company/updates (live, page returns 200, renders).
+- JS syntax: auth-guard.js, adhd.js, permissions.js all node --check clean.
+
+## Loop 2 — sweeps dispatched (~20:40 AST)
+- D: login.html + sso.html
+- E: quoting flow + quoter role perms
+- F: photo.html + filter JS + mobile drawer
