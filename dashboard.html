@@ -3117,11 +3117,16 @@ let currentUser;
 <div id="qpdf-print-area" aria-hidden="true"></div>
 
 <style>
+@keyframes popupSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .niv-account-popup {
   position: absolute; bottom: 90px; left: 16px; right: 16px;
   background: #0b0b0e; border: 1px solid #e8e8e8; border-radius: 16px;
   padding: 10px; z-index: 200; display: flex; flex-direction: column; gap: 6px;
   box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  animation: popupSlideUp 0.25s ease-out;
 }
 .niv-popup-btn {
   display: block; width: 100%; padding: 10px 14px;
