@@ -213,6 +213,7 @@
     .company-details-summary::after { content: '›'; font-size: 20px; transition: transform .2s; }
     .company-details[open] .company-details-summary::after { transform: rotate(90deg); }
     .company-details-body { padding: 0 16px 16px; }
+    .company-title { font-size: 32px; margin: 0; }
     @media (min-width: 769px) {
       .company-details-summary { display: none; }
       .company-details { border: none; }
@@ -2844,10 +2845,10 @@
       + '</div>'
       + '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
       + '</div>'
+      + '<h1 class="logo company-title' + (qgi ? ' qgi' : '') + '">' + escapeHtml(company.name) + '</h1>'
       + '<details class="company-details" id="company-details">'
       + '<summary class="company-details-summary">' + t('company_details') + '</summary>'
       + '<div class="company-details-body">'
-      + '<h1 class="logo' + (qgi ? ' qgi' : '') + '" style="font-size:32px">' + escapeHtml(company.name) + '</h1>'
       + '<div class="tagline">' + escapeHtml(companyText(company, 'signinText')) + '</div>'
       + '<div class="company-employee-notice">' + escapeHtml(company.employeeNotice || '') + '</div>'
       + '<div class="company-inquiry">' + escapeHtml(companyText(company, 'inquiryText')) + '</div>'
