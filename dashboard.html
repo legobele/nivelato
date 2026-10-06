@@ -3114,9 +3114,45 @@ document.addEventListener('click', function(e) {
 function toggleAboutPopup(e) {
   e.stopPropagation();
   document.getElementById('niv-account-popup').style.display = 'none';
-  alert('Nivelato v1.0.0\nField measurement for glass shops.\nNivelato Labs, Puerto Rico.');
+  document.getElementById('niv-about-modal').style.display = 'flex';
+}
+function closeAboutModal() {
+  document.getElementById('niv-about-modal').style.display = 'none';
 }
 </script>
+
+<style>
+.niv-about-modal {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,.6);
+  display: flex; align-items: center; justify-content: center;
+}
+.niv-about-card {
+  background: #0b0b0e; border: 1px solid #e8e8e8; border-radius: 20px;
+  padding: 32px; max-width: 380px; width: calc(100% - 48px);
+  text-align: center; color: #fff;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.niv-about-card h2 { margin: 0 0 8px; font-size: 24px; }
+.niv-about-card p { margin: 4px 0; color: #aaa; font-size: 14px; }
+.niv-about-card .niv-about-ver { color: #f5a524; font-weight: 600; font-size: 13px; margin-bottom: 12px; }
+.niv-about-close {
+  margin-top: 20px; padding: 10px 32px;
+  background: transparent; color: #fff; font-size: 14px;
+  border: 1px solid #e8e8e8; border-radius: 12px; cursor: pointer;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.niv-about-close:hover { background: rgba(255,255,255,.06); }
+</style>
+<div class="niv-about-modal" id="niv-about-modal" style="display:none" onclick="if(event.target===this)closeAboutModal()">
+  <div class="niv-about-card">
+    <h2>Nivelato</h2>
+    <div class="niv-about-ver">v1.0.0</div>
+    <p>Field measurement for glass shops.</p>
+    <p>Nivelato Labs, Puerto Rico.</p>
+    <button class="niv-about-close" onclick="closeAboutModal()">Cerrar</button>
+  </div>
+</div>
 </body>
 </html>
 
