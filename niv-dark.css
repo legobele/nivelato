@@ -278,6 +278,12 @@
   color: var(--niv-text);
   transition: background 0.15s, border-color 0.15s;
   min-width: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
 }
 .niv-account-card:hover { background: var(--niv-surface-2); border-color: var(--niv-border-soft); }
 .niv-account-avatar {
