@@ -27,10 +27,14 @@ function currentRoute() {
   return '';
 }
 
+// Active beacons by uid: startPresence is idempotent - calling again with the
+// same uid restarts instead of doubling intervals.
+const _activeBeacons = {};
 // Writes the beacon immediately, then every 2 min, plus once on pagehide.
 // Returns a stop() function for cleanup (e.g. on logout).
 export function startPresence(uid) {
   if (!uid) return () => {};
+  if (_activeBeacons[uid]) _activeBeacons[uid]();
   let timer = null;
   const ping = () => {
     try {
@@ -46,10 +50,13 @@ export function startPresence(uid) {
   timer = setInterval(ping, BEACON_INTERVAL_MS);
   const onHide = () => ping();
   if (typeof window !== 'undefined') window.addEventListener('pagehide', onHide);
-  return () => {
+  const stop = () => {
     if (timer) clearInterval(timer);
     if (typeof window !== 'undefined') window.removeEventListener('pagehide', onHide);
+    if (_activeBeacons[uid] === stop) delete _activeBeacons[uid];
   };
+  _activeBeacons[uid] = stop;
+  return stop;
 }
 
 // Lists org members whose beacon is fresh (lastSeen within 5 min).

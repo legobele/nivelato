@@ -43,6 +43,7 @@ async function hardSignOut() {
       new Promise((_, reject) => setTimeout(() => reject(new Error('signOut timeout')), 4000)),
     ]);
   } catch (_) { /* fall through to purge + navigate */ }
+  try { localStorage.removeItem('nivelato_company_theme'); } catch (_) {}
   purgeAuthRemnants();
 }
 
@@ -126,6 +127,8 @@ function closeMenu() {
   const dd = document.getElementById("acct-dropdown");
   if (dd) dd.classList.remove("open");
   _menuOpen = false;
+  const tr = document.getElementById("acct-trigger");
+  if (tr) tr.setAttribute("aria-expanded", "false");
 }
 
 function buildMenu({ user, userData }) {
@@ -134,8 +137,9 @@ function buildMenu({ user, userData }) {
   const header = document.getElementById("app-header") || document.querySelector("header");
   if (!header) return;
 
-  // Avoid double-injecting
-  if (document.getElementById("acct-menu-wrap")) return;
+  // Rebuild instead of early-return: an in-page re-init must not show a stale account
+  const _old = document.getElementById("acct-menu-wrap");
+  if (_old) _old.remove();
 
   const wrap = document.createElement("div");
   wrap.id = "acct-menu-wrap";
@@ -191,12 +195,17 @@ function buildMenu({ user, userData }) {
     window.location.href = "https://login.nivelatolabs.com/?signout=1";
   });
 
-  document.addEventListener("click", (e) => {
-    if (_menuOpen && !wrap.contains(e.target)) closeMenu();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && _menuOpen) closeMenu();
-  });
+  window.__acctWrap = wrap;
+  if (!window.__acctDocListeners) {
+    window.__acctDocListeners = true;
+    document.addEventListener("click", (e) => {
+      const w = window.__acctWrap;
+      if (_menuOpen && (!w || !w.contains(e.target))) closeMenu();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && _menuOpen) closeMenu();
+    });
+  }
   } catch (e) {
     // Never wedge init: pages without a header must still load fine.
     console.warn("[Nivelato] account selector failed:", e);
