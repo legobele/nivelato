@@ -205,6 +205,19 @@
     }
     .lang-toggle:hover { color: var(--ink); border-color: var(--dim); }
     .lang-toggle:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+    /* company signin: QGC row on top, details collapsed */
+    .company-single { display: flex; flex-direction: column; gap: 16px; }
+    .company-details { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .company-details-summary { padding: 12px 16px; cursor: pointer; font-weight: 600; list-style: none; display: flex; align-items: center; justify-content: space-between; }
+    .company-details-summary::-webkit-details-marker { display: none; }
+    .company-details-summary::after { content: '›'; font-size: 20px; transition: transform .2s; }
+    .company-details[open] .company-details-summary::after { transform: rotate(90deg); }
+    .company-details-body { padding: 0 16px 16px; }
+    @media (min-width: 769px) {
+      .company-details-summary { display: none; }
+      .company-details { border: none; }
+      .company-details-body { padding: 0; }
+    }
     /* compact: globe icon only on small screens */
     @media (max-width: 480px) {
       .lang-toggle { font-size: 0 !important; width: 44px; min-width: 44px; padding: 10px 0; text-align: center; }
@@ -730,6 +743,7 @@
         signin_with: 'Entrar con...',
         select_language: 'Seleccionar idioma',
         change_language: 'Cambiar idioma',
+        company_details: 'Detalles de la empresa',
         qgc_only_msg: 'Solo puedes iniciar sesión en Quality Glazing Contractors ya que estás en Puerto Rico. También puedes usar una cuenta personal (solo Pro)',
         tagline_qgc_brand: 'Medidas de campo, niveladas.',
         account_kind_qgc: 'Quality Glass - Trabajo',
@@ -838,6 +852,7 @@
         signin_with: 'Sign in with...',
         select_language: 'Select language',
         change_language: 'Change language',
+        company_details: 'Company Details',
         qgc_only_msg: 'You may only sign into Quality Glazing Contractors since you are in Puerto Rico. However you can also use a personal account (Pro only)',
         tagline_qgc_brand: 'Field measurements, leveled.',
         account_kind_qgc: 'Quality Glass - Work',
@@ -2820,15 +2835,7 @@
     const company = COMPANIES[companyShown];
     if (!company) return;
     const qgi = QGI;
-    card.innerHTML = '<div class="split">'
-      + '<div class="brand-panel">'
-      + '<h1 class="logo' + (qgi ? ' qgi' : '') + '" style="font-size:32px">' + escapeHtml(company.name) + '</h1>'
-      + '<div class="tagline">' + escapeHtml(companyText(company, 'signinText')) + '</div>'
-      + '<div class="company-employee-notice">' + escapeHtml(company.employeeNotice || '') + '</div>'
-      + '<div class="company-inquiry">' + escapeHtml(companyText(company, 'inquiryText')) + '</div>'
-      + '<div class="company-travel-notice" id="company-travel-notice" style="display:none">' + t('outside_pr_notice') + '</div>'
-      + '</div>'
-      + '<div class="main-panel">'
+    card.innerHTML = '<div class="company-single">'
       + '<div class="company-head">'
       + '<button type="button" class="back-btn" id="company-back" aria-label="' + t('go_back') + '">&#8249;</button>'
       + '<div class="account-pill">'
@@ -2837,11 +2844,22 @@
       + '</div>'
       + '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
       + '</div>'
-      + '<div id="company-form-area"></div>'
+      + '<details class="company-details" id="company-details">'
+      + '<summary class="company-details-summary">' + t('company_details') + '</summary>'
+      + '<div class="company-details-body">'
+      + '<h1 class="logo' + (qgi ? ' qgi' : '') + '" style="font-size:32px">' + escapeHtml(company.name) + '</h1>'
+      + '<div class="tagline">' + escapeHtml(companyText(company, 'signinText')) + '</div>'
+      + '<div class="company-employee-notice">' + escapeHtml(company.employeeNotice || '') + '</div>'
+      + '<div class="company-inquiry">' + escapeHtml(companyText(company, 'inquiryText')) + '</div>'
+      + '<div class="company-travel-notice" id="company-travel-notice" style="display:none">' + t('outside_pr_notice') + '</div>'
       + '</div>'
+      + '</details>'
+      + '<div id="company-form-area"></div>'
       + '</div>';
     window.nivApplyLang();
     document.getElementById('company-back').addEventListener('click', goBackView);
+    // Desktop: company details expanded by default; mobile: collapsed.
+    try { if (window.innerWidth > 768) document.getElementById('company-details').open = true; } catch (_) {}
     renderCompanyFormArea();
     updateCompanyTravelNotice();
   }
