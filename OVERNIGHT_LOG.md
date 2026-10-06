@@ -78,3 +78,15 @@ From agent D report:
 - F7: generic fallbacks instead of raw Firebase error text (login + sso).
 - F5: sso.html em dashes fixed (title + placeholder).
 - F8 (dead branch), F9 (token TTL note): informational, no change.
+
+## Loop 2 — quoting fixes (landed via parent commit 08fede2, ~21:00 AST)
+From agent E (quoting) report. Code changes are in 08fede2 on remote (parent committed working tree):
+- F-2: company/settings.html hides #card-quote-settings for non-quoting orgs (QGC).
+- F-3: dashboard /company view skips quotes query + hides quote stat cards and "Cotizaciones recientes" for QGC.
+- F-4: qCanCreateQuote/qCanApproveQuote/qCanEditQuote/qCanSendQuote/plCanManage all return false when !orgHasQuotes.
+- F-5: qCanEditQuote/qCanSendQuote honor explicit createQuotes=false.
+- F-6 (data): removed inert editMeasurements flag from quotes@qgipr.com user doc via REST (was dead data, zero code reads).
+- F-1 (OPEN, needs user spec): no Firestore rules exist for companies/*/quotes or companies/*/priceList - quoting writes fail closed regardless of org. Rules changes are a hard boundary; needs her spec before any patch. NOT fixed.
+
+## Loop 2 — remaining
+- Agent F (photo/filter/drawer) still running.
