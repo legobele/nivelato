@@ -3244,7 +3244,10 @@
   onAuthStateChanged(auth, (user) => {
     if (authInitDone || authBusy || pendingShown) return;
     if (_signoutLanding) { _signoutLanding = false; authInitDone = true; renderView('main'); return; }
-    if (user) { authInitDone = true; postAuthRedirect(); }
+    // Auto-login nuked: always show the form, never auto-redirect on existing session.
+    // Users who want in enter credentials; no silent session adoption.
+    authInitDone = true;
+    renderView('main');
   });
 
   // ---- Background geo (post-paint): swap the flow UI only if it differs.
