@@ -504,6 +504,7 @@
 <canvas id="drawing-canvas" style="display:none;width:340px;height:420px"></canvas>
 
 <div class="niv-shell">
+<div class="niv-scrim" id="niv-scrim" onclick="document.body.classList.remove('nav-open')"></div>
 <div class="niv-float-panel" id="niv-panel">
   <div class="niv-panel-head" id="niv-panel-head" onclick="openCompanyDialog(event)" style="cursor:pointer" title="Ajustes de la empresa">
     <div class="niv-company-avatar" id="sidebar-avatar">N</div>
@@ -525,7 +526,7 @@
       <div id="niv-panel-measures"><div class="niv-panel-empty">Sin medidas</div></div>
     </div>
     <div class="niv-panel-actions">
-      <button class="niv-nav-btn" id="nav-measures" onclick="window.showDashView('measures')">Medidas</button>
+      <button class="niv-nav-btn" id="nav-measures" onclick="document.body.classList.remove('nav-open');window.showDashView('measures')">Medidas</button>
       <button class="niv-nav-btn" id="btn-pricelist" onclick="togglePriceListView()" style="display:none">Precios</button>
       <button class="niv-nav-btn" id="btn-quotes" onclick="toggleQuotesView()" style="display:none">Cotizaciones</button>
       <a class="niv-nav-btn" id="nav-users" href="/company/settings" style="display:none">Usuarios</a>
@@ -557,6 +558,7 @@
 <main>
  <div id="view-measures">
   <div style="display:flex; align-items:center; gap:12px;">
+    <button class="niv-hamburger" onclick="document.body.classList.toggle('nav-open')" aria-label="Menú">☰</button>
     <h1 style="margin:0;">Historial de medidas</h1>
     <button id="btn-new-measure" onclick="window.location.href='/index.html'" style="display:none; margin-left:auto; background:var(--niv-accent,#f5a524); color:#000; border:none; border-radius:12px; padding:10px 20px; font-size:15px; font-weight:600; cursor:pointer; font-family:'Inter',system-ui,sans-serif;">+ Nueva medida</button>
   </div>
