@@ -3258,6 +3258,9 @@
     // Auto-login nuked: always show the form, never auto-redirect on existing session.
     // Users who want in enter credentials; no silent session adoption.
     authInitDone = true;
+    // Don't clobber the PR (company-select) initial view — only seed main
+    // state if we're actually on the main view.
+    if (typeof currentView === 'string' && currentView !== 'main') return;
     renderView('main');
     // Seed history state so back-from-company restores the form via popstate
     // (without this, back lands on a stateless entry and the form never re-renders).
