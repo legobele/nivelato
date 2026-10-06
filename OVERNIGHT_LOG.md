@@ -20,3 +20,39 @@ Base commit: b9f15e1
 - BUG-1 (verified via curl): "Nueva medida" button pointed to /index.html on dashboard.nivelatolabs.com, which 404s (worker ROUTES has no /index.html; .html not in STATIC_CT). Measurement flow actually lives at https://app.nivelatolabs.com/ (200 OK). FIXED: button now goes to https://app.nivelatolabs.com/ (auth-guard there bounces through login.nivelatolabs.com SSO if needed). Commit 81abe62.
 - NOTE: parent pushed 78ef14e concurrently (mobile hamburger drawer). Pull before every commit from here on.
 - NOTE: app.nivelatolabs.com serves a STALE index.html (still has the removed console.log line; Pages deploy lags repo). Not fixing tonight (Pages pipeline).
+
+## Loop 1 — fixes committed (1596588, pushed ~20:35 AST)
+Sweep reports reconciled from 3 agents. All fixes applied, committed, pushed.
+
+**Critical:**
+- BUG-4 (save-permission root cause): auth-guard.js saveJobToFirestore now awaits ensureFlowClaims (10s timeout race) + forces getIdToken refresh before addDoc. Previously fire-and-forget on page load meant claim-less tokens hit fail-closed jobs rules. Also added friendly permission-denied message mapping in adhd.js save catch (no more raw FirebaseError).
+- BUG-1 (verified via curl): Nueva medida button -> https://app.nivelatolabs.com/ (was /index.html = 404 on dashboard worker).
+
+**Security/hardening:**
+- adhd.js postMessage: origin check added (was accepting NIVELATO_ANNOTATED_PHOTO from any origin).
+- company/settings.html: non-owner managers can no longer edit their own perm row (self-elevation closed); owner rows were already locked.
+- users.html: Team page now gated on userManagement (was visible to any org member).
+
+**Links/routes:**
+- settings.html back link: dashboard.html -> / (worker has no /dashboard.html route; /dashboard also 404s, / is correct).
+- settings.html privacy link: privacy.html -> https://legobele.github.io/nivelato/privacy.html (worker has no /privacy route).
+- Missing-profile recovery (settings.html, company/settings.html, users.html): login.html?missingProfile=1 -> https://login.nivelatolabs.com/?missingProfile=1.
+- Updates cards (both settings pages): now link to /company/updates with notif-dot, no underline.
+
+**Dashboard UI:**
+- Collapsed sidebar: account card stays visible (avatar only); was hidden by .niv-panel-bottom display:none. Popup repositioned for collapsed state.
+- Collapse after manual resize: inline width cleared so .collapsed applies.
+- Mobile drawer: Precios/Cotizaciones now close drawer (parity with Medidas).
+- Estradiol easter-egg span preserved across org-name writes.
+- Dead .italiano-mode .btn-new-measure selector removed.
+- Date placeholder: overflow guard (ellipsis).
+- About modal: Escape closes.
+
+**Copy:**
+- Em-dash purge (user-facing): index.html labels/placeholders, adhd.js validation strings, photo.html title/header, settings titles. Hyphens used.
+- Personal names removed from comments: index.html:188, adhd.js:1235 ("built with love by benj & deepseek v4 flash").
+- Fixed parent's wrong-line delete: removed the actual console.log from index.html, restored theme-color meta.
+
+**Cache-busting:** niv-dark.css?v=3, adhd.js?v=2/3, auth-guard.js?v=2.
+
+**Still needs real-browser verification (parent to run via browser tasks):** all BROWSER TEST PLANS from the 3 sweep reports. None of the above is browser-verified.
