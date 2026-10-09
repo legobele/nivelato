@@ -336,7 +336,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
 import { startPresence, getOnlineUsers } from './presence.js';
-import { ensureFlowClaims } from './geo.js';
+import { ensureFlowClaims, routeAfterGate } from './geo.js';
 
 // Escape ALL user-controlled strings before innerHTML interpolation (stored XSS).
 // Names, roles, and update notes come from Firestore and members can set their own.
@@ -584,7 +584,11 @@ async function onCancelUpdate() {
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
   // Mint flow claims: rules require them for org data reads.
-  try { await ensureFlowClaims(); } catch (_) { /* fails soft */ }
+  // Route to geo-blocked on fresh block/review verdicts (same as login.html).
+  try {
+    const gate = await ensureFlowClaims();
+    if (gate && gate.ok && !gate.cached && routeAfterGate(gate.verdict, gate.reason)) return;
+  } catch (_) { /* fails soft */ }
   currentUser = user;
   if (window.applyCompanyThemeFromAuth) { try { window.applyCompanyThemeFromAuth(auth); } catch (_) {} }
 

@@ -876,7 +876,7 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { getDoc, doc, setDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
 import { makePermChecker, canEditJob, orgHasQuotes, userCanQuote } from './permissions.js';
-import { ensureFlowClaims } from './geo.js';
+import { ensureFlowClaims, routeAfterGate } from './geo.js';
 // Flow claims (flow/geoOk/licenseStatus) are minted server-side by flowGate.
 // The rules require them for all org data reads; the SSO custom token doesn't
 // carry them, so returning sessions must mint here (same as auth-guard.js
@@ -1072,7 +1072,13 @@ let currentUser;
     if (NIV_ROUTE === 'company') return; // la ruta /company usa initCompanyView (arriba)
     if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
     // Mint flow claims before any org data read (rules require them).
-    try { await ensureFlowClaims(); } catch (_) { /* fails soft, rules decide */ }
+    // If flowGate says block/review on a fresh call, route to the
+    // geo-blocked page instead of failing silently with permission-denied
+    // on every read (same pattern as login.html/auth-guard.js).
+    try {
+      const gate = await ensureFlowClaims();
+      if (gate && gate.ok && !gate.cached && routeAfterGate(gate.verdict, gate.reason)) return;
+    } catch (_) { /* fails soft, rules decide */ }
     // backup: theme from ID-token claims if user doc path changes
     if (window.applyCompanyThemeFromAuth) { try { window.applyCompanyThemeFromAuth(auth); } catch (_) {} }
     // check if account is pending approval
@@ -1204,7 +1210,13 @@ let currentUser;
     window._jobsUnsub = onSnapshot(q, applyJobsSnap, (err) => {
       console.error('[Nivelato] jobs listener error:', err);
       const dl = document.querySelector('.loading');
-      if (dl) dl.textContent = 'No se pudieron cargar las medidas. Revisa tu conexión.';
+      if (dl) {
+        const code = err && err.code ? ` (${err.code})` : '';
+        const hint = err && err.code === 'permission-denied'
+          ? ' Revisa tus permisos (flowGate).'
+          : '';
+        dl.textContent = `No se pudieron cargar las medidas${code}.${hint} Revisa tu conexión.`;
+      }
     });
     window.addEventListener('pagehide', () => { if (window._jobsUnsub) { window._jobsUnsub(); window._jobsUnsub = null; } if (window._plUnsub) { window._plUnsub(); window._plUnsub = null; } if (window._qUnsub) { window._qUnsub(); window._qUnsub = null; } if (window._userRefreshTimer) { clearInterval(window._userRefreshTimer); window._userRefreshTimer = null; } });
 
