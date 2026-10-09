@@ -287,11 +287,16 @@ async function ipIntel(ip) {
       if (!res.ok) return { ok: false, reason: `provider-http-${res.status}` };
       const j = await res.json();
       const p = j.privacy || {};
+      // NOTE (2026-10-09): `hosting` excluded from the block trigger.
+      // It false-positives on mobile carrier CGNAT and business ISP ranges
+      // (company networks kept getting flagged). `proxy`/`vpn`/`tor`/`relay`
+      // are the reliable anonymizer signals. `hosting` stays in flags for
+      // triage logging.
       return {
         ok: true,
         country: j.country || null,
         region: j.region || null,
-        untrusted: Boolean(p.vpn || p.proxy || p.tor || p.relay || p.hosting),
+        untrusted: Boolean(p.vpn || p.proxy || p.tor || p.relay),
         flags: {
           vpn: Boolean(p.vpn), proxy: Boolean(p.proxy), tor: Boolean(p.tor),
           relay: Boolean(p.relay), hosting: Boolean(p.hosting),
@@ -308,11 +313,13 @@ async function ipIntel(ip) {
     if (!res.ok) return { ok: false, reason: `provider-http-${res.status}` };
     const j = await res.json();
     if (j.status !== 'success') return { ok: false, reason: 'provider-fail' };
+    // NOTE (2026-10-09): `hosting` excluded from the block trigger — see above.
+    // ip-api.com's hosting flag fires on mobile carriers and business ISPs.
     return {
       ok: true,
       country: j.countryCode || null,      // 'PR', 'US', ...
       region: j.region || null,
-      untrusted: Boolean(j.proxy || j.hosting),
+      untrusted: Boolean(j.proxy),
       flags: { vpn: false, proxy: Boolean(j.proxy), tor: false, relay: false, hosting: Boolean(j.hosting) },
       rawCountry: j.countryCode || null,
     };
