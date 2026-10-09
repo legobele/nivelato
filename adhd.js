@@ -308,7 +308,7 @@ function calcDesnivel_wall(a, b) {
   const diff = a - b;
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
-  const arrow = diff > 0 ? '⟩' : '⟨';
+  const arrow = diff > 0 ? '→' : '←';
   return { val: val, dir: arrow, label: arrow + ' ' + toFracStr(val), raw: diff };
 }
 
@@ -335,11 +335,11 @@ function recalcAll() {
   results.paredDer = calcDesnivel_wall(pD_A, pD_B);
   // Fix right wall arrow direction: lean-in on right wall means ← not →
   if (results.paredDer.raw > 0) {
-    results.paredDer.dir = '\u27e8';
-    results.paredDer.label = '\u27e8 ' + toFracStr(results.paredDer.val);
+    results.paredDer.dir = '←';
+    results.paredDer.label = '← ' + toFracStr(results.paredDer.val);
   } else if (results.paredDer.raw < 0) {
-    results.paredDer.dir = '\u27e9';
-    results.paredDer.label = '\u27e9 ' + toFracStr(results.paredDer.val);
+    results.paredDer.dir = '→';
+    results.paredDer.label = '→ ' + toFracStr(results.paredDer.val);
   }
   results.techo = calcDesnivel_horiz(t_A, t_B);
   results.piso  = calcDesnivel_horiz(p_A, p_B);
@@ -716,7 +716,11 @@ function animateCanvas(step) {
   let zoom = sv.zoom;
 
   if (step === TOTAL_STEPS) {
-    const padFit = 48;
+    // Fit padding must clear the desnivel labels, which are drawn OUTSIDE
+    // the glass rect: anchored 14px out + up to ~55px of label text
+    // (e.g. left/right labels with textAlign pushing outward). 48px clipped
+    // them at the canvas edge (bug 2026-10-09).
+    const padFit = 80;
     const fitZoomX = (W - padFit * 2) / gr.w;
     const fitZoomY = (H - padFit * 2) / gr.h;
     zoom = Math.min(fitZoomX, fitZoomY, 1.0);
@@ -1251,7 +1255,7 @@ if (canvas) {
 
 window.embedGraph = function(cvs, data) {
   if (!cvs || !data) return;
-  // Extract numeric magnitudes from labels like '⟩ 1/4"' or '47 1/4"'.
+  // Extract numeric magnitudes from labels like '→ 1/4"' or '47 1/4"'.
   // The fraction may have no whole part ("1/4"" = 0.25, NOT 1).
   function ev(s) {
     if (!s || s === 'Nivel' || s === '-') return 0;
@@ -1261,10 +1265,10 @@ window.embedGraph = function(cvs, data) {
     return parseFloat(m[4]) || 0;
   }
   // Direction arrows give the sign (same convention as the main app):
-  // paredIzq '⟩'/paredDer '⟨'/techo '↓'/piso '↑' = raw>0, opposite = raw<0.
+  // paredIzq '→'/paredDer '←'/techo '↓'/piso '↑' = raw>0, opposite = raw<0.
   function neg(s, ch) { return !!s && s.indexOf(ch) !== -1; }
-  var pIs = neg(data.pIL, '⟨') ? -1 : 1;
-  var pDs = neg(data.pDL, '⟩') ? -1 : 1;
+  var pIs = neg(data.pIL, '←') ? -1 : 1;
+  var pDs = neg(data.pDL, '→') ? -1 : 1;
   var tSs = neg(data.tL, '↑') ? -1 : 1;
   var pSs = neg(data.pL, '↓') ? -1 : 1;
   var pIv = ev(data.pIL);

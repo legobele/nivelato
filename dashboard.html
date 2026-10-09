@@ -1524,8 +1524,8 @@ let currentUser;
     const pI = window.calcDesnivel_wall(v.pI_A, v.pI_B);
     const pD = window.calcDesnivel_wall(v.pD_A, v.pD_B);
     // Fix dirección flecha pared derecha (igual que el wizard)
-    if (pD.raw > 0)      { pD.dir = '⟨'; pD.label = '⟨ ' + window.toFracStr(pD.val); }
-    else if (pD.raw < 0) { pD.dir = '⟩'; pD.label = '⟩ ' + window.toFracStr(pD.val); }
+    if (pD.raw > 0)      { pD.dir = '←'; pD.label = '← ' + window.toFracStr(pD.val); }
+    else if (pD.raw < 0) { pD.dir = '→'; pD.label = '→ ' + window.toFracStr(pD.val); }
     const tc = window.calcDesnivel_horiz(v.t_A, v.t_B);
     const ps = window.calcDesnivel_horiz(v.p_A, v.p_B);
     // Dirección del piso es opuesta a la del techo (igual que el wizard)

@@ -768,8 +768,8 @@ window.addEventListener('message', (e) => {
       anchoTop: e.data.anchoTop,
       altoIzq: e.data.altoIzq,
       altoDer: e.data.altoDer,
-      paredIzq: labelSign(e.data.paredIzq, '⟨') * parseLabel(e.data.paredIzq),
-      paredDer: labelSign(e.data.paredDer, '⟩') * parseLabel(e.data.paredDer),
+      paredIzq: labelSign(e.data.paredIzq, '←') * parseLabel(e.data.paredIzq),
+      paredDer: labelSign(e.data.paredDer, '→') * parseLabel(e.data.paredDer),
       techo: labelSign(e.data.techo, '↑') * parseLabel(e.data.techo),
       piso: labelSign(e.data.piso, '↓') * parseLabel(e.data.piso)
     };
