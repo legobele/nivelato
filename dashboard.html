@@ -2,6 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
+  <script>
+  try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|$)/);if(cm&&cm[1]==='1')document.documentElement.classList.add('niv-compact');var lm=c.match(/; nivelato-login-lang=(es|en)(?:;|$)/);if(lm)document.documentElement.lang=lm[1];}catch(e){}
+  </script>
+  <script src="./niv-settings.js"></script>
   <script src="./company-theme.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#121212" />
@@ -828,10 +832,28 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 
 /* vista Usuarios incrustada: el iframe llena la tarjeta y la pagina
    incrustada desplaza por dentro, sin doble barra de desplazamiento */
-#view-users { height: 100%; }
-#users-embed-frame { display: block; width: 100%; height: 100%; border: 0; border-radius: 12px; background: transparent; }
+#view-users { height: 100%; display: flex; flex-direction: column; }
+.niv-users-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.niv-users-head h1 { margin: 0; flex: 1; min-width: 0; }
+#users-embed-frame { display: block; width: 100%; flex: 1; min-height: 0; border: 0; border-radius: 12px; background: transparent; }
 #users-embed-fallback { padding: 28px; text-align: center; color: var(--niv-text-dim, #a7a7ad); font-size: 14px; }
 #users-embed-fallback a { color: var(--niv-accent, #1971c2); }
+
+/* menu de empresa dentro de la barra lateral (sustituye al dialogo modal):
+   vive en la zona superior del panel, bajo la cabecera de la empresa, y
+   en el riel colapsado no se muestra (no cabe y la cabecera lo reabre al
+   expandir). */
+.niv-company-menu {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px 16px 12px;
+  border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+}
+.niv-company-menu-title {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+  color: var(--niv-text-dim, #a7a7ad);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.niv-float-panel.collapsed .niv-company-menu { display: none !important; }
 
 /* barra superior: centrado + indicador deslizante con topes. La pastilla
    activa conserva su degradado hasta que el indicador esta vivo (ind-on);
@@ -887,6 +909,12 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
     <div class="niv-company-avatar" id="sidebar-avatar">N</div>
     <div class="niv-company-name" id="org-name-badge">…<span id="estradiol-indicator">E2</span></div>
     <button class="niv-panel-collapse" id="niv-panel-collapse" title="Colapsar" aria-label="Colapsar">‹</button>
+  </div>
+  <div class="niv-company-menu" id="niv-company-menu" style="display:none">
+    <div class="niv-company-menu-title" id="company-menu-title">Empresa</div>
+    <button class="niv-nav-btn" id="company-menu-settings" onclick="window.location.href='/company/settings'">Ajustes de la empresa</button>
+    <button class="niv-nav-btn" id="company-menu-users" onclick="window.closeCompanyDialog();window.showDashView('users')" style="display:none">Usuarios</button>
+    <button class="niv-nav-btn" id="company-menu-close" onclick="window.closeCompanyDialog()">Cerrar</button>
   </div>
   <div class="org-badge" id="tier-badge" style="display:none;">Pro</div>
   <button class="btn-save" id="btn-upgrade-plan" onclick="window.showUpgradeModal && window.showUpgradeModal()" style="display:none;margin:10px 16px 0;">Mejorar plan</button>
@@ -960,9 +988,22 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 /* Modo "Barra lateral compacta" (preferencia de interfaz guardada en
    Ajustes, clave 'niv-compact-sidebar'): se lee y se aplica durante el
    parseo, antes del primer pintado, para que la carcasa nazca ya como
-   riel y con la barra superior visible, sin destello del estado contrario. */
+   riel y con la barra superior visible, sin destello del estado contrario.
+   La fuente de verdad es NivSettings (cookie, ver niv-settings.js); el
+   snippet de arranque en <head> ya marco <html> con la clase niv-compact
+   y este bloque reconcilia <body> con esa marca. Solo si la plataforma
+   de ajustes no cargo se cae a la lectura localStorage anterior, que
+   NivSettings sigue espejando. */
 try {
-  if (localStorage.getItem('niv-compact-sidebar') === '1') {
+  var _compactOn = false;
+  if (window.NivSettings && typeof window.NivSettings.getCompact === 'function') {
+    _compactOn = window.NivSettings.getCompact();
+  } else if (document.documentElement.classList.contains('niv-compact')) {
+    _compactOn = true;
+  } else {
+    _compactOn = localStorage.getItem('niv-compact-sidebar') === '1';
+  }
+  if (_compactOn) {
     document.body.classList.add('niv-compact');
     var _cp = document.getElementById('niv-panel');
     if (_cp) {
@@ -1014,8 +1055,12 @@ try {
   <div id="notif-list"><div class="loading">Cargando notificaciones…</div></div>
  </div><!-- /view-notifications -->
  <div id="view-users" style="display:none">
+  <div class="niv-users-head">
+    <h1 id="users-title">Usuarios</h1>
+    <button class="niv-btn-pill niv-btn-primary" id="users-admin-btn" style="display:none" onclick="window._toggleUsersAdmin()">Administrar usuarios</button>
+  </div>
   <iframe id="users-embed-frame" title="Usuarios" loading="lazy"></iframe>
-  <div id="users-embed-fallback" style="display:none">No se pudo cargar la gestión de usuarios. <a href="/company/users" target="_top">Abrir la página completa</a></div>
+  <div id="users-embed-fallback" style="display:none"><span id="users-fallback-text">No se pudo cargar la vista de usuarios.</span> <a id="users-fallback-link" href="/users" target="_top">Abrir la página completa</a></div>
  </div><!-- /view-users -->
  <div id="view-measures">
   <div style="display:flex; align-items:center; gap:12px; min-width:0;">
@@ -1304,16 +1349,6 @@ try {
 
 
 <!-- NEW PROJECT MODAL -->
-<div class="modal-overlay" id="company-modal-overlay" role="dialog" aria-modal="true" onclick="closeCompanyDialog(event)">
-  <div class="modal" style="max-width:380px">
-    <div class="modal-title" id="company-dialog-title">Empresa</div>
-    <div id="company-dialog-body">
-      <button class="btn-save" onclick="window.location.href='/company/settings'">Ajustes de la empresa</button>
-      <button class="btn-save" id="company-dialog-users" onclick="closeCompanyDialog();window.showDashView('users')" style="display:none;margin-top:8px">Usuarios</button>
-    </div>
-    <button class="btn-cancel" onclick="closeCompanyDialog()">Cerrar</button>
-  </div>
-</div>
 <div class="modal-overlay" id="np-modal-overlay" role="dialog" aria-modal="true" onclick="closeNewProject(event)">
   <div class="modal" style="max-width:440px">
     <div class="modal-title">Nuevo proyecto</div>
@@ -1511,6 +1546,12 @@ document.addEventListener('breadchange', function () {
 // El worker de Cloudflare inyecta window.NIVELATO_ROUTE antes del cierre del body.
 // Al abrir el archivo directo (GitHub Pages) la variable no existe:
 // en ese caso, o con ruta "dashboard", se usa el dashboard normal.
+// Alcance: ningun enlace del repo apunta a /company a secas (todos van a
+// /company/settings, /company/users o /company/updates), asi que esta vista
+// solo la alcanza quien aterriza en la URL pelada a traves del worker, que
+// vive fuera del repo y tambien es la senal que presence.js usa para su
+// ruta. No es codigo muerto demostrable: se conserva la ruta y se unifica
+// su aspecto sobre los tokens del sistema de diseno (abajo).
 const NIV_ROUTE = window.NIVELATO_ROUTE;
 
 const CO_ROLE_LABEL = { owner: 'Dueño / Admin', cotizador: 'Cotizador', supervisor: 'Supervisor', medidor: 'Técnico medidor' };
@@ -1546,15 +1587,24 @@ async function initCompanyView(user) {
 
   const nEstado = (s) => quotes.filter(q => (q.estado || 'borrador') === s).length;
 
-  const rowStyle = 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #f1f3f5';
-  const cardStyle = 'background:#fff;border-radius:12px;padding:4px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-bottom:24px';
+  // Unificada sobre los tokens del sistema de diseno (niv-dark.css): esta
+  // vista es una pagina completa que reemplaza el body, asi que sale de la
+  // carcasa has-sidebar y pinta su fondo y superficies con las variables
+  // --niv-* en vez de los colores claros heredados (#fff, #212529, #f5a524).
+  const rowStyle = 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--niv-border-soft, rgba(255,255,255,0.14))';
+  const cardStyle = 'background:var(--niv-surface, #17171a);border:1px solid var(--niv-border-soft, rgba(255,255,255,0.14));border-radius:var(--niv-radius, 18px);padding:4px 16px;box-shadow:0 10px 34px rgba(0,0,0,0.38);margin-bottom:24px';
+  const statCardStyle = 'background:var(--niv-surface, #17171a);border:1px solid var(--niv-border-soft, rgba(255,255,255,0.14));border-radius:var(--niv-radius, 18px);padding:16px;box-shadow:0 10px 34px rgba(0,0,0,0.38)';
+  const statNumStyle = 'font-size:28px;font-weight:700;color:var(--niv-text, #f5f5f7)';
+  const statLabelStyle = 'font-size:12px;color:var(--niv-text-dim, #a7a7ad);margin-top:2px';
+  const textStyle = 'color:var(--niv-text, #f5f5f7)';
+  const dimStyle = 'color:var(--niv-text-dim, #a7a7ad)';
 
   const memberRows = members.map(m => {
     const rl = CO_ROLE_LABEL[m.role] || m.role || 'Sin rol';
     return '<div style="' + rowStyle + '">' +
-      '<div><div style="font-size:14px;font-weight:600;color:#212529">' + escapeHtml(m.name || 'Sin nombre') + '</div>' +
-      '<div style="font-size:12px;color:#868e96">' + escapeHtml(m.email || '') + '</div></div>' +
-      '<span style="font-size:12px;font-weight:600;color:#f5a524;background:rgba(245,165,36,.12);padding:4px 10px;border-radius:20px;white-space:nowrap">' + escapeHtml(rl) + '</span></div>';
+      '<div><div style="font-size:14px;font-weight:600;' + textStyle + '">' + escapeHtml(m.name || 'Sin nombre') + '</div>' +
+      '<div style="font-size:12px;' + dimStyle + '">' + escapeHtml(m.email || '') + '</div></div>' +
+      '<span style="font-size:12px;font-weight:600;color:var(--niv-text, #f5f5f7);background:var(--niv-surface-2, #1e1e22);padding:4px 10px;border-radius:20px;white-space:nowrap">' + escapeHtml(rl) + '</span></div>';
   }).join('');
 
   const recentRows = quotes.slice(0, 10).map(q => {
@@ -1562,31 +1612,34 @@ async function initCompanyView(user) {
     const estadoLabel = CO_ESTADOS[estado] || estado;
     const total = '$' + (Number(q.totales && q.totales.total) || 0).toFixed(2);
     return '<div style="' + rowStyle + '">' +
-      '<div><div style="font-size:14px;font-weight:600;color:#212529">' + escapeHtml(q.numero || 'Sin folio') +
-      ' <span style="font-size:11px;font-weight:600;color:#495057;background:#f1f3f5;padding:3px 8px;border-radius:20px;white-space:nowrap">' + escapeHtml(estadoLabel) + '</span></div>' +
-      '<div style="font-size:12px;color:#868e96">' + escapeHtml((q.cliente && q.cliente.nombre) || 'Sin cliente') + '</div></div>' +
-      '<div style="font-size:14px;font-weight:700;color:#212529;white-space:nowrap">' + escapeHtml(total) + '</div></div>';
+      '<div><div style="font-size:14px;font-weight:600;' + textStyle + '">' + escapeHtml(q.numero || 'Sin folio') +
+      ' <span style="font-size:11px;font-weight:600;color:var(--niv-text-dim, #a7a7ad);background:var(--niv-surface-2, #1e1e22);padding:3px 8px;border-radius:20px;white-space:nowrap">' + escapeHtml(estadoLabel) + '</span></div>' +
+      '<div style="font-size:12px;' + dimStyle + '">' + escapeHtml((q.cliente && q.cliente.nombre) || 'Sin cliente') + '</div></div>' +
+      '<div style="font-size:14px;font-weight:700;' + textStyle + ';white-space:nowrap">' + escapeHtml(total) + '</div></div>';
   }).join('');
 
+  document.body.classList.remove('has-sidebar');
+  document.body.style.background = 'var(--niv-bg, #0e0e10)';
+  document.body.style.color = 'var(--niv-text, #f5f5f7)';
   document.body.innerHTML =
-    '<main style="padding:24px 20px;max-width:720px;margin:0 auto">' +
-    '<h1>' + escapeHtml(orgName) + '</h1>' +
-    '<p class="subtitle">Vista de compañía</p>' +
+    '<main style="padding:24px 20px;max-width:720px;margin:0 auto;background:var(--niv-bg, #0e0e10);color:var(--niv-text, #f5f5f7);font-family:Inter,system-ui,sans-serif;min-height:100dvh">' +
+    '<h1 style="' + textStyle + '">' + escapeHtml(orgName) + '</h1>' +
+    '<p class="subtitle" style="' + dimStyle + '">Vista de compañía</p>' +
     '<div class="stats-row" style="grid-template-columns:repeat(2,1fr)">' +
       (_hasQuotes ?
-        '<div class="stat-card"><div class="stat-num">' + nEstado('borrador') + '</div><div class="stat-label">Cotizaciones en borrador</div></div>' +
-        '<div class="stat-card"><div class="stat-num">' + nEstado('aprobada') + '</div><div class="stat-label">Cotizaciones aprobadas</div></div>' +
-        '<div class="stat-card"><div class="stat-num">' + nEstado('enviada') + '</div><div class="stat-label">Cotizaciones enviadas</div></div>' : '') +
-      '<div class="stat-card"><div class="stat-num">' + members.length + '</div><div class="stat-label">Miembros del equipo</div></div>' +
+        '<div class="stat-card" style="' + statCardStyle + '"><div class="stat-num" style="' + statNumStyle + '">' + nEstado('borrador') + '</div><div class="stat-label" style="' + statLabelStyle + '">Cotizaciones en borrador</div></div>' +
+        '<div class="stat-card" style="' + statCardStyle + '"><div class="stat-num" style="' + statNumStyle + '">' + nEstado('aprobada') + '</div><div class="stat-label" style="' + statLabelStyle + '">Cotizaciones aprobadas</div></div>' +
+        '<div class="stat-card" style="' + statCardStyle + '"><div class="stat-num" style="' + statNumStyle + '">' + nEstado('enviada') + '</div><div class="stat-label" style="' + statLabelStyle + '">Cotizaciones enviadas</div></div>' : '') +
+      '<div class="stat-card" style="' + statCardStyle + '"><div class="stat-num" style="' + statNumStyle + '">' + members.length + '</div><div class="stat-label" style="' + statLabelStyle + '">Miembros del equipo</div></div>' +
     '</div>' +
-    '<h2 style="font-size:16px;font-weight:700;color:#212529;margin:8px 0 12px">Equipo</h2>' +
+    '<h2 style="font-size:16px;font-weight:700;' + textStyle + ';margin:8px 0 12px">Equipo</h2>' +
     '<div style="' + cardStyle + '">' +
-      (memberRows || '<p style="padding:16px 0;font-size:13px;color:#868e96">No hay miembros en esta compañía.</p>') +
+      (memberRows || '<p style="padding:16px 0;font-size:13px;' + dimStyle + '">No hay miembros en esta compañía.</p>') +
     '</div>' +
     (_hasQuotes ?
-      '<h2 style="font-size:16px;font-weight:700;color:#212529;margin:8px 0 12px">Cotizaciones recientes</h2>' +
+      '<h2 style="font-size:16px;font-weight:700;' + textStyle + ';margin:8px 0 12px">Cotizaciones recientes</h2>' +
       '<div style="' + cardStyle + '">' +
-        (recentRows || '<p style="padding:16px 0;font-size:13px;color:#868e96">Aún no hay cotizaciones.</p>') +
+        (recentRows || '<p style="padding:16px 0;font-size:13px;' + dimStyle + '">Aún no hay cotizaciones.</p>') +
       '</div>' : '') +
     '</main>';
 }
@@ -1605,6 +1658,16 @@ let currentUser;
   onAuthStateChanged(auth, async (user) => {
     if (NIV_ROUTE === 'company') return; // la ruta /company usa initCompanyView (arriba)
     if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
+    // Alerta de inicio de sesion (niv-user.js): disparo sin bloqueo en el
+    // aterrizaje autenticado; nunca debe romper el inicio de sesion.
+    import('./niv-user.js').then(m => m.maybeSendLoginAlert(user)).catch(() => {});
+    // Idioma resuelto (niv-user.js): users/{uid}.language manda sobre la
+    // cadena local; al resolver se aplica a NivSettings y a la chrome.
+    import('./niv-user.js').then(async (m) => {
+      const lang = await m.resolveLang(user.uid);
+      m.applyResolvedLang(lang);
+      if (window._applyDashLang) window._applyDashLang(lang);
+    }).catch(() => {});
     // Mint flow claims before any org data read (rules require them).
     // If flowGate says block/review on a fresh call, route to the
     // geo-blocked page instead of failing silently with permission-denied
@@ -1712,6 +1775,9 @@ let currentUser;
       const jcs = document.getElementById('join-code-section');
       jcs.classList.add('show');
       document.getElementById('join-code-display').textContent = orgDoc.data()?.joinCode || orgId;
+      // el camino a la administracion de usuarios solo existe para gerentes
+      const uab = document.getElementById('users-admin-btn');
+      if (uab) uab.style.display = '';
     }
 
     // load all org members for share panel
@@ -3639,18 +3705,27 @@ let currentUser;
     }
   };
 
-  // ---- company dialog ----
+  // ---- menu de empresa en la barra lateral ----
+  // Antes esto abria un dialogo modal sobre el contenido principal. Ahora
+  // la cabecera del panel despliega el menu DENTRO de la propia barra
+  // lateral: Usuarios aterriza en la vista de usuarios de esta carcasa y
+  // Ajustes de la empresa navega a su pagina desde el menu lateral.
+  // El permiso es el mismo de antes: sin userManagement no hay menu.
   window.openCompanyDialog = (e) => {
     if (e && e.target && e.target.id === 'niv-panel-collapse') return;
-    if (!window._can || !window._can('userManagement')) return; // no perms: no dialog
-    const orgName = document.getElementById('org-name-badge')?.textContent?.replace('E2','').trim() || 'Empresa';
-    document.getElementById('company-dialog-title').textContent = orgName;
-    document.getElementById('company-dialog-users').style.display = 'block';
-    document.getElementById('company-modal-overlay').classList.add('open');
+    if (!window._can || !window._can('userManagement')) return; // no perms: no menu
+    const menu = document.getElementById('niv-company-menu');
+    if (!menu) return;
+    const orgName = document.getElementById('org-name-badge')?.textContent?.replace('E2','').trim() || L('Empresa', 'Company');
+    const title = document.getElementById('company-menu-title');
+    if (title) title.textContent = orgName;
+    const usersBtn = document.getElementById('company-menu-users');
+    if (usersBtn) usersBtn.style.display = 'block';
+    menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
   };
-  window.closeCompanyDialog = (e) => {
-    if (e && e.type === 'click' && e.target && !e.target.classList.contains('modal-overlay') && e.target.textContent.trim() !== 'Cerrar') return;
-    document.getElementById('company-modal-overlay').classList.remove('open');
+  window.closeCompanyDialog = () => {
+    const menu = document.getElementById('niv-company-menu');
+    if (menu) menu.style.display = 'none';
   };
 
   // ---- sidebar: collapse ----
@@ -3672,10 +3747,28 @@ let currentUser;
   // ================= REDESIGN (wireframes de Giulia, Oct 2026) =================
   // Barra superior persistente, secciones colapsables, sidebar redimensionable,
   // vista Panel (home) y vista de Notificaciones.
-  // Idioma de la chrome nueva: la misma señal que login/ajustes
-  // (localStorage 'nivelato-login-lang'); por defecto español.
-  const NIV_LANG = (() => { try { return localStorage.getItem('nivelato-login-lang') === 'en' ? 'en' : 'es'; } catch (_) { return 'es'; } })();
+  // Idioma de la chrome nueva: la fuente de verdad es NivSettings
+  // (getLang(), cookie 'nivelato-login-lang' con espejo localStorage);
+  // por defecto español. Tras el inicio de sesion el resolvedor de
+  // niv-user.js manda (users/{uid}.language) y _applyDashLang actualiza
+  // este valor y repinta los textos estaticos.
+  let NIV_LANG = (() => {
+    try { if (window.NivSettings && typeof window.NivSettings.getLang === 'function') return window.NivSettings.getLang(); } catch (_) {}
+    try { return localStorage.getItem('nivelato-login-lang') === 'en' ? 'en' : 'es'; } catch (_) { return 'es'; }
+  })();
   const L = (es, en) => (NIV_LANG === 'en' ? en : es);
+  // Persistencia del panel (ancho y secciones) a traves de NivSettings:
+  // la cookie es la fuente y set() mantiene los espejos localStorage que
+  // los lectores antiguos aun usan. Si la plataforma no cargo, se cae al
+  // localStorage de antes con la misma clave y el mismo formato.
+  const _nivGetSetting = (key) => {
+    try { if (window.NivSettings) { const v = window.NivSettings.get(key); if (v !== null && v !== undefined) return v; } } catch (_) {}
+    try { return localStorage.getItem(key); } catch (_) { return null; }
+  };
+  const _nivSetSetting = (key, value) => {
+    try { if (window.NivSettings && window.NivSettings.set(key, value)) return true; } catch (_) {}
+    try { localStorage.setItem(key, value); return true; } catch (_) { return false; }
+  };
   const _callable = (name) => httpsCallable(getFunctions(auth.app, 'us-central1'), name);
   const _fmtDateTime = (ms) => {
     if (!ms) return '';
@@ -3686,7 +3779,7 @@ let currentUser;
   };
 
   // textos estáticos de la chrome nueva (EN/ES)
-  (() => {
+  const _applyDashChromeTexts = () => {
     const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
     const setTab = (id, txt) => { const el = document.querySelector('#' + id + ' .niv-tab-label'); if (el) el.textContent = txt; };
     setTab('tab-home', L('Panel', 'Dashboard'));
@@ -3707,7 +3800,25 @@ let currentUser;
     setText('home-update-link', L('Ver actualización', 'See update'));
     setText('notif-title', L('Notificaciones', 'Notifications'));
     setText('notif-mark-all', L('Marcar todas como leídas', 'Mark all as read'));
-  })();
+    setText('company-menu-settings', L('Ajustes de la empresa', 'Company settings'));
+    setText('company-menu-users', L('Usuarios', 'Users'));
+    setText('company-menu-close', L('Cerrar', 'Close'));
+    setText('users-title', L('Usuarios', 'Users'));
+    setText('users-fallback-text', L('No se pudo cargar la vista de usuarios.', 'Could not load the users view.'));
+    setText('users-fallback-link', L('Abrir la página completa', 'Open the full page'));
+    const _ph = document.getElementById('niv-panel-head');
+    if (_ph) _ph.title = L('Ajustes de la empresa', 'Company settings');
+    if (window._syncUsersAdminBtn) window._syncUsersAdminBtn();
+  };
+  _applyDashChromeTexts();
+  // Punto de entrada del resolvedor de idioma (niv-user.js): cuando el
+  // idioma de la cuenta difiere del local, la chrome se repinta entera.
+  window._applyDashLang = (lang) => {
+    if (lang !== 'es' && lang !== 'en') return;
+    if (lang === NIV_LANG) { _applyDashChromeTexts(); return; }
+    NIV_LANG = lang;
+    _applyDashChromeTexts();
+  };
 
   // ---- barra superior: pestaña activa según la vista ----
   window._onDashViewChange = (name) => {
@@ -3755,8 +3866,8 @@ let currentUser;
   // secciones ('niv-panel-sections', clave 'nav-open'), sin almacen paralelo.
   (() => {
     let saved = {};
-    try { saved = JSON.parse(localStorage.getItem('niv-panel-sections') || '{}'); } catch (_) {}
-    const store = () => { try { localStorage.setItem('niv-panel-sections', JSON.stringify(saved)); } catch (_) {} };
+    try { saved = JSON.parse(_nivGetSetting('niv-panel-sections') || '{}'); } catch (_) {}
+    const store = () => { _nivSetSetting('niv-panel-sections', JSON.stringify(saved)); };
     const units = {};
     document.querySelectorAll('#niv-panel .niv-navunit').forEach((u) => { units[u.getAttribute('data-navunit')] = u; });
     // la lista de proyectos expandida vive en la zona desplazable del panel,
@@ -3799,15 +3910,35 @@ let currentUser;
     };
   })();
 
-  // ---- vista Usuarios: users.html incrustado en modo embed (?embed=users) ----
-  // La pagina completa de usuarios sigue siendo Ajustes; aqui solo vive el
-  // area de gestion. La carga es perezosa (primer uso) y el enlace "Add more"
-  // pide la apertura del flujo de agregar por postMessage si el marco ya
-  // cargo, o por parametro si todavia no.
+  // ---- vista Usuarios: dos superficies, dos puertas (regla IA) ----
+  // La vista incrusta el RESUMEN de usuarios para todo espectador con
+  // permiso: la pagina raiz de usuarios servida en /users, en modo embed
+  // (?embed=1). La ADMINISTRACION vive en /company/users (invitaciones,
+  // roles, estado, eliminacion) y solo se incrusta aqui cuando un gerente
+  // la pide: el flujo "Add more" (?addUser=1, los parametros embed se
+  // conservan) o el boton de administrar de la cabecera de la vista, que
+  // alterna entre resumen y administracion. La carga es perezosa (primer
+  // uso) y "Add more" pide la apertura del flujo por postMessage si el
+  // marco de administracion ya cargo, o por parametro si todavia no.
   (() => {
     const frame = document.getElementById('users-embed-frame');
     if (!frame) return;
     let ready = false;
+    let mode = null; // 'overview' | 'admin'
+    const OVERVIEW_URL = '/users?embed=1';
+    const ADMIN_URL = '/company/users?embed=users';
+    window._syncUsersAdminBtn = () => {
+      const btn = document.getElementById('users-admin-btn');
+      if (btn) btn.textContent = mode === 'admin' ? L('Ver resumen', 'View overview') : L('Administrar usuarios', 'Manage users');
+      const fbLink = document.getElementById('users-fallback-link');
+      if (fbLink) fbLink.href = mode === 'admin' ? '/company/users' : '/users';
+    };
+    const setMode = (next, url) => {
+      mode = next;
+      ready = false;
+      frame.src = url;
+      window._syncUsersAdminBtn();
+    };
     frame.addEventListener('load', () => {
       if (!frame.getAttribute('src')) return;
       ready = true;
@@ -3820,12 +3951,17 @@ let currentUser;
       if (fb) fb.style.display = 'block';
     });
     window._ensureUsersFrame = (addUser) => {
-      const url = '/company/users?embed=users' + (addUser ? '&addUser=1' : '');
-      if (!frame.getAttribute('src') || (addUser && !ready)) { frame.src = url; return; }
-      if (addUser && ready) {
+      if (addUser) {
+        if (mode !== 'admin' || !ready) { setMode('admin', ADMIN_URL + '&addUser=1'); return; }
         try { frame.contentWindow.postMessage({ type: 'nivelato:addUser' }, window.location.origin); } catch (_) {}
+        return;
       }
+      if (mode !== 'overview' || !frame.getAttribute('src')) { setMode('overview', OVERVIEW_URL); return; }
     };
+    window._openUsersAdmin = () => { if (mode !== 'admin') setMode('admin', ADMIN_URL); };
+    window._showUsersOverview = () => { if (mode !== 'overview') setMode('overview', OVERVIEW_URL); };
+    window._toggleUsersAdmin = () => { if (mode === 'admin') window._showUsersOverview(); else window._openUsersAdmin(); };
+    window._syncUsersAdminBtn();
   })();
 
   // ---- barra superior: indicador deslizante con topes (detents) ----
@@ -4032,7 +4168,7 @@ let currentUser;
   // ---- sidebar: secciones colapsables individualmente (ley #2) ----
   (() => {
     let saved = {};
-    try { saved = JSON.parse(localStorage.getItem('niv-panel-sections') || '{}'); } catch (_) {}
+    try { saved = JSON.parse(_nivGetSetting('niv-panel-sections') || '{}'); } catch (_) {}
     document.querySelectorAll('#niv-panel .niv-panel-sec').forEach((sec, i) => {
       const key = sec.getAttribute('data-seckey') || ('sec' + i);
       const title = sec.querySelector('.niv-panel-sec-title');
@@ -4047,7 +4183,7 @@ let currentUser;
       const toggle = () => {
         sec.classList.toggle('sec-collapsed');
         saved[key] = sec.classList.contains('sec-collapsed');
-        try { localStorage.setItem('niv-panel-sections', JSON.stringify(saved)); } catch (_) {}
+        _nivSetSetting('niv-panel-sections', JSON.stringify(saved));
       };
       chev.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
       title.addEventListener('click', (e) => {
@@ -4066,7 +4202,7 @@ let currentUser;
     const WKEY = 'niv-panel-width';
     let autoCollapsed = false;
     const savedWidth = () => {
-      try { const w = parseInt(localStorage.getItem(WKEY) || '', 10); return (w >= 220 && w <= 520) ? w : null; } catch (_) { return null; }
+      try { const w = parseInt(_nivGetSetting(WKEY) || '', 10); return (w >= 220 && w <= 520) ? w : null; } catch (_) { return null; }
     };
     const w0 = savedWidth();
     if (w0 && !panel.classList.contains('collapsed')) panel.style.width = w0 + 'px';
@@ -4102,7 +4238,7 @@ let currentUser;
           const rawW = ev.clientX - startLeft;
           if (rawW < SNAP_W) {
             snapped = true;
-            try { localStorage.setItem(WKEY, String(lastGoodW)); } catch (_) {}
+            _nivSetSetting(WKEY, String(lastGoodW));
             autoCollapsed = false; // gesto manual: applyAuto no lo resucita al ensanchar
             setCollapsed(true); // la misma maquinaria que el toggle y el auto-colapso
             endDrag(); // se suelta aqui: el resto del gesto ya no se sigue
@@ -4116,7 +4252,7 @@ let currentUser;
           endDrag();
           if (snapped) return; // WKEY ya guarda lastGoodW; el width quedo limpio
           const w = parseInt(panel.style.width, 10);
-          if (w) { try { localStorage.setItem(WKEY, String(w)); } catch (_) {} }
+          if (w) { _nivSetSetting(WKEY, String(w)); }
         };
         document.addEventListener('pointermove', move);
         document.addEventListener('pointerup', up);
