@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
 <base href="/" />
 <meta charset="UTF-8" />
@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0d0d0f" />
 <link rel="manifest" href="manifest.json" />
-<title>Nivelato - Updates</title>
+<title>Nivelato - Actualizaciones</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   :root {
@@ -39,8 +39,12 @@
     gap: var(--niv-inset, 30px);
     box-sizing: border-box;
   }
-  /* ---------- sidebar: shared .niv-side component (niv-dark.css) ---------- */
-  .shell .niv-side { width: 300px; flex: none; }
+  /* ---------- sidebar: company module hosted in #chrome-sidebar ---------- */
+  #chrome-sidebar { width: 300px; flex: none; height: calc(100vh - (2 * var(--niv-inset, 30px))); position: sticky; top: var(--niv-inset, 30px); }
+  #chrome-sidebar .niv-shell-frame { height: 100%; }
+  /* ---------- top bar: desktop only (shell rule) ---------- */
+  #chrome-topbar { display: block; }
+  .updates-wrap { width: 100%; max-width: 720px; }
   /* ---------- main ---------- */
   .main {
     flex: 1;
@@ -51,7 +55,6 @@
   }
   .update-card {
     width: 100%;
-    max-width: 720px;
     background: var(--card);
     border: 1.5px solid var(--line);
     border-radius: var(--radius-lg);
@@ -213,9 +216,13 @@
     font-size: 14px;
     text-align: center;
   }
-  @media (max-width: 768px) {
-    .niv-side { display: none; }
-    .shell { padding: 12px; }
+  @media (max-width: 900px) {
+    /* Shell rule: the top bar does not exist on mobile. The bridge mount
+       is suppressed in JS and this hides the host box as a second layer;
+       mobile navigation is the sidebar module, stacked above the card. */
+    #chrome-topbar { display: none !important; }
+    .shell { flex-direction: column; padding: 12px; }
+    #chrome-sidebar { width: 100%; height: 480px; position: static; }
     .main { padding: 20px 16px; }
     .update-card { padding: 24px 20px; border-radius: var(--radius-lg); }
     .card-top { gap: 14px; margin-bottom: 18px; }
@@ -226,36 +233,19 @@
 <link rel="stylesheet" href="./qgc-theme.css" />
 </head>
 <body>
+<div id="chrome-topbar"></div>
 <div class="shell">
-  <aside class="niv-side" aria-label="Company navigation">
-    <div class="niv-side-head">
-      <div class="niv-company-avatar" id="org-avatar">--</div>
-      <div>
-        <div class="niv-company-name" id="org-name">Loading...</div>
-        <div class="niv-company-ver" id="org-version">Nivelato</div>
-      </div>
-    </div>
-    <nav class="niv-nav">
-      <div class="niv-nav-group">
-        <div class="niv-nav-group-title">Company</div>
-        <a class="niv-nav-btn" href="/company/users">Users</a>
-        <a class="niv-nav-btn" href="/company/settings">Company settings</a>
-        <button class="niv-nav-btn active" aria-current="page">Updates<span class="nav-sub" id="updates-sub">Checking...</span><span class="dot" id="updates-dot"></span></button>
-        <button class="niv-nav-btn soon" disabled>Billing<span class="soon-badge">soon</span></button>
-      </div>
-      <div class="niv-nav-group">
-        <div class="niv-nav-group-title">Account</div>
-        <a class="niv-nav-btn" href="/account/settings">My account</a>
-      </div>
-    </nav>
-  </aside>
+  <div id="chrome-sidebar" aria-label="Navegación de la compañía"></div>
   <main class="main">
-    <div class="update-card" id="update-card">
-      <div class="state-loading" id="loading-state">Loading update status...</div>
+    <div class="updates-wrap">
+      <a class="btn-back niv-btn-back" id="btn-back" href="/dashboard.html?view=home">&#8592; Volver</a>
+      <div class="update-card" id="update-card">
+        <div class="state-loading" id="loading-state">Cargando el estado de actualización...</div>
+      </div>
+      <div class="niv-status-line" id="update-status" role="status" aria-live="polite"></div>
     </div>
   </main>
 </div>
-
 <script type="module">
 import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
@@ -290,14 +280,6 @@ let onlineRefreshTimer = null;
 
 const isOwner = () => currentUserData && currentUserData.role === 'owner';
 
-function initialsOf(name) {
-  const words = String(name || '').trim().split(/\s+/).filter(Boolean);
-  if (!words.length) return 'QG';
-  const first = words[0][0] || '';
-  const second = words.length > 1 ? (words[1][0] || '') : (words[0][1] || '');
-  return (first + second).toUpperCase();
-}
-
 function dataVersion() {
   return (orgData && orgData.dataVersion) ? String(orgData.dataVersion) : '0.9';
 }
@@ -311,18 +293,13 @@ function pendingScheduled() {
   return !!(orgData && orgData.pendingUpdate);
 }
 
-function renderSidebar() {
-  const name = orgData && orgData.name ? orgData.name : 'Company';
-  document.getElementById('org-avatar').textContent = initialsOf(name);
-  document.getElementById('org-name').textContent = name;
-  document.getElementById('org-version').textContent = 'Nivelato v' + dataVersion();
-  const pending = updateAvailable() || pendingScheduled();
-  document.getElementById('updates-sub').textContent = pending ? 'New version available' : 'Up to date';
-  document.getElementById('updates-dot').classList.toggle('on', pending);
-}
+/* The sidebar is the company module (modules/sidebar.html via
+   NivShell.mountSidebar): it renders the org head and owns the Updates
+   entry's status sub label and dot (ids updates-sub / updates-dot live
+   inside the module iframe, with the same app_updates/latest vs org
+   dataVersion comparison). This page no longer forks that markup. */
 
 function render() {
-  renderSidebar();
   if (applying) return; // (b) owns the card while applying
   if (pendingScheduled()) return renderScheduled();
   if (updateAvailable()) return renderAvailable();
@@ -576,14 +553,66 @@ onAuthStateChanged(auth, async (user) => {
     (snap) => {
       orgData = snap.exists() ? snap.data() : {};
       if (!applying) render();
-      else renderSidebar();
     },
     (e) => {
       card.innerHTML = `<div class="state-error">Could not load company data: ${escapeHtml(e.message || 'unknown error')}</div>`;
     });
 });
 </script>
+<script src="./niv-settings.js"></script>
+<script src="./modules/shell-bridge.js"></script>
 <script src="./nav-referrer.js"></script>
+<script>
+  /* Shell mounts (module platform, see modules/README.md).
+     Sidebar: the company module replaces this page's old forked sidebar
+     markup; active entry is Updates. Top bar: SHELL RULE, desktop only:
+     at <=900px the bridge mount is suppressed here and the host box is
+     hidden in CSS, and the topbar module self-suppresses too; mobile
+     navigation is the sidebar. Language starts from the NivSettings
+     chain; the page module re-points both handles when the user level
+     language resolves and on later niv:lang changes. */
+  (function () {
+    var lang = 'es';
+    try { if (window.NivSettings) lang = window.NivSettings.getLang(); } catch (e) { /* default es */ }
+    var onNav = function (href) {
+      /* Referrer capture for JS driven navigation into Account settings,
+         the nivSaveSettingsReferrer hook nav-referrer.js exposes. */
+      try {
+        var path = new URL(href, window.location.origin).pathname;
+        if (path === '/account/settings' && window.nivSaveSettingsReferrer) window.nivSaveSettingsReferrer();
+      } catch (e) { /* ignore */ }
+    };
+    try {
+      window.__nivSidebar = window.NivShell.mountSidebar('#chrome-sidebar', {
+        target: 'company', active: 'updates', lang: lang, onNav: onNav
+      });
+    } catch (e) { /* shell bridge unavailable: the card still works */ }
+    try {
+      if (window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
+        window.__nivTopbar = window.NivShell.mountTopbar('#chrome-topbar', { active: 'home', lang: lang });
+      }
+    } catch (e) { /* ignore */ }
+
+    /* Referrer-aware Back, same semantics nav-referrer.js applies on the
+       account settings page: an allowlisted same origin referrer wins,
+       the /dashboard.html?view=home fallback in the markup otherwise.
+       (nav-referrer.js itself only consumes its saved referrer on
+       /account/settings, so this page mirrors its allowlist against
+       document.referrer without touching the one-shot saved key, which
+       belongs to the account settings visit.) */
+    var ALLOWED = ['/', '/dashboard.html', '/company/users', '/company/settings', '/company/updates', '/photo.html'];
+    try {
+      if (document.referrer) {
+        var u = new URL(document.referrer, window.location.origin);
+        if (u.origin === window.location.origin && ALLOWED.indexOf(u.pathname) !== -1 &&
+            u.pathname + u.search !== window.location.pathname + window.location.search) {
+          var btn = document.getElementById('btn-back');
+          if (btn) btn.setAttribute('href', u.pathname + u.search);
+        }
+      }
+    } catch (e) { /* keep the fallback href */ }
+  })();
+</script>
 <script src="./press-yaoi.js"></script>
 </body>
 </html>
