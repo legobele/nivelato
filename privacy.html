@@ -4,22 +4,26 @@
 <meta charset="UTF-8" />
 <script src="./company-theme.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0e0e10" />
 <title>Nivelato — Política de Privacidad</title>
+<link rel="icon" href="icon-192.png" />
+<link rel="manifest" href="manifest.json" />
+<link rel="stylesheet" href="niv-dark.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   * { box-sizing: border-box; }
-  body { font-family: 'Inter', system-ui, sans-serif; margin: 0; background: #f4f6f4; color: #1c2420; line-height: 1.65; }
-  header { background: #2f9e44; color: #fff; padding: 28px 20px; }
+  body { font-family: 'Inter', system-ui, sans-serif; margin: 0; background: var(--niv-bg); color: var(--niv-text); line-height: 1.65; }
+  header { background: var(--niv-surface); color: var(--niv-text); padding: 28px 20px; border-bottom: 1px solid var(--niv-border-soft); }
   header h1 { margin: 0; font-size: 24px; }
-  header p { margin: 6px 0 0; opacity: .9; font-size: 14px; }
+  header p { margin: 6px 0 0; color: var(--niv-text-dim); font-size: 14px; }
   main { max-width: 760px; margin: 0 auto; padding: 28px 20px 60px; }
-  h2 { font-size: 18px; margin: 32px 0 10px; color: #2f9e44; }
+  h2 { font-size: 18px; margin: 32px 0 10px; color: var(--niv-green); }
   ul { padding-left: 22px; }
   li { margin-bottom: 8px; }
-  .updated { font-size: 13px; color: #6b7a70; margin-top: 40px; }
-  a { color: #2f9e44; }
-  .card { background: #fff; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+  .updated { font-size: 13px; color: var(--niv-text-dim); margin-top: 40px; }
+  a { color: var(--niv-green); }
+  .card { background: var(--niv-surface); border: 1px solid var(--niv-border); border-radius: var(--niv-radius); padding: 20px 22px; }
 </style>
 <link rel="stylesheet" href="./qgc-theme.css">
 </head>
@@ -29,6 +33,7 @@
   <p>Qué datos recopila la app, por qué y cómo se manejan.</p>
 </header>
 <main>
+  <a class="niv-btn-back" href="ayuda.html">← Centro de ayuda</a>
   <div class="card">
     <p>Nivelato es una herramienta de medición móvil. Este documento describe qué datos recopila la app, por qué y cómo se manejan.</p>
 
