@@ -398,8 +398,12 @@ What does NOT exist (TODOs, not fiction):
 The debug surface documents exactly this, and the help docs gain a
 matching section (ayuda.html, new section "Versiones y volver a una
 version anterior") written to the same facts. The help repo is THIS
-repo: ayuda.html is served at legobele.github.io/nivelato/ayuda.html.
-Its Pages pipeline has been wedged since 2026-10-06; the section is
+repo. Since 2026-10-12 the help page's canonical home is
+https://support.nivelatolabs.com/ (the nivelato-support worker
+serves support/index.html from this repo's main via GitHub raw);
+the page previously lived at legobele.github.io/nivelato/ayuda.html,
+where ayuda.html is now a redirect stub to the new home. Its Pages
+pipeline has been wedged since 2026-10-06; the section is
 committed anyway and the wedge is reported, not worked around.
 
 ...[truncated 20367 chars]
