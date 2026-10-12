@@ -21,8 +21,15 @@
     overflow: hidden;
   }
 
-  /* Progress state tokens (design system, from the flow boards):
-     orange = Not done yet, yellow = Ongoing, green = Done, red = Error. */
+  /* Progress state tokens (design system, legend updated Oct 12):
+     FIVE states. orange solid = Not done yet, yellow SOLID = Ongoing
+     (the item/step itself), green solid = Done, red solid = Error,
+     yellow DASHED = Ongoing (section). Stroke carries scope: solid is
+     item-level, dashed is section-level. The rail lists sections, so
+     rail rings use: todo (orange solid), ongoing-section (yellow
+     dashed, the open section), done (green solid), error (red solid).
+     Solid yellow 'ongoing' stays in the token set for per-item state
+     inside a section's cards. */
   :root {
     --flow-todo: #fb923c;
     --flow-doing: #facc15;
@@ -93,6 +100,7 @@
   }
   .flow-ring[data-state="todo"] { border-color: var(--flow-todo); }
   .flow-ring[data-state="ongoing"] { border-color: var(--flow-doing); }
+  .flow-ring[data-state="ongoing-section"] { border-color: var(--flow-doing); border-style: dashed; }
   .flow-ring[data-state="done"] { border-color: var(--flow-done); }
   .flow-ring[data-state="error"] { border-color: var(--flow-error); }
   .flow-hint { font-size: 13px; color: var(--flow-doing); min-height: 18px; margin: 4px 2px 0; }
@@ -470,7 +478,7 @@ const STR = {
     newCustomer: 'Cliente nuevo', newProject: 'Proyecto nuevo',
     progressDone: '{n}% listo',
     sectionDetails: 'Datos del cliente y el proyecto', sectionDimensions: 'Dimensiones base',
-    stateTodo: 'Pendiente', stateOngoing: 'En curso', stateDone: 'Listo', stateError: 'Error',
+    stateTodo: 'Pendiente', stateOngoing: 'En curso', stateOngoingSection: 'En curso (sección)', stateDone: 'Listo', stateError: 'Error',
     graph: 'Gráfica',
     whoTitle: '¿Para quién es?',
     optIndividual: 'Cliente (individual)', optNew: 'Empresa o proyecto (nuevo)', optExisting: 'Empresa o proyecto (existente)',
@@ -506,7 +514,7 @@ const STR = {
     newCustomer: 'New customer', newProject: 'New project',
     progressDone: '{n}% done',
     sectionDetails: 'Customer and project details', sectionDimensions: 'Base dimensions',
-    stateTodo: 'Not done yet', stateOngoing: 'Ongoing', stateDone: 'Done', stateError: 'Error',
+    stateTodo: 'Not done yet', stateOngoing: 'Ongoing', stateOngoingSection: 'Ongoing (section)', stateDone: 'Done', stateError: 'Error',
     graph: 'Graph',
     whoTitle: 'Who is this for?',
     optIndividual: 'Customer (individual)', optNew: 'Company or project (new)', optExisting: 'Company or project (existing)',
@@ -596,7 +604,11 @@ function whoValid() {
   return false;
 }
 function section1Done() { return whoValid() && state.location.trim().length > 0; }
-function section1State() { return section1Done() ? 'done' : 'ongoing'; }
+function section1State() {
+  if (section1Done()) return 'done';
+  if (state.activeSection === 1) return 'ongoing-section';
+  return 'todo';
+}
 /* Base dimensions: totals are whole + fraction, the same readVal math
    the wizard uses for hueco-ancho-bot / hueco-alto-izq. */
 function dimsTotals() {
@@ -616,7 +628,7 @@ function section2Done() {
 function section2State() {
   if (state.dims.error) return 'error';
   if (section2Done()) return 'done';
-  if (state.activeSection === 2 || state.dims.visited) return 'ongoing';
+  if (state.activeSection === 2) return 'ongoing-section';
   return 'todo';
 }
 function progressPct() {
@@ -671,13 +683,15 @@ function renderProgress() {
   $('flow-progress-fill').style.width = pct + '%';
   $('flow-progress').setAttribute('aria-valuenow', String(pct));
   $('flow-progress-label').textContent = S().progressDone.replace('{n}', String(pct));
+  const STATE_LABEL = { done: 'stateDone', error: 'stateError', 'ongoing-section': 'stateOngoingSection', ongoing: 'stateOngoing', todo: 'stateTodo' };
   const r1 = $('flow-ring-1');
-  r1.dataset.state = section1State();
-  r1.title = S()[section1State() === 'done' ? 'stateDone' : 'stateOngoing'];
+  const s1 = section1State();
+  r1.dataset.state = s1;
+  r1.title = S()[STATE_LABEL[s1]];
   const r2 = $('flow-ring-2');
   const s2 = section2State();
   r2.dataset.state = s2;
-  r2.title = S()[s2 === 'done' ? 'stateDone' : s2 === 'error' ? 'stateError' : s2 === 'ongoing' ? 'stateOngoing' : 'stateTodo'];
+  r2.title = S()[STATE_LABEL[s2]];
   $('flow-sec-1').classList.toggle('active', state.activeSection === 1);
   $('flow-sec-2').classList.toggle('active', state.activeSection === 2);
 }
