@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<script src="/company-theme.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0e0e10" />
+<link rel="manifest" href="/manifest.json" />
+<title>Nivelato - Nueva medida</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/niv-dark.css" />
+<link rel="stylesheet" href="/qgc-theme.css" />
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--niv-bg);
+    color: var(--niv-text);
+    font-family: 'Inter', system-ui, sans-serif;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* Progress state tokens (design system, from the flow boards):
+     orange = Not done yet, yellow = Ongoing, green = Done, red = Error. */
+  :root {
+    --flow-todo: #fb923c;
+    --flow-doing: #facc15;
+    --flow-done: var(--niv-green);
+    --flow-error: var(--niv-red);
+    --flow-salmon: #f1948a;
+  }
+
+  .flow-shell {
+    display: flex;
+    gap: var(--niv-inset);
+    padding: var(--niv-inset);
+    height: 100dvh;
+  }
+
+  /* ---------- left rail ---------- */
+  .flow-rail {
+    width: 300px; flex: none;
+    display: flex; flex-direction: column;
+    background: var(--niv-surface);
+    border: 1px solid var(--niv-border);
+    border-radius: var(--niv-radius);
+    padding: 22px 20px;
+    min-height: 0;
+  }
+  .flow-watermark {
+    display: none;
+    color: #ff3b30;
+    font-weight: 800; font-size: 13px; letter-spacing: .02em;
+    margin-bottom: 6px; word-break: break-all;
+  }
+  .flow-watermark.on { display: block; }
+  .flow-brand { font-size: 30px; font-weight: 800; line-height: 1.05; margin: 0 0 10px; }
+  .flow-context { font-size: 14.5px; line-height: 1.45; margin-bottom: 16px; word-break: break-word; }
+  .flow-context .dim { color: var(--niv-text-dim); }
+  .flow-context .ctx-id { color: var(--niv-text-dim); font-size: 12.5px; }
+
+  .flow-progress-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .flow-progress {
+    position: relative; flex: 1; height: 26px;
+    border: 1px solid var(--niv-border); border-radius: var(--niv-pill);
+    background: var(--niv-surface-2); overflow: hidden;
+  }
+  .flow-progress-fill {
+    position: absolute; inset: 0 auto 0 0; width: 0%;
+    background: rgba(34, 197, 94, .28);
+    transition: width .35s ease;
+  }
+  .flow-progress-dot {
+    position: absolute; top: 50%; left: 7px; transform: translateY(-50%);
+    width: 13px; height: 13px; border-radius: 50%;
+    background: var(--flow-done);
+  }
+  .flow-progress-label { font-size: 14px; font-weight: 600; white-space: nowrap; }
+
+  .flow-sections { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+  .flow-section {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    background: transparent; border: 1px solid transparent; border-radius: 12px;
+    color: var(--niv-text); font: 500 15px 'Inter', system-ui, sans-serif;
+    text-align: left; padding: 9px 10px; cursor: pointer;
+  }
+  .flow-section:hover { background: var(--niv-surface-2); }
+  .flow-section.active { background: var(--niv-surface-2); border-color: var(--niv-border-soft); }
+  .flow-ring {
+    flex: none; width: 22px; height: 22px; border-radius: 50%;
+    border: 3px solid var(--flow-todo); background: transparent;
+  }
+  .flow-ring[data-state="todo"] { border-color: var(--flow-todo); }
+  .flow-ring[data-state="ongoing"] { border-color: var(--flow-doing); }
+  .flow-ring[data-state="done"] { border-color: var(--flow-done); }
+  .flow-ring[data-state="error"] { border-color: var(--flow-error); }
+  .flow-hint { font-size: 13px; color: var(--flow-doing); min-height: 18px; margin: 4px 2px 0; }
+
+  .flow-rail-spacer { flex: 1; }
+
+  /* ---------- user chip + menu ---------- */
+  .flow-user { position: relative; margin-top: 14px; }
+  .flow-chip {
+    display: flex; align-items: center; gap: 11px; width: 100%;
+    background: transparent; border: 1px solid transparent; border-radius: 12px;
+    color: var(--niv-text); font-family: inherit; text-align: left;
+    padding: 8px; cursor: pointer;
+  }
+  .flow-chip:hover { background: var(--niv-surface-2); }
+  .flow-avatar {
+    flex: none; width: 38px; height: 38px; border-radius: 50%;
+    background: var(--niv-surface-2); border: 1px solid var(--niv-border-soft);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; overflow: hidden;
+  }
+  .flow-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .flow-chip-meta { min-width: 0; }
+  .flow-chip-name { font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .flow-chip-email { font-size: 12.5px; color: var(--niv-text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .flow-menu {
+    position: absolute; left: 0; right: 0; bottom: calc(100% + 8px);
+    background: var(--niv-surface); border: 1px solid var(--niv-border);
+    border-radius: 14px; padding: 8px; display: none; z-index: 40;
+    box-shadow: 0 16px 48px rgba(0,0,0,.5);
+  }
+  .flow-menu.open { display: block; }
+  .flow-menu button {
+    display: block; width: 100%; text-align: left;
+    background: transparent; border: 1px solid var(--niv-border-soft);
+    border-radius: var(--niv-pill); color: var(--niv-text);
+    font: 600 14.5px 'Inter', system-ui, sans-serif;
+    padding: 11px 16px; margin-bottom: 8px; cursor: pointer;
+  }
+  .flow-menu button:last-child { margin-bottom: 0; }
+  .flow-menu button:hover { background: var(--niv-surface-2); }
+
+  /* ---------- main column ---------- */
+  .flow-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--niv-inset); min-height: 0; }
+  .flow-graph-panel {
+    position: relative; flex: 1.25; min-height: 240px;
+    background:
+      linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px),
+      #101013;
+    background-size: 28px 28px;
+    border: 1px solid var(--niv-border); border-radius: var(--niv-radius);
+    overflow: hidden;
+  }
+  .flow-graph-tag {
+    position: absolute; top: 12px; left: 14px; z-index: 3;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--niv-text-dim); background: rgba(14,14,16,.72);
+    border: 1px solid var(--niv-border-soft); border-radius: var(--niv-pill);
+    padding: 3px 10px; pointer-events: none;
+  }
+  #flow-graph-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+  .flow-cards { display: grid; grid-template-columns: 1fr 1fr; gap: var(--niv-inset); align-items: start; }
+  .flow-card {
+    background: var(--niv-surface); border: 1px solid var(--niv-border);
+    border-radius: var(--niv-radius); padding: 22px;
+  }
+  .flow-card h2 { font-size: 19px; margin: 0 0 16px; text-align: center; }
+  .flow-opt {
+    display: block; width: 100%; margin-bottom: 10px;
+    background: transparent; border: 1px solid var(--niv-border);
+    border-radius: var(--niv-pill); color: var(--niv-text);
+    font: 500 15px 'Inter', system-ui, sans-serif;
+    padding: 12px 18px; cursor: pointer; text-align: center;
+  }
+  .flow-opt:last-child { margin-bottom: 0; }
+  .flow-opt:hover { background: var(--niv-surface-2); }
+  .flow-opt.selected { border-color: var(--niv-accent); background: var(--niv-surface-2); font-weight: 600; }
+  .flow-why { margin-top: 16px; border-top: 1px solid var(--niv-border-soft); padding-top: 12px; }
+  .flow-why h3 { font-size: 14px; margin: 0 0 4px; }
+  .flow-why p { font-size: 13.5px; color: var(--niv-text-dim); line-height: 1.5; margin: 0; }
+
+  .flow-projects { margin-top: 6px; display: none; }
+  .flow-projects.open { display: block; }
+  .flow-projects .flow-opt { font-size: 14px; padding: 10px 14px; }
+  .flow-empty { font-size: 13.5px; color: var(--niv-text-dim); text-align: center; padding: 8px 0 2px; }
+
+  .flow-loc-input {
+    width: 100%; background: transparent; border: 1px solid var(--niv-border);
+    border-radius: var(--niv-pill); color: var(--niv-text);
+    font: 400 15px 'Inter', system-ui, sans-serif; padding: 12px 18px;
+    text-align: center; margin-bottom: 12px;
+  }
+  .flow-loc-input::placeholder { color: var(--niv-text-dim); }
+  .flow-loc-input:focus { outline: none; border-color: var(--niv-accent); }
+  .flow-geo-status { font-size: 13px; color: var(--niv-text-dim); min-height: 18px; text-align: center; margin-top: 10px; }
+  .flow-geo-status.err { color: var(--flow-error); }
+
+  /* ---------- base dimensions step ---------- */
+  .flow-dims-wrap { display: grid; grid-template-columns: 1.7fr 1fr; gap: var(--niv-inset); align-items: stretch; }
+  .flow-dims-card h2 { text-align: left; }
+  .flow-dims-unit { color: var(--niv-text-dim); font-size: 14px; margin: -8px 0 18px; }
+  .flow-dim-row { display: flex; align-items: flex-end; gap: 14px; }
+  .flow-dim-group { flex: 1; min-width: 0; }
+  .flow-dim-group label { display: block; font-size: 12.5px; font-weight: 600; color: var(--niv-text-dim); margin-bottom: 7px; }
+  .flow-dim-pair { display: flex; gap: 8px; }
+  .flow-whole {
+    flex: 1; min-width: 0; background: var(--niv-surface-2);
+    border: 1px solid var(--niv-border-soft); border-radius: 12px;
+    color: var(--niv-text); font: 400 15px 'Inter', system-ui, sans-serif;
+    padding: 11px 13px;
+  }
+  .flow-whole:focus { outline: none; border-color: var(--niv-accent); }
+  .flow-frac {
+    flex: none; width: 108px; background: var(--niv-surface-2);
+    border: 1px solid var(--niv-border-soft); border-radius: 12px;
+    color: var(--niv-text); font: 400 15px 'Inter', system-ui, sans-serif;
+    padding: 11px 10px; color-scheme: dark;
+  }
+  .flow-frac:focus { outline: none; border-color: var(--niv-accent); }
+  .flow-x { font-size: 20px; font-weight: 600; color: var(--niv-text-dim); padding-bottom: 10px; }
+  .flow-step-error {
+    display: none; margin-top: 14px; font-size: 14px; color: var(--flow-error);
+    border: 1px solid rgba(229,72,77,.5); background: rgba(229,72,77,.1);
+    border-radius: 12px; padding: 11px 14px;
+  }
+  .flow-step-error.on { display: block; }
+  .flow-continue {
+    display: block; width: 100%; margin-top: 20px;
+    background: var(--niv-accent); border: 1px solid transparent;
+    border-radius: var(--niv-pill); color: #fff;
+    font: 600 15.5px 'Inter', system-ui, sans-serif;
+    padding: 13px 18px; cursor: pointer;
+  }
+  .flow-continue:hover { filter: brightness(1.12); }
+  .flow-why-panel {
+    background: var(--niv-surface); border: 1px solid var(--niv-border);
+    border-radius: var(--niv-radius); padding: 22px;
+  }
+  .flow-why-panel h3 { font-size: 17px; margin: 0 0 8px; }
+  .flow-why-panel p { font-size: 14.5px; color: var(--niv-text-dim); line-height: 1.6; margin: 0; }
+  @media (max-width: 900px) { .flow-dims-wrap { grid-template-columns: 1fr; gap: 14px; } }
+
+  .flow-stub {
+    display: none; margin-top: var(--niv-inset);
+    background: var(--niv-surface); border: 1px dashed var(--niv-border);
+    border-radius: var(--niv-radius); padding: 18px 22px;
+    font-size: 14.5px; color: var(--niv-text-dim); line-height: 1.55;
+  }
+  .flow-stub.on { display: block; }
+  .flow-stub strong { color: var(--niv-text); }
+
+  /* ---------- gate view ---------- */
+  .flow-gate {
+    display: none; flex: 1; align-items: center; justify-content: center; min-height: 0;
+  }
+  .flow-gate.on { display: flex; }
+  .flow-gate-card {
+    max-width: 520px; width: 100%;
+    background: var(--niv-surface); border: 1px solid var(--niv-border);
+    border-radius: var(--niv-radius); padding: 30px; text-align: center;
+  }
+  .flow-gate-card h1 { font-size: 23px; margin: 0 0 10px; }
+  .flow-gate-card p { color: var(--niv-text-dim); font-size: 15px; line-height: 1.6; margin: 0 0 20px; }
+
+  /* ---------- exit guard dialog ---------- */
+  .flow-guard {
+    position: fixed; inset: 0; z-index: 100; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,.55); padding: 18px;
+  }
+  .flow-guard.open { display: flex; }
+  .flow-guard-card {
+    width: 100%; max-width: 360px;
+    background: var(--niv-surface); border: 1px solid var(--niv-border);
+    border-radius: var(--niv-radius); padding: 24px 22px; text-align: center;
+  }
+  .flow-guard-card p { font-size: 16.5px; line-height: 1.5; margin: 0 0 20px; }
+  .flow-guard-go {
+    display: block; width: 100%; border: none; border-radius: var(--niv-pill);
+    background: var(--flow-salmon); color: #1c1210;
+    font: 600 15.5px 'Inter', system-ui, sans-serif;
+    padding: 13px 18px; cursor: pointer; margin-bottom: 10px;
+  }
+  .flow-guard-cancel {
+    display: block; width: 100%; background: transparent;
+    border: 1px solid var(--niv-border); border-radius: var(--niv-pill);
+    color: var(--niv-text); font: 600 15.5px 'Inter', system-ui, sans-serif;
+    padding: 13px 18px; cursor: pointer;
+  }
+  .flow-guard-cancel:hover { background: var(--niv-surface-2); }
+
+  .flow-loading { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--niv-text-dim); font-size: 15px; }
+
+  @media (max-width: 900px) {
+    body { overflow: auto; height: auto; }
+    .flow-shell { flex-direction: column; height: auto; padding: 14px; gap: 14px; }
+    .flow-rail { width: 100%; }
+    .flow-main { gap: 14px; }
+    .flow-graph-panel { min-height: 300px; flex: none; height: 340px; }
+    .flow-cards { grid-template-columns: 1fr; gap: 14px; }
+    .flow-stub { margin-top: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="flow-shell" id="flow-shell" style="display:none">
+
+  <!-- ======== left rail ======== -->
+  <aside class="flow-rail" aria-label="Nivelato">
+    <div class="flow-watermark" id="flow-watermark"></div>
+    <h1 class="flow-brand">Nivelato</h1>
+    <div class="flow-context">
+      <div id="flow-ctx-customer"><span class="dim" data-s="noCustomer">Sin cliente todavía</span></div>
+      <div id="flow-ctx-project"><span class="dim" data-s="noProject">Sin proyecto todavía</span></div>
+    </div>
+
+    <div class="flow-progress-row">
+      <div class="flow-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="flow-progress">
+        <div class="flow-progress-fill" id="flow-progress-fill"></div>
+        <div class="flow-progress-dot"></div>
+      </div>
+      <div class="flow-progress-label" id="flow-progress-label">0% done</div>
+    </div>
+
+    <nav class="flow-sections niv-scroll" id="flow-sections" aria-label="Secciones">
+      <button type="button" class="flow-section active" id="flow-sec-1">
+        <span class="flow-ring" data-state="ongoing" id="flow-ring-1"></span>
+        <span data-s="sectionDetails">Datos del cliente y el proyecto</span>
+      </button>
+      <button type="button" class="flow-section" id="flow-sec-2">
+        <span class="flow-ring" data-state="todo" id="flow-ring-2"></span>
+        <span data-s="sectionDimensions">Dimensiones base</span>
+      </button>
+      <div class="flow-hint" id="flow-hint"></div>
+    </nav>
+
+    <div class="flow-rail-spacer"></div>
+
+    <div class="flow-user">
+      <div class="flow-menu" id="flow-menu">
+        <button type="button" id="flow-menu-dashboard" data-s="menuDashboard">Panel</button>
+        <button type="button" id="flow-menu-settings" data-s="menuSettings">Ajustes</button>
+      </div>
+      <button type="button" class="flow-chip" id="flow-chip" aria-haspopup="true" aria-expanded="false">
+        <span class="flow-avatar" id="flow-avatar">?</span>
+        <span class="flow-chip-meta">
+          <span class="flow-chip-name" id="flow-user-name">...</span>
+          <span class="flow-chip-email" id="flow-user-email"></span>
+        </span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ======== main column ======== -->
+  <main class="flow-main" id="flow-main">
+    <section class="flow-graph-panel" aria-label="Graph">
+      <span class="flow-graph-tag" data-s="graph">Gráfica</span>
+      <canvas id="flow-graph-canvas"></canvas>
+    </section>
+
+    <div id="flow-step1">
+      <div class="flow-cards">
+        <section class="flow-card" aria-label="Who">
+          <h2 data-s="whoTitle">¿Para quién es?</h2>
+          <button type="button" class="flow-opt" data-who="individual" data-s="optIndividual">Cliente (individual)</button>
+          <button type="button" class="flow-opt" data-who="company-new" data-s="optNew">Empresa o proyecto (nuevo)</button>
+          <button type="button" class="flow-opt" data-who="company-existing" data-s="optExisting">Empresa o proyecto (existente)</button>
+          <div class="flow-projects" id="flow-projects"></div>
+          <div class="flow-why">
+            <h3 data-s="whyTitle">¿Por qué esto?</h3>
+            <p data-s="whoWhy">Para que cada medida pertenezca al cliente y proyecto correctos desde el primer paso.</p>
+          </div>
+        </section>
+
+        <section class="flow-card" aria-label="Where">
+          <h2 data-s="whereTitle">¿Dónde es?</h2>
+          <input type="text" class="flow-loc-input" id="flow-location" data-s-ph="locationPh" placeholder="Ubicación" autocomplete="off" />
+          <button type="button" class="flow-opt" id="flow-geo" data-s="usePrecise">Usar mi ubicación precisa</button>
+          <div class="flow-geo-status" id="flow-geo-status"></div>
+          <div class="flow-why">
+            <h3 data-s="whyTitle2">¿Por qué esto?</h3>
+            <p data-s="whereWhy">La ubicación ancla la medida al lugar donde vivirá el cristal.</p>
+          </div>
+        </section>
+      </div>
+
+      <div class="flow-stub" id="flow-next-stub"></div>
+    </div>
+
+    <div id="flow-step2" style="display:none">
+      <div class="flow-dims-wrap">
+        <section class="flow-card flow-dims-card" aria-label="Base dimensions">
+          <h2 data-s="dimsTitle">Saca tu cinta métrica. ¿Cuáles son las dimensiones base del área?</h2>
+          <div class="flow-dims-unit" data-s="dimsUnit">(pulgadas)</div>
+          <div class="flow-dim-row">
+            <div class="flow-dim-group">
+              <label for="flow-w-whole" data-s="widthLabel">Ancho</label>
+              <div class="flow-dim-pair">
+                <input type="number" class="flow-whole" id="flow-w-whole" min="0" step="1" inputmode="numeric" data-s-ph="wholePh" placeholder="Entero" />
+                <select class="flow-frac" id="flow-w-frac" aria-label="Fracción de pulgada"></select>
+              </div>
+            </div>
+            <div class="flow-x" aria-hidden="true">x</div>
+            <div class="flow-dim-group">
+              <label for="flow-h-whole" data-s="heightLabel">Alto</label>
+              <div class="flow-dim-pair">
+                <input type="number" class="flow-whole" id="flow-h-whole" min="0" step="1" inputmode="numeric" data-s-ph="wholePh" placeholder="Entero" />
+                <select class="flow-frac" id="flow-h-frac" aria-label="Fracción de pulgada"></select>
+              </div>
+            </div>
+          </div>
+          <div class="flow-step-error" id="flow-dims-error" role="alert"></div>
+          <button type="button" class="flow-continue" id="flow-dims-continue" data-s="continueBtn">Continuar</button>
+        </section>
+        <aside class="flow-why-panel" aria-label="Why">
+          <h3 data-s="whyTitle3">¿Por qué esto?</h3>
+          <p data-s="dimsWhy">Esto nos permite medir los desniveles del cristal dándonos una referencia con la que trabajar.</p>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <!-- ======== gate (stable channel / signed out) ======== -->
+  <div class="flow-gate" id="flow-gate">
+    <div class="flow-gate-card">
+      <h1 id="flow-gate-title">El flujo nuevo está en beta</h1>
+      <p id="flow-gate-text">Tu empresa está en el canal estable, así que el flujo nuevo de medidas todavía no está disponible. Llega primero por el canal beta.</p>
+      <a class="niv-btn-pill niv-btn-primary" href="/dashboard.html" id="flow-gate-btn">Ir al panel</a>
+    </div>
+  </div>
+</div>
+
+<div class="flow-loading" id="flow-loading">Cargando...</div>
+
+<!-- ======== exit guard ======== -->
+<div class="flow-guard" id="flow-guard" role="alertdialog" aria-modal="true">
+  <div class="flow-guard-card">
+    <p id="flow-guard-text">Tienes una medición en curso que <strong>será descartada</strong>. ¿Ir al panel?</p>
+    <button type="button" class="flow-guard-go" id="flow-guard-go" data-s="goAnyway">Ir de todos modos</button>
+    <button type="button" class="flow-guard-cancel" id="flow-guard-cancel" data-s="cancel">Cancelar</button>
+  </div>
+</div>
+
+<script src="/niv-settings.js"></script>
+<script src="/adhd.js"></script>
+<script type="module">
+import { auth, db } from '/firebase-config.js';
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+import { getDoc, getDocs, doc, collection } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+import { resolveLang } from '/niv-user.js';
+
+/* New measurement flow, step 1 (Giulia's boards, Oct 12 2026).
+   Additive page: the existing wizard (index.html) is untouched.
+   Entry is gated to the beta/testing/debug channels and hosts; the
+   stable channel sees the gate card, never the flow.
+
+   Channel resolution:
+     1. host surface (testing./debug./beta.nivelatolabs.com)
+     2. orgs/{orgId}.updateChannel === 'beta'
+     3. users/{uid}.betaEnrolled or betaChannel === 'beta'
+     4. 'stable'
+   The TEST watermark renders only when the channel resolves to
+   'testing', with version + commit read live from app_updates/backend.
+   Dev mode (ids beside context names) = debug surface/host, a local
+   host, or demo with dev=1.
+   Demo mode (?demo=1, the modules' own convention) skips auth and
+   feeds demo data; ?channel= is honored only inside demo. */
+
+const STR = {
+  es: {
+    docTitle: 'Nivelato - Nueva medida',
+    noCustomer: 'Sin cliente todavía', noProject: 'Sin proyecto todavía',
+    newCustomer: 'Cliente nuevo', newProject: 'Proyecto nuevo',
+    progressDone: '{n}% listo',
+    sectionDetails: 'Datos del cliente y el proyecto', sectionDimensions: 'Dimensiones base',
+    stateTodo: 'Pendiente', stateOngoing: 'En curso', stateDone: 'Listo', stateError: 'Error',
+    graph: 'Gráfica',
+    whoTitle: '¿Para quién es?',
+    optIndividual: 'Cliente (individual)', optNew: 'Empresa o proyecto (nuevo)', optExisting: 'Empresa o proyecto (existente)',
+    whyTitle: '¿Por qué esto?', whyTitle2: '¿Por qué esto?',
+    whoWhy: 'Para que cada medida pertenezca al cliente y proyecto correctos desde el primer paso.',
+    pickProject: 'Elige un proyecto', noProjects: 'Todavía no hay proyectos en esta empresa.', loadingProjects: 'Cargando proyectos...',
+    whereTitle: '¿Dónde es?', locationPh: 'Ubicación', usePrecise: 'Usar mi ubicación precisa',
+    whereWhy: 'La ubicación ancla la medida al lugar donde vivirá el cristal.',
+    geoBusy: 'Obteniendo tu ubicación...', geoAdded: 'Ubicación precisa agregada.',
+    geoDenied: 'No se compartió la ubicación. Puedes escribirla en el campo.',
+    geoUnsupported: 'Este dispositivo no puede compartir su ubicación.',
+    nextIndividual: 'Sigue: el flujo de cliente nuevo. Llega con la próxima versión de este flujo.',
+    nextReady: 'Datos completos. Las próximas secciones llegan con la próxima versión de este flujo.',
+    dimsTitle: 'Saca tu cinta métrica. ¿Cuáles son las dimensiones base del área?',
+    dimsUnit: '(pulgadas)', widthLabel: 'Ancho', heightLabel: 'Alto', wholePh: 'Entero',
+    continueBtn: 'Continuar',
+    dimsError: 'Ambas dimensiones necesitan un valor mayor que cero para continuar.',
+    whyTitle3: '¿Por qué esto?',
+    dimsWhy: 'Esto nos permite medir los desniveles del cristal dándonos una referencia con la que trabajar.',
+    guardHtml: 'Tienes una medición en curso que <strong>será descartada</strong>. ¿Ir al panel?',
+    goAnyway: 'Ir de todos modos', cancel: 'Cancelar',
+    menuDashboard: 'Panel', menuSettings: 'Ajustes',
+    gateBetaTitle: 'El flujo nuevo está en beta',
+    gateBetaText: 'Tu empresa está en el canal estable, así que el flujo nuevo de medidas todavía no está disponible. Llega primero por el canal beta.',
+    gateSigninTitle: 'Inicia sesión para continuar',
+    gateSigninText: 'El flujo nuevo de medidas necesita tu cuenta de Nivelato.',
+    gateDashboard: 'Ir al panel', gateSignin: 'Iniciar sesión',
+    loading: 'Cargando...'
+  },
+  en: {
+    docTitle: 'Nivelato - New measurement',
+    noCustomer: 'No customer yet', noProject: 'No project yet',
+    newCustomer: 'New customer', newProject: 'New project',
+    progressDone: '{n}% done',
+    sectionDetails: 'Customer and project details', sectionDimensions: 'Base dimensions',
+    stateTodo: 'Not done yet', stateOngoing: 'Ongoing', stateDone: 'Done', stateError: 'Error',
+    graph: 'Graph',
+    whoTitle: 'Who is this for?',
+    optIndividual: 'Customer (individual)', optNew: 'Company or project (new)', optExisting: 'Company or project (existing)',
+    whyTitle: 'Why do this?', whyTitle2: 'Why do this?',
+    whoWhy: 'So every measurement belongs to the right customer and project from the very first step.',
+    pickProject: 'Choose a project', noProjects: 'No projects yet in this company.', loadingProjects: 'Loading projects...',
+    whereTitle: 'Where is this at?', locationPh: 'Location', usePrecise: 'Use my precise location',
+    whereWhy: 'The location anchors the measurement to the place where the glass will live.',
+    geoBusy: 'Getting your location...', geoAdded: 'Precise location added.',
+    geoDenied: 'Location was not shared. You can type it in the field instead.',
+    geoUnsupported: 'This device cannot share its location.',
+    nextIndividual: 'Next: the new customer flow. It arrives with the next build of this flow.',
+    nextReady: 'Details complete. The next sections arrive with the next build of this flow.',
+    dimsTitle: 'Get out your measuring tape. What are the base dimensions of the area?',
+    dimsUnit: '(inches)', widthLabel: 'Width', heightLabel: 'Height', wholePh: 'Whole',
+    continueBtn: 'Continue',
+    dimsError: 'Both dimensions need a value greater than zero to continue.',
+    whyTitle3: 'Why do this?',
+    dimsWhy: 'This lets us measure the offsets of the glass by giving us a reference to work with.',
+    guardHtml: 'You have a measurement in progress which will be <strong>discarded</strong>. Go to dashboard?',
+    goAnyway: 'Go anyway', cancel: 'Cancel',
+    menuDashboard: 'Dashboard', menuSettings: 'Settings',
+    gateBetaTitle: 'The new flow is in beta',
+    gateBetaText: 'Your company is on the stable channel, so the new measurement flow is not available yet. It rolls out through the beta channel first.',
+    gateSigninTitle: 'Sign in to continue',
+    gateSigninText: 'The new measurement flow needs your Nivelato account.',
+    gateDashboard: 'Go to dashboard', gateSignin: 'Sign in',
+    loading: 'Loading...'
+  }
+};
+
+const params = new URLSearchParams(location.search);
+const DEMO = params.get('demo') === '1';
+const HOST = location.hostname;
+const HOST_SURFACE =
+  HOST === 'testing.nivelatolabs.com' ? 'testing' :
+  HOST === 'debug.nivelatolabs.com' ? 'debug' :
+  HOST === 'beta.nivelatolabs.com' ? 'beta' : null;
+const LOCAL_HOST = HOST === 'localhost' || HOST === '127.0.0.1' || HOST === '';
+
+let LANG = 'es';
+try {
+  const ck = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1];
+  const ls = window.localStorage.getItem('nivelato-login-lang');
+  LANG = (ck === 'es' || ck === 'en') ? ck : ((ls === 'es' || ls === 'en') ? ls : 'es');
+} catch (e) {}
+const S = () => STR[LANG];
+
+const state = {
+  who: null,               // 'individual' | 'company-new' | 'company-existing'
+  project: null,           // { id, name } when an existing project is picked/referred
+  customerName: '',        // only when referred with ?customer=
+  location: '',
+  locationCoords: null,
+  touched: false,          // any interaction, or a referral prefill
+  activeSection: 1,
+  dims: {                  // base dimensions (section 2)
+    wWhole: '', wFrac: '0', hWhole: '', hFrac: '0',
+    committed: null,       // { w, h } totals snapshot from the last valid Continue
+    error: false,
+    visited: false
+  },
+  projects: [],            // org projects for the existing picker
+  projectsLoaded: false,
+  user: null,              // { name, email, photoURL }
+  channel: HOST_SURFACE || 'stable',
+  devMode: HOST_SURFACE === 'debug' || LOCAL_HOST || (DEMO && params.get('dev') === '1')
+};
+
+if (DEMO) {
+  state.channel = params.get('channel') || HOST_SURFACE || 'beta';
+  state.user = { name: 'Demo User', email: 'demo@nivelato.app', photoURL: '' };
+  state.projects = [
+    { id: 'demo-project-1', name: 'Test project' },
+    { id: 'fc6efa67b9cd2', name: 'Test project 2' }
+  ];
+  state.projectsLoaded = true;
+}
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+/* ---------- section state machine ---------- */
+function whoValid() {
+  if (state.who === 'individual' || state.who === 'company-new') return true;
+  if (state.who === 'company-existing') return !!state.project;
+  return false;
+}
+function section1Done() { return whoValid() && state.location.trim().length > 0; }
+function section1State() { return section1Done() ? 'done' : 'ongoing'; }
+/* Base dimensions: totals are whole + fraction, the same readVal math
+   the wizard uses for hueco-ancho-bot / hueco-alto-izq. */
+function dimsTotals() {
+  const d = state.dims;
+  return {
+    w: (parseFloat(d.wWhole) || 0) + (parseFloat(d.wFrac) || 0),
+    h: (parseFloat(d.hWhole) || 0) + (parseFloat(d.hFrac) || 0)
+  };
+}
+function dimsValid() { const t = dimsTotals(); return t.w > 0 && t.h > 0; }
+function section2Done() {
+  const c = state.dims.committed;
+  if (!c) return false;
+  const t = dimsTotals();
+  return t.w > 0 && t.h > 0 && t.w === c.w && t.h === c.h;
+}
+function section2State() {
+  if (state.dims.error) return 'error';
+  if (section2Done()) return 'done';
+  if (state.activeSection === 2 || state.dims.visited) return 'ongoing';
+  return 'todo';
+}
+function progressPct() {
+  let done = 0;
+  if (section1Done()) done++;
+  if (section2Done()) done++;
+  return Math.round((done / 2) * 100);
+}
+
+/* ---------- rendering ---------- */
+function applyLang() {
+  document.documentElement.lang = LANG;
+  document.title = S().docTitle;
+  document.querySelectorAll('[data-s]').forEach((el) => {
+    const k = el.getAttribute('data-s');
+    if (S()[k] != null) el.textContent = S()[k];
+  });
+  document.querySelectorAll('[data-s-ph]').forEach((el) => {
+    const k = el.getAttribute('data-s-ph');
+    if (S()[k] != null) el.setAttribute('placeholder', S()[k]);
+  });
+  $('flow-guard-text').innerHTML = S().guardHtml;
+}
+
+function renderContext() {
+  const cEl = $('flow-ctx-customer');
+  const pEl = $('flow-ctx-project');
+  let cHtml, pHtml;
+  if (state.customerName) {
+    cHtml = esc(state.customerName);
+  } else if (state.who === 'individual' || state.who === 'company-new') {
+    cHtml = '<span class="dim">' + esc(S().newCustomer) + '</span>';
+  } else {
+    cHtml = '<span class="dim">' + esc(S().noCustomer) + '</span>';
+  }
+  if (state.project) {
+    pHtml = esc(state.project.name);
+    if (state.devMode && state.project.id) {
+      pHtml += ' <span class="ctx-id">(id ' + esc(state.project.id) + ')</span>';
+    }
+  } else if (state.who === 'company-new') {
+    pHtml = '<span class="dim">' + esc(S().newProject) + '</span>';
+  } else {
+    pHtml = '<span class="dim">' + esc(S().noProject) + '</span>';
+  }
+  cEl.innerHTML = cHtml;
+  pEl.innerHTML = pHtml;
+}
+
+function renderProgress() {
+  const pct = progressPct();
+  $('flow-progress-fill').style.width = pct + '%';
+  $('flow-progress').setAttribute('aria-valuenow', String(pct));
+  $('flow-progress-label').textContent = S().progressDone.replace('{n}', String(pct));
+  const r1 = $('flow-ring-1');
+  r1.dataset.state = section1State();
+  r1.title = S()[section1State() === 'done' ? 'stateDone' : 'stateOngoing'];
+  const r2 = $('flow-ring-2');
+  const s2 = section2State();
+  r2.dataset.state = s2;
+  r2.title = S()[s2 === 'done' ? 'stateDone' : s2 === 'error' ? 'stateError' : s2 === 'ongoing' ? 'stateOngoing' : 'stateTodo'];
+  $('flow-sec-1').classList.toggle('active', state.activeSection === 1);
+  $('flow-sec-2').classList.toggle('active', state.activeSection === 2);
+}
+
+function renderWho() {
+  document.querySelectorAll('[data-who]').forEach((b) => {
+    b.classList.toggle('selected', b.getAttribute('data-who') === state.who);
+  });
+  const box = $('flow-projects');
+  if (state.who === 'company-existing') {
+    box.classList.add('open');
+    if (!state.projectsLoaded) {
+      box.innerHTML = '<div class="flow-empty">' + esc(S().loadingProjects) + '</div>';
+    } else if (!state.projects.length) {
+      box.innerHTML = '<div class="flow-empty">' + esc(S().noProjects) + '</div>';
+    } else {
+      box.innerHTML = '<div class="flow-empty" style="font-weight:600;color:var(--niv-text)">' + esc(S().pickProject) + '</div>' +
+        state.projects.map((p) =>
+          '<button type="button" class="flow-opt' + (state.project && state.project.id === p.id ? ' selected' : '') +
+          '" data-project="' + esc(p.id) + '">' + esc(p.name) + '</button>').join('');
+      box.querySelectorAll('[data-project]').forEach((b) => {
+        b.addEventListener('click', () => {
+          const p = state.projects.find((x) => x.id === b.getAttribute('data-project'));
+          if (p) { state.project = p; state.touched = true; render(); }
+        });
+      });
+    }
+  } else {
+    box.classList.remove('open');
+    box.innerHTML = '';
+  }
+}
+
+function renderNextStub() {
+  const stub = $('flow-next-stub');
+  if (!section1Done()) { stub.classList.remove('on'); stub.innerHTML = ''; return; }
+  stub.classList.add('on');
+  stub.innerHTML = state.who === 'individual'
+    ? '<strong>' + esc(S().optIndividual) + '.</strong> ' + esc(S().nextIndividual)
+    : esc(S().nextReady);
+}
+
+function renderSections() {
+  $('flow-step1').style.display = state.activeSection === 1 ? '' : 'none';
+  $('flow-step2').style.display = state.activeSection === 2 ? '' : 'none';
+}
+
+function renderUser() {
+  if (!state.user) return;
+  $('flow-user-name').textContent = state.user.name || state.user.email || '';
+  $('flow-user-email').textContent = state.user.email || '';
+  const av = $('flow-avatar');
+  if (state.user.photoURL) {
+    av.innerHTML = '<img src="' + esc(state.user.photoURL) + '" alt="">';
+  } else {
+    const src = state.user.name || state.user.email || '?';
+    av.textContent = src.trim().charAt(0).toUpperCase() || '?';
+  }
+}
+
+function render() {
+  applyLang();
+  renderContext();
+  renderProgress();
+  renderWho();
+  renderNextStub();
+  renderSections();
+  renderUser();
+}
+
+/* ---------- graph panel: the current embed renderer, unmodified ----
+   adhd.js is loaded as a classic script above. This page deliberately
+   has NO #drawing-canvas element, so the wizard engine inside adhd.js
+   stays dormant (its init is guarded on that element) and only
+   window.embedGraph is used, exactly as dashboard.html uses it.
+   The renderer paints its own deliberate light canvas; darkening it
+   is a separate, contrast-gated step in GRAPH_MODULE_PLAN.md. */
+let graphMounted = false;
+function mountGraph() {
+  const cvs = $('flow-graph-canvas');
+  const panel = cvs.parentElement;
+  if (!cvs || !panel || typeof window.embedGraph !== 'function') return;
+  const w = Math.max(280, Math.floor(panel.clientWidth));
+  const h = Math.max(220, Math.floor(panel.clientHeight));
+  cvs.width = w; cvs.height = h;
+  /* Feed: the embed payload's base fields, the same shape dashboard
+     passes for a job (hueco.anchoBot / hueco.altoIzq are the stored
+     whole+fraction totals of the wizard's base fields). Until base
+     dimensions are committed, the neutral 36 x 84 defaults the
+     renderer itself falls back to. Offsets stay 'Nivel': the offset
+     steps are later sections of this flow. */
+  const c = state.dims.committed;
+  window.embedGraph(cvs, {
+    anchoBot: c ? c.w : 36, altoIzq: c ? c.h : 84,
+    pIL: 'Nivel', pDL: 'Nivel', tL: 'Nivel', pL: 'Nivel'
+  });
+  graphMounted = true;
+}
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  if (!graphMounted) return;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(mountGraph, 250);
+});
+
+/* ---------- watermark (testing channel only) ---------- */
+async function loadWatermark() {
+  if (state.channel !== 'testing') return;
+  try {
+    const snap = await getDoc(doc(db, 'app_updates', 'backend'));
+    if (!snap.exists()) return;
+    const d = snap.data() || {};
+    const ver = d.friendlyVersion || '';
+    const commit = String(d.commit || '').slice(0, 6);
+    if (!ver) return;
+    $('flow-watermark').textContent = 'TEST - v' + ver + (commit ? ' (' + commit + ')' : '');
+    $('flow-watermark').classList.add('on');
+  } catch (e) { /* registry unreadable: no watermark, never a fake one */ }
+}
+
+/* ---------- interactions ---------- */
+document.querySelectorAll('[data-who]').forEach((b) => {
+  b.addEventListener('click', () => {
+    state.who = b.getAttribute('data-who');
+    state.touched = true;
+    if (state.who !== 'company-existing') state.project = null;
+    render();
+  });
+});
+
+$('flow-location').addEventListener('input', (e) => {
+  state.location = e.target.value;
+  state.touched = true;
+  renderProgress();
+});
+
+$('flow-geo').addEventListener('click', () => {
+  state.touched = true;
+  const status = $('flow-geo-status');
+  status.classList.remove('err');
+  if (!('geolocation' in navigator)) {
+    status.textContent = S().geoUnsupported;
+    status.classList.add('err');
+    return;
+  }
+  status.textContent = S().geoBusy;
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
+      state.locationCoords = { lat, lng };
+      state.location = lat.toFixed(5) + ', ' + lng.toFixed(5);
+      $('flow-location').value = state.location;
+      status.textContent = S().geoAdded;
+      renderProgress();
+    },
+    () => {
+      status.textContent = S().geoDenied;
+      status.classList.add('err');
+    },
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+  );
+});
+
+$('flow-sec-1').addEventListener('click', () => {
+  state.activeSection = 1;
+  $('flow-hint').textContent = '';
+  render();
+});
+$('flow-sec-2').addEventListener('click', () => {
+  state.activeSection = 2;
+  state.dims.visited = true;
+  $('flow-hint').textContent = '';
+  render();
+});
+
+/* ---------- base dimensions ---------- */
+/* The fraction set is the wizard's own (index.html FRAC_OPTIONS):
+   sixteenths, decimal values, populated the same idempotent way. */
+const FRAC_OPTIONS = `
+<option value="0">0</option>
+<option value="0.0625">1/16</option>
+<option value="0.125">1/8</option>
+<option value="0.1875">3/16</option>
+<option value="0.25">1/4</option>
+<option value="0.3125">5/16</option>
+<option value="0.375">3/8</option>
+<option value="0.4375">7/16</option>
+<option value="0.5">1/2</option>
+<option value="0.5625">9/16</option>
+<option value="0.625">5/8</option>
+<option value="0.6875">11/16</option>
+<option value="0.75">3/4</option>
+<option value="0.8125">13/16</option>
+<option value="0.875">7/8</option>
+<option value="0.9375">15/16</option>
+`;
+$('flow-w-frac').innerHTML = FRAC_OPTIONS;
+$('flow-h-frac').innerHTML = FRAC_OPTIONS;
+
+function bindDim(inputId, key) {
+  $(inputId).addEventListener('input', (e) => {
+    state.dims[key] = e.target.value;
+    state.touched = true;
+    if (state.dims.error) { state.dims.error = false; $('flow-dims-error').classList.remove('on'); }
+    renderProgress();
+  });
+  $(inputId).addEventListener('change', (e) => { state.dims[key] = e.target.value; });
+}
+bindDim('flow-w-whole', 'wWhole');
+bindDim('flow-w-frac', 'wFrac');
+bindDim('flow-h-whole', 'hWhole');
+bindDim('flow-h-frac', 'hFrac');
+
+$('flow-dims-continue').addEventListener('click', () => {
+  state.touched = true;
+  if (!dimsValid()) {
+    state.dims.error = true;
+    const err = $('flow-dims-error');
+    err.textContent = S().dimsError;
+    err.classList.add('on');
+    renderProgress();
+    return;
+  }
+  state.dims.error = false;
+  $('flow-dims-error').classList.remove('on');
+  state.dims.committed = dimsTotals();
+  render();
+  mountGraph();
+});
+
+/* user chip menu + exit guard */
+const menu = $('flow-menu');
+$('flow-chip').addEventListener('click', () => {
+  const open = menu.classList.toggle('open');
+  $('flow-chip').setAttribute('aria-expanded', String(open));
+});
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.flow-user')) {
+    menu.classList.remove('open');
+    $('flow-chip').setAttribute('aria-expanded', 'false');
+  }
+});
+$('flow-menu-settings').addEventListener('click', () => {
+  window.location.href = '/account/settings';
+});
+$('flow-menu-dashboard').addEventListener('click', () => {
+  menu.classList.remove('open');
+  if (state.touched) {
+    $('flow-guard').classList.add('open');
+  } else {
+    window.location.href = '/dashboard.html';
+  }
+});
+$('flow-guard-cancel').addEventListener('click', () => $('flow-guard').classList.remove('open'));
+$('flow-guard-go').addEventListener('click', () => { window.location.href = '/dashboard.html'; });
+$('flow-guard').addEventListener('click', (e) => {
+  if (e.target === $('flow-guard')) $('flow-guard').classList.remove('open');
+});
+
+/* ---------- views ---------- */
+function showFlow() {
+  $('flow-loading').style.display = 'none';
+  $('flow-shell').style.display = '';
+  $('flow-gate').classList.remove('on');
+  $('flow-main').style.display = '';
+  document.querySelector('.flow-rail').style.display = '';
+  render();
+  requestAnimationFrame(mountGraph);
+}
+function showGate(kind) {
+  $('flow-loading').style.display = 'none';
+  $('flow-shell').style.display = '';
+  $('flow-main').style.display = 'none';
+  document.querySelector('.flow-rail').style.display = 'none';
+  const gate = $('flow-gate');
+  gate.classList.add('on');
+  const btn = $('flow-gate-btn');
+  if (kind === 'signin') {
+    $('flow-gate-title').textContent = S().gateSigninTitle;
+    $('flow-gate-text').textContent = S().gateSigninText;
+    btn.textContent = S().gateSignin;
+    btn.setAttribute('href', '/login.html');
+  } else {
+    $('flow-gate-title').textContent = S().gateBetaTitle;
+    $('flow-gate-text').textContent = S().gateBetaText;
+    btn.textContent = S().gateDashboard;
+    btn.setAttribute('href', '/dashboard.html');
+  }
+  applyLang();
+}
+
+/* ---------- referral prefill (?project= / ?customer=) ---------- */
+function applyReferral(projectsById) {
+  const pid = params.get('project');
+  const cust = params.get('customer');
+  if (cust) { state.customerName = cust; state.touched = true; }
+  if (pid) {
+    const known = projectsById && projectsById.get(pid);
+    state.who = 'company-existing';
+    state.project = { id: pid, name: known || params.get('projectName') || pid };
+    state.touched = true;
+  }
+}
+
+/* ---------- boot ---------- */
+async function bootDemo() {
+  applyReferral(null);
+  showFlow();
+  loadWatermark();
+}
+
+async function bootReal() {
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { showGate('signin'); return; }
+    let userData = {};
+    let orgData = {};
+    try {
+      const us = await getDoc(doc(db, 'users', user.uid));
+      if (us.exists()) userData = us.data() || {};
+    } catch (e) { /* fail soft: channel falls back below */ }
+    const orgId = userData.orgId || null;
+    if (orgId) {
+      try {
+        const os = await getDoc(doc(db, 'orgs', orgId));
+        if (os.exists()) orgData = os.data() || {};
+      } catch (e) { /* fail soft */ }
+      try {
+        const ps = await getDocs(collection(db, 'orgs', orgId, 'projects'));
+        state.projects = ps.docs.map((d) => ({ id: d.id, name: (d.data() && d.data().name) || d.id }));
+      } catch (e) { state.projects = []; }
+      state.projectsLoaded = true;
+    }
+    /* channel: host surface > org channel > personal beta enrollment */
+    if (!HOST_SURFACE) {
+      if (orgData.updateChannel === 'beta') state.channel = 'beta';
+      else if (userData.betaEnrolled === true || userData.betaChannel === 'beta') state.channel = 'beta';
+      else state.channel = 'stable';
+    }
+    try {
+      const l = await resolveLang(user.uid);
+      if (l === 'es' || l === 'en') LANG = l;
+    } catch (e) { /* local chain already applied */ }
+
+    state.user = {
+      name: userData.name || userData.displayName || user.displayName || '',
+      email: user.email || userData.email || '',
+      photoURL: user.photoURL || ''
+    };
+
+    const allowed = DEMO || state.channel === 'beta' || state.channel === 'testing' ||
+      state.channel === 'debug' || userData.betaEnrolled === true;
+    if (!allowed) { showGate('beta'); return; }
+
+    applyReferral(new Map(state.projects.map((p) => [p.id, p.name])));
+    showFlow();
+    loadWatermark();
+  });
+}
+
+if (DEMO) bootDemo();
+else bootReal();
+</script>
+</body>
+</html>
