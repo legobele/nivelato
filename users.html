@@ -119,11 +119,31 @@
   html.embed-users #chrome-topbar, html.embed-users #chrome-sidebar { display: none !important; }
   html.embed-users body { height: 100vh; overflow: hidden; }
   html.embed-users .ov-shell { padding: 18px; gap: 18px; }
+
+  /* Admin context (served at /company/users): never offer the Manage
+     users door — it points at /company/users, this very page. */
+  html.admin-context #ov-manage { display: none !important; }
+
+  /* Permission editor (detail panel): toggle rows in the same visual
+     language as the administration page's switches. */
+  .ov-edit-perms { margin-top: 14px; }
+  .ov-perm-rows { display: flex; flex-direction: column; gap: 4px; }
+  .ov-perm-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 2px; }
+  .ov-perm-row span { font-size: 14px; }
+  .ov-toggle { width: 46px; height: 26px; flex: none; border-radius: 999px; border: 1px solid var(--niv-border); background: var(--niv-surface); position: relative; cursor: pointer; padding: 0; }
+  .ov-toggle .knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--niv-text-dim); transition: left .15s ease, background .15s ease; }
+  .ov-toggle.on { background: var(--niv-accent, #1e9df0); border-color: transparent; }
+  .ov-toggle.on .knob { left: 22px; background: #fff; }
+  .ov-edit-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 </style>
 <script>
   try {
     var _embed = new URLSearchParams(window.location.search).get('embed');
     if (_embed === '1' || _embed === 'users') document.documentElement.classList.add('embed-users');
+    /* Admin context: this document served AT /company/users is the
+       administration destination itself; the Manage users door in the
+       header would link back to this very page (see CSS below). */
+    if (window.location.pathname.replace(/\/+$/, '') === '/company/users') document.documentElement.classList.add('admin-context');
   } catch (e) {}
 </script>
 </head>
@@ -169,7 +189,7 @@
 import { auth, db } from '/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import {
-  getDoc, doc, getDocs, collection, query, where
+  getDoc, doc, getDocs, collection, query, where, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { startPresence, getOnlineUsers } from '/presence.js';
 import { PERM_DEFS, makePermChecker, orgHasQuotes } from '/permissions.js';
@@ -211,6 +231,8 @@ const STR = {
     email: 'Correo', role: 'Rol',
     permsTitle: 'Permisos', permsDesc: 'Lo que este usuario puede hacer, según su rol y sus permisos guardados.',
     permsNone: 'Ningún permiso activo.',
+    editPerms: 'Editar permisos', savePerms: 'Guardar permisos', cancelEdit: 'Cancelar',
+    permSaveFailed: 'No se pudieron guardar los permisos: {msg}',
     permLabels: Object.fromEntries(PERM_DEFS.map(d => [d.key, d.label])),
     projectsTitle: 'Proyectos', projectsDesc: 'Proyectos con espacios medidos por este usuario.',
     loadingProjects: 'Cargando proyectos...', couldNotProjects: 'No se pudieron cargar los proyectos.',
@@ -242,6 +264,8 @@ const STR = {
     email: 'Email', role: 'Role',
     permsTitle: 'Permissions', permsDesc: 'What this user can do, from their role and saved permissions.',
     permsNone: 'No active permissions.',
+    editPerms: 'Edit permissions', savePerms: 'Save permissions', cancelEdit: 'Cancel',
+    permSaveFailed: 'Could not save permissions: {msg}',
     permLabels: {
       viewDashboard: 'View dashboard', createMeasurements: 'Create measurements',
       viewOwnMeasurements: 'View own measurements', editOwnMeasurements: 'Edit own measurements',
@@ -400,6 +424,7 @@ function renderList() {
 }
 
 function selectUser(uid, fromClick) {
+  if (permEdit && permEdit.uid !== uid) permEdit = null;
   selectedUid = uid;
   try {
     const url = new URL(window.location.href);
@@ -470,8 +495,20 @@ function renderDetail() {
     + '</div>';
   if (canSeePerms(m)) {
     html += '<div class="niv-card"><div class="niv-card-title">' + escapeHtml(t('permsTitle')) + '</div>'
-      + '<div class="niv-card-desc">' + escapeHtml(t('permsDesc')) + '</div>'
-      + '<div class="niv-perm-grid">' + permsChipsHtml(m) + '</div></div>';
+      + '<div class="niv-card-desc">' + escapeHtml(t('permsDesc')) + '</div>';
+    if (permEdit && permEdit.uid === m.uid) {
+      html += '<div class="ov-perm-rows">' + permEditorRowsHtml(m) + '</div>'
+        + '<div class="ov-edit-actions">'
+        + '<button class="niv-btn-pill niv-btn-primary" id="ov-perms-save">' + escapeHtml(t('savePerms')) + '</button>'
+        + '<button class="niv-btn-pill" id="ov-perms-cancel">' + escapeHtml(t('cancelEdit')) + '</button>'
+        + '</div>';
+    } else {
+      html += '<div class="niv-perm-grid">' + permsChipsHtml(m) + '</div>';
+      if (canEditPerms()) {
+        html += '<button class="niv-btn-pill ov-edit-perms" id="ov-perms-edit">' + escapeHtml(t('editPerms')) + '</button>';
+      }
+    }
+    html += '</div>';
   }
   if (canSeeProjects(m)) {
     html += '<div class="niv-card"><div class="niv-card-title">' + escapeHtml(t('projectsTitle')) + '</div>'
@@ -479,20 +516,100 @@ function renderDetail() {
       + '<div id="ov-projects-body"><div class="ov-empty">' + escapeHtml(t('loadingProjects')) + '</div></div></div>';
   }
   detail.innerHTML = html;
+  const editBtn = document.getElementById('ov-perms-edit');
+  if (editBtn) editBtn.addEventListener('click', () => startPermEdit(m));
+  if (permEdit && permEdit.uid === m.uid) wirePermEditor(m);
   if (canSeeProjects(m)) renderProjects(m);
 }
 function infoRow(label, value, rawHtml) {
   return '<div class="niv-info-row"><div class="niv-info-label">' + escapeHtml(label) + '</div>'
     + '<div class="niv-info-value">' + (rawHtml ? value : escapeHtml(value)) + '</div></div>';
 }
+function permKeysFor(m) {
+  return PERM_DEFS.map((d) => d.key)
+    .filter((k) => orgHasQuotes(m) || !['managePriceList', 'createQuotes', 'approveQuotes'].includes(k));
+}
 function permsChipsHtml(m) {
   const checker = makePermChecker(m);
-  const keys = PERM_DEFS.map((d) => d.key)
-    .filter((k) => orgHasQuotes(m) || !['managePriceList', 'createQuotes', 'approveQuotes'].includes(k))
+  const keys = permKeysFor(m)
     .filter((k) => { try { return !!checker(k); } catch (e) { return false; } });
   if (!keys.length) return '<span class="ov-empty" style="padding:0">' + escapeHtml(t('permsNone')) + '</span>';
   return keys.map((k) => '<span class="ov-perm-chip">'
     + escapeHtml((STR[LANG].permLabels && STR[LANG].permLabels[k]) || k) + '</span>').join('');
+}
+
+/* ---- permission editing ----
+   Same storage and read model the administration page
+   (company/users.html) uses: explicit booleans at
+   users/{uid}.permissions.<key>, read back through makePermChecker
+   (explicit flag wins, then the owner grant, then the role fallback).
+   Firestore rules allow that write only for the org owner, so the
+   affordance is gated on the userManagement capability AND the owner
+   role — the combination that can actually save. Saving re-renders
+   the detail, so the chips reflect the new saved state. */
+let permEdit = null;
+function canEditPerms() {
+  return !!(_can && _can('userManagement') && currentUserData && currentUserData.role === 'owner');
+}
+function startPermEdit(m) {
+  const checker = makePermChecker(m);
+  const values = {};
+  permKeysFor(m).forEach((k) => { values[k] = !!checker(k); });
+  permEdit = { uid: m.uid, values };
+  renderDetail();
+}
+function permEditorRowsHtml(m) {
+  return permKeysFor(m).map((k) => {
+    const on = !!(permEdit.values && permEdit.values[k]);
+    const label = (STR[LANG].permLabels && STR[LANG].permLabels[k]) || k;
+    return '<div class="ov-perm-row"><span>' + escapeHtml(label) + '</span>'
+      + '<button class="ov-toggle' + (on ? ' on' : '') + '" data-key="' + escapeHtml(k) + '" aria-pressed="' + on
+      + '" aria-label="' + escapeHtml(label) + '"><span class="knob"></span></button></div>';
+  }).join('');
+}
+function wirePermEditor(m) {
+  document.querySelectorAll('#ov-detail .ov-toggle').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const k = btn.getAttribute('data-key');
+      permEdit.values[k] = !permEdit.values[k];
+      btn.classList.toggle('on', permEdit.values[k]);
+      btn.setAttribute('aria-pressed', String(permEdit.values[k]));
+    });
+  });
+  const cancel = document.getElementById('ov-perms-cancel');
+  if (cancel) cancel.addEventListener('click', () => { permEdit = null; renderDetail(); });
+  const save = document.getElementById('ov-perms-save');
+  if (save) save.addEventListener('click', () => savePermEdit(m, save));
+}
+async function savePermEdit(m, btn) {
+  if (!permEdit || !guardEnter('perm-save:' + m.uid)) return;
+  const checker = makePermChecker(m);
+  const updates = {};
+  const saved = {};
+  Object.keys(permEdit.values).forEach((k) => {
+    if (!!checker(k) !== !!permEdit.values[k]) {
+      updates['permissions.' + k] = !!permEdit.values[k];
+      saved[k] = !!permEdit.values[k];
+    }
+  });
+  if (!Object.keys(updates).length) {
+    permEdit = null;
+    guardExit('perm-save:' + m.uid);
+    renderDetail();
+    return;
+  }
+  btn.disabled = true;
+  try {
+    await updateDoc(doc(db, 'users', m.uid), updates);
+    m.permissions = { ...(m.permissions || {}), ...saved };
+    permEdit = null;
+    renderDetail();
+  } catch (e) {
+    alert(t('permSaveFailed', { msg: e.message || t('unknownError') }));
+    btn.disabled = false;
+  } finally {
+    guardExit('perm-save:' + m.uid);
+  }
 }
 async function renderProjects(m) {
   const body = document.getElementById('ov-projects-body');
