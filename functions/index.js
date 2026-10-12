@@ -395,7 +395,15 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
   const untrustedIp = intel.ok && intel.untrusted;
 
   // 3. Timezone corroboration (client-reported, never decisive alone).
-  const tzMismatch = clientTimezone && intel.ok && inPR && clientTimezone !== 'America/Puerto_Rico';
+  //    Expected zones for a PR-geolocated client: America/Puerto_Rico AND
+  //    America/La_Paz. La Paz is not an error: Windows' San Juan zone
+  //    (SA Western Standard Time) shares UTC-4 with Bolivia and its
+  //    canonical IANA mapping resolves to America/La_Paz, so browsers on
+  //    correctly configured PR Windows machines report La Paz. Do not
+  //    "fix" this back to Puerto_Rico-only — that misread is what locked
+  //    QGI out on 2026-10-12.
+  const PR_EXPECTED_ZONES = ['America/Puerto_Rico', 'America/La_Paz'];
+  const tzMismatch = clientTimezone && intel.ok && inPR && !PR_EXPECTED_ZONES.includes(clientTimezone);
 
   // 4. Verdict.
   let verdict = 'review';
