@@ -914,7 +914,7 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
       </div>
     </button>
     <div class="niv-account-popup" id="niv-account-popup" style="display:none">
-      <button class="niv-popup-btn" onclick="window.location.href='/account/settings'">Account settings</button>
+      <button class="niv-popup-btn" data-niv-to-settings onclick="window.location.href='/account/settings'">Account settings</button>
       <button class="niv-popup-btn" onclick="toggleAboutPopup(event)">About Nivelato</button>
       <button class="niv-popup-btn" onclick="window.open('https://legobele.github.io/nivelato/ayuda.html','_blank')">Help</button>
       <button class="niv-popup-btn niv-popup-logout" onclick="window._popupSignOut()">Cerrar sesión</button>
@@ -4225,6 +4225,7 @@ document.addEventListener('keydown', function(e) {
 </div>
   <!-- the measurements are leveled. the whimsy is load-bearing. 🦀 -->
   <script type="module" src="/crab.js"></script>
+<script src="./nav-referrer.js"></script>
 <script src="./press-yaoi.js"></script>
 </body>
 </html>

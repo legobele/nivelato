@@ -13,7 +13,8 @@
   #app-shell { display: flex; flex-direction: column; height: 100dvh; }
 
   /* HEADER */
-  header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #171b21; border-bottom: 1px solid #262c35; flex-shrink: 0; gap: 10px; }
+  /* chrome bars aligned to the shared dark tokens (niv-dark.css --niv-surface / --niv-border-soft) */
+  header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #17171a; border-bottom: 1px solid rgba(255,255,255,0.14); flex-shrink: 0; gap: 10px; }
   .header-titles { min-width: 0; }
   .header-title { font-size: 15px; font-weight: 700; }
   .header-sub { font-size: 11px; color: #8b93a1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -34,7 +35,7 @@
   .btn-photo.ghost { background: #262c35; }
 
   /* TOOLBAR */
-  #toolbar { display: flex; gap: 6px; align-items: center; padding: 8px 12px; background: #171b21; border-top: 1px solid #262c35; flex-shrink: 0; overflow-x: auto; flex-wrap: wrap; }
+  #toolbar { display: flex; gap: 6px; align-items: center; padding: 8px 12px; background: #17171a; border-top: 1px solid rgba(255,255,255,0.14); flex-shrink: 0; overflow-x: auto; flex-wrap: wrap; }
   .tool-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 44px; padding: 6px 10px; border: 1px solid #262c35; border-radius: 8px; background: transparent; color: #8b93a1; font-family: inherit; font-size: 10px; font-weight: 600; cursor: pointer; }
   .tool-btn .ico { font-size: 15px; }
   .tool-btn.active { background: #1d3a5c; border-color: #1971c2; color: #fff; }
@@ -62,7 +63,7 @@
   .quick-chips button:hover { border-color: #1971c2; color: #fff; }
 
   /* HINT */
-  #hint-bar { font-size: 11px; color: #8b93a1; text-align: center; padding: 8px 16px; background: #171b21; border-top: 1px solid #262c35; flex-shrink: 0; }
+  #hint-bar { font-size: 11px; color: #8b93a1; text-align: center; padding: 8px 16px; background: #17171a; border-top: 1px solid rgba(255,255,255,0.14); flex-shrink: 0; }
 </style>
 <link rel="stylesheet" href="./qgc-theme.css">
 </head>
