@@ -307,7 +307,7 @@
   }
 </style>
 </head>
-<body>
+<body data-envmark-interstitial>
 <div class="flow-shell" id="flow-shell" style="display:none">
 
   <!-- ======== left rail ======== -->
@@ -340,6 +340,8 @@
     </nav>
 
     <div class="flow-rail-spacer"></div>
+
+    <div id="flow-env-cards" aria-live="polite"></div>
 
     <div class="flow-user">
       <div class="flow-menu" id="flow-menu">
@@ -447,6 +449,7 @@
 </div>
 
 <script src="/niv-settings.js"></script>
+<script src="/niv-envmark.js"></script>
 <script src="/adhd.js"></script>
 <script type="module">
 import { auth, db } from '/firebase-config.js';
@@ -959,6 +962,9 @@ function showFlow() {
   $('flow-main').style.display = '';
   document.querySelector('.flow-rail').style.display = '';
   render();
+  /* environment warning cards (niv-envmark.js): beta card when the
+   * channel is beta, dev card while a dev mark is active */
+  try { if (window.NivEnvMark) window.NivEnvMark.renderRailCards(); } catch (_) { /* ignore */ }
   requestAnimationFrame(mountGraph);
 }
 function showGate(kind) {
@@ -1050,6 +1056,16 @@ async function bootReal() {
     loadWatermark();
   });
 }
+
+/* ---------- environment marks: channel provider + live re-render ---------- */
+try {
+  if (window.NivEnvMark) {
+    window.NivEnvMark.setChannelProvider(function () { return state.channel; });
+    document.addEventListener('niv-envmark-change', function () {
+      try { window.NivEnvMark.renderRailCards(); } catch (_) { /* ignore */ }
+    });
+  }
+} catch (_) { /* env marks unavailable: the flow runs without warning cards */ }
 
 if (DEMO) bootDemo();
 else bootReal();

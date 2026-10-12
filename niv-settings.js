@@ -325,6 +325,37 @@
     'niv-lang': {
       validate: isLang, lsKey: 'niv-lang', mirror: true,
       normalize: function (v) { return String(v).toLowerCase(); }
+    },
+    /* Environment marks (niv-envmark.js, Giulia's boards Oct 12 2026):
+     * - 'niv-env-mark': 'prod' | 'dev' | unset. Device-level environment
+     *   mark. Ctrl+Alt+B on a sign-in card toggles the production mark;
+     *   a 'dev' mark triggers the dev-flag alarm state (full-screen
+     *   interstitial in the app, additional sign-in step on auth pages).
+     *   Set transiently by ?env=dev|prod|none (test path), persisted to
+     *   the cookie by the script. SECURITY NOTE: this is a client-side,
+     *   user-writable marker. The UI treats a dev mark as an alarm and
+     *   the modal states the risk, but no server-side gate may trust it
+     *   as an authorization fact (same reason company theme stays out
+     *   of the cookie system).
+     * - 'niv-env-accounts': JSON array of email strings, the accounts
+     *   marked production at sign-in time (the account is not authed
+     *   yet when the chord is pressed, so the mark is keyed by the
+     *   email typed into the sign-in field). Capped like
+     *   niv-panel-sections; deduped by the writer. */
+    'niv-env-mark': {
+      validate: function (v) { return v === 'prod' || v === 'dev'; },
+      lsKey: 'niv-env-mark', mirror: true, normalize: function (v) { return String(v).toLowerCase(); }
+    },
+    'niv-env-accounts': {
+      validate: function (v) {
+        if (typeof v !== 'string' || v.length > MAX_COOKIE_VALUE) return false;
+        try {
+          var a = JSON.parse(v);
+          return Array.isArray(a) && a.every(function (e) { return typeof e === 'string' && e.length <= 320; });
+        } catch (e) { return false; }
+      },
+      lsKey: 'niv-env-accounts', mirror: true,
+      normalize: function (v) { return typeof v === 'string' ? v : JSON.stringify(v); }
     }
   };
   var ALLOWLIST = Object.keys(DEFS);

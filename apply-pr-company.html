@@ -88,7 +88,7 @@
   </div>
 </nav>
 
-<div class="wrap" id="form-wrap">
+<div class="wrap" id="form-wrap" data-envmark-card>
   <header>
     <div class="kicker">Puerto Rico · Cuentas de empresa</div>
     <h1>Solicita una cuenta para tu empresa</h1>
@@ -411,6 +411,9 @@ form.addEventListener('submit', async e => {
   }
 });
 </script>
+<script src="./niv-settings.js"></script>
+<script>window.NivEnvMarkConfig = { interceptSubmits: false };</script>
+<script src="./niv-envmark.js"></script>
 <script src="./press-yaoi.js"></script>
 </body>
 </html>

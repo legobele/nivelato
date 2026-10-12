@@ -8,6 +8,7 @@
   <link rel="icon" href="icon-192.png" />
   <link rel="manifest" href="manifest.json" />
   <script src="./niv-settings.js"></script>
+  <script src="./niv-envmark.js"></script>
   <link rel="stylesheet" href="niv-dark.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -710,7 +711,7 @@
       <div class="tagline" data-i18n="tagline">Mediciones de campo, niveladas.</div>
       <div class="brand-logo-box"><img src="./icon-192.png" alt="Nivelato" /></div>
     </div>
-    <div class="main-panel">
+    <div class="main-panel" data-envmark-card>
       <div class="accounts-section" id="accounts-section" style="display:none">
         <div class="accounts-head"><div class="accounts-title" data-i18n="used_accounts">Cuentas usadas</div><button type="button" id="lang-toggle" class="lang-toggle" aria-label="Switch to English">Select language</button></div>
         <div id="accounts-list"><button type="button" class="account-add" data-add-account><span class="account-add-icon" aria-hidden="true">+</span><span data-i18n="add_another_account">Añadir cuenta personal</span></button></div>
@@ -2366,7 +2367,7 @@
       + '<h1 class="logo' + (qgi ? ' qgi' : '') + '" style="font-size:32px">' + t('add_account_title') + '</h1>'
       + '<div class="tagline">' + t('add_account_sub') + '</div>'
       + '</div>'
-      + '<div class="main-panel">'
+      + '<div class="main-panel" data-envmark-card>'
       + '<form id="addaccount-form" autocomplete="on" onsubmit="return false">'
       + '<div class="field">'
       + '<label for="addaccount-email">' + t('label_email') + '</label>'
@@ -2413,7 +2414,7 @@
       + '<h1 class="logo' + (qgi ? ' qgi' : '') + '" style="font-size:32px">' + t('reauth_title') + '</h1>'
       + '<div class="tagline">' + t('reauth_sub') + '</div>'
       + '</div>'
-      + '<div class="main-panel">'
+      + '<div class="main-panel" data-envmark-card>'
       + '<div class="reauth-acct">'
       + '<span class="account-avatar">' + escapeHtml(initialsOf(label)) + '</span>'
       + '<span class="account-meta">'
@@ -2673,7 +2674,7 @@
         + '<div class="brand-panel">'
         + '<h1 class="logo" style="font-size:32px">' + selTitle + '</h1>'
         + '</div>'
-        + '<div class="main-panel">'
+        + '<div class="main-panel" data-envmark-card>'
         + '<div class="accounts-title">' + t('nearby') + '</div>'
         + '<div id="company-select-list" class="scroll-region">' + pills + '</div>'
         + '<button type="button" class="btn-google" id="btn-another-company" style="margin-top:16px"><span>' + t('or_signin_another') + '</span></button>'
@@ -2885,7 +2886,7 @@
     const company = COMPANIES[companyShown];
     if (!company) return;
     const qgi = QGI;
-    card.innerHTML = '<div class="company-single">'
+    card.innerHTML = '<div class="company-single" data-envmark-card>'
       + '<div class="company-head">'
       + '<button type="button" class="back-btn" id="company-back" aria-label="' + t('go_back') + '">&#8249;</button>'
       + '<div class="account-pill">'

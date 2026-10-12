@@ -2,7 +2,7 @@
 // precached file changes. A version bump is required for the update to take
 // effect — activate() deletes every cache whose name !== CACHE, so without a
 // new name the old precache survives and the changed list never installs.
-const CACHE = 'nivelato-v48';
+const CACHE = 'nivelato-v49';
 // App shell: every file that must exist for the app to work offline.
 // (Keep this list in sync with the repo — a missing file used to make
 // addAll() reject and silently skip the ENTIRE precache.)
@@ -26,6 +26,7 @@ const URLS = [
   './modules/topbar.html',
   './modules/shell-bridge.js',
   './niv-settings.js',
+  './niv-envmark.js',
   './niv-user.js',
   './niv-drag.js',
   './adhd.js',
