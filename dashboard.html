@@ -861,21 +861,42 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 #users-embed-fallback { padding: 28px; text-align: center; color: var(--niv-text-dim, #a7a7ad); font-size: 14px; }
 #users-embed-fallback a { color: var(--niv-accent, #1971c2); }
 
-/* menu de empresa dentro de la barra lateral (sustituye al dialogo modal):
-   vive en la zona superior del panel, bajo la cabecera de la empresa, y
-   en el riel colapsado no se muestra (no cabe y la cabecera lo reabre al
-   expandir). */
-.niv-company-menu {
-  display: flex; flex-direction: column; gap: 8px;
-  padding: 10px 16px 12px;
-  border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+/* Popover de empresa: tarjeta flotante anclada a la cabecera del panel
+   (su disparador), fuera del flujo (nada empuja el contenido), con la
+   superficie elevada de los popovers del sistema. En el riel colapsado
+   se ancla a la derecha de la cabecera, como la ventana de la cuenta. */
+.niv-panel-head { position: relative; }
+.niv-company-pop {
+  position: absolute; left: 0; top: calc(100% + 6px); width: 264px; z-index: 300;
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--niv-surface, #17171a);
+  border: 1px solid var(--niv-border, rgba(255,255,255,0.14));
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  padding: 6px;
+  animation: nivPopIn 0.16s ease-out;
+  transform-origin: top left;
 }
-.niv-company-menu-title {
-  font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+@keyframes nivPopIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.niv-company-pop-title {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
   color: var(--niv-text-dim, #a7a7ad);
+  padding: 6px 10px 4px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.niv-float-panel.collapsed .niv-company-menu { display: none !important; }
+.niv-company-pop-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; height: 36px;
+  padding: 0 10px; border: none; background: transparent; border-radius: 9px;
+  color: var(--niv-text, #f5f5f7); font: inherit; font-size: 13.5px; font-weight: 500;
+  cursor: pointer; text-align: left;
+}
+.niv-company-pop-item:hover { background: var(--niv-surface-2, #1e1e22); }
+.niv-company-pop-item:focus-visible { outline: 2px solid var(--niv-accent, #1971c2); outline-offset: -2px; }
+.niv-company-pop-item svg { width: 20px; height: 20px; flex: none; color: var(--niv-text-dim, #a7a7ad); }
+.niv-float-panel.collapsed .niv-company-pop { left: calc(100% + 10px); top: 0; transform-origin: top left; }
 
 /* barra superior: centrado + indicador deslizante con topes. La pastilla
    activa conserva su degradado hasta que el indicador esta vivo (ind-on);
@@ -927,16 +948,15 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 <div class="niv-scrim" id="niv-scrim" onclick="document.body.classList.remove('nav-open')"></div>
 <div class="niv-float-panel" id="niv-panel">
   <div class="niv-panel-topzone">
-  <div class="niv-panel-head" id="niv-panel-head" onclick="openCompanyDialog(event)" style="cursor:pointer" title="Ajustes de la empresa">
+  <div class="niv-panel-head" id="niv-panel-head" onclick="openCompanyDialog(event)" style="cursor:pointer" title="Ajustes de la empresa" tabindex="-1" aria-haspopup="menu" aria-expanded="false">
     <div class="niv-company-avatar" id="sidebar-avatar">N</div>
     <div class="niv-company-name" id="org-name-badge">…<span id="estradiol-indicator">E2</span></div>
     <button class="niv-panel-collapse" id="niv-panel-collapse" title="Colapsar" aria-label="Colapsar">‹</button>
+  <div class="niv-company-pop" id="niv-company-menu" style="display:none" role="menu">
+    <div class="niv-company-pop-title" id="company-menu-title">Empresa</div>
+    <button class="niv-company-pop-item" id="company-menu-settings" role="menuitem" onclick="window.closeCompanyDialog();window.location.href='/company/settings'"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="6" fill="currentColor"/><g stroke="#fff" stroke-width="1.8" stroke-linecap="round"><line x1="6.5" y1="9" x2="17.5" y2="9"/><line x1="6.5" y1="15" x2="17.5" y2="15"/></g><circle cx="10" cy="9" r="2.1" fill="#fff"/><circle cx="14" cy="15" r="2.1" fill="#fff"/></svg><span id="company-menu-settings-label">Ajustes de la empresa</span></button>
+    <button class="niv-company-pop-item" id="company-menu-users" role="menuitem" onclick="window.closeCompanyDialog();window.showDashView('users')"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="6" fill="currentColor"/><path d="M9.2 6.1a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4zM3.9 18.7c.7-3.1 2.8-4.7 5.3-4.7s4.6 1.6 5.3 4.7zM16.6 7.6a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zM15.9 14.3c2.1.3 3.7 1.8 4.3 4.4h-4.5c.35-1.6.42-3.05.2-4.4z" fill="#fff"/></svg><span id="company-menu-users-label">Usuarios</span></button>
   </div>
-  <div class="niv-company-menu" id="niv-company-menu" style="display:none">
-    <div class="niv-company-menu-title" id="company-menu-title">Empresa</div>
-    <button class="niv-nav-btn" id="company-menu-settings" onclick="window.location.href='/company/settings'">Ajustes de la empresa</button>
-    <button class="niv-nav-btn" id="company-menu-users" onclick="window.closeCompanyDialog();window.showDashView('users')" style="display:none">Usuarios</button>
-    <button class="niv-nav-btn" id="company-menu-close" onclick="window.closeCompanyDialog()">Cerrar</button>
   </div>
   <div class="org-badge" id="tier-badge" style="display:none;">Pro</div>
   <button class="btn-save" id="btn-upgrade-plan" onclick="window.showUpgradeModal && window.showUpgradeModal()" style="display:none;margin:10px 16px 0;">Mejorar plan</button>
@@ -3780,19 +3800,43 @@ let currentUser;
   // El permiso es el mismo de antes: sin userManagement no hay menu.
   window.openCompanyDialog = (e) => {
     if (e && e.target && e.target.id === 'niv-panel-collapse') return;
-    if (!window._can || !window._can('userManagement')) return; // no perms: no menu
+    if (e && e.target && e.target.closest && e.target.closest('#niv-company-menu')) return; // clicks inside the popover are not trigger clicks
+    if (!window._can || !window._can('userManagement')) return; // no perms: no popover
     const menu = document.getElementById('niv-company-menu');
     if (!menu) return;
+    if (menu.style.display !== 'none') { window.closeCompanyDialog(); return; } // toggle
     const orgName = document.getElementById('org-name-badge')?.textContent?.replace('E2','').trim() || L('Empresa', 'Company');
     const title = document.getElementById('company-menu-title');
     if (title) title.textContent = orgName;
-    const usersBtn = document.getElementById('company-menu-users');
-    if (usersBtn) usersBtn.style.display = 'block';
-    menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
+    try { _applyDashChromeTexts(); } catch (_) {} // item labels always match the live language at open time
+    menu.style.display = 'flex';
+    const head = document.getElementById('niv-panel-head');
+    if (head) head.setAttribute('aria-expanded', 'true');
+    document.addEventListener('pointerdown', window._companyPopOutside, true);
+    document.addEventListener('keydown', window._companyPopKey, true);
+    const first = menu.querySelector('.niv-company-pop-item');
+    if (first) first.focus();
   };
-  window.closeCompanyDialog = () => {
+  window._companyPopOutside = (ev) => {
     const menu = document.getElementById('niv-company-menu');
-    if (menu) menu.style.display = 'none';
+    const head = document.getElementById('niv-panel-head');
+    if (!menu) return;
+    if (menu.contains(ev.target)) return;
+    if (head && head.contains(ev.target)) return;
+    window.closeCompanyDialog();
+  };
+  window._companyPopKey = (ev) => {
+    if (ev.key === 'Escape') { ev.stopPropagation(); window.closeCompanyDialog(true); }
+  };
+  window.closeCompanyDialog = (refocus) => {
+    const menu = document.getElementById('niv-company-menu');
+    if (!menu || menu.style.display === 'none') return;
+    menu.style.display = 'none';
+    document.removeEventListener('pointerdown', window._companyPopOutside, true);
+    document.removeEventListener('keydown', window._companyPopKey, true);
+    const head = document.getElementById('niv-panel-head');
+    if (head) head.setAttribute('aria-expanded', 'false');
+    if (refocus && head) head.focus();
   };
 
   // ---- sidebar: collapse ----
@@ -3867,9 +3911,8 @@ let currentUser;
     setText('home-update-link', L('Ver actualización', 'See update'));
     setText('notif-title', L('Notificaciones', 'Notifications'));
     setText('notif-mark-all', L('Marcar todas como leídas', 'Mark all as read'));
-    setText('company-menu-settings', L('Ajustes de la empresa', 'Company settings'));
-    setText('company-menu-users', L('Usuarios', 'Users'));
-    setText('company-menu-close', L('Cerrar', 'Close'));
+    setText('company-menu-settings-label', L('Ajustes de la empresa', 'Company settings'));
+    setText('company-menu-users-label', L('Usuarios', 'Users'));
     setText('users-title', L('Usuarios', 'Users'));
     setText('panel-projects-title', L('Proyectos', 'Projects'));
     setText('panel-customers-title', L('Clientes', 'Customers'));
