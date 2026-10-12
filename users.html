@@ -1,472 +1,179 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
 <meta charset="UTF-8" />
-<script src="./company-theme.js"></script>
+<script src="/company-theme.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="theme-color" content="#0d0d0f" />
-<link rel="manifest" href="manifest.json" />
-<title>Nivelato - Users</title>
+<meta name="theme-color" content="#0e0e10" />
+<link rel="manifest" href="/manifest.json" />
+<title>Nivelato - Usuarios</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/niv-dark.css" />
+<link rel="stylesheet" href="/qgc-theme.css" />
 <style>
-  :root {
-    --bg: #0d0d0f;
-    --card: #101013;
-    --line: #2a2a2e;
-    --line-soft: #1f1f23;
-    --text: #f1f1f2;
-    --muted: #9a9aa0;
-    --faint: #6d6d74;
-    --blue: #1e9df0;
-    --teal1: #2dd4bf;
-    --teal2: #1e9df0;
-    --red: #e03131;
-    --red-dark: #b3271e;
-    --green: #51cf66;
-    --radius-lg: 28px;
-    --radius-md: 18px;
-    --radius-sm: 12px;
-  }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+    background: var(--niv-bg);
+    color: var(--niv-text);
+    font-family: 'Inter', system-ui, sans-serif;
     height: 100vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
   }
-  /* Tarjetas flotantes, igual que el dashboard: nada toca los bordes. */
-  .shell { display: flex; flex: 1; min-height: 0; padding: 30px; gap: 30px; box-sizing: border-box; }
 
-  /* ---------- sidebar: shared .niv-side component (niv-dark.css) ---------- */
-  .shell .niv-side { width: 300px; flex: none; }
+  /* ---------- layout: chrome module hosts + main column ---------- */
+  .ov-shell { display: flex; flex: 1; min-height: 0; padding: 30px; gap: 30px; }
+  #chrome-sidebar { width: 300px; flex: none; align-self: stretch; min-height: 0; }
+  .ov-main { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+  .ov-head { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .ov-head-text { flex: 1; min-width: 200px; }
+  .ov-head .niv-page-title { margin: 0 0 4px; }
+  .ov-head .niv-page-sub { margin-bottom: 0; }
+  .ov-manage { flex: none; }
+  .ov-search { margin-bottom: 16px; }
+  .ov-search .niv-field { margin-bottom: 0; }
+  .ov-content { display: flex; gap: 20px; flex: 1; min-height: 0; align-items: stretch; }
 
-  /* ---------- user list column ---------- */
-  .users-col {
-    width: 340px;
-    flex: none;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    background: #0b0b0d;
-    padding: 24px 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    overflow-y: auto;
-    max-height: none;
+  /* ---------- directory list ---------- */
+  .ov-list-col {
+    width: 340px; flex: none; min-height: 0; overflow-y: auto;
+    border: 1px solid var(--niv-border); border-radius: var(--niv-radius);
+    background: var(--niv-surface); padding: 18px 14px;
   }
-  .users-title { font-size: 13px; font-weight: 600; color: var(--faint); text-transform: uppercase; letter-spacing: .12em; padding: 4px 6px 0; }
-  .user-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    border: 1.5px solid var(--line);
-    border-radius: var(--radius-md);
-    background: transparent;
-    cursor: pointer;
-    text-align: left;
-    color: var(--text);
-    font-family: inherit;
-    width: 100%;
+  .ov-list-title {
+    font-size: 13px; font-weight: 600; color: var(--niv-text-dim);
+    text-transform: uppercase; letter-spacing: .12em; padding: 2px 6px 12px;
   }
-  .user-card:hover { border-color: var(--faint); }
-  .user-card.selected {
-    background: linear-gradient(135deg, var(--teal1), var(--teal2));
-    border-color: transparent;
+  .ov-list-col .niv-user-row { width: 100%; font-family: inherit; text-align: left; color: var(--niv-text); }
+  .ov-avatar-wrap { position: relative; flex: none; }
+  .ov-online {
+    position: absolute; right: -1px; bottom: -1px; width: 12px; height: 12px;
+    border-radius: 50%; background: var(--niv-green); border: 2px solid var(--niv-surface);
   }
-  .user-card.selected .u-name, .user-card.selected .u-email { color: #06281f; }
-  .u-avatar {
-    width: 44px;
-    height: 44px;
-    flex: none;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 700;
-    color: #fff;
-    position: relative;
+  .niv-user-row.selected .ov-online { border-color: transparent; }
+  .ov-row-meta { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+  .ov-row-email { display: block; }
+  .ov-row-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .ov-row-name .niv-user-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .ov-row-email { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ov-chip {
+    flex: none; font-size: 11px; font-weight: 700; padding: 2px 9px;
+    border-radius: var(--niv-pill); border: 1px solid var(--niv-border-soft);
+    color: var(--niv-text-dim); background: var(--niv-surface-2); white-space: nowrap;
   }
-  .u-online {
-    position: absolute;
-    right: -1px;
-    bottom: -1px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--green);
-    border: 2px solid var(--bg);
-  }
-  .user-card.selected .u-online { border-color: transparent; }
-  .u-meta { min-width: 0; flex: 1; }
-  .u-name {
-    font-size: 14px;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .u-email {
-    font-size: 12px;
-    color: var(--muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-top: 2px;
-  }
+  .ov-chip.pending { color: #fbbf24; border-color: rgba(230, 119, 0, 0.6); background: rgba(230, 119, 0, 0.15); }
+  .ov-chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 5px; }
+  .niv-user-row.selected .ov-chip { color: #06281f; border-color: transparent; background: rgba(255, 255, 255, 0.25); }
 
   /* ---------- detail panel ---------- */
-  .detail {
-    flex: 1;
-    padding: 40px 36px;
-    min-width: 0;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    background: #0b0b0d;
-    overflow-y: auto;
+  .ov-detail {
+    flex: 1; min-width: 0; min-height: 0; overflow-y: auto;
+    border: 1px solid var(--niv-border); border-radius: var(--niv-radius);
+    background: var(--niv-surface); padding: 26px;
   }
-  .detail-head { text-align: center; margin-bottom: 28px; }
-  .detail-name { font-size: 20px; font-weight: 700; }
-  .detail-email { font-size: 14px; color: var(--muted); margin-top: 4px; word-break: break-all; }
-  .detail-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    max-width: 880px;
-    margin: 0 auto;
+  .ov-detail-head { display: flex; align-items: center; gap: 16px; margin-bottom: 10px; flex-wrap: wrap; }
+  .ov-detail-head .niv-user-avatar { width: 56px; height: 56px; font-size: 19px; }
+  .ov-detail-name { font-size: 20px; font-weight: 700; word-break: break-word; }
+  .ov-detail-email { font-size: 14px; color: var(--niv-text-dim); margin-top: 3px; word-break: break-all; }
+  .ov-detail .niv-card { background: var(--niv-surface-2); }
+  .ov-detail .niv-card:last-child { margin-bottom: 0; }
+  .ov-status-on { color: #4ade80; font-weight: 600; }
+  .ov-status-pending { color: #fbbf24; font-weight: 600; }
+  .ov-perm-chip {
+    display: inline-flex; align-items: center; font-size: 12px; font-weight: 500;
+    color: var(--niv-text); padding: 4px 10px; background: var(--niv-surface);
+    border-radius: 8px; border: 1px solid var(--niv-border-soft);
   }
-  .panel {
-    border: 1.5px solid var(--line);
-    border-radius: var(--radius-md);
-    background: var(--card);
-    padding: 20px 22px;
+  .ov-proj-row {
+    display: flex; align-items: center; gap: 12px;
+    border: 1px solid var(--niv-border-soft); border-radius: 12px;
+    padding: 10px 12px; margin-bottom: 10px;
   }
-  .panel h3 { font-size: 15px; font-weight: 700; margin: 0 0 14px; text-align: center; }
-  .proj-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border: 1.5px solid var(--line);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-    margin-bottom: 10px;
+  .ov-proj-row:last-child { margin-bottom: 0; }
+  .ov-proj-name { font-size: 14px; font-weight: 600; word-break: break-word; }
+  .ov-proj-sub { font-size: 12px; color: var(--niv-text-dim); margin-top: 2px; }
+  .ov-empty { text-align: center; color: var(--niv-text-dim); font-size: 13px; padding: 18px 0; }
+  .ov-state { text-align: center; color: var(--niv-text-dim); font-size: 14px; padding: 48px 16px; }
+  .ov-error {
+    border: 1px solid rgba(229, 72, 77, 0.55); background: rgba(229, 72, 77, 0.12);
+    color: #f87171; border-radius: 12px; padding: 16px 18px; font-size: 14px;
+    text-align: center; max-width: 560px; margin: 48px auto;
   }
-  .proj-thumb {
-    width: 44px;
-    height: 44px;
-    flex: none;
-    border-radius: 10px;
-    background: var(--line-soft);
-    border: 1px solid var(--line);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 9px;
-    color: var(--faint);
-    font-weight: 600;
-  }
-  .proj-name { font-size: 14px; font-weight: 600; }
-  .proj-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .empty { text-align: center; color: var(--faint); font-size: 13px; padding: 18px 0; }
+  .ov-retry { margin-top: 12px; }
 
-  /* toggle switches */
-  .perm-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 9px 0;
-    border-bottom: 1px solid var(--line-soft);
-    font-size: 14px;
-  }
-  .perm-row:last-of-type { border-bottom: 0; }
-  .toggle {
-    position: relative;
-    width: 52px;
-    height: 30px;
-    flex: none;
-    border-radius: 9999px;
-    border: 0;
-    background: #3a3a40;
-    cursor: pointer;
-    transition: background .15s;
-  }
-  .toggle .knob {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: #fff;
-    transition: left .15s;
-  }
-  .toggle.on { background: var(--green); }
-  .toggle.on .knob { left: 25px; }
-  .toggle:disabled { opacity: .55; cursor: default; }
-
-  .btn {
-    display: block;
-    width: 100%;
-    padding: 13px 16px;
-    border-radius: 9999px;
-    border: 1.5px solid var(--line);
-    background: transparent;
-    color: var(--text);
-    font-size: 14px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    margin-top: 12px;
-  }
-  .btn:hover { border-color: var(--faint); }
-  .btn-danger {
-    background: var(--red);
-    border-color: var(--red);
-    color: #fff;
-    max-width: 880px;
-    margin: 24px auto 0;
-    padding: 15px 16px;
-    font-size: 15px;
-  }
-  .btn-danger:hover { background: var(--red-dark); border-color: var(--red-dark); }
-  .btn-danger:disabled { opacity: .5; cursor: default; }
-  .delete-note { text-align: center; color: var(--faint); font-size: 12px; margin-top: 10px; }
-  .state-loading { text-align: center; color: var(--faint); font-size: 14px; padding: 60px 0; }
-  .state-error {
-    border: 1.5px solid #5c2121;
-    background: #1c0f0f;
-    color: #f0a3a3;
-    border-radius: var(--radius-sm);
-    padding: 14px 18px;
-    font-size: 14px;
-    text-align: center;
-    max-width: 560px;
-    margin: 60px auto;
-  }
-  .perm-note { font-size: 12px; color: var(--faint); text-align: center; margin-top: 10px; }
-
-  /* ---------- top bar (same persistent header as the dashboard) ---------- */
-  .niv-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 10px 24px;
-    background: #0b0b0d;
-    border-bottom: 1px solid var(--line);
-  }
-  .niv-topbar-tabs {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: #17171a;
-    border: 1px solid var(--line-soft);
-    border-radius: 9999px;
-    padding: 4px;
-    max-width: 100%;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .niv-topbar-tabs::-webkit-scrollbar { display: none; }
-  .niv-tab {
-    border: none;
-    background: transparent;
-    color: var(--muted);
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    padding: 8px 18px;
-    border-radius: 9999px;
-    cursor: pointer;
-    white-space: nowrap;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-  }
-  a.niv-tab:hover { color: var(--text); }
-  .niv-tab.active { background: linear-gradient(135deg, var(--teal1), var(--teal2)); color: #06281f; cursor: default; }
-
-  /* detail header: name with the email in parens on the same line */
-  .detail-name .detail-email-inline {
-    font-size: 15px;
-    color: var(--muted);
-    font-weight: 500;
-    word-break: break-all;
-  }
-
-  /* ---------- registered devices panel ---------- */
-  .devices-panel { max-width: 880px; margin: 20px auto 0; }
-  .dev-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border: 1.5px solid var(--line);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-    margin-bottom: 10px;
-  }
-  .dev-row.outdated { border-color: #8a6d1f; }
-  .dev-icon {
-    width: 26px;
-    height: 44px;
-    flex: none;
-    border: 1.5px solid var(--faint);
-    border-radius: 6px;
-    position: relative;
-  }
-  .dev-icon::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    bottom: 3px;
-    transform: translateX(-50%);
-    width: 10px;
-    height: 2px;
-    background: var(--faint);
-    border-radius: 2px;
-  }
-  .dev-meta { min-width: 0; flex: 1; }
-  .dev-name { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .dev-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .dev-warn {
-    font-size: 11px;
-    font-weight: 700;
-    color: #ffd43b;
-    border: 1px solid #8a6d1f;
-    border-radius: 9999px;
-    padding: 1px 8px;
-  }
-  .dev-rename {
-    background: transparent;
-    border: 1px solid var(--line);
-    color: var(--muted);
-    border-radius: 9999px;
-    padding: 3px 10px;
-    font-size: 11px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-  }
-  .dev-rename:hover { color: var(--text); border-color: var(--faint); }
-  .dev-edit { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-  .dev-edit input {
-    flex: 1;
-    min-width: 140px;
-    background: var(--card);
-    border: 1.5px solid var(--line);
-    border-radius: 10px;
-    color: var(--text);
-    padding: 8px 10px;
-    font-family: inherit;
-    font-size: 13px;
-  }
-  .dev-edit button {
-    padding: 8px 14px;
-    border-radius: 9999px;
-    border: 1.5px solid var(--line);
-    background: transparent;
-    color: var(--text);
-    font-size: 12px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-  }
-  .dev-edit button:disabled { opacity: .55; cursor: default; }
-
-  @media (max-width: 1100px) {
-    .detail-grid { grid-template-columns: 1fr; }
-  }
   @media (max-width: 900px) {
     body { height: auto; overflow: visible; }
-    .shell { flex-direction: column; flex: none; padding: 12px; gap: 16px; }
-    .shell .niv-side {
-      width: 100%;
-      padding: 16px;
-    }
-    .niv-side .niv-nav { display: none; }
-    .niv-side-head { padding: 0; }
-    .niv-side-head .niv-company-avatar { width: 48px; height: 48px; font-size: 16px; }
-    .users-col {
-      width: 100%;
-      max-height: none;
-    }
-    .detail { padding: 24px 16px; }
+    .ov-shell { flex-direction: column; flex: none; padding: 12px; gap: 16px; }
+    #chrome-sidebar { width: 100%; height: 380px; flex: none; }
+    .ov-main { min-height: 0; }
+    .ov-content { flex-direction: column; flex: none; }
+    .ov-list-col { width: 100%; overflow-y: visible; }
+    .ov-detail { overflow-y: visible; padding: 20px 16px; }
   }
 
-  /* modo incrustado (?embed=users): solo el area de gestion de usuarios.
-     Desaparecen la barra superior propia y la barra lateral de ajustes;
-     la pagina desplaza por dentro de sus columnas, sin barra doble. */
-  html.embed-users .niv-topbar, html.embed-users .niv-side { display: none !important; }
+  /* Embed mode (?embed=1, used by the dashboard users view): no chrome of
+     its own at all, the page is only the directory area. The class goes on
+     <html> before first paint (script below) so it is born chrome-less. */
+  html.embed-users #chrome-topbar, html.embed-users #chrome-sidebar { display: none !important; }
   html.embed-users body { height: 100vh; overflow: hidden; }
-  html.embed-users .shell { padding: 18px; gap: 18px; flex: 1; min-height: 0; }
+  html.embed-users .ov-shell { padding: 18px; gap: 18px; }
 </style>
-<link rel="stylesheet" href="./niv-dark.css" />
-<link rel="stylesheet" href="./qgc-theme.css" />
 <script>
-  /* Modo incrustado: la clase va en <html> antes del primer pintado para
-     que la pagina nazca ya recortada al area de gestion. */
-  try { if (new URLSearchParams(window.location.search).get('embed') === 'users') document.documentElement.classList.add('embed-users'); } catch (e) {}
+  try {
+    var _embed = new URLSearchParams(window.location.search).get('embed');
+    if (_embed === '1' || _embed === 'users') document.documentElement.classList.add('embed-users');
+  } catch (e) {}
 </script>
 </head>
 <body>
-<header class="niv-topbar">
-  <nav class="niv-topbar-tabs" aria-label="Dashboard">
-    <a class="niv-tab" href="https://app.nivelatolabs.com/dashboard.html?view=home">Dashboard</a>
-    <a class="niv-tab" href="https://app.nivelatolabs.com/dashboard.html?view=projects">Projects</a>
-    <a class="niv-tab" href="https://app.nivelatolabs.com/dashboard.html?view=notifications">Notifications</a>
-    <span class="niv-tab active" aria-current="page">Users</span>
-  </nav>
-</header>
-<div class="shell">
-  <aside class="niv-side" aria-label="Company navigation">
-    <div class="niv-side-head">
-      <div class="niv-company-avatar" id="org-avatar">--</div>
-      <div>
-        <div class="niv-company-name" id="org-name">Loading...</div>
-        <div class="niv-company-ver" id="org-version">Nivelato</div>
+<div id="chrome-topbar"></div>
+<div class="ov-shell">
+  <div id="chrome-sidebar" aria-label="Nivelato"></div>
+
+  <main class="ov-main">
+    <div class="ov-head">
+      <div class="ov-head-text">
+        <h1 class="niv-page-title" id="ov-title">Usuarios</h1>
+        <div class="niv-page-sub" id="ov-sub"></div>
+      </div>
+      <a class="niv-btn-pill niv-btn-primary ov-manage" id="ov-manage" href="/company/users" target="_top" style="display:none">Gestionar usuarios</a>
+    </div>
+
+    <div class="niv-card" id="ov-denied" style="display:none">
+      <div class="niv-card-title" id="ov-denied-title">Sin acceso</div>
+      <div class="niv-card-desc" id="ov-denied-desc" style="margin-bottom:0">Tu cuenta no tiene acceso al directorio de usuarios de esta compañía.</div>
+    </div>
+
+    <div id="ov-area">
+      <div class="ov-search">
+        <div class="niv-field">
+          <input id="ov-search-input" type="search" autocomplete="off" placeholder="Buscar por nombre, correo o rol" aria-label="Buscar usuarios" />
+        </div>
+      </div>
+      <div class="ov-content">
+        <section class="ov-list-col" aria-label="Usuarios" id="ov-list-col">
+          <div class="ov-list-title" id="ov-list-title">Equipo</div>
+          <div id="ov-list"><div class="ov-state" id="ov-list-loading">Cargando usuarios...</div></div>
+        </section>
+        <section class="ov-detail" id="ov-detail" aria-label="Detalle de usuario">
+          <div class="ov-state" id="ov-detail-loading">Selecciona un usuario para ver los detalles.</div>
+        </section>
       </div>
     </div>
-    <nav class="niv-nav">
-      <div class="niv-nav-group">
-        <div class="niv-nav-group-title">Company</div>
-        <button class="niv-nav-btn active" aria-current="page">Users</button>
-        <a class="niv-nav-btn" href="/company/settings">Company settings</a>
-        <a class="niv-nav-btn" href="/company/updates" id="nav-updates">Updates<span class="nav-sub" id="updates-sub">Checking...</span><span class="dot" id="updates-dot"></span></a>
-        <button class="niv-nav-btn soon" disabled>Billing<span class="soon-badge">soon</span></button>
-      </div>
-      <div class="niv-nav-group">
-        <div class="niv-nav-group-title">Account</div>
-        <a class="niv-nav-btn" href="/account/settings">My account</a>
-      </div>
-    </nav>
-  </aside>
-
-  <section class="users-col" aria-label="Company users">
-    <div class="users-title">Team</div>
-    <div id="user-list"><div class="state-loading">Loading users...</div></div>
-  </section>
-
-  <main class="detail" id="detail"><div class="state-loading">Select a user to see details.</div></main>
+  </main>
 </div>
 
 <script type="module">
-import { auth, db } from './firebase-config.js';
+import { auth, db } from '/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import {
-  getDoc, doc, getDocs, collection, query, where, updateDoc
+  getDoc, doc, getDocs, collection, query, where
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
-import { startPresence, getOnlineUsers } from './presence.js';
-import { PERM_DEFS, makePermChecker, orgHasQuotes } from './permissions.js';
-import { ensureFlowClaims, routeAfterGate } from './geo.js';
+import { startPresence, getOnlineUsers } from '/presence.js';
+import { PERM_DEFS, makePermChecker, orgHasQuotes } from '/permissions.js';
+import { ensureFlowClaims, routeAfterGate } from '/geo.js';
 
 const escapeHtml = (s) => String(s ?? '')
   .replace(/&/g, '&amp;')
@@ -475,22 +182,95 @@ const escapeHtml = (s) => String(s ?? '')
   .replace(/"/g, '&quot;')
   .replace(/'/g, '&#39;');
 
-// English labels for the 10 permission keys (PERM_DEFS order).
-const PERM_LABELS_EN = {
-  viewDashboard: 'View dashboard',
-  createMeasurements: 'Create measurements',
-  viewOwnMeasurements: 'View own measurements',
-  editOwnMeasurements: 'Edit own measurements',
-  viewOthersMeasurements: "View others' measurements",
-  editOthersMeasurements: "Edit others' measurements",
-  managePriceList: 'Manage price list',
-  createQuotes: 'Create quotes',
-  approveQuotes: 'Approve quotes',
-  userManagement: 'Manage users'
+/* Language: complete EN/ES pairs for every string this page renders.
+   Resolution follows the locked order (niv-user.js): the signed-in
+   user's saved language (users/{uid}.language) first, then the
+   nivelato-login-lang local chain, then Spanish, the product default. */
+let LANG = 'es';
+try {
+  const _ls = window.localStorage.getItem('nivelato-login-lang');
+  const _ck = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1];
+  LANG = (_ls === 'es' || _ls === 'en') ? _ls : (_ck || 'es');
+} catch (e) {}
+const STR = {
+  es: {
+    pageTitle: 'Nivelato - Usuarios', title: 'Usuarios',
+    subWithOrg: '{org} · {count}', subNoOrg: '{count}',
+    membersOne: '1 miembro', membersMany: '{n} miembros',
+    onlineNow: '{n} en línea ahora',
+    manage: 'Gestionar usuarios', team: 'Equipo',
+    searchPh: 'Buscar por nombre, correo o rol', searchAria: 'Buscar usuarios',
+    listAria: 'Usuarios', detailAria: 'Detalle de usuario',
+    loadingUsers: 'Cargando usuarios...', selectUser: 'Selecciona un usuario para ver los detalles.',
+    noMembers: 'Todavía no hay miembros en el equipo.', noResults: 'Ningún usuario coincide con tu búsqueda.',
+    unknownUser: 'Usuario desconocido', you: ' (tú)',
+    roles: { owner: 'Dueño / Admin', supervisor: 'Supervisor', cotizador: 'Cotizador', medidor: 'Técnico medidor' },
+    noRole: 'Sin rol',
+    status: 'Estado', statusActive: 'Activo', statusPending: 'Pendiente de aprobación',
+    presence: 'Presencia', online: 'En línea ahora', offline: 'No está en línea',
+    email: 'Correo', role: 'Rol',
+    permsTitle: 'Permisos', permsDesc: 'Lo que este usuario puede hacer, según su rol y sus permisos guardados.',
+    permsNone: 'Ningún permiso activo.',
+    permLabels: Object.fromEntries(PERM_DEFS.map(d => [d.key, d.label])),
+    projectsTitle: 'Proyectos', projectsDesc: 'Proyectos con espacios medidos por este usuario.',
+    loadingProjects: 'Cargando proyectos...', couldNotProjects: 'No se pudieron cargar los proyectos.',
+    noProjects: 'Todavía no hay proyectos.', measuredSpace: 'espacio medido', measuredSpaces: 'espacios medidos',
+    deniedTitle: 'Sin acceso',
+    deniedDesc: 'Tu cuenta no tiene acceso al directorio de usuarios de esta compañía.',
+    loadErrorTitle: 'Algo salió mal',
+    couldNotUsers: 'No se pudieron cargar los usuarios: {msg}',
+    couldNotProfile: 'No se pudo cargar tu perfil de usuario: {msg}',
+    missingProfile: 'No pudimos encontrar tu perfil de usuario. Inicia sesión de nuevo para repararlo.',
+    noOrg: 'Tu perfil de usuario no tiene una compañía asignada.',
+    unknownError: 'error desconocido', retry: 'Reintentar'
+  },
+  en: {
+    pageTitle: 'Nivelato - Users', title: 'Users',
+    subWithOrg: '{org} · {count}', subNoOrg: '{count}',
+    membersOne: '1 member', membersMany: '{n} members',
+    onlineNow: '{n} online now',
+    manage: 'Manage users', team: 'Team',
+    searchPh: 'Search by name, email or role', searchAria: 'Search users',
+    listAria: 'Users', detailAria: 'User detail',
+    loadingUsers: 'Loading users...', selectUser: 'Select a user to see details.',
+    noMembers: 'No team members yet.', noResults: 'No user matches your search.',
+    unknownUser: 'Unknown user', you: ' (you)',
+    roles: { owner: 'Owner / Admin', supervisor: 'Supervisor', cotizador: 'Quoter', medidor: 'Measuring technician' },
+    noRole: 'No role',
+    status: 'Status', statusActive: 'Active', statusPending: 'Pending approval',
+    presence: 'Presence', online: 'Online now', offline: 'Not online',
+    email: 'Email', role: 'Role',
+    permsTitle: 'Permissions', permsDesc: 'What this user can do, from their role and saved permissions.',
+    permsNone: 'No active permissions.',
+    permLabels: {
+      viewDashboard: 'View dashboard', createMeasurements: 'Create measurements',
+      viewOwnMeasurements: 'View own measurements', editOwnMeasurements: 'Edit own measurements',
+      viewOthersMeasurements: "View others' measurements", editOthersMeasurements: "Edit others' measurements",
+      managePriceList: 'Manage price list', createQuotes: 'Create quotes',
+      approveQuotes: 'Approve quotes', userManagement: 'Manage users'
+    },
+    projectsTitle: 'Projects', projectsDesc: 'Projects with spaces measured by this user.',
+    loadingProjects: 'Loading projects...', couldNotProjects: 'Could not load projects.',
+    noProjects: 'No projects yet.', measuredSpace: 'measured space', measuredSpaces: 'measured spaces',
+    deniedTitle: 'No access',
+    deniedDesc: 'Your account does not have access to this company user directory.',
+    loadErrorTitle: 'Something went wrong',
+    couldNotUsers: 'Could not load users: {msg}',
+    couldNotProfile: 'Could not load your user profile: {msg}',
+    missingProfile: 'We could not find your user profile. Please sign in again to repair it.',
+    noOrg: 'Your user profile has no company assigned.',
+    unknownError: 'unknown error', retry: 'Retry'
+  }
 };
-const PERM_KEYS = PERM_DEFS.map(d => d.key);
-const QUOTE_KEYS = ['managePriceList', 'createQuotes', 'approveQuotes'];
-const PERMS_PREVIEW = 3;
+const t = (key, vars) => {
+  let out = (STR[LANG] && STR[LANG][key]) || STR.es[key] || key;
+  if (vars) for (const k of Object.keys(vars)) out = out.replace('{' + k + '}', String(vars[k]));
+  return out;
+};
+const roleLabel = (m) => {
+  const r = m && (m.role || m.installerRole);
+  return (STR[LANG].roles && STR[LANG].roles[r]) || r || t('noRole');
+};
 
 const AVATAR_COLORS = ['#e64980', '#1e9df0', '#51cf66', '#9775fa', '#f06595', '#ffa94d', '#3bc9db', '#748ffc'];
 function avatarColor(uid) {
@@ -505,49 +285,32 @@ function initialsOf(name, email) {
   const second = words.length > 1 ? (words[1][0] || '') : ((words[0] && words[0][1]) || '');
   return (first + second).toUpperCase();
 }
-function roleLabel(role) {
-  const r = String(role || 'medidor');
-  return r.charAt(0).toUpperCase() + r.slice(1);
+function avatarHtml(m, extraClass) {
+  const cls = 'niv-user-avatar' + (extraClass ? ' ' + extraClass : '');
+  if (m.photoURL) {
+    return '<span class="' + cls + '"><img src="' + escapeHtml(m.photoURL) + '" alt="" /></span>';
+  }
+  return '<span class="' + cls + '" style="background:' + avatarColor(m.uid) + '">'
+    + escapeHtml(initialsOf(m.name, m.email)) + '</span>';
 }
 
 let currentUser = null;
 let currentUserData = null;
 let orgId = null;
-let orgData = null;
+let orgName = '';
 let members = [];
 let selectedUid = null;
+try { selectedUid = new URLSearchParams(window.location.search).get('user'); } catch (e) {}
 let onlineUids = new Set();
-let expandedProjects = false;
-let expandedPerms = false;
-let expandedDevices = false;
+let onlineLoaded = false;
+let searchText = '';
+let _can = () => false;
+/* In-flight guards: rapid repeat loads for the same block are ignored. */
+const _inFlight = new Set();
+function guardEnter(key) { if (_inFlight.has(key)) return false; _inFlight.add(key); return true; }
+function guardExit(key) { _inFlight.delete(key); }
 
-const isOwner = () => currentUserData && currentUserData.role === 'owner';
-// Mirrors the server owner rule (org doc ownerId, or the owner role).
-const viewerIsOrgOwner = () => isOwner() || !!(orgData && currentUser && orgData.ownerId === currentUser.uid);
-const dataVersion = () => (orgData && orgData.dataVersion) ? String(orgData.dataVersion) : '0.9';
-const memberById = (uid) => members.find(m => m.uid === uid);
-
-function renderSidebar() {
-  const name = orgData && orgData.name ? orgData.name : 'Company';
-  document.getElementById('org-avatar').textContent = initialsOf(name);
-  document.getElementById('org-name').textContent = name;
-  document.getElementById('org-version').textContent = 'Nivelato v' + dataVersion();
-}
-
-async function renderUpdatesDot() {
-  const sub = document.getElementById('updates-sub');
-  const dot = document.getElementById('updates-dot');
-  try {
-    const latestSnap = await getDoc(doc(db, 'app_updates', 'latest'));
-    const latest = latestSnap.exists() ? latestSnap.data() : null;
-    const pending = latest && latest.version && dataVersion() !== String(latest.version);
-    sub.textContent = pending ? 'New version available' : 'Up to date';
-    dot.classList.toggle('on', !!pending);
-  } catch (_) {
-    sub.textContent = '';
-  }
-}
-
+const statusOf = (m) => (m.disabled === true ? 'pending' : 'active');
 function sortedMembers() {
   return [...members].sort((a, b) => {
     const ao = a.role === 'owner' ? 0 : 1;
@@ -556,45 +319,106 @@ function sortedMembers() {
     return String(a.name || a.email || '').localeCompare(String(b.name || b.email || ''));
   });
 }
-
 function displayName(m) {
   const self = m.uid === (currentUser && currentUser.uid);
-  if (m.role === 'owner') return 'Owner' + (self ? ' (you)' : '');
-  const base = m.name || m.email || 'Unknown user';
-  return self ? base + ' (you)' : base;
+  const base = m.name || m.email || t('unknownUser');
+  return self ? base + t('you') : base;
+}
+function memberById(uid) { return members.find((m) => m.uid === uid); }
+
+function applyStaticLang() {
+  document.title = t('pageTitle');
+  try { document.documentElement.setAttribute('lang', LANG); } catch (e) {}
+  const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  set('ov-title', t('title'));
+  set('ov-manage', t('manage'));
+  set('ov-list-title', t('team'));
+  set('ov-denied-title', t('deniedTitle'));
+  set('ov-denied-desc', t('deniedDesc'));
+  const input = document.getElementById('ov-search-input');
+  if (input) { input.placeholder = t('searchPh'); input.setAttribute('aria-label', t('searchAria')); }
+  const lc = document.getElementById('ov-list-col');
+  if (lc) lc.setAttribute('aria-label', t('listAria'));
+  const dt = document.getElementById('ov-detail');
+  if (dt) dt.setAttribute('aria-label', t('detailAria'));
+  const ll = document.getElementById('ov-list-loading');
+  if (ll) ll.textContent = t('loadingUsers');
+  const dl = document.getElementById('ov-detail-loading');
+  if (dl) dl.textContent = t('selectUser');
+  renderSub();
+}
+function renderSub() {
+  const sub = document.getElementById('ov-sub');
+  if (!sub) return;
+  const count = members.length === 1 ? t('membersOne') : t('membersMany', { n: members.length });
+  let txt = orgName ? t('subWithOrg', { org: orgName, count }) : t('subNoOrg', { count });
+  if (onlineLoaded) txt += ' · ' + t('onlineNow', { n: onlineUids.size });
+  sub.textContent = txt;
+}
+
+function visibleMembers() {
+  const q = searchText.trim().toLowerCase();
+  const all = sortedMembers();
+  if (!q) return all;
+  return all.filter((m) => {
+    const hay = [m.name || '', m.email || '', roleLabel(m)].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
 }
 
 function renderList() {
-  const list = document.getElementById('user-list');
+  const list = document.getElementById('ov-list');
+  if (!list) return;
   if (!members.length) {
-    list.innerHTML = '<div class="empty">No team members yet.</div>';
+    list.innerHTML = '<div class="ov-empty">' + escapeHtml(t('noMembers')) + '</div>';
     return;
   }
-  list.innerHTML = sortedMembers().map((m) => {
+  const vis = visibleMembers();
+  if (!vis.length) {
+    list.innerHTML = '<div class="ov-empty">' + escapeHtml(t('noResults')) + '</div>';
+    return;
+  }
+  list.innerHTML = vis.map((m) => {
     const sel = m.uid === selectedUid ? ' selected' : '';
-    const online = onlineUids.has(m.uid) ? '<span class="u-online"></span>' : '';
-    return `<button class="user-card${sel}" data-uid="${escapeHtml(m.uid)}">
-      <span class="u-avatar" style="background:${avatarColor(m.uid)}">${escapeHtml(initialsOf(m.name, m.email))}${online}</span>
-      <span class="u-meta">
-        <span class="u-name">${escapeHtml(displayName(m))}</span>
-        <span class="u-email">${escapeHtml(m.email || '')}</span>
-      </span>
-    </button>`;
+    const online = onlineUids.has(m.uid) ? '<span class="ov-online"></span>' : '';
+    const pending = statusOf(m) === 'pending'
+      ? '<span class="ov-chip pending">' + escapeHtml(t('statusPending')) + '</span>' : '';
+    return '<button class="niv-user-row' + sel + '" data-uid="' + escapeHtml(m.uid) + '">'
+      + '<span class="ov-avatar-wrap">' + avatarHtml(m) + online + '</span>'
+      + '<span class="ov-row-meta">'
+      + '<span class="ov-row-name"><span class="niv-user-name">' + escapeHtml(displayName(m)) + '</span></span>'
+      + '<span class="niv-user-email ov-row-email">' + escapeHtml(m.email || '') + '</span>'
+      + '<span class="ov-chip-row"><span class="ov-chip">' + escapeHtml(roleLabel(m)) + '</span>' + pending + '</span>'
+      + '</span>'
+      + '</button>';
   }).join('');
-  list.querySelectorAll('.user-card').forEach((el) => {
+  list.querySelectorAll('.niv-user-row').forEach((el) => {
     el.addEventListener('click', () => {
-      selectedUid = el.getAttribute('data-uid');
-      expandedProjects = false;
-      expandedPerms = false;
-      renderList();
-      renderDetail();
+      selectUser(el.getAttribute('data-uid'), true);
     });
   });
 }
 
+function selectUser(uid, fromClick) {
+  selectedUid = uid;
+  try {
+    const url = new URL(window.location.href);
+    if (uid) url.searchParams.set('user', uid); else url.searchParams.delete('user');
+    window.history.replaceState(null, '', url.toString());
+  } catch (e) {}
+  renderList();
+  renderDetail();
+  if (fromClick && window.innerWidth <= 900) {
+    const detail = document.getElementById('ov-detail');
+    if (detail) detail.scrollIntoView({ block: 'start' });
+  }
+}
+
+/* Projects block data: the same jobs grouping the administration detail
+   uses (orgs/{orgId}/jobs where installerUid == uid, drafts skipped,
+   grouped by project, falling back to customer). Only called when the
+   viewer's own permissions allow seeing that user's measurements. */
 async function loadProjects(uid) {
-  // "Projects by {name}": group the user's jobs by project (fallback: customer).
-  // Each job is one measured opening, so the count is honest "measured spaces".
   try {
     const qs = await getDocs(query(collection(db, 'orgs', orgId, 'jobs'), where('installerUid', '==', uid)));
     const groups = new Map();
@@ -605,319 +429,283 @@ async function loadProjects(uid) {
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(j);
     });
-    return [...groups.entries()]
-      .map(([name, jobs]) => ({ name, count: jobs.length }))
+    return [...groups.entries()].map(([name, jobs]) => ({ name, count: jobs.length }))
       .sort((a, b) => b.count - a.count);
   } catch (e) {
     console.warn('[Nivelato] could not load jobs:', e.message);
-    return null; // null = load failed (vs [] = none)
+    return null;
   }
+}
+
+function canSeeProjects(m) {
+  if (!m) return false;
+  const isSelf = m.uid === (currentUser && currentUser.uid);
+  return isSelf ? _can('viewOwnMeasurements') : _can('viewOthersMeasurements');
+}
+function canSeePerms(m) {
+  if (!m) return false;
+  return m.uid === (currentUser && currentUser.uid) || _can('userManagement');
 }
 
 function renderDetail() {
-  expandedDevices = false;
-  const detail = document.getElementById('detail');
+  const detail = document.getElementById('ov-detail');
+  if (!detail) return;
   const m = memberById(selectedUid);
   if (!m) {
-    detail.innerHTML = '<div class="state-loading">Select a user to see details.</div>';
+    detail.innerHTML = '<div class="ov-state">' + escapeHtml(t('selectUser')) + '</div>';
     return;
   }
-  const name = m.name || m.email || 'Unknown user';
-  detail.innerHTML = `
-    <div class="detail-head">
-      <div class="detail-name">${escapeHtml(name)} <span class="detail-email-inline">(${escapeHtml(m.email || '')})</span></div>
-    </div>
-    <div class="detail-grid">
-      <div class="panel" id="projects-panel">
-        <h3>Projects by ${escapeHtml(String(name).split(' ')[0])}</h3>
-        <div id="projects-body"><div class="empty">Loading projects...</div></div>
-      </div>
-      <div class="panel" id="perms-panel">
-        <h3>Permissions</h3>
-        <div id="perms-body"></div>
-        ${isOwner() ? '' : '<div class="perm-note">Only owners can change permissions.</div>'}
-      </div>
-    </div>
-    <div class="panel devices-panel" id="devices-panel">
-      <h3 id="devices-title">Registered devices</h3>
-      <div id="devices-body"><div class="empty">Loading devices...</div></div>
-    </div>
-    <div id="delete-zone"></div>
-  `;
-  renderProjects(m);
-  renderPerms(m);
-  renderDevices(m);
-  renderDelete(m);
-}
-
-// Registered devices for the selected user. The read goes through the
-// owner-scoped listUserDevices callable (devices/{id} is not
-// client-readable by rules). Renaming your own devices uses
-// renameDevice (device-owner-only on the server); the org owner also
-// gets the Rename action on member devices, saved through
-// renameMemberDevice, which applies the same org-owner rule server-side.
-async function renderDevices(m) {
-  const body = document.getElementById('devices-body');
-  const title = document.getElementById('devices-title');
-  if (!body) return;
-  body.innerHTML = '<div class="empty">Loading devices...</div>';
-  try {
-    const fn = httpsCallable(getFunctions(auth.app, 'us-central1'), 'listUserDevices');
-    const { data } = await fn({ uid: m.uid });
-    if (!body.isConnected) return;
-    const devices = (data && data.devices) || [];
-    const limit = (data && data.limit) || 5;
-    if (title) title.textContent = `Registered devices (${devices.length}/${limit})`;
-    if (!devices.length) {
-      body.innerHTML = '<div class="empty">No linked devices yet.</div>';
-      return;
-    }
-    const visible = expandedDevices ? devices : devices.slice(0, limit);
-    const isSelfView = m.uid === (currentUser && currentUser.uid);
-    const canRename = isSelfView || viewerIsOrgOwner();
-    body.innerHTML = visible.map((d) => {
-      const name = d.displayName || 'Unnamed device';
-      const modelBits = [d.brand, d.model].filter(Boolean).join(' ');
-      const sub = modelBits || (d.appVersionName ? 'Nivelato v' + d.appVersionName : 'Nivelato');
-      const linked = d.linkedAt
-        ? new Date(d.linkedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-        : '';
-      return `<div class="dev-row${d.outdated ? ' outdated' : ''}">
-        <div class="dev-icon" aria-hidden="true"></div>
-        <div class="dev-meta">
-          <div class="dev-name"><span class="dev-name-text">${escapeHtml(name)}</span>${d.outdated ? '<span class="dev-warn">Update available</span>' : ''}${canRename ? `<button class="dev-rename" data-rename="${escapeHtml(d.uuid)}">Rename</button>` : ''}</div>
-          <div class="dev-sub">${escapeHtml(sub)}${linked ? ' · Linked ' + escapeHtml(linked) : ''}</div>
-          <div class="dev-edit-slot"></div>
-        </div>
-      </div>`;
-    }).join('') +
-    (devices.length > limit ? `<button class="btn" id="btn-more-devices">${expandedDevices ? 'Show less' : 'View more'}</button>` : '');
-    const more = document.getElementById('btn-more-devices');
-    if (more) more.addEventListener('click', () => { expandedDevices = !expandedDevices; renderDevices(m); });
-    body.querySelectorAll('[data-rename]').forEach((btn) => {
-      btn.addEventListener('click', () => openDeviceRename(btn, m));
-    });
-  } catch (e) {
-    if (body.isConnected) body.innerHTML = '<div class="empty">Could not load devices.</div>';
+  const pending = statusOf(m) === 'pending';
+  const online = onlineUids.has(m.uid);
+  let html = ''
+    + '<div class="ov-detail-head">' + avatarHtml(m)
+    + '<div><div class="ov-detail-name">' + escapeHtml(displayName(m)) + '</div>'
+    + '<div class="ov-detail-email">' + escapeHtml(m.email || '') + '</div></div></div>'
+    + '<div class="niv-card">'
+    + infoRow(t('email'), m.email || '')
+    + infoRow(t('role'), roleLabel(m))
+    + infoRow(t('status'), '<span class="' + (pending ? 'ov-status-pending' : 'ov-status-on') + '">'
+      + escapeHtml(pending ? t('statusPending') : t('statusActive')) + '</span>', true)
+    + infoRow(t('presence'), '<span id="ov-presence-value">' + escapeHtml(online ? t('online') : t('offline')) + '</span>', true)
+    + '</div>';
+  if (canSeePerms(m)) {
+    html += '<div class="niv-card"><div class="niv-card-title">' + escapeHtml(t('permsTitle')) + '</div>'
+      + '<div class="niv-card-desc">' + escapeHtml(t('permsDesc')) + '</div>'
+      + '<div class="niv-perm-grid">' + permsChipsHtml(m) + '</div></div>';
   }
+  if (canSeeProjects(m)) {
+    html += '<div class="niv-card"><div class="niv-card-title">' + escapeHtml(t('projectsTitle')) + '</div>'
+      + '<div class="niv-card-desc">' + escapeHtml(t('projectsDesc')) + '</div>'
+      + '<div id="ov-projects-body"><div class="ov-empty">' + escapeHtml(t('loadingProjects')) + '</div></div></div>';
+  }
+  detail.innerHTML = html;
+  if (canSeeProjects(m)) renderProjects(m);
 }
-
-function openDeviceRename(btn, m) {
-  const row = btn.closest('.dev-row');
-  const slot = row && row.querySelector('.dev-edit-slot');
-  if (!slot || slot.dataset.open === '1') return;
-  slot.dataset.open = '1';
-  const uuid = btn.getAttribute('data-rename');
-  const nameEl = row.querySelector('.dev-name-text');
-  const current = nameEl ? nameEl.textContent.trim() : '';
-  slot.innerHTML = `<div class="dev-edit">
-    <input type="text" maxlength="60" value="${escapeHtml(current === 'Unnamed device' ? '' : current)}" placeholder="Device name" aria-label="Device name" />
-    <button class="dev-save">Save</button>
-    <button class="dev-cancel">Cancel</button>
-  </div>`;
-  const input = slot.querySelector('input');
-  input.focus();
-  input.select();
-  slot.querySelector('.dev-cancel').addEventListener('click', () => renderDevices(m));
-  slot.querySelector('.dev-save').addEventListener('click', async () => {
-    const saveBtn = slot.querySelector('.dev-save');
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';
-    try {
-      // Own devices go through renameDevice (device-owner-only);
-      // a member's devices go through the org-scoped renameMemberDevice.
-      const isSelfView = m.uid === (currentUser && currentUser.uid);
-      const fn = httpsCallable(getFunctions(auth.app, 'us-central1'),
-        isSelfView ? 'renameDevice' : 'renameMemberDevice');
-      const payload = isSelfView
-        ? { deviceUuid: uuid, displayName: input.value.trim() }
-        : { uid: m.uid, deviceUuid: uuid, displayName: input.value.trim() };
-      await fn(payload);
-      renderDevices(m);
-    } catch (e) {
-      alert('Could not rename device: ' + (e.message || 'unknown error'));
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'Save';
-    }
-  });
+function infoRow(label, value, rawHtml) {
+  return '<div class="niv-info-row"><div class="niv-info-label">' + escapeHtml(label) + '</div>'
+    + '<div class="niv-info-value">' + (rawHtml ? value : escapeHtml(value)) + '</div></div>';
 }
-
+function permsChipsHtml(m) {
+  const checker = makePermChecker(m);
+  const keys = PERM_DEFS.map((d) => d.key)
+    .filter((k) => orgHasQuotes(m) || !['managePriceList', 'createQuotes', 'approveQuotes'].includes(k))
+    .filter((k) => { try { return !!checker(k); } catch (e) { return false; } });
+  if (!keys.length) return '<span class="ov-empty" style="padding:0">' + escapeHtml(t('permsNone')) + '</span>';
+  return keys.map((k) => '<span class="ov-perm-chip">'
+    + escapeHtml((STR[LANG].permLabels && STR[LANG].permLabels[k]) || k) + '</span>').join('');
+}
 async function renderProjects(m) {
-  const body = document.getElementById('projects-body');
+  const body = document.getElementById('ov-projects-body');
   if (!body) return;
+  if (!guardEnter('projects:' + m.uid)) return;
   const groups = await loadProjects(m.uid);
+  guardExit('projects:' + m.uid);
   if (!body.isConnected) return;
+  if (selectedUid !== m.uid) return;
   if (groups === null) {
-    body.innerHTML = '<div class="empty">Could not load projects.</div>';
+    body.innerHTML = '<div class="ov-empty">' + escapeHtml(t('couldNotProjects')) + '</div>';
     return;
   }
   if (!groups.length) {
-    body.innerHTML = '<div class="empty">No projects yet.</div>';
+    body.innerHTML = '<div class="ov-empty">' + escapeHtml(t('noProjects')) + '</div>';
     return;
   }
-  const visible = expandedProjects ? groups : groups.slice(0, 3);
-  body.innerHTML = visible.map((g) => `
-    <div class="proj-row">
-      <div class="proj-thumb">IMG</div>
-      <div>
-        <div class="proj-name">${escapeHtml(g.name)}</div>
-        <div class="proj-sub">${g.count} measured space${g.count === 1 ? '' : 's'}</div>
-      </div>
-    </div>`).join('') +
-    (groups.length > 3 ? `<button class="btn" id="btn-more-projects">${expandedProjects ? 'Show less' : 'View more'}</button>` : '');
-  const btn = document.getElementById('btn-more-projects');
-  if (btn) btn.addEventListener('click', () => { expandedProjects = !expandedProjects; renderProjects(m); });
-}
-
-function renderPerms(m) {
-  const body = document.getElementById('perms-body');
-  if (!body) return;
-  const checker = makePermChecker(m);
-  // orgs sin quoting (QGC): no se muestran los permisos de precios/cotizaciones
-  const allKeys = orgHasQuotes(m) ? PERM_KEYS : PERM_KEYS.filter(k => !QUOTE_KEYS.includes(k));
-  const keys = expandedPerms ? allKeys : allKeys.slice(0, PERMS_PREVIEW);
-  const canEdit = isOwner();
-  body.innerHTML = keys.map((k) => {
-    const on = !!checker(k);
-    return `<div class="perm-row">
-      <span>${escapeHtml(PERM_LABELS_EN[k] || k)}</span>
-      <button class="toggle${on ? ' on' : ''}" data-key="${escapeHtml(k)}" ${canEdit ? '' : 'disabled'}
-        aria-pressed="${on}" aria-label="${escapeHtml(PERM_LABELS_EN[k] || k)}">
-        <span class="knob"></span>
-      </button>
-    </div>`;
-  }).join('') +
-  (allKeys.length > PERMS_PREVIEW
-    ? `<button class="btn" id="btn-all-perms">${expandedPerms ? 'Show less' : 'View all'}</button>`
-    : '');
-  const btnAll = document.getElementById('btn-all-perms');
-  if (btnAll) btnAll.addEventListener('click', () => { expandedPerms = !expandedPerms; renderPerms(m); });
-  if (canEdit) {
-    body.querySelectorAll('.toggle').forEach((t) => {
-      t.addEventListener('click', async () => {
-        const key = t.getAttribute('data-key');
-        const cur = memberById(m.uid);
-        const nowOn = !!makePermChecker(cur)(key);
-        t.disabled = true;
-        try {
-          await updateDoc(doc(db, 'users', m.uid), { ['permissions.' + key]: !nowOn });
-          cur.permissions = { ...(cur.permissions || {}), [key]: !nowOn };
-        } catch (e) {
-          alert('Could not update permission: ' + (e.message || 'unknown error'));
-        }
-        renderPerms(memberById(m.uid));
-      });
-    });
-  }
-}
-
-function renderDelete(m) {
-  const zone = document.getElementById('delete-zone');
-  if (!zone || !isOwner()) return;
-  const isSelf = m.uid === (currentUser && currentUser.uid);
-  const isOrgOwner = orgData && orgData.ownerId === m.uid;
-  if (isSelf || isOrgOwner) {
-    zone.innerHTML = `<div class="delete-note">${isSelf ? 'You cannot remove your own account here.' : 'The organization owner cannot be removed.'}</div>`;
-    return;
-  }
-  zone.innerHTML = `
-    <button class="btn btn-danger" id="btn-delete-user">Delete user</button>
-    <div class="delete-note">This deactivates the account immediately. One click to confirm, no maze.</div>`;
-  document.getElementById('btn-delete-user').addEventListener('click', async () => {
-    const label = m.name || m.email || 'this user';
-    if (!confirm('Remove ' + label + ' from the company? They will lose access immediately.')) return;
-    const btn = document.getElementById('btn-delete-user');
-    btn.disabled = true;
-    btn.textContent = 'Removing...';
-    try {
-      await updateDoc(doc(db, 'users', m.uid), { disabled: true });
-      members = members.filter((x) => x.uid !== m.uid);
-      selectedUid = members.length ? sortedMembers()[0].uid : null;
-      expandedProjects = false;
-      expandedPerms = false;
-      renderList();
-      renderDetail();
-    } catch (e) {
-      alert('Could not remove user: ' + (e.message || 'unknown error'));
-      btn.disabled = false;
-      btn.textContent = 'Delete user';
-    }
-  });
+  body.innerHTML = groups.map((g) =>
+    '<div class="ov-proj-row"><div><div class="ov-proj-name">' + escapeHtml(g.name) + '</div>'
+    + '<div class="ov-proj-sub">' + g.count + ' '
+    + escapeHtml(g.count === 1 ? t('measuredSpace') : t('measuredSpaces')) + '</div></div></div>'
+  ).join('');
 }
 
 async function refreshOnline() {
   try {
     const online = await getOnlineUsers(orgId);
     onlineUids = new Set(online.map((u) => u.uid));
+    onlineLoaded = true;
+    renderSub();
     renderList();
-  } catch (_) { /* online dots are a nice-to-have */ }
+    const pv = document.getElementById('ov-presence-value');
+    if (pv && selectedUid) pv.textContent = onlineUids.has(selectedUid) ? t('online') : t('offline');
+  } catch (_) { /* online state is a nice-to-have */ }
 }
 
-// ---- auth + data ----
+function showLoadError(msg) {
+  window.__nivUsersBooted = true;
+  const area = document.getElementById('ov-area');
+  if (area) area.style.display = 'none';
+  const sub = document.getElementById('ov-sub');
+  if (sub) sub.textContent = '';
+  const denied = document.getElementById('ov-denied');
+  if (!denied) return;
+  denied.style.display = 'block';
+  const title = document.getElementById('ov-denied-title');
+  if (title) title.textContent = t('loadErrorTitle');
+  const desc = document.getElementById('ov-denied-desc');
+  if (desc) {
+    desc.textContent = msg;
+    const br = document.createElement('br');
+    const btn = document.createElement('button');
+    btn.className = 'niv-btn-pill ov-retry';
+    btn.textContent = t('retry');
+    btn.addEventListener('click', () => window.location.reload());
+    desc.appendChild(br);
+    desc.appendChild(btn);
+  }
+}
+function showDenied() {
+  window.__nivUsersBooted = true;
+  const area = document.getElementById('ov-area');
+  if (area) area.style.display = 'none';
+  const sub = document.getElementById('ov-sub');
+  if (sub) sub.textContent = '';
+  const denied = document.getElementById('ov-denied');
+  if (denied) denied.style.display = 'block';
+}
+
+const searchInput = document.getElementById('ov-search-input');
+if (searchInput) {
+  searchInput.addEventListener('input', () => { searchText = searchInput.value || ''; renderList(); });
+}
+
+/* ---- auth + data ----
+   Access (the overview's own enforcement, per modules/README.md):
+   signed-in active members of the org. The members list query is the
+   exact one the administration page and the dashboard run
+   (users where orgId == the viewer's orgId), which firestore.rules
+   allows to any active same-org member, so this page can never expose
+   a user the viewer could not already list elsewhere. On top of that,
+   the page requires the viewDashboard permission through the shared
+   checker (explicit flag wins, then the owner grant, then the role
+   fallback, which grants it to every role). Non-permitted viewers get
+   the denied card the company settings page gives its non-permitted
+   viewers, and no members query runs for them. */
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
-  // Mint flow claims: rules require them for org data reads.
-  // Route to geo-blocked on fresh block/review verdicts (same as login.html).
   try {
     const gate = await ensureFlowClaims();
     if (gate && gate.ok && !gate.cached && routeAfterGate(gate.verdict, gate.reason)) return;
   } catch (_) { /* fails soft */ }
   currentUser = user;
 
-  // Backup theme pass: in case the fast path or doc-based check could not run.
   if (window.applyCompanyThemeFromAuth) { try { window.applyCompanyThemeFromAuth(auth); } catch (_) {} }
 
-  const userSnap = await getDoc(doc(db, 'users', user.uid));
+  let userSnap;
+  try {
+    userSnap = await getDoc(doc(db, 'users', user.uid));
+  } catch (e) {
+    showLoadError(t('couldNotProfile', { msg: e.message || t('unknownError') }));
+    return;
+  }
   if (!userSnap.exists()) {
-    alert('We could not find your user profile. Please sign in again to repair it.');
+    alert(t('missingProfile'));
     window.location.href = 'https://login.nivelatolabs.com/?missingProfile=1';
     return;
   }
   if (window.applyCompanyTheme) { try { window.applyCompanyTheme(userSnap.data()); } catch (_) {} }
   currentUserData = userSnap.data();
+  if (currentUserData.language === 'es' || currentUserData.language === 'en') {
+    LANG = currentUserData.language;
+  }
   orgId = currentUserData.orgId;
+  if (!orgId) { showLoadError(t('noOrg')); return; }
+  _can = makePermChecker(currentUserData);
 
-  if (!makePermChecker(currentUserData)('userManagement')) {
-    if (window.nivSaveSettingsReferrer) window.nivSaveSettingsReferrer();
-    window.location.href = '/account/settings';
-    return;
+  const isActiveMember = currentUserData.disabled !== true && currentUserData.disabled !== 'rejected';
+  if (!isActiveMember || !_can('viewDashboard')) { applyStaticLang(); showDenied(); return; }
+
+  applyStaticLang();
+  if (_can('userManagement')) {
+    const mg = document.getElementById('ov-manage');
+    if (mg) mg.style.display = '';
   }
 
   try { await startPresence(user.uid); } catch (e) {
     console.warn('[Nivelato] presence start failed:', e.message);
   }
 
+  /* Org name for the header only; a failed org read falls back to the
+     count alone, it never blocks the directory. */
   try {
     const orgSnap = await getDoc(doc(db, 'orgs', orgId));
-    orgData = orgSnap.exists() ? orgSnap.data() : {};
+    if (orgSnap.exists()) orgName = orgSnap.data().name || '';
   } catch (e) {
-    document.getElementById('user-list').innerHTML =
-      `<div class="state-error">Could not load company data: ${escapeHtml(e.message || 'unknown error')}</div>`;
-    return;
+    console.warn('[Nivelato] could not load org name:', e.message);
   }
-  renderSidebar();
-  renderUpdatesDot();
+  renderSub();
 
+  let qs;
   try {
-    const qs = await getDocs(query(collection(db, 'users'), where('orgId', '==', orgId)));
-    members = qs.docs
-      .map((d) => ({ uid: d.id, ...d.data() }))
-      .filter((m) => m.disabled !== true);
+    qs = await getDocs(query(collection(db, 'users'), where('orgId', '==', orgId)));
   } catch (e) {
-    document.getElementById('user-list').innerHTML =
-      `<div class="state-error">Could not load users: ${escapeHtml(e.message || 'unknown error')}</div>`;
+    showLoadError(t('couldNotUsers', { msg: e.message || t('unknownError') }));
     return;
   }
+  members = qs.docs
+    .map((d) => ({ uid: d.id, ...d.data() }))
+    .filter((m) => m.disabled !== 'rejected');
 
-  if (members.length) selectedUid = sortedMembers()[0].uid;
+  window.__nivUsersBooted = true;
+  renderSub();
+  if (!memberById(selectedUid)) {
+    selectedUid = members.length ? sortedMembers()[0].uid : null;
+  }
   renderList();
   renderDetail();
   refreshOnline();
   setInterval(refreshOnline, 60000);
 });
+applyStaticLang();
 </script>
-<script src="./press-yaoi.js"></script>
-<script type="module" src="./add-user.js"></script>
-<script src="./nav-referrer.js"></script>
+<script src="/modules/shell-bridge.js"></script>
+<script>
+  /* Chrome modules: sidebar (target=shell, this page is its Usuarios
+     door at /users) and, per the shell rule, the top bar ONLY at 901px
+     and up, never on mobile. Embed mode mounts neither: it is
+     chrome-less. Language follows the local chain here; the sidebar
+     module resolves the signed-in user's language itself for its own
+     gate, and the bridge init carries this page's resolved language. */
+  (function () {
+    var embed = false;
+    try {
+      var e = new URLSearchParams(window.location.search).get('embed');
+      embed = e === '1' || e === 'users';
+    } catch (err) {}
+    if (embed || !window.NivShell) return;
+    var lang = 'es';
+    try {
+      var ls = window.localStorage.getItem('nivelato-login-lang');
+      var ck = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1];
+      lang = (ls === 'es' || ls === 'en') ? ls : (ck || 'es');
+    } catch (err2) {}
+    window.NivShell.mountSidebar('#chrome-sidebar', { target: 'shell', active: 'users', lang: lang });
+    if (window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
+      window.NivShell.mountTopbar('#chrome-topbar', { active: 'users' });
+    }
+  })();
+</script>
+<script>
+  /* Boot watchdog: if the module script cannot run at all, the directory
+     would otherwise sit on the loading text forever. After a grace
+     period, an unbooted page replaces it with an honest error plus a
+     retry, in the language of the local chain. */
+  setTimeout(function () {
+    if (window.__nivUsersBooted) return;
+    var es = true;
+    try {
+      var ls = window.localStorage.getItem('nivelato-login-lang');
+      var ck = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1];
+      es = (ls || ck || 'es') !== 'en';
+    } catch (e) {}
+    var msg = es ? 'No se pudieron cargar los usuarios. Revisa tu conexión e inténtalo de nuevo.'
+                 : 'Could not load users. Check your connection and try again.';
+    var retry = es ? 'Reintentar' : 'Retry';
+    var list = document.getElementById('ov-list');
+    if (list) {
+      list.innerHTML = '<div class="ov-error">' + msg + '<br><button class="niv-btn-pill ov-retry" onclick="window.location.reload()">' + retry + '</button></div>';
+    }
+  }, 15000);
+</script>
+<script src="/press-yaoi.js"></script>
+<script src="/nav-referrer.js"></script>
 </body>
 </html>
