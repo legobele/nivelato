@@ -6,7 +6,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Nivelato</title>
 <link rel="manifest" href="/nivelato/manifest.json" />
-<meta name="theme-color" content="#121212" />
+<meta name="theme-color" content="#0e0e10" />
+<link rel="icon" href="icon-192.png" />
+<link rel="stylesheet" href="niv-dark.css" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-192.png" />
@@ -18,7 +20,7 @@
 .step-error{display:none;margin:10px 0 2px;padding:10px 12px;background:#ffe3e3;color:#c92a2a;border:1px solid #ffa8a8;border-radius:8px;font-size:13px;font-weight:600;line-height:1.4}
 .step-error.show{display:block}
 /* Toast liviano (QA fix 2026-09-18) */
-#nv-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#171b21;color:#fff;padding:10px 18px;border-radius:24px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;z-index:10002;box-shadow:0 4px 16px rgba(0,0,0,.25);max-width:86vw;text-align:center}
+#nv-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--niv-surface);color:var(--niv-text);padding:10px 18px;border-radius:24px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;z-index:10002;box-shadow:0 4px 16px rgba(0,0,0,.25);max-width:86vw;text-align:center}
 #nv-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* Modal de advertencias inline — reemplaza el confirm() nativo (QA fix 2026-09-18) */
 #nv-modal-overlay{position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px}
