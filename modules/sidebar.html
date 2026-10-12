@@ -119,6 +119,50 @@
   }
   body.niv-drag-active .niv-drag-new { display: flex; }
 
+  /* Row context menus (v1.1): the "..." affordance is a real button
+     opening a small menu with per-row actions. */
+  .dots {
+    flex: none;
+    background: transparent;
+    border: none;
+    color: var(--niv-text-dim, #a7a7ad);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    line-height: 1;
+  }
+  .dots:hover { background: var(--niv-surface-2, #1e1e22); color: var(--niv-text, #f5f5f7); }
+  .row-menu {
+    position: fixed;
+    z-index: 1000;
+    min-width: 180px;
+    background: var(--niv-surface, #17171a);
+    border: 1px solid var(--niv-border, rgba(255,255,255,0.28));
+    border-radius: 12px;
+    box-shadow: 0 10px 34px rgba(0,0,0,0.5);
+    padding: 6px;
+  }
+  .row-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: var(--niv-text, #f5f5f7);
+    font-size: 13px;
+    font-family: inherit;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .row-menu-item:hover { background: var(--niv-surface-2, #1e1e22); }
+  .row-menu-item.danger { color: #f87171; }
+  .row-menu-item.danger:hover { background: rgba(229,72,77,0.12); }
+
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -282,6 +326,13 @@ const STRINGS = {
     demoProject: 'Proyecto de ejemplo', demoCustomer: 'Cliente de ejemplo', demoMeasure: 'Medida de ejemplo',
     shellHome: 'Panel', shellProjects: 'Proyectos', shellNotifications: 'Notificaciones',
     newProject: 'Nuevo proyecto',
+    menuOpen: 'Abrir', menuView: 'Ver detalles', menuRename: 'Renombrar', menuDelete: 'Eliminar',
+    menuNewMeasure: 'Nueva medida',
+    renamePrompt: (name) => 'Nuevo nombre para "' + name + '":',
+    renameFailed: 'No se pudo renombrar. Revisa tus permisos e intenta de nuevo.',
+    deleteConfirm: (name) => '¿Eliminar "' + name + '"? Esta acción no se puede deshacer.',
+    deleteFailed: 'No se pudo eliminar. Revisa tus permisos e intenta de nuevo.',
+    menuActionFailed: 'La acción no se pudo completar.',
     ariaCompany: 'Navegación de la compañía', ariaSettings: 'Ajustes', ariaAccountSettings: 'Ajustes de la cuenta',
     ariaShell: 'Navegación principal'
   },
@@ -302,6 +353,13 @@ const STRINGS = {
     demoProject: 'Example project', demoCustomer: 'Example customer', demoMeasure: 'Example measurement',
     shellHome: 'Dashboard', shellProjects: 'Projects', shellNotifications: 'Notifications',
     newProject: 'New project',
+    menuOpen: 'Open', menuView: 'View details', menuRename: 'Rename', menuDelete: 'Delete',
+    menuNewMeasure: 'New measurement',
+    renamePrompt: (name) => 'New name for "' + name + '":',
+    renameFailed: 'Could not rename. Check your permissions and try again.',
+    deleteConfirm: (name) => 'Delete "' + name + '"? This cannot be undone.',
+    deleteFailed: 'Could not delete. Check your permissions and try again.',
+    menuActionFailed: 'The action could not be completed.',
     ariaCompany: 'Company navigation', ariaSettings: 'Settings', ariaAccountSettings: 'Account settings',
     ariaShell: 'Main navigation'
   }
@@ -655,19 +713,19 @@ let demoListsOn = false;
 function panelItems(names, emptyKey) {
   if (!names.length) return '<div class="niv-panel-empty">' + escapeHtml(L(emptyKey)) + '</div>';
   return names.map((n, i) =>
-    '<div class="niv-panel-item' + (i === 0 ? ' first' : '') + '"><span>' + escapeHtml(n) + '</span><span class="dots">...</span></div>'
+    '<div class="niv-panel-item' + (i === 0 ? ' first' : '') + '" data-kind="customer" data-label="' + escapeHtml(n) + '"><span>' + escapeHtml(n) + '</span><button type="button" class="dots" aria-label="...">...</button></div>'
   ).join('');
 }
 function projectItems(projects) {
   if (!projects.length) return '<div class="niv-panel-empty">' + escapeHtml(L('emptyProjects')) + '</div>';
   return projects.map((pr, i) =>
-    '<div class="niv-panel-item' + (i === 0 ? ' first' : '') + '" data-project-id="' + escapeHtml(pr.id) + '"><span>' + escapeHtml(pr.name) + '</span><span class="dots">...</span></div>'
+    '<div class="niv-panel-item' + (i === 0 ? ' first' : '') + '" data-kind="project" data-project-id="' + escapeHtml(pr.id) + '" data-label="' + escapeHtml(pr.name) + '"><span>' + escapeHtml(pr.name) + '</span><button type="button" class="dots" aria-label="...">...</button></div>'
   ).join('');
 }
 function measureItems(measures) {
   if (!measures.length) return '<div class="niv-panel-empty">' + escapeHtml(L('emptyMeasures')) + '</div>';
   return measures.map((m, i) =>
-    '<div class="niv-panel-item' + (i === 0 ? ' first' : '') + '" data-measure-id="' + escapeHtml(m.id) + '" data-measure-label="' + escapeHtml(m.label) + '"><span>' + escapeHtml(m.label) + (m.photo ? ' \u{1F4F7}' : '') + '</span><span class="dots">...</span></div>'
+    '<div class="niv-panel-item' + (i === 0 ? ' first' : '') + '" data-kind="measure" data-measure-id="' + escapeHtml(m.id) + '" data-measure-label="' + escapeHtml(m.label) + '" data-label="' + escapeHtml(m.label) + '"><span>' + escapeHtml(m.label) + (m.photo ? ' \u{1F4F7}' : '') + '</span><button type="button" class="dots" aria-label="...">...</button></div>'
   ).join('');
 }
 function renderLists(data) {
@@ -686,6 +744,121 @@ function renderDemoLists() {
     measures: [{ id: 'demo-measure-1', label: L('demoMeasure'), photo: false }]
   });
 }
+
+/* ---------------- row context menus (v1.1) ----------------
+   The "..." on each list row opens a real menu. Actions:
+   - project: Open (host navigates), Rename (Firestore), Delete (confirm + Firestore)
+   - customer: View details (host), New measurement (host)
+   - measure: View (host), Delete (confirm + Firestore)
+   Open/View go to the host via niv:row-open; the module falls back to a
+   dashboard view navigation when embedded without a row-action handler.
+   Rename/Delete run as Firestore writes from the module (rules enforce
+   permissions; failures surface in the menu). */
+let _rowMenuEl = null;
+let _modDb = null, _modFs = null, _modOrgId = null;
+function closeRowMenu() {
+  if (_rowMenuEl && _rowMenuEl.parentNode) _rowMenuEl.parentNode.removeChild(_rowMenuEl);
+  _rowMenuEl = null;
+  document.removeEventListener('pointerdown', _rowMenuOutside, true);
+}
+function _rowMenuOutside(ev) {
+  if (_rowMenuEl && !_rowMenuEl.contains(ev.target)) closeRowMenu();
+}
+function rowMenuOptions(kind) {
+  if (kind === 'project') {
+    return [
+      { action: 'open', label: L('menuOpen'), danger: false },
+      { action: 'rename', label: L('menuRename'), danger: false },
+      { action: 'delete', label: L('menuDelete'), danger: true }
+    ];
+  }
+  if (kind === 'customer') {
+    return [
+      { action: 'view', label: L('menuView'), danger: false },
+      { action: 'new-measure', label: L('menuNewMeasure'), danger: false }
+    ];
+  }
+  return [
+    { action: 'view', label: L('menuView'), danger: false },
+    { action: 'delete', label: L('menuDelete'), danger: true }
+  ];
+}
+function openRowMenu(btn, kind, id, label) {
+  closeRowMenu();
+  const menu = document.createElement('div');
+  menu.className = 'row-menu';
+  menu.setAttribute('role', 'menu');
+  rowMenuOptions(kind).forEach((opt) => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'row-menu-item' + (opt.danger ? ' danger' : '');
+    item.textContent = opt.label;
+    item.setAttribute('role', 'menuitem');
+    item.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      closeRowMenu();
+      runRowAction(kind, opt.action, id, label);
+    });
+    menu.appendChild(item);
+  });
+  document.body.appendChild(menu);
+  const r = btn.getBoundingClientRect();
+  const mw = 200;
+  menu.style.left = Math.max(8, Math.min(window.innerWidth - mw - 8, r.right - mw)) + 'px';
+  menu.style.top = Math.min(window.innerHeight - 160, r.bottom + 4) + 'px';
+  _rowMenuEl = menu;
+  document.addEventListener('pointerdown', _rowMenuOutside, true);
+}
+async function runRowAction(kind, action, id, label) {
+  if (action === 'open' || action === 'view' || action === 'new-measure') {
+    // Host-first: the shell owns the views. Fallback navigations below
+    // are the sane defaults when no host handles the message.
+    post({ type: 'niv:row-open', kind, action, id: id || null, label: label || '' });
+    return;
+  }
+  if (!_modDb || !_modFs || !_modOrgId) return;
+  const fs = _modFs, db = _modDb, orgId = _modOrgId;
+  try {
+    if (action === 'rename') {
+      const next = window.prompt(L('renamePrompt', label), label);
+      if (next === null) return;
+      const name = String(next).trim();
+      if (!name || name === label) return;
+      if (kind === 'project' && id) {
+        await fs.updateDoc(fs.doc(db, 'orgs', orgId, 'projects', id), { name });
+      } else if (kind === 'measure' && id) {
+        await fs.updateDoc(fs.doc(db, 'orgs', orgId, 'jobs', id), { project: name });
+      } else {
+        return;
+      }
+      if (window._modReloadLists) window._modReloadLists();
+    } else if (action === 'delete') {
+      if (!window.confirm(L('deleteConfirm', label))) return;
+      if (kind === 'project' && id) {
+        await fs.deleteDoc(fs.doc(db, 'orgs', orgId, 'projects', id));
+      } else if (kind === 'measure' && id) {
+        await fs.deleteDoc(fs.doc(db, 'orgs', orgId, 'jobs', id));
+      } else {
+        return;
+      }
+      if (window._modReloadLists) window._modReloadLists();
+    }
+  } catch (e) {
+    window.alert(L(action === 'rename' ? 'renameFailed' : 'deleteFailed'));
+  }
+}
+document.addEventListener('click', (ev) => {
+  const btn = ev.target && ev.target.closest ? ev.target.closest('.niv-panel-item .dots') : null;
+  if (!btn) return;
+  ev.stopPropagation();
+  ev.preventDefault();
+  const row = btn.closest('.niv-panel-item');
+  if (!row) return;
+  const kind = row.getAttribute('data-kind') || 'project';
+  const id = row.getAttribute('data-project-id') || row.getAttribute('data-measure-id') || null;
+  const label = row.getAttribute('data-label') || '';
+  openRowMenu(btn, kind, id, label);
+});
 /* Same data sources as the dashboard panel: orgs/{orgId}/projects for
    the projects list, orgs/{orgId}/jobs (newest first) feeding the
    unique customers list (max 5) and the recent measures list (max 5).
@@ -693,6 +866,8 @@ function renderDemoLists() {
    deep link exists at base, so opening items stays with the shell. */
 async function loadLists(db, fs, orgId) {
   if (!orgId) return;
+  _modDb = db; _modFs = fs; _modOrgId = orgId;
+  window._modReloadLists = () => loadLists(db, fs, orgId);
   let projects = [];
   let jobs = [];
   try {

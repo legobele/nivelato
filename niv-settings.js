@@ -356,6 +356,23 @@
       },
       lsKey: 'niv-env-accounts', mirror: true,
       normalize: function (v) { return typeof v === 'string' ? v : JSON.stringify(v); }
+    },
+    /* Automatic updates (updates.html, v1.1): device-level preference for
+     * whether available org updates apply automatically.
+     * - 'niv-auto-update': '1' | '0'. Master switch.
+     * - 'niv-auto-update-cadence': 'immediate' | 'tonight'. When the
+     *   automatic apply runs: as soon as an update is available, or
+     *   deferred to the overnight window (same semantics as the
+     *   "Update Tonight" scheduling). Default 'tonight' is the
+     *   conservative choice: nobody's data is touched mid-shift. */
+    'niv-auto-update': {
+      validate: isBool10, lsKey: 'niv-auto-update', mirror: true,
+      normalize: normalizeBool
+    },
+    'niv-auto-update-cadence': {
+      validate: function (v) { return v === 'immediate' || v === 'tonight'; },
+      lsKey: 'niv-auto-update-cadence', mirror: true,
+      normalize: function (v) { return String(v).toLowerCase(); }
     }
   };
   var ALLOWLIST = Object.keys(DEFS);

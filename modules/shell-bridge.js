@@ -123,11 +123,38 @@
       if (d.type === 'niv:ready') {
         sendInit();
         if (typeof opts.onReady === 'function') opts.onReady(d);
-      } else if (d.type === 'niv:nav') {
-        var href = sameOriginHref(d.href);
+      } else if (d.type === 'niv:nav') {        var href = sameOriginHref(d.href);
         if (!href) return;
+        /* Settings-destination navigations from inside a module iframe
+           never pass through the host document's click capture, so
+           nav-referrer.js would never learn the origin and Back would
+           fall back to the dashboard home. Save it here, under the same
+           keys the settings pages consume. */
+        try {
+          var destPath = new URL(href, window.location.origin).pathname;
+          if (destPath === '/account/settings' && typeof window.nivSaveSettingsReferrer === 'function') {
+            window.nivSaveSettingsReferrer();
+          } else if (destPath === '/company/settings' && typeof window.nivSaveCompanySettingsReferrer === 'function') {
+            window.nivSaveCompanySettingsReferrer();
+          }
+        } catch (e) { /* save is best effort; navigation still happens */ }
         if (typeof opts.onNav === 'function' && opts.onNav(d.href) === false) return;
         window.location.href = href;
+      } else if (d.type === 'niv:row-open') {
+        /* Row context-menu "open" actions from the module lists. Hosts
+           may handle via opts.onRowAction (return false to suppress the
+           default). Defaults are the sane dashboard destinations. */
+        var handled = false;
+        if (typeof opts.onRowAction === 'function') {
+          try { handled = opts.onRowAction(d) === false; } catch (e) { handled = false; }
+        }
+        if (!handled) {
+          var dest = '/dashboard.html?view=home';
+          if (d.kind === 'project' && d.action === 'open') dest = '/dashboard.html?view=projects';
+          else if (d.kind === 'measure' && d.action === 'view') dest = '/dashboard.html?view=measures';
+          else if (d.kind === 'customer' && d.action === 'new-measure') dest = '/flow.html';
+          window.location.href = dest;
+        }
       } else if (d.type === 'niv:resize') {
         if (heightMode !== 'auto') return;
         var h = Number(d.height);

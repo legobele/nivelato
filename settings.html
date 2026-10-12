@@ -78,11 +78,21 @@ html, body { overflow-y: auto !important; }
       <div class="niv-nav-group-title">Mi cuenta</div>
       <a class="niv-nav-btn active" href="/account/settings">Mi cuenta</a>
     </div>
+    <!-- Company settings (v1.1): in company context the sidebar also
+         carries the company-settings destinations. Rendered by JS once
+         the org doc loads (hidden for users without a company). -->
+    <div class="niv-nav-group" id="company-settings-group" hidden>
+      <div class="niv-nav-group-title" data-i18n="groupCompany">Compañía</div>
+      <a class="niv-nav-btn" href="/company/settings" data-i18n="companyProfile">Perfil de la compañía</a>
+      <a class="niv-nav-btn" href="/company/users" data-i18n="companyTeam">Equipo y usuarios</a>
+      <a class="niv-nav-btn" href="/company/updates" data-i18n="companyUpdates">Actualizaciones</a>
+    </div>
     <!-- Account settings shows ONLY account navigation in its sidebar
          (Giulia, 2026-10-12): no company zone here. The company doors
          (Usuarios, Ajustes de la compañía, Updates, Billing) live in
          the company sidebar module on the company pages, not on the
-         user settings surface. -->
+         user settings surface. v1.1 amends: in company context the
+         company-settings section above IS shown. -->
   </nav>
 </aside>
 <div class="niv-main">
@@ -237,6 +247,7 @@ html, body { overflow-y: auto !important; }
   var STR = {
     es: {
       docTitle: 'Nivelato - Ajustes', pageTitle: 'Ajustes', pageSub: 'Configuración de tu cuenta', back: '← Volver',
+      groupCompany: 'Compañía', companyProfile: 'Perfil de la compañía', companyTeam: 'Equipo y usuarios', companyUpdates: 'Actualizaciones',
       accountInfo: 'Información de la cuenta', accountInfoDesc: 'Datos de tu perfil en Nivelato.', changePhoto: 'Cambiar foto',
       uploading: 'Subiendo...', photoUpdated: 'Foto actualizada.', photoFailed: 'No se pudo subir la foto. Intenta de nuevo.',
       lblName: 'Nombre', lblEmail: 'Correo', lblRole: 'Rol', lblOrg: 'Taller', lblCode: 'Código',
@@ -276,6 +287,7 @@ html, body { overflow-y: auto !important; }
     },
     en: {
       docTitle: 'Nivelato - Settings', pageTitle: 'Settings', pageSub: 'Your account settings', back: '← Back',
+      groupCompany: 'Company', companyProfile: 'Company profile', companyTeam: 'Team & users', companyUpdates: 'Updates',
       accountInfo: 'Account information', accountInfoDesc: 'Your Nivelato profile details.', changePhoto: 'Change photo',
       uploading: 'Uploading...', photoUpdated: 'Photo updated.', photoFailed: 'The photo could not be uploaded. Try again.',
       lblName: 'Name', lblEmail: 'Email', lblRole: 'Role', lblOrg: 'Workshop', lblCode: 'Code',
@@ -550,6 +562,14 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('set-company-name').textContent = _on;
     document.getElementById('set-company-avatar').textContent =
       _on.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    // v1.1: company context -> show the company-settings destinations
+    // in the sidebar alongside the account nav. Company context is an
+    // org membership (orgId present); the company pages carry their own
+    // permission gates, so the links are safe to render.
+    if (orgId) {
+      const _cg = document.getElementById('company-settings-group');
+      if (_cg) _cg.hidden = false;
+    }
     // Header version: read the version registry (app_updates public
     // projections, channel aware), never a hardcoded string. Beta orgs
     // read app_updates/beta-latest; everyone else reads

@@ -54,6 +54,17 @@
       removeOnclick: true,
       selfByPath: true
     },
+    /* Alias: the same page served at its file path (the worker maps
+       /account/settings -> settings.html; if the file path is ever hit
+       directly the Back behavior is identical). */
+    '/settings.html': {
+      key: 'niv:settings-referrer',
+      saveName: 'nivSaveSettingsReferrer',
+      allowed: ['/', '/dashboard.html', '/company/users', '/company/settings', '/company/updates', '/photo.html'],
+      selector: '.niv-btn-back',
+      removeOnclick: true,
+      selfByPath: true
+    },
     '/company/settings': {
       key: 'niv:company-settings-referrer',
       saveName: 'nivSaveCompanySettingsReferrer',

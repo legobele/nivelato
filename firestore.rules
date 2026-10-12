@@ -254,6 +254,19 @@ service cloud.firestore {
           && myUser().role == 'owner';
       }
 
+      // Customers — orgs/{orgId}/customers/{customerId} (v1.1).
+      // Contact details editable from the customer overview. Doc ID is
+      // the URL-encoded customer name (same key the overview uses).
+      // - read: active org members.
+      // - create/update: any member who can write org data (contact
+      //   details are not privileged); delete: owner only.
+      match /customers/{customerId} {
+        allow read: if canReadOrgData(orgId) && myOrgId() == orgId;
+        allow create, update: if canWriteOrgData(orgId) && myOrgId() == orgId;
+        allow delete: if canWriteOrgData(orgId) && myOrgId() == orgId
+          && myUser().role == 'owner';
+      }
+
       // Invites — orgs/{orgId}/invites/{email}. Written by the owner from
       // the Add User flow (users.html + add-user.js): an email-bound
       // pre-approval carrying the role + permission overrides the new

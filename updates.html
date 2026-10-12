@@ -150,6 +150,69 @@
     color: var(--faint);
     margin: 14px 0 0;
   }
+  /* channel picker + automatic updates */
+  .pref-section {
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .pref-title { font-size: 15px; font-weight: 700; margin: 0 0 6px; }
+  .pref-desc { font-size: 13px; color: var(--muted); margin: 0 0 14px; line-height: 1.5; }
+  .chan-pills { display: flex; gap: 10px; }
+  .chan-pill {
+    flex: 1;
+    padding: 12px 10px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--line);
+    background: transparent;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: center;
+  }
+  .chan-pill.active {
+    border-color: var(--blue);
+    color: var(--text);
+    background: rgba(30, 157, 240, 0.12);
+    cursor: default;
+  }
+  .chan-pill:disabled { opacity: 0.55; cursor: default; }
+  .pref-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .pref-row + .pref-row { margin-top: 12px; }
+  .pref-label { font-size: 14px; font-weight: 600; }
+  .pref-sub { font-size: 12px; color: var(--faint); margin-top: 2px; }
+  .switch {
+    position: relative; width: 46px; height: 26px; flex: none;
+    appearance: none; -webkit-appearance: none;
+    background: var(--line); border-radius: 999px; cursor: pointer;
+    transition: background 0.15s; margin: 0;
+  }
+  .switch:checked { background: var(--blue); }
+  .switch::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #fff; transition: left 0.15s;
+  }
+  .switch:checked::after { left: 23px; }
+  .cadence-opts { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .cadence-opt {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--text); cursor: pointer;
+    padding: 8px 10px; border-radius: var(--radius-sm);
+    border: 1.5px solid transparent;
+  }
+  .cadence-opt:hover { background: #141417; }
+  .cadence-opt input { accent-color: var(--blue); }
+  .pref-note { font-size: 12px; color: var(--faint); margin-top: 10px; line-height: 1.5; }
+  /* download phase readout */
+  .dl-meta {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 13px; color: var(--muted); margin-bottom: 10px; min-height: 20px;
+  }
+  .dl-rate { font-variant-numeric: tabular-nums; color: var(--text); font-weight: 600; }
   /* progress */
   .progress-label { font-size: 14px; color: var(--text); margin-bottom: 10px; }
   .progress-step { font-size: 13px; color: var(--muted); margin-bottom: 10px; min-height: 20px; }
@@ -312,7 +375,27 @@ const STRINGS = {
     you: 'tú',
     upToDateTitle: 'Estás en la versión más reciente.',
     missingProfile: 'No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.',
-    orgLoadFailed: (msg) => 'No se pudieron cargar los datos de la compañía: ' + msg
+    orgLoadFailed: (msg) => 'No se pudieron cargar los datos de la compañía: ' + msg,
+    channelTitle: 'Canal de actualización',
+    channelDesc: 'El canal determina qué versiones recibe tu taller. Beta recibe las funciones nuevas antes; Estable solo recibe versiones probadas.',
+    channelStable: 'Estable',
+    channelBeta: 'Beta',
+    channelChange: 'Cambiar canal',
+    channelChanging: 'Cambiando canal...',
+    channelChanged: (c) => 'Canal cambiado a ' + (c === 'beta' ? 'Beta' : 'Estable') + '.',
+    channelChangeFailed: (msg) => 'No se pudo cambiar el canal: ' + msg,
+    channelBetaNeedsEnroll: 'Tu taller debe estar inscrito en la beta para usar el canal Beta.',
+    autoUpdateTitle: 'Actualizaciones automáticas',
+    autoUpdateDesc: 'Cuando hay una actualización disponible, aplicarla sin pedir confirmación.',
+    autoUpdateOn: 'Activadas',
+    autoUpdateOff: 'Desactivadas',
+    autoUpdateWhen: 'Cuándo aplicarlas',
+    autoUpdateImmediate: 'En cuanto esté disponible',
+    autoUpdateTonight: 'Esta noche (cuando nadie esté en línea)',
+    downloading: (done, total) => 'Descargando actualización (' + done + ' de ' + total + ')',
+    downloadRate: (rate) => rate + '/s',
+    installing: 'Instalando...',
+    downloadComplete: 'Descarga completa'
   },
   en: {
     docTitle: 'Nivelato - Updates',
@@ -349,7 +432,27 @@ const STRINGS = {
     you: 'you',
     upToDateTitle: "You're on the latest version.",
     missingProfile: 'We could not find your user profile. Please sign in again to repair it.',
-    orgLoadFailed: (msg) => 'Could not load company data: ' + msg
+    orgLoadFailed: (msg) => 'Could not load company data: ' + msg,
+    channelTitle: 'Update channel',
+    channelDesc: 'The channel decides which versions your workshop receives. Beta gets new features first; Stable only gets tested releases.',
+    channelStable: 'Stable',
+    channelBeta: 'Beta',
+    channelChange: 'Change channel',
+    channelChanging: 'Changing channel...',
+    channelChanged: (c) => 'Channel changed to ' + (c === 'beta' ? 'Beta' : 'Stable') + '.',
+    channelChangeFailed: (msg) => 'Could not change the channel: ' + msg,
+    channelBetaNeedsEnroll: 'Your workshop must be enrolled in the beta to use the Beta channel.',
+    autoUpdateTitle: 'Automatic updates',
+    autoUpdateDesc: 'When an update is available, apply it without asking for confirmation.',
+    autoUpdateOn: 'On',
+    autoUpdateOff: 'Off',
+    autoUpdateWhen: 'When to apply them',
+    autoUpdateImmediate: 'As soon as available',
+    autoUpdateTonight: 'Tonight (when nobody is online)',
+    downloading: (done, total) => 'Downloading update (' + done + ' of ' + total + ')',
+    downloadRate: (rate) => rate + '/s',
+    installing: 'Installing...',
+    downloadComplete: 'Download complete'
   }
 };
 let currentLang = 'es';
@@ -386,9 +489,10 @@ let currentUser = null;
 let currentUserData = null;
 let orgId = null;
 let orgData = null;      // orgs/{orgId}
-let latestDoc = null;    // app_updates/latest
-let updateDocData = null; // app_updates/{latest version}
+let channelDoc = null;   // app_updates/beta-latest | app_updates/backend (channel aware)
+let updateDocData = null; // app_updates/{version} descriptor (beta) or null (stable uses the backend doc itself)
 let applying = false;
+let lastPointerChannel = null; // channel the pointer was last loaded for
 /* Button mash guards (fix list item 6). actionInFlight covers the whole
    Update Now run (confirm, callable, progress animation); writeInFlight
    covers the Update Tonight / Cancel Firestore writes. While either is
@@ -417,9 +521,25 @@ function dataVersion() {
   return (orgData && orgData.dataVersion) ? String(orgData.dataVersion) : '0.9';
 }
 
+/* Update channel (v1.1): the org's channel decides which registry
+   projection this page reads. beta -> app_updates/beta-latest,
+   stable -> app_updates/backend (the stable stamp; the legacy
+   app_updates/latest pointer is stale and is not a display source).
+   The header version line (sidebar module) resolves from the same
+   registry, so changing the channel re-resolves it too. */
+function orgChannel() {
+  return (orgData && orgData.updateChannel === 'beta') ? 'beta' : 'stable';
+}
+function pointerVersion() {
+  if (!channelDoc) return null;
+  const v = channelDoc.version || channelDoc.friendlyVersion;
+  return v ? String(v) : null;
+}
+
 function updateAvailable() {
-  if (!latestDoc || !latestDoc.version) return false;
-  return dataVersion() !== String(latestDoc.version);
+  const pv = pointerVersion();
+  if (!pv) return false;
+  return dataVersion() !== pv;
 }
 
 function pendingScheduled() {
@@ -443,6 +563,132 @@ function ownerButtons(html) {
   return isOwner() ? html : '<p class="note-owner">' + escapeHtml(t('ownerOnly')) + '</p>';
 }
 
+/* ---- v1.1: update channel picker ----
+   The org's channel (orgs/{orgId}.updateChannel) decides which registry
+   projection the update content comes from. Owners change it through the
+   setOrgUpdateChannel callable (server enforces beta enrollment for the
+   beta channel); everyone else sees the current channel read-only.
+   After a change the pointer is re-read and the card re-renders, so the
+   update content follows the chosen channel; the header version line
+   (sidebar module, registry-live) picks the new channel up on its own. */
+function renderChannelSection() {
+  const ch = orgChannel();
+  const canChange = isOwner();
+  return `
+    <div class="pref-section" id="channel-section">
+      <div class="pref-title">${escapeHtml(t('channelTitle'))}</div>
+      <p class="pref-desc">${escapeHtml(t('channelDesc'))}</p>
+      <div class="chan-pills" role="group" aria-label="${escapeHtml(t('channelTitle'))}">
+        <button type="button" class="chan-pill${ch === 'stable' ? ' active' : ''}" data-channel="stable"${ch === 'stable' || !canChange ? ' disabled' : ''}>${escapeHtml(t('channelStable'))}</button>
+        <button type="button" class="chan-pill${ch === 'beta' ? ' active' : ''}" data-channel="beta"${ch === 'beta' || !canChange ? ' disabled' : ''}>${escapeHtml(t('channelBeta'))}</button>
+      </div>
+      ${!canChange ? '<p class="pref-note">' + escapeHtml(t('ownerOnly')) + '</p>' : ''}
+      <div class="niv-status-line" id="channel-status"></div>
+    </div>
+  `;
+}
+function wireChannelSection() {
+  const pills = card.querySelectorAll('#channel-section .chan-pill[data-channel]');
+  pills.forEach((pill) => {
+    pill.addEventListener('click', () => onChannelChange(pill.getAttribute('data-channel'), pill));
+  });
+}
+async function onChannelChange(channel, pill) {
+  if (!isOwner() || channel === orgChannel()) return;
+  if (channel !== 'stable' && channel !== 'beta') return;
+  const statusEl = document.getElementById('channel-status');
+  const setCStatus = (kind, text) => {
+    if (!statusEl) return;
+    statusEl.className = 'niv-status-line' + (kind ? ' ' + kind : '');
+    statusEl.textContent = text || '';
+  };
+  card.querySelectorAll('#channel-section .chan-pill').forEach((p) => { p.disabled = true; });
+  setCStatus('warn', t('channelChanging'));
+  try {
+    const functions = getFunctions(undefined, 'us-central1');
+    const setChannel = httpsCallable(functions, 'setOrgUpdateChannel');
+    await setChannel({ channel });
+    // Re-read the org doc (the channel write) and the channel pointer,
+    // then re-render so the update content follows the new channel.
+    const snap = await getDoc(doc(db, 'orgs', orgId));
+    if (snap.exists()) orgData = snap.data() || orgData;
+    await loadChannelPointer();
+    setCStatus('ok', t('channelChanged', channel));
+    dataReady = true;
+    render();
+  } catch (e) {
+    const msg = (e && e.message) || t('unknownError');
+    // The callable rejects beta adoption without enrollment; say so plainly.
+    setCStatus('err', t('channelChangeFailed', msg));
+    card.querySelectorAll('#channel-section .chan-pill').forEach((p) => { p.disabled = false; });
+    // Re-sync the active pill (the change did not land).
+    render();
+  }
+}
+
+/* ---- v1.1: automatic updates menu ----
+   Device-level preference (NivSettings domain cookie, localStorage
+   mirror): when an update is available, apply it without asking.
+   Cadence: immediately, or tonight when nobody is online (the same
+   deferred semantics as "Update Tonight"). The menu only records the
+   preference; the apply itself still goes through the owner-gated
+   buttons below, so a non-owner's "on" can never trigger a write. */
+function autoUpdateOn() {
+  try { return window.NivSettings && window.NivSettings.get('niv-auto-update') === '1'; }
+  catch (_) { return false; }
+}
+function autoUpdateCadence() {
+  try {
+    const v = window.NivSettings && window.NivSettings.get('niv-auto-update-cadence');
+    return v === 'immediate' ? 'immediate' : 'tonight';
+  } catch (_) { return 'tonight'; }
+}
+function renderAutoUpdateSection() {
+  const on = autoUpdateOn();
+  const cad = autoUpdateCadence();
+  return `
+    <div class="pref-section" id="autoupdate-section">
+      <div class="pref-title">${escapeHtml(t('autoUpdateTitle'))}</div>
+      <p class="pref-desc">${escapeHtml(t('autoUpdateDesc'))}</p>
+      <div class="pref-row">
+        <div>
+          <div class="pref-label">${escapeHtml(on ? t('autoUpdateOn') : t('autoUpdateOff'))}</div>
+        </div>
+        <input type="checkbox" class="switch" id="autoupdate-toggle" ${on ? 'checked' : ''}
+               aria-label="${escapeHtml(t('autoUpdateTitle'))}" />
+      </div>
+      <div id="autoupdate-cadence" ${on ? '' : 'hidden'}>
+        <div class="pref-row" style="margin-top:12px;">
+          <div class="pref-label">${escapeHtml(t('autoUpdateWhen'))}</div>
+        </div>
+        <div class="cadence-opts" role="radiogroup" aria-label="${escapeHtml(t('autoUpdateWhen'))}">
+          <label class="cadence-opt"><input type="radio" name="autoupdate-cadence" value="immediate"${cad === 'immediate' ? ' checked' : ''} />${escapeHtml(t('autoUpdateImmediate'))}</label>
+          <label class="cadence-opt"><input type="radio" name="autoupdate-cadence" value="tonight"${cad === 'tonight' ? ' checked' : ''} />${escapeHtml(t('autoUpdateTonight'))}</label>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function wireAutoUpdateSection() {
+  const toggle = document.getElementById('autoupdate-toggle');
+  if (toggle) {
+    toggle.addEventListener('change', () => {
+      try { if (window.NivSettings) window.NivSettings.set('niv-auto-update', toggle.checked ? '1' : '0'); } catch (_) {}
+      const cad = document.getElementById('autoupdate-cadence');
+      if (cad) cad.hidden = !toggle.checked;
+      // Re-render the on/off label.
+      const label = toggle.closest('.pref-row').querySelector('.pref-label');
+      if (label) label.textContent = toggle.checked ? t('autoUpdateOn') : t('autoUpdateOff');
+    });
+  }
+  card.querySelectorAll('input[name="autoupdate-cadence"]').forEach((radio) => {
+    radio.addEventListener('change', () => {
+      if (!radio.checked) return;
+      try { if (window.NivSettings) window.NivSettings.set('niv-auto-update-cadence', radio.value); } catch (_) {}
+    });
+  });
+}
+
 // User-visible short description for an update descriptor: the reserved
 // `description` field wins; legacy `notes` is the fallback so descriptors
 // seeded before the field existed render exactly as before. The reserved
@@ -457,9 +703,9 @@ function visibleDescription(u) {
 // ---- state (a): update available ----
 function renderAvailable() {
   const u = updateDocData || {};
-  const version = escapeHtml(u.version || (latestDoc && latestDoc.version) || '');
-  const title = escapeHtml(u.title || ('Nivelato v' + version));
-  const notes = escapeHtml(visibleDescription(u) || t('defaultNotes'));
+  const version = escapeHtml(pointerVersion() || '');
+  const title = escapeHtml(u.title || channelDoc.title || ('Nivelato v' + version));
+  const notes = escapeHtml(visibleDescription(u) || channelDoc.notes || t('defaultNotes'));
   const extended = escapeHtml(String(u.extendedDescription || '').trim());
   card.innerHTML = `
     <div class="card-top">
@@ -478,6 +724,8 @@ function renderAvailable() {
       <button class="btn btn-outline" id="btn-update-tonight">${escapeHtml(t('updateTonight'))}</button>
       <p class="caption">${escapeHtml(t('tonightCaption'))}</p>
     `)}
+    ${renderChannelSection()}
+    ${renderAutoUpdateSection()}
   `;
   const btnNow = document.getElementById('btn-update-now');
   const btnTonight = document.getElementById('btn-update-tonight');
@@ -492,14 +740,16 @@ function renderAvailable() {
       btnMore.textContent = opening ? t('showLess') : t('showMore');
     });
   }
+  wireChannelSection();
+  wireAutoUpdateSection();
 }
 
 // ---- state (b): applying ----
 function renderApplying(stepLabel, pct) {
+  const version = escapeHtml(pointerVersion() || '');
   const u = updateDocData || {};
-  const version = escapeHtml(u.version || (latestDoc && latestDoc.version) || '');
-  const title = escapeHtml(u.title || ('Nivelato v' + version));
-  const notes = escapeHtml(visibleDescription(u));
+  const title = escapeHtml(u.title || (channelDoc && channelDoc.title) || ('Nivelato v' + version));
+  const notes = escapeHtml(visibleDescription(u) || (channelDoc && channelDoc.notes) || '');
   card.innerHTML = `
     <div class="card-top">
       <div class="mini-logo">N</div>
@@ -507,7 +757,8 @@ function renderApplying(stepLabel, pct) {
     </div>
     <div class="progress-label">${escapeHtml(t('applyingPct', pct))}</div>
     <div class="progress-step">${escapeHtml(stepLabel || t('starting'))}</div>
-    <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="dl-meta" id="dl-meta" hidden><span id="dl-bytes"></span><span class="dl-rate" id="dl-rate"></span></div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:${pct}%"></div></div>
     ${notes ? `<div class="notes-box"><p>${notes}</p></div>` : ''}
     ${isOwner() ? '<button class="btn btn-outline" id="btn-cancel">' + escapeHtml(t('cancelUpdate')) + '</button>' : ''}
   `;
@@ -515,29 +766,98 @@ function renderApplying(stepLabel, pct) {
   if (btn) btn.addEventListener('click', onCancelUpdate);
 }
 
+/* v1.1: realistic download phase. The old progress was a flat 650ms per
+   install step; this drives the bar like a real download first:
+   - total 48.6 MB, ticks every 110-160ms with variable chunk sizes
+   - throughput starts fast and decelerates as the remainder shrinks
+     (rate proportional to the remaining fraction), with per-tick jitter
+   - the bar is monotonic (never moves backward) and caps at 92% while
+     downloading, so it never hangs visibly at 99%
+   - the install steps then carry 92% -> 100%, landing exactly on 100%
+     when the last step completes
+   - the byte counter and MB/s readout stay consistent with the bar */
+const DL_TOTAL_MB = 48.6;
+const DL_CAP_PCT = 92;
+function fmtMB(v) {
+  return (Math.round(v * 10) / 10).toFixed(1) + ' MB';
+}
+function setBar(pct) {
+  const fill = document.getElementById('progress-fill');
+  if (fill) fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+  const label = card.querySelector('.progress-label');
+  if (label) label.textContent = t('applyingPct', Math.round(Math.max(0, Math.min(100, pct))));
+}
+async function runDownloadPhase(cancelled) {
+  const meta = document.getElementById('dl-meta');
+  const bytesEl = document.getElementById('dl-bytes');
+  const rateEl = document.getElementById('dl-rate');
+  if (meta) meta.hidden = false;
+  let downloaded = 0;
+  let emaRate = 0; // MB/s, exponential moving average for a stable readout
+  let last = performance.now();
+  // Target ~9-12s of download: base rate tuned so the cap is reached
+  // in that window under the deceleration curve.
+  const BASE_RATE = 9.5; // MB/s at 0%
+  while (downloaded < DL_TOTAL_MB) {
+    if (cancelled()) return false;
+    const now = performance.now();
+    const dt = Math.max(0.05, (now - last) / 1000);
+    last = now;
+    const remainingFrac = 1 - (downloaded / DL_TOTAL_MB);
+    // Decelerating tail: rate falls with the remaining fraction, plus
+    // a floor so it always makes progress; jitter for variable chunks.
+    const jitter = 0.55 + Math.random() * 0.9;
+    const rate = Math.max(0.6, BASE_RATE * Math.pow(remainingFrac, 0.7) * jitter);
+    const chunk = Math.min(rate * dt, DL_TOTAL_MB - downloaded);
+    downloaded += chunk;
+    emaRate = emaRate === 0 ? rate : emaRate * 0.7 + rate * 0.3;
+    const pct = (downloaded / DL_TOTAL_MB) * DL_CAP_PCT;
+    setBar(pct);
+    const stepEl = card.querySelector('.progress-step');
+    if (stepEl) stepEl.textContent = t('downloading', fmtMB(downloaded), fmtMB(DL_TOTAL_MB));
+    if (bytesEl) bytesEl.textContent = fmtMB(downloaded) + ' / ' + fmtMB(DL_TOTAL_MB);
+    if (rateEl) rateEl.textContent = t('downloadRate', emaRate.toFixed(1) + ' MB');
+    await new Promise((r) => setTimeout(r, 110 + Math.random() * 50));
+  }
+  if (bytesEl) bytesEl.textContent = fmtMB(DL_TOTAL_MB) + ' / ' + fmtMB(DL_TOTAL_MB);
+  const stepEl = card.querySelector('.progress-step');
+  if (stepEl) stepEl.textContent = t('downloadComplete');
+  await new Promise((r) => setTimeout(r, 350));
+  return true;
+}
+
 async function onUpdateNow() {
   if (actionInFlight || applying) return; // re-entry guard: one run only
   if (!isOwner()) return;
-  const version = (latestDoc && latestDoc.version) || '';
+  const version = pointerVersion() || '';
   if (!confirm(t('confirmNow', version))) return;
   actionInFlight = true;
   applying = true;
   setStatus('warn', t('busyNow'));
   renderApplying(t('starting'), 0);
+  const cancelled = () => !applying;
   try {
+    // Phase 1: realistic download (0 -> 92%). Phase 2 below carries the
+    // install steps 92 -> 100% so the bar lands exactly on 100% when
+    // the last step completes.
+    const dlOk = await runDownloadPhase(cancelled);
+    if (!dlOk || !applying) return; // cancelled during download
     const functions = getFunctions(undefined, 'us-central1');
     const applyCompanyUpdate = httpsCallable(functions, 'applyCompanyUpdate');
     const result = await applyCompanyUpdate({});
     const steps = (result && result.data && Array.isArray(result.data.steps))
       ? result.data.steps.map(String)
       : [t('applyingFallback')];
+    const stepEl = () => card.querySelector('.progress-step');
     for (let i = 0; i < steps.length; i++) {
       if (!applying) break; // cancelled locally; the callable may still finish server side
-      const pct = Math.round(((i + 1) / steps.length) * 100);
-      renderApplying(steps[i], pct);
+      const pct = DL_CAP_PCT + Math.round(((i + 1) / steps.length) * (100 - DL_CAP_PCT));
+      setBar(pct);
+      if (stepEl()) stepEl().textContent = t('installing') + ' ' + steps[i];
       await new Promise((r) => setTimeout(r, 650));
     }
     if (applying) {
+      setBar(100);
       renderApplying(t('finishing'), 100);
       await new Promise((r) => setTimeout(r, 600));
     }
@@ -560,9 +880,9 @@ async function onUpdateNow() {
 // ---- state (c): scheduled for tonight ----
 function renderScheduled() {
   const u = updateDocData || {};
-  const version = escapeHtml(u.version || (latestDoc && latestDoc.version) || '');
-  const title = escapeHtml(u.title || ('Nivelato v' + version));
-  const notes = escapeHtml(visibleDescription(u));
+  const version = escapeHtml(pointerVersion() || '');
+  const title = escapeHtml(u.title || (channelDoc && channelDoc.title) || ('Nivelato v' + version));
+  const notes = escapeHtml(visibleDescription(u) || (channelDoc && channelDoc.notes) || '');
   const pend = orgData.pendingUpdate || {};
   const scheduledVer = escapeHtml(pend.version || version);
   card.innerHTML = `
@@ -577,12 +897,16 @@ function renderScheduled() {
       <ul class="online-list" id="online-list"></ul>
     </div>
     ${ownerButtons('<button class="btn btn-outline" id="btn-cancel">' + escapeHtml(t('cancelUpdate')) + '</button>')}
+    ${renderChannelSection()}
+    ${renderAutoUpdateSection()}
   `;
   const btn = document.getElementById('btn-cancel');
   if (btn) btn.addEventListener('click', onCancelUpdate);
   refreshOnlineList();
   if (onlineRefreshTimer) clearInterval(onlineRefreshTimer);
   onlineRefreshTimer = setInterval(refreshOnlineList, 30000);
+  wireChannelSection();
+  wireAutoUpdateSection();
 }
 
 async function refreshOnlineList() {
@@ -617,13 +941,17 @@ function renderUpToDate() {
       <h2>${escapeHtml(t('upToDateTitle'))}</h2>
       <p>Nivelato v${escapeHtml(dataVersion())}</p>
     </div>
+    ${renderChannelSection()}
+    ${renderAutoUpdateSection()}
   `;
+  wireChannelSection();
+  wireAutoUpdateSection();
 }
 
 async function onUpdateTonight() {
   if (actionInFlight || applying || writeInFlight) return; // re-entry guard
   if (!isOwner()) return;
-  const version = String((latestDoc && latestDoc.version) || '');
+  const version = pointerVersion() || '';
   writeInFlight = true;
   setCardButtonsDisabled(true);
   setStatus('warn', t('busyTonight'));
@@ -666,10 +994,18 @@ async function onCancelUpdate() {
 
 // Programmatic hooks for the headless mash test: the same handlers the
 // buttons call, plus the busy flags, so a test can fire them repeatedly
-// and assert a single execution.
+// and assert a single execution. v1.1 additions expose the channel and
+// download-phase pieces for the headless verification run.
 window.__nivUpdates = {
   onUpdateNow, onUpdateTonight, onCancelUpdate,
-  isBusy: () => actionInFlight || writeInFlight || applying
+  isBusy: () => actionInFlight || writeInFlight || applying,
+  orgChannel, pointerVersion, updateAvailable,
+  autoUpdateOn, autoUpdateCadence,
+  runDownloadPhase, setBar, DL_TOTAL_MB, DL_CAP_PCT,
+  onChannelChange,
+  _setOrgDataForTest: (d) => { orgData = d; },
+  _setChannelDocForTest: (d) => { channelDoc = d; updateDocData = null; lastPointerChannel = orgChannel(); },
+  _renderForTest: () => render()
 };
 
 // ---- auth + data ----
@@ -707,24 +1043,40 @@ onAuthStateChanged(auth, async (user) => {
     console.warn('[Nivelato] presence start failed:', e.message);
   }
 
-  // latest + update doc (public read)
-  try {
-    const latestSnap = await getDoc(doc(db, 'app_updates', 'latest'));
-    latestDoc = latestSnap.exists() ? latestSnap.data() : null;
-    if (latestDoc && latestDoc.version) {
-      const updSnap = await getDoc(doc(db, 'app_updates', String(latestDoc.version)));
-      updateDocData = updSnap.exists() ? updSnap.data() : null;
+  // Channel pointer + update descriptor (public read, channel aware).
+  // Loaded/refreshes from the org snapshot below so the channel is known.
+  // beta -> app_updates/beta-latest (has `version` -> descriptor doc);
+  // stable -> app_updates/backend (the stable stamp; friendlyVersion).
+  // The legacy app_updates/latest pointer is stale and is never read.
+  async function loadChannelPointer() {
+    const ch = orgChannel();
+    const path = ch === 'beta' ? 'beta-latest' : 'backend';
+    try {
+      const snap = await getDoc(doc(db, 'app_updates', path));
+      channelDoc = snap.exists() ? snap.data() : null;
+      updateDocData = null;
+      const ver = channelDoc && channelDoc.version ? String(channelDoc.version) : null;
+      if (ver) {
+        try {
+          const updSnap = await getDoc(doc(db, 'app_updates', ver));
+          updateDocData = updSnap.exists() ? updSnap.data() : null;
+        } catch (_) { /* descriptor optional */ }
+      }
+    } catch (e) {
+      console.warn('[Nivelato] could not read app_updates/' + path + ':', e.message);
+      channelDoc = null;
+      updateDocData = null;
     }
-  } catch (e) {
-    console.warn('[Nivelato] could not read app_updates:', e.message);
+    lastPointerChannel = ch;
   }
 
-  // live org doc so scheduling/cancel/apply reflect for everyone
+  // live org doc so scheduling/cancel/apply/channel reflect for everyone
   if (unsubOrg) unsubOrg();
   unsubOrg = onSnapshot(doc(db, 'orgs', orgId),
-    (snap) => {
+    async (snap) => {
       dataReady = true;
       orgData = snap.exists() ? snap.data() : {};
+      if (orgChannel() !== lastPointerChannel) await loadChannelPointer();
       if (!applying) render();
     },
     (e) => {

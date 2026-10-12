@@ -598,7 +598,37 @@ body.has-sidebar .niv-shell > main {
 body.sidebar-collapsed .niv-resize-handle { display: none; }
 body.niv-resizing { cursor: col-resize; user-select: none; }
 
-/* ---- (2) per-section collapse (separate from the sidebar's own collapse) ---- */
+/* ---- v1.1: sidebar collapse/show slide animations ----
+   The panel width transitions (slide in/out) instead of snapping.
+   Collapsed = 76px icon rail (explicit, so the transition always has
+   interpolable endpoints; auto widths do not animate). */
+#niv-panel {
+  transition: width 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+body.has-sidebar #niv-panel.collapsed {
+  width: 76px;
+}
+/* Collapsed-state expand handle: a slim drag strip on the rail's right
+   edge (the resize handle is display:none when collapsed). Dragging it
+   rightward expands the panel; touch + mouse via Pointer Events. */
+#niv-panel-expand-handle {
+  display: none;
+  position: absolute;
+  top: 0; bottom: 0; right: -6px;
+  width: 12px;
+  cursor: ew-resize;
+  z-index: 520;
+  touch-action: pan-y;
+}
+body.has-sidebar #niv-panel.collapsed #niv-panel-expand-handle { display: block; }
+#niv-panel-expand-handle::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 5px; width: 2px;
+  background: transparent; transition: background 0.15s; border-radius: 2px;
+}
+#niv-panel-expand-handle:hover::after, #niv-panel-expand-handle.dragging::after {
+  background: var(--niv-accent, #1971c2);
+}
+#niv-panel { position: relative; }
 .niv-panel-sec-title { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
 .niv-sec-chev {
   margin-left: auto; width: 22px; height: 22px; border-radius: 50%;
@@ -947,6 +977,7 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 <div class="niv-shell">
 <div class="niv-scrim" id="niv-scrim" onclick="document.body.classList.remove('nav-open')"></div>
 <div class="niv-float-panel" id="niv-panel">
+  <div id="niv-panel-expand-handle" aria-hidden="true"></div>
   <div class="niv-panel-topzone">
   <div class="niv-panel-head" id="niv-panel-head" onclick="openCompanyDialog(event)" style="cursor:pointer" title="Ajustes de la empresa" tabindex="-1" aria-haspopup="menu" aria-expanded="false">
     <div class="niv-company-avatar" id="sidebar-avatar">N</div>
@@ -3802,6 +3833,13 @@ let currentUser;
     if (e && e.target && e.target.id === 'niv-panel-collapse') return;
     if (e && e.target && e.target.closest && e.target.closest('#niv-company-menu')) return; // clicks inside the popover are not trigger clicks
     if (!window._can || !window._can('userManagement')) return; // no perms: no popover
+    // v1.1: tapping the logo while collapsed expands the sidebar first.
+    // The popover's collapsed-state anchoring assumed expanded layout and
+    // glitched; expanding first keeps every position rule on its happy path.
+    const _panel = document.getElementById('niv-panel');
+    if (_panel && _panel.classList.contains('collapsed') && window._nivSetPanelCollapsed) {
+      window._nivSetPanelCollapsed(false);
+    }
     const menu = document.getElementById('niv-company-menu');
     if (!menu) return;
     if (menu.style.display !== 'none') { window.closeCompanyDialog(); return; } // toggle
@@ -3839,7 +3877,36 @@ let currentUser;
     if (refocus && head) head.focus();
   };
 
-  // ---- sidebar: collapse ----
+  // ---- sidebar: collapse (v1.1: animated slide in/out) ----
+  // Shared animated collapse helper. Both the click toggle below and
+  // the auto-collapse/resize logic use it. The transition on #niv-panel
+  // needs explicit pixel endpoints (auto does not interpolate), so the
+  // current width is pinned inline, a reflow is forced, then the target
+  // state is applied.
+  window._nivSetPanelCollapsed = function (on) {
+    const panel = document.getElementById('niv-panel');
+    const collapseBtn = document.getElementById('niv-panel-collapse');
+    if (!panel) return;
+    const startW = panel.offsetWidth;
+    if (startW > 0) panel.style.width = startW + 'px';
+    void panel.offsetWidth; // reflow: pin the start width
+    panel.classList.toggle('collapsed', on);
+    document.body.classList.toggle('sidebar-collapsed', on);
+    if (on) {
+      panel.style.width = ''; // the .collapsed CSS rail width (76px) takes over
+    } else {
+      let w = null;
+      try {
+        const sw = parseInt((typeof _nivGetSetting === 'function' ? _nivGetSetting('niv-panel-width') : localStorage.getItem('niv-panel-width')) || '', 10);
+        if (sw >= 220 && sw <= 520) w = sw;
+      } catch (_) {}
+      panel.style.width = w ? w + 'px' : '';
+    }
+    if (collapseBtn) {
+      collapseBtn.textContent = on ? '›' : '‹';
+      collapseBtn.title = on ? 'Expandir' : 'Colapsar';
+    }
+  };
   (() => {
     const panel = document.getElementById('niv-panel');
     const head = document.getElementById('niv-panel-head');
@@ -3847,11 +3914,44 @@ let currentUser;
     if (!panel || !head) return;
     collapseBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      panel.style.width = ''; // clear native-resize inline width so .collapsed applies
-      panel.classList.toggle('collapsed');
-      document.body.classList.toggle('sidebar-collapsed', panel.classList.contains('collapsed'));
-      collapseBtn.textContent = panel.classList.contains('collapsed') ? '›' : '‹';
-      collapseBtn.title = panel.classList.contains('collapsed') ? 'Expandir' : 'Colapsar';
+      window._nivSetPanelCollapsed(!panel.classList.contains('collapsed'));
+    });
+  })();
+
+  // ---- sidebar: drag out of collapsed state (v1.1) ----
+  // In the collapsed icon-rail state, dragging the rail's right edge
+  // rightward expands the panel back to full. Pointer Events cover
+  // mouse + touch. A tap (no drag) is ignored so icon clicks still work.
+  (() => {
+    const panel = document.getElementById('niv-panel');
+    const handle = document.getElementById('niv-panel-expand-handle');
+    if (!panel || !handle) return;
+    const DRAG_THRESHOLD = 28; // px rightward to trigger expand
+    handle.addEventListener('pointerdown', (e) => {
+      if (!panel.classList.contains('collapsed')) return;
+      e.preventDefault();
+      handle.classList.add('dragging');
+      const startX = e.clientX;
+      let expanded = false;
+      try { handle.setPointerCapture(e.pointerId); } catch (_) {}
+      const move = (ev) => {
+        if (expanded) return;
+        if (ev.clientX - startX > DRAG_THRESHOLD) {
+          expanded = true;
+          handle.classList.remove('dragging');
+          window._nivSetPanelCollapsed(false);
+          cleanup();
+        }
+      };
+      const up = () => { handle.classList.remove('dragging'); cleanup(); };
+      const cleanup = () => {
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', up);
+        handle.removeEventListener('pointercancel', up);
+      };
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', up);
+      handle.addEventListener('pointercancel', up);
     });
   })();
 
@@ -4018,8 +4118,34 @@ let currentUser;
   // mismo markup que renderJobs y mismo openJob (modal con ver, editar,
   // eliminar y compartir segun permisos). openJob indexa window._jobs,
   // asi que esta puerta lo apunta primero a la lista del cliente.
-  window.openCustomerJob = (i) => {
-    const list = window._custJobs || [];
+  // v1.1: loose project names (no doc yet) are clickable too. The
+  // create is confirm-gated (never silent): on confirm the doc is
+  // created with the customer prefilled and the project view opens.
+  window.custCreateProject = async (encName, encCustomer) => {
+    const nm = decodeURIComponent(encName || '');
+    const customer = decodeURIComponent(encCustomer || '');
+    if (!nm) return;
+    if (!confirm(L('¿Crear el proyecto "' + nm + '"?', 'Create the project "' + nm + '"?'))) return;
+    try {
+      const orgId = window._currentOrgId || (window._currentUserData && window._currentUserData.orgId);
+      if (!orgId) throw new Error('no org');
+      const ref = await addDoc(collection(db, 'orgs', orgId, 'projects'), {
+        name: nm,
+        customer: customer || '',
+        createdAt: serverTimestamp(),
+        createdBy: (window._currentUserData && window._currentUserData.uid) || null
+      });
+      // Refresh the local project list so openProject finds it.
+      try {
+        const snap = await getDoc(doc(db, 'orgs', orgId, 'projects', ref.id));
+        if (snap.exists() && Array.isArray(_projects)) _projects.push({ id: ref.id, ...(snap.data() || {}) });
+      } catch (_) {}
+      window.openProject(ref.id);
+    } catch (e) {
+      alert(L('No se pudo crear el proyecto. Intenta de nuevo.', 'Could not create the project. Try again.'));
+    }
+  };
+  window.openCustomerJob = (i) => {    const list = window._custJobs || [];
     if (!list[i]) return;
     window._jobs = list;
     window.openJob(i);
@@ -4031,6 +4157,75 @@ let currentUser;
     window._qView = items;
     window.openQuote(idx);
   };
+  window.renderCustomerContact = async function (contactEl, key, canQuote, quotes) {
+    const custDocId = encodeURIComponent(key);
+    let stored = null;
+    try {
+      const orgId = window._currentOrgId || (window._currentUserData && window._currentUserData.orgId);
+      if (orgId) {
+        const snap = await getDoc(doc(db, 'orgs', orgId, 'customers', custDocId));
+        if (snap.exists()) stored = snap.data() || {};
+      }
+    } catch (_) { /* fall back to quote data */ }
+    let c = stored || {};
+    if (!c.telefono && !c.email && !c.direccion && canQuote) {
+      let latest = null, latestD = null;
+      (quotes || []).forEach((q) => { const d = _custDate(q.creadoEl) || _custDate(q.actualizadoEl); if (!latest || (d && (!latestD || d > latestD))) { latest = q; latestD = d; } });
+      c = (latest && latest.cliente) || {};
+    }
+    const rows = [];
+    if (c.telefono) rows.push(['Teléfono', 'Phone', c.telefono, 'telefono']);
+    if (c.email) rows.push(['Email', 'Email', c.email, 'email']);
+    if (c.direccion) rows.push(['Dirección', 'Address', c.direccion, 'direccion']);
+    const canEdit = !!window._can && (window._can('userManagement') || (window._currentUserData && window._currentUserData.role === 'owner'));
+    const editBtn = canEdit
+      ? `<button class="niv-btn-sm" type="button" id="cust-contact-edit">${escapeHtml(L('Editar', 'Edit'))}</button>`
+      : '';
+    contactEl.innerHTML =
+      (rows.length
+        ? rows.map(([es, en, v]) => `<div class="niv-detail-row"><span class="k">${escapeHtml(L(es, en))}</span><span class="v">${escapeHtml(v)}</span></div>`).join('')
+        : '<div class="niv-panel-empty">' + escapeHtml(L('Sin datos de contacto registrados.', 'No contact details on record.')) + '</div>')
+      + (editBtn ? `<div style="margin-top:10px;">${editBtn}</div><div class="niv-status-line" id="cust-contact-status"></div>` : '');
+    const btn = document.getElementById('cust-contact-edit');
+    if (btn) btn.addEventListener('click', () => showCustomerContactForm(contactEl, key, c));
+  };
+  function showCustomerContactForm(contactEl, key, c) {
+    contactEl.innerHTML = `
+      <div class="niv-field"><label>${escapeHtml(L('Teléfono', 'Phone'))}</label>
+        <input type="tel" id="cust-f-telefono" value="${escapeHtml(c.telefono || '')}" maxlength="40" /></div>
+      <div class="niv-field"><label>Email</label>
+        <input type="email" id="cust-f-email" value="${escapeHtml(c.email || '')}" maxlength="120" /></div>
+      <div class="niv-field"><label>${escapeHtml(L('Dirección', 'Address'))}</label>
+        <input type="text" id="cust-f-direccion" value="${escapeHtml(c.direccion || '')}" maxlength="200" /></div>
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button class="niv-btn-sm niv-btn-primary" type="button" id="cust-contact-save">${escapeHtml(L('Guardar', 'Save'))}</button>
+        <button class="niv-btn-sm" type="button" id="cust-contact-cancel">${escapeHtml(L('Cancelar', 'Cancel'))}</button>
+      </div>
+      <div class="niv-status-line" id="cust-contact-status"></div>`;
+    document.getElementById('cust-contact-cancel').addEventListener('click', () => {
+      window.renderCustomerOverview();
+    });
+    document.getElementById('cust-contact-save').addEventListener('click', async () => {
+      const status = document.getElementById('cust-contact-status');
+      const data = {
+        telefono: document.getElementById('cust-f-telefono').value.trim(),
+        email: document.getElementById('cust-f-email').value.trim(),
+        direccion: document.getElementById('cust-f-direccion').value.trim(),
+        updatedAt: serverTimestamp()
+      };
+      try {
+        const orgId = window._currentOrgId || (window._currentUserData && window._currentUserData.orgId);
+        if (!orgId) throw new Error('no org');
+        await setDoc(doc(db, 'orgs', orgId, 'customers', encodeURIComponent(key)), data, { merge: true });
+        window.renderCustomerOverview();
+      } catch (e) {
+        if (status) {
+          status.className = 'niv-status-line err';
+          status.textContent = L('No se pudo guardar el contacto. Intenta de nuevo.', 'Could not save the contact. Try again.');
+        }
+      }
+    });
+  }
   window.renderCustomerOverview = () => {
     const key = _customerKey;
     if (!key) return;
@@ -4052,23 +4247,12 @@ let currentUser;
     const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
     setText('cust-name', key);
     setText('cust-subtitle', L('Resumen del cliente', 'Customer overview'));
-    // contacto: solo de la cotizacion mas reciente con ese cliente.nombre
+    // contacto (v1.1: editable): el doc orgs/{orgId}/customers/{nombre}
+    // gana si existe; si no, la cotizacion mas reciente con ese
+    // cliente.nombre; si no hay nada, estado vacio con boton de editar.
     const contactEl = document.getElementById('cust-contact');
     if (contactEl) {
-      if (!canQuote) {
-        contactEl.innerHTML = '<div class="niv-panel-empty">' + L('Sin datos de contacto registrados.', 'No contact details on record.') + '</div>';
-      } else {
-        let latest = null, latestD = null;
-        quotes.forEach((q) => { const d = _custDate(q.creadoEl) || _custDate(q.actualizadoEl); if (!latest || (d && (!latestD || d > latestD))) { latest = q; latestD = d; } });
-        const c = (latest && latest.cliente) || {};
-        const rows = [];
-        if (c.telefono) rows.push(['Teléfono', 'Phone', c.telefono]);
-        if (c.email) rows.push(['Email', 'Email', c.email]);
-        if (c.direccion) rows.push(['Dirección', 'Address', c.direccion]);
-        contactEl.innerHTML = rows.length
-          ? rows.map(([es, en, v]) => `<div class="niv-detail-row"><span class="k">${escapeHtml(L(es, en))}</span><span class="v">${escapeHtml(v)}</span></div>`).join('')
-          : '<div class="niv-panel-empty">' + L('Sin datos de contacto registrados.', 'No contact details on record.') + '</div>';
-      }
+      renderCustomerContact(contactEl, key, canQuote, quotes);
     }
     // stats honestas: conteos reales y actividad mas reciente real
     const projCount = docProjects.length + looseNames.length;
@@ -4094,7 +4278,7 @@ let currentUser;
       }).join('');
       const looseHtml = looseNames.map((nm) => {
         const n = jobs.filter((j) => (j.project || '') === nm && !(j.projectId && docIds.has(j.projectId))).length;
-        return `<div class="cust-proj-row static"><span class="cust-proj-name">${escapeHtml(nm)}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span></div>`;
+        return `<div class="cust-proj-row" onclick="window.custCreateProject('${encodeURIComponent(nm)}','${encodeURIComponent(key)}')"><span class="cust-proj-name">${escapeHtml(nm)}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span></div>`;
       }).join('');
       projEl.innerHTML = (docHtml + looseHtml) || '<div class="niv-panel-empty">' + L('Sin proyectos', 'No projects') + '</div>';
     }
@@ -4587,14 +4771,8 @@ let currentUser;
       });
     }
     const setCollapsed = (on) => {
-      panel.classList.toggle('collapsed', on);
-      document.body.classList.toggle('sidebar-collapsed', on);
-      if (collapseBtn) {
-        collapseBtn.textContent = on ? '›' : '‹';
-        collapseBtn.title = on ? 'Expandir' : 'Colapsar';
-      }
-      if (on) { panel.style.width = ''; }
-      else { const w = savedWidth(); if (w) panel.style.width = w + 'px'; }
+      // v1.1: animated via the shared helper (slide in/out).
+      window._nivSetPanelCollapsed(on);
     };
     if (collapseBtn) collapseBtn.addEventListener('click', () => {
       autoCollapsed = false;
