@@ -961,6 +961,12 @@
       }
     };
     var STORE_KEY = 'nivelato-login-lang';
+    // Mirror the language into a cookie so surfaces on other subdomains
+    // (which cannot read this origin's localStorage, e.g. geo-blocked)
+    // can render in the same language.
+    function writeLangCookie(l) {
+      try { document.cookie = STORE_KEY + '=' + l + '; Domain=.nivelatolabs.com; Path=/; SameSite=Lax; Max-Age=31536000'; } catch (_) { /* ignore */ }
+    }
     function detectLang() {
       try {
         var s = localStorage.getItem(STORE_KEY);
@@ -973,6 +979,7 @@
       return 'es';
     }
     var lang = detectLang();
+    writeLangCookie(lang);
     // Language explicitly chosen by the user this session (via the toggle).
     // postAuthRedirect must not let a stale DB value override it.
     var sessionExplicitLang = null;
@@ -1032,6 +1039,7 @@
       // later in postAuthRedirect (toggle-then-sign-in race).
       sessionExplicitLang = l;
       try { localStorage.setItem(STORE_KEY, l); } catch (_) { /* ignore */ }
+      writeLangCookie(l);
       // Write-through to the DB when signed in (best effort; never blocks).
       if (window.__nivelatoSaveLangDb) { try { window.__nivelatoSaveLangDb(l); } catch (_) {} }
       applyLang();
@@ -1044,6 +1052,7 @@
     // Adopt a language coming from the DB (no write-back; just switch to it).
     function adoptDbLang(l) {
       if (l !== 'es' && l !== 'en') return;
+      writeLangCookie(l);
       try { localStorage.setItem('nl_lang_db', '1'); } catch (_) { /* ignore */ }
       if (l === lang) { applyLang(); return; }
       lang = l;

@@ -78,44 +78,71 @@
     vpn: {
       icon: '🚫',
       title: 'Acceso restringido',
+      titleEn: 'Access restricted',
       es: 'Nivelato es de uso exclusivo de Quality Glass en Puerto Rico. Si crees que esto es un error, <a href="mailto:support@nivelatolabs.com">escríbenos</a>.',
       en: 'Nivelato is exclusively for Quality Glass in Puerto Rico. If you think this is a mistake, contact us.',
       back: 'Volver',
+      backEn: 'Back',
     },
     // PR user attempting the external flow directly
     'pr-external': {
       icon: '📍',
       title: 'No disponible en Puerto Rico',
+      titleEn: 'Not available in Puerto Rico',
       es: 'En PR, Nivelato es exclusivo de Quality Glass. Usa el acceso de QGI.',
       en: 'In PR, Nivelato is exclusive to Quality Glass. Use the QGI login.',
       back: 'Ir al acceso de QGI',
+      backEn: 'Go to the QGI login',
     },
     // Affiliation / geo under review — lands in Daniel's / Giulia's queue
     review: {
       icon: '⏳',
       title: 'Cuenta en revisión',
+      titleEn: 'Account under review',
       es: 'Estamos verificando tu acceso. Te avisaremos pronto.',
       en: "We're verifying your access. We'll notify you soon.",
       back: 'Volver',
+      backEn: 'Back',
     },
     // INTERIM: billing suspension UX (Phase 3 replaces with dedicated copy)
     billing: {
       icon: '💳',
       title: 'Suscripción vencida',
+      titleEn: 'Subscription lapsed',
       es: 'Tu suscripción está vencida. Habla con el dueño del taller para reactivarla.',
       en: 'Your subscription has lapsed. Ask the shop owner to reactivate it.',
       back: 'Volver',
+      backEn: 'Back',
     },
   };
   const params = new URLSearchParams(window.location.search);
   const v = VARIANTS[params.get('reason')] || VARIANTS.vpn;
+  // Single-language render: the login page leaves a `nivelato-login-lang`
+  // cookie (Domain=.nivelatolabs.com), so read it here. No cookie or an
+  // unknown value falls back to Spanish, the product default. The other
+  // language's paragraph is removed from the DOM, never just hidden.
+  const langMatch = document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)(?:;|$)/);
+  const lang = langMatch && langMatch[1] === 'en' ? 'en' : 'es';
+  document.documentElement.lang = lang;
   document.getElementById('icon').textContent = v.icon;
-  document.getElementById('title').textContent = v.title;
-  // Fixed-literal copy only — the query-string value is just the lookup key,
-  // so innerHTML is safe here and lets the vpn variant carry its mailto link.
-  document.getElementById('body-es').innerHTML = v.es;
-  document.getElementById('body-en').textContent = v.en;
-  document.getElementById('back-btn').textContent = v.back;
+  const title = lang === 'en' ? v.titleEn : v.title;
+  document.getElementById('title').textContent = title;
+  document.title = 'Nivelato — ' + title;
+  const esEl = document.getElementById('body-es');
+  const enEl = document.getElementById('body-en');
+  if (lang === 'en') {
+    esEl.remove();
+    enEl.classList.remove('en'); // sole language renders as primary text
+    // Fixed-literal copy only, same as the ES body below.
+    enEl.textContent = v.en;
+  } else {
+    enEl.remove();
+    // Fixed-literal copy only — the query-string value is just the lookup
+    // key, so innerHTML is safe here and lets the vpn variant carry its
+    // mailto link.
+    esEl.innerHTML = v.es;
+  }
+  document.getElementById('back-btn').textContent = lang === 'en' ? v.backEn : v.back;
 </script>
 <script>
   // Egg: ?reason=gay slowly turns the page into a pride flag over 100s,
@@ -129,6 +156,47 @@
     fade.style.transition = 'opacity 100s linear';
     fade.style.opacity = '1';
     setTimeout(() => { window.location.href = 'https://archiveofourown.org'; }, 100000);
+  }
+</script>
+<script>
+  // Reason block: idk. The page gets progressively less sure that you are
+  // blocked at all, over about 30 seconds, then stays that way. No
+  // redirect, no other side effects. Mutations are gentle opacity fades.
+  if (new URLSearchParams(window.location.search).get('reason') === 'idk') {
+    const en = document.documentElement.lang === 'en';
+    const titleEl = document.getElementById('title');
+    const bodyEl = document.querySelector('#body-es, #body-en');
+    const iconEl = document.getElementById('icon');
+    const backEl = document.getElementById('back-btn');
+    const MAIL = '<a href="mailto:support@nivelatolabs.com">escríbenos</a>';
+    // Successive full-paragraph states (fixed literals): doubt accumulates.
+    const BODY = en ? [
+      'Nivelato is exclusively for Quality Glass in Puerto Rico. probably. If you think this is a mistake, contact us.',
+      'Nivelato is exclusively for Quality Glass in Puerto Rico. probably. if this is a mistake. if you are even blocked. if this is even a page, contact us.',
+      'Nivelato is exclusively for Quality Glass in Puerto Rico. probably. maybe. honestly, I have no proof. if this is a mistake. if you are even blocked. if this is even a page, contact us.'
+    ] : [
+      'Nivelato es de uso exclusivo de Quality Glass en Puerto Rico. probablemente. Si crees que esto es un error, ' + MAIL + '.',
+      'Nivelato es de uso exclusivo de Quality Glass en Puerto Rico. probablemente. si esto es un error. si es que estás bloqueado. si es que esto es una página, ' + MAIL + '.',
+      'Nivelato es de uso exclusivo de Quality Glass en Puerto Rico. probablemente. a lo mejor. honestamente, no me consta. si esto es un error. si es que estás bloqueado. si es que esto es una página, ' + MAIL + '.'
+    ];
+    function swap(el, html) {
+      el.style.transition = 'opacity .25s ease';
+      el.style.opacity = '0';
+      setTimeout(() => { el.innerHTML = html; el.style.opacity = '1'; }, 250);
+    }
+    function swapTitle(text) {
+      swap(titleEl, text);
+      document.title = 'Nivelato — ' + text;
+    }
+    setTimeout(() => swapTitle(en ? 'Access restricted (I think)' : 'Acceso restringido (creo)'), 5000);
+    setTimeout(() => swap(bodyEl, BODY[0]), 10000);
+    setTimeout(() => swap(iconEl, '❓'), 15000);
+    setTimeout(() => swap(bodyEl, BODY[1]), 20000);
+    setTimeout(() => swapTitle(en ? 'Access restricted?' : '¿Acceso restringido?'), 25000);
+    setTimeout(() => {
+      swap(bodyEl, BODY[2]);
+      swap(backEl, en ? 'Back?' : '¿Volver?');
+    }, 29000);
   }
 </script>
 <script src="./press-yaoi.js"></script>
