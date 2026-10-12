@@ -751,6 +751,81 @@ body.has-sidebar .niv-shell > main {
     left: var(--niv-inset); bottom: var(--niv-inset); height: auto;
   }
 }
+
+/* ============ REVISION 3: tres zonas, barra condicional, iconos por token ============
+   (a) La barra lateral pasa a tres zonas explicitas: cabecera fija (empresa,
+   boton de colapso como pieza separada y navegacion de iconos), centro
+   desplazable (la lista de proyectos expandida vive aqui, con Clientes y
+   Medidas) y cuenta anclada al fondo en ambos estados.
+   (b) La barra superior deja de duplicar la navegacion de iconos de la barra
+   lateral: en escritorio no aparece en ninguno de los dos estados de la
+   barra; solo existe en movil o en el modo "Barra lateral compacta"
+   (preferencia de interfaz de Ajustes) con el riel activo.
+   (c) Los iconos de la navegacion ya no llevan colores fijos por item: salen
+   de los tokens del tema. */
+.niv-panel-topzone { flex: none; display: flex; flex-direction: column; }
+body.has-sidebar .niv-panel-bottom { margin-top: auto; }
+.niv-panel-collapserow { display: flex; justify-content: flex-end; padding: 0 2px 4px; margin-top: -6px; }
+.niv-panel-collapse {
+  width: 34px; height: 34px;
+  background: var(--niv-accent, #1971c2);
+  border: 1px solid transparent;
+  color: var(--niv-bg, #0e0e10); font-size: 18px; font-weight: 700;
+}
+.niv-panel-collapse:hover { background: var(--niv-accent, #1971c2); filter: brightness(1.18); }
+.niv-float-panel.collapsed .niv-panel-head { padding-bottom: 2px; }
+.niv-float-panel.collapsed .niv-panel-collapserow { justify-content: center; padding: 2px 0 6px; margin-top: 0; }
+.niv-float-panel.collapsed .niv-panel-collapse { width: 40px; height: 40px; font-size: 19px; }
+#niv-snav-projects-body { display: none; }
+#niv-snav-projects-body.open { display: block; margin-bottom: 14px; }
+.niv-projlist-title { font-size: 13px; color: var(--niv-text-dim, #a7a7ad); margin-bottom: 8px; padding-left: 4px; }
+
+/* iconos por token: la baldosa hereda currentColor del span y el glifo va
+   atenuado; en el item activo la baldosa toma el acento (el mismo token que
+   honra la interfaz) y el glifo pasa a blanco. El punto de notificaciones ya
+   usaba el token de peligro (--niv-red en .niv-notif-badge) y se queda asi. */
+.niv-snav-ico { color: var(--niv-surface-2, #1e1e22); }
+.niv-snav-ico svg path { fill: var(--niv-text-dim, #a7a7ad); transition: fill 0.15s; }
+.niv-snav:hover .niv-snav-ico { color: var(--niv-surface, #17171a); }
+.niv-navunit.active .niv-snav-ico { color: var(--niv-accent, #1971c2); }
+.niv-navunit.active .niv-snav-ico svg path { fill: #fff; }
+
+/* vista Usuarios incrustada: el iframe llena la tarjeta y la pagina
+   incrustada desplaza por dentro, sin doble barra de desplazamiento */
+#view-users { height: 100%; }
+#users-embed-frame { display: block; width: 100%; height: 100%; border: 0; border-radius: 12px; background: transparent; }
+#users-embed-fallback { padding: 28px; text-align: center; color: var(--niv-text-dim, #a7a7ad); font-size: 14px; }
+#users-embed-fallback a { color: var(--niv-accent, #1971c2); }
+
+/* barra superior: centrado + indicador deslizante con topes. La pastilla
+   activa conserva su degradado hasta que el indicador esta vivo (ind-on);
+   desde entonces el aspecto elevado vive en el indicador. */
+.niv-topbar-tabs { margin: 0 auto; position: relative; }
+.niv-tab { position: relative; z-index: 1; }
+.niv-tab-indicator {
+  position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; z-index: 0;
+  border-radius: 999px; pointer-events: none; opacity: 0;
+  background: linear-gradient(135deg, #0ea5a5, #1971c2);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.38), 0 2px 5px rgba(0,0,0,0.28);
+  transition: left 0.38s cubic-bezier(0.25, 1.35, 0.35, 1), width 0.38s cubic-bezier(0.25, 1.35, 0.35, 1), opacity 0.18s ease;
+}
+.niv-tab-indicator.dragging { transition: none; }
+.niv-topbar-tabs.ind-on .niv-tab.active { background: transparent; }
+@media (prefers-reduced-motion: reduce) {
+  .niv-tab-indicator { transition: none; }
+}
+@media (min-width: 901px) {
+  body.has-sidebar .niv-topbar { display: none; }
+  body.has-sidebar.niv-compact.sidebar-collapsed .niv-topbar { display: flex; }
+  body.has-sidebar.niv-compact .niv-topbar-project {
+    position: absolute; right: 32px; top: 50%;
+    transform: translateY(-50%); margin-left: 0;
+  }
+}
+@media (max-width: 900px) {
+  .niv-topbar-tabs { touch-action: none; }
+  .niv-tab { padding: 8px 13px; }
+}
 </style>
 </head>
 <body class="has-sidebar">
@@ -763,7 +838,7 @@ body.has-sidebar .niv-shell > main {
     <button class="niv-tab" id="tab-home" onclick="window.showDashView('home')"><span class="niv-tab-label">Panel</span></button>
     <button class="niv-tab" id="tab-projects" onclick="window.openProjectTab()"><span class="niv-tab-label">Proyectos</span></button>
     <button class="niv-tab" id="tab-notifications" onclick="window.showDashView('notifications')"><span class="niv-tab-label">Notificaciones</span><span class="niv-notif-badge" id="niv-notif-badge">0</span></button>
-    <button class="niv-tab" id="tab-users" onclick="window.location.href='/company/users'"><span class="niv-tab-label">Usuarios</span></button>
+    <button class="niv-tab" id="tab-users" onclick="window.showDashView('users')"><span class="niv-tab-label">Usuarios</span></button>
   </nav>
   <div class="niv-topbar-project" id="niv-topbar-project"></div>
 </header>
@@ -771,47 +846,52 @@ body.has-sidebar .niv-shell > main {
 <div class="niv-shell">
 <div class="niv-scrim" id="niv-scrim" onclick="document.body.classList.remove('nav-open')"></div>
 <div class="niv-float-panel" id="niv-panel">
+  <div class="niv-panel-topzone">
   <div class="niv-panel-head" id="niv-panel-head" onclick="openCompanyDialog(event)" style="cursor:pointer" title="Ajustes de la empresa">
     <div class="niv-company-avatar" id="sidebar-avatar">N</div>
     <div class="niv-company-name" id="org-name-badge">…<span id="estradiol-indicator">E2</span></div>
-    <button class="niv-panel-collapse" id="niv-panel-collapse" title="Colapsar">‹</button>
+  </div>
+  <div class="niv-panel-collapserow">
+    <button class="niv-panel-collapse" id="niv-panel-collapse" title="Colapsar" aria-label="Colapsar">‹</button>
   </div>
   <div class="org-badge" id="tier-badge" style="display:none;">Pro</div>
   <button class="btn-save" id="btn-upgrade-plan" onclick="window.showUpgradeModal && window.showUpgradeModal()" style="display:none;margin:10px 16px 0;">Mejorar plan</button>
   <nav class="niv-side-nav" aria-label="Dashboard">
     <div class="niv-navunit" data-navunit="home">
       <button class="niv-snav" id="snav-home" onclick="window._sideNavGo('home')">
-        <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#4CD964"/><path d="M12 5l7 6.3h-1.9V18a1.2 1.2 0 0 1-1.2 1.2h-2.9v-4.7h-2v4.7H8.1A1.2 1.2 0 0 1 6.9 18v-6.7H5z" fill="#fff"/></svg></span>
+        <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="currentColor"/><path d="M12 5l7 6.3h-1.9V18a1.2 1.2 0 0 1-1.2 1.2h-2.9v-4.7h-2v4.7H8.1A1.2 1.2 0 0 1 6.9 18v-6.7H5z" fill="#fff"/></svg></span>
         <span class="niv-snav-label" id="snav-home-label">Panel</span>
       </button>
     </div>
     <div class="niv-navunit" data-navunit="projects">
       <div class="niv-snav-row">
         <button class="niv-snav" id="snav-projects" onclick="window._sideNavGo('projects')">
-          <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#AF52DE"/><path d="M3.5 7.5A1.6 1.6 0 0 1 5.1 5.9h3.6c.44 0 .86.18 1.16.5l1.54 1.65h7.5A1.6 1.6 0 0 1 20.5 9.65v6.9a1.6 1.6 0 0 1-1.6 1.6H5.1a1.6 1.6 0 0 1-1.6-1.6z" fill="#fff"/></svg></span>
+          <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="currentColor"/><path d="M3.5 7.5A1.6 1.6 0 0 1 5.1 5.9h3.6c.44 0 .86.18 1.16.5l1.54 1.65h7.5A1.6 1.6 0 0 1 20.5 9.65v6.9a1.6 1.6 0 0 1-1.6 1.6H5.1a1.6 1.6 0 0 1-1.6-1.6z" fill="#fff"/></svg></span>
           <span class="niv-snav-label" id="snav-projects-label">Proyectos</span>
         </button>
         <button class="niv-plus-btn niv-snav-plus" onclick="openNewProject()" title="Nuevo proyecto" aria-label="Nuevo proyecto">+</button>
       </div>
-      <div class="niv-snav-body" id="niv-snav-projects-body">
-        <div id="niv-panel-projects"><div class="niv-panel-empty">Sin proyectos</div></div>
-      </div>
     </div>
     <div class="niv-navunit" data-navunit="notifications">
       <button class="niv-snav" id="snav-notifications" onclick="window._sideNavGo('notifications')">
-        <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#FF3B30"/><path d="M12 4.2a5.3 5.3 0 0 0-5.3 5.3v3L5.2 15.5a.75.75 0 0 0 .67 1.1h12.26a.75.75 0 0 0 .67-1.1l-1.5-3v-3A5.3 5.3 0 0 0 12 4.2zM10.1 18.6a1.9 1.9 0 0 0 3.8 0z" fill="#fff"/></svg></span>
+        <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="currentColor"/><path d="M12 4.2a5.3 5.3 0 0 0-5.3 5.3v3L5.2 15.5a.75.75 0 0 0 .67 1.1h12.26a.75.75 0 0 0 .67-1.1l-1.5-3v-3A5.3 5.3 0 0 0 12 4.2zM10.1 18.6a1.9 1.9 0 0 0 3.8 0z" fill="#fff"/></svg></span>
         <span class="niv-snav-label" id="snav-notifications-label">Notificaciones</span>
         <span class="niv-notif-badge" id="niv-snav-badge">0</span>
       </button>
     </div>
     <div class="niv-navunit" data-navunit="users">
       <button class="niv-snav" id="snav-users" onclick="window._sideNavGo('users')">
-        <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#0A84FF"/><path d="M9.2 6.1a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4zM3.9 18.7c.7-3.1 2.8-4.7 5.3-4.7s4.6 1.6 5.3 4.7zM16.6 7.6a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zM15.9 14.3c2.1.3 3.7 1.8 4.3 4.4h-4.5c.35-1.6.42-3.05.2-4.4z" fill="#fff"/></svg></span>
+        <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="currentColor"/><path d="M9.2 6.1a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4zM3.9 18.7c.7-3.1 2.8-4.7 5.3-4.7s4.6 1.6 5.3 4.7zM16.6 7.6a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zM15.9 14.3c2.1.3 3.7 1.8 4.3 4.4h-4.5c.35-1.6.42-3.05.2-4.4z" fill="#fff"/></svg></span>
         <span class="niv-snav-label" id="snav-users-label">Usuarios</span>
       </button>
     </div>
   </nav>
+  </div><!-- /niv-panel-topzone -->
   <div class="niv-panel-body" id="niv-panel-body">
+    <div class="niv-projlist" id="niv-snav-projects-body">
+      <div class="niv-projlist-title">Proyectos</div>
+      <div id="niv-panel-projects"><div class="niv-panel-empty">Sin proyectos</div></div>
+    </div>
     <div class="niv-panel-sec" data-seckey="customers">
       <div class="niv-panel-sec-title">Clientes</div>
       <div class="niv-sec-body" id="niv-panel-customers"><div class="niv-panel-empty">Sin clientes</div></div>
@@ -821,10 +901,8 @@ body.has-sidebar .niv-shell > main {
       <div class="niv-sec-body" id="niv-panel-measures"><div class="niv-panel-empty">Sin medidas</div></div>
     </div>
     <div class="niv-panel-actions">
-      <button class="niv-nav-btn" id="nav-measures" onclick="document.body.classList.remove('nav-open');window.showDashView('measures')">Medidas</button>
       <button class="niv-nav-btn" id="btn-pricelist" onclick="document.body.classList.remove('nav-open');togglePriceListView()" style="display:none">Precios</button>
       <button class="niv-nav-btn" id="btn-quotes" onclick="document.body.classList.remove('nav-open');toggleQuotesView()" style="display:none">Cotizaciones</button>
-      <a class="niv-nav-btn" id="nav-users" href="/company/settings" style="display:none">Usuarios</a>
     </div>
   </div>
   <div class="niv-panel-bottom">
@@ -844,6 +922,24 @@ body.has-sidebar .niv-shell > main {
   </div>
 </div>
 <div class="niv-resize-handle" id="niv-resize-handle" role="separator" aria-orientation="vertical" title="Arrastrar para redimensionar"></div>
+<script>
+/* Modo "Barra lateral compacta" (preferencia de interfaz guardada en
+   Ajustes, clave 'niv-compact-sidebar'): se lee y se aplica durante el
+   parseo, antes del primer pintado, para que la carcasa nazca ya como
+   riel y con la barra superior visible, sin destello del estado contrario. */
+try {
+  if (localStorage.getItem('niv-compact-sidebar') === '1') {
+    document.body.classList.add('niv-compact');
+    var _cp = document.getElementById('niv-panel');
+    if (_cp) {
+      _cp.classList.add('collapsed');
+      document.body.classList.add('sidebar-collapsed');
+      var _cb = document.getElementById('niv-panel-collapse');
+      if (_cb) { _cb.textContent = '›'; _cb.title = 'Expandir'; }
+    }
+  }
+} catch (_) {}
+</script>
 
 <main>
  <div id="view-home" style="display:none">
@@ -883,6 +979,10 @@ body.has-sidebar .niv-shell > main {
   <div class="subtitle" id="notif-subtitle"></div>
   <div id="notif-list"><div class="loading">Cargando notificaciones…</div></div>
  </div><!-- /view-notifications -->
+ <div id="view-users" style="display:none">
+  <iframe id="users-embed-frame" title="Usuarios" loading="lazy"></iframe>
+  <div id="users-embed-fallback" style="display:none">No se pudo cargar la gestión de usuarios. <a href="/company/users" target="_top">Abrir la página completa</a></div>
+ </div><!-- /view-users -->
  <div id="view-measures">
   <div style="display:flex; align-items:center; gap:12px; min-width:0;">
     <button class="niv-hamburger" onclick="document.body.classList.toggle('nav-open')" aria-label="Menú" style="flex-shrink:0;">☰</button>
@@ -1181,7 +1281,7 @@ body.has-sidebar .niv-shell > main {
     <div class="modal-title" id="company-dialog-title">Empresa</div>
     <div id="company-dialog-body">
       <button class="btn-save" onclick="window.location.href='/company/settings'">Ajustes de la empresa</button>
-      <button class="btn-save" id="company-dialog-users" onclick="window.location.href='/company/users'" style="display:none;margin-top:8px">Usuarios</button>
+      <button class="btn-save" id="company-dialog-users" onclick="closeCompanyDialog();window.showDashView('users')" style="display:none;margin-top:8px">Usuarios</button>
     </div>
     <button class="btn-cancel" onclick="closeCompanyDialog()">Cerrar</button>
   </div>
@@ -1576,10 +1676,6 @@ let currentUser;
         else _aa.textContent = ((_dn || _em || 'U')[0] || 'U').toUpperCase();
       }
     } catch (_) {}
-    if (_can('userManagement')) {
-      const _nu = document.getElementById('nav-users');
-      if (_nu) _nu.style.display = 'block';
-    }
     window._currentOrgId = orgId;
     loadProjects();
     document.getElementById('dash-subtitle').textContent = `${orgName} · ${_can('userManagement') ? 'Administrador' : (hasQuotes ? 'Cotizaciones' : 'Medidas')}`;
@@ -2498,7 +2594,7 @@ let currentUser;
     document.body.classList.remove('nav-open');
     // orgs sin quoting (QGC): las vistas de precios/cotizaciones no existen
     if (!userCanQuote(window._currentUserData) && ['pricelist', 'quotes', 'builder'].includes(name)) name = 'measures';
-    const views = { home: 'view-home', notifications: 'view-notifications', measures: 'view-measures', pricelist: 'view-pricelist', quotes: 'view-quotes', builder: 'view-builder', project: 'view-project', measure: 'view-measure' };
+    const views = { home: 'view-home', notifications: 'view-notifications', users: 'view-users', measures: 'view-measures', pricelist: 'view-pricelist', quotes: 'view-quotes', builder: 'view-builder', project: 'view-project', measure: 'view-measure' };
     Object.keys(views).forEach(k => {
       const el = document.getElementById(views[k]);
       if (el) el.style.display = (k === name) ? '' : 'none';
@@ -2508,8 +2604,6 @@ let currentUser;
     if (btnPl) btnPl.textContent = name === 'pricelist' ? '📊 Medidas' : '📋 Precios';
     if (btnQ) btnQ.textContent = (name === 'quotes' || name === 'builder') ? '📊 Medidas' : '💲 Cotizaciones';
     // sidebar nav active state
-    const _nm = document.getElementById('nav-measures');
-    if (_nm) _nm.classList.toggle('active', name === 'measures');
     if (btnPl) btnPl.classList.toggle('active', name === 'pricelist');
     if (btnQ) btnQ.classList.toggle('active', name === 'quotes' || name === 'builder');
     if (name === 'pricelist') ensurePriceList();
@@ -3431,9 +3525,10 @@ let currentUser;
   }
 
   window.openAssignUsers = () => {
-    // "Add more" del panel de usuarios asignados: abre la pantalla de
-    // usuarios de la empresa con el flujo de agregar usuario ya abierto.
-    window.location.href = '/company/users?addUser=1';
+    // "Add more" del panel de usuarios asignados: abre la vista Usuarios
+    // del panel (users.html incrustado) con el flujo de agregar ya abierto.
+    window.showDashView('users');
+    if (window._ensureUsersFrame) window._ensureUsersFrame(true);
   };
 
 
@@ -3588,7 +3683,7 @@ let currentUser;
 
   // ---- barra superior: pestaña activa según la vista ----
   window._onDashViewChange = (name) => {
-    const map = { home: 'tab-home', project: 'tab-projects', notifications: 'tab-notifications' };
+    const map = { home: 'tab-home', project: 'tab-projects', notifications: 'tab-notifications', users: 'tab-users' };
     ['tab-home', 'tab-projects', 'tab-notifications', 'tab-users'].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.classList.toggle('active', map[name] === id);
@@ -3601,6 +3696,7 @@ let currentUser;
     // el contenido principal tiene su propio scroll: vuelve arriba al cambiar
     const mainEl = document.querySelector('.niv-shell > main');
     if (mainEl) mainEl.scrollTop = 0;
+    if (name === 'users' && window._ensureUsersFrame) window._ensureUsersFrame(false);
   };
 
   // pestaña Proyectos: abre el proyecto actual (o el primero, o la vista vacía)
@@ -3633,20 +3729,26 @@ let currentUser;
     const store = () => { try { localStorage.setItem('niv-panel-sections', JSON.stringify(saved)); } catch (_) {} };
     const units = {};
     document.querySelectorAll('#niv-panel .niv-navunit').forEach((u) => { units[u.getAttribute('data-navunit')] = u; });
+    // la lista de proyectos expandida vive en la zona desplazable del panel,
+    // no dentro de la unidad de navegacion: su visibilidad la manda la clase
+    // 'open' sobre el propio contenedor de la lista
+    const projBody = document.getElementById('niv-snav-projects-body');
     const setExpanded = (key, on) => {
       const u = units[key];
       if (!u) return;
       u.classList.toggle('expanded', on);
+      if (key === 'projects' && projBody) projBody.classList.toggle('open', on);
       if (key === 'projects') { saved['nav-open'] = on ? 'projects' : null; store(); }
     };
     const expandOnly = (key) => { Object.keys(units).forEach((k) => setExpanded(k, k === key)); };
     // restaura la expansion guardada sin cambiar de vista
     if (saved['nav-open'] === 'projects' && units.projects) units.projects.classList.add('expanded');
+    if (saved['nav-open'] === 'projects' && projBody) projBody.classList.add('open');
     window._sideNavGo = (key) => {
       document.body.classList.remove('nav-open');
       if (key === 'home') { expandOnly(null); window.showDashView('home'); return; }
       if (key === 'notifications') { expandOnly(null); window.showDashView('notifications'); return; }
-      if (key === 'users') { window.location.href = '/company/users'; return; }
+      if (key === 'users') { expandOnly(null); window.showDashView('users'); return; }
       if (key === 'projects') {
         const u = units.projects;
         // segundo toque sobre el item ya activo: colapsa solo la lista
@@ -3659,11 +3761,131 @@ let currentUser;
       let key = null;
       if (name === 'home') key = 'home';
       else if (name === 'notifications') key = 'notifications';
+      else if (name === 'users') key = 'users';
       else if (name === 'project') key = 'projects';
       else if (name === 'measure' && typeof _measureReturnView !== 'undefined' && _measureReturnView === 'project') key = 'projects';
       Object.keys(units).forEach((k) => units[k].classList.toggle('active', k === key));
       if (key === 'projects') expandOnly('projects');
     };
+  })();
+
+  // ---- vista Usuarios: users.html incrustado en modo embed (?embed=users) ----
+  // La pagina completa de usuarios sigue siendo Ajustes; aqui solo vive el
+  // area de gestion. La carga es perezosa (primer uso) y el enlace "Add more"
+  // pide la apertura del flujo de agregar por postMessage si el marco ya
+  // cargo, o por parametro si todavia no.
+  (() => {
+    const frame = document.getElementById('users-embed-frame');
+    if (!frame) return;
+    let ready = false;
+    frame.addEventListener('load', () => {
+      if (!frame.getAttribute('src')) return;
+      ready = true;
+      const fb = document.getElementById('users-embed-fallback');
+      if (fb) fb.style.display = 'none';
+      frame.style.display = 'block';
+    });
+    frame.addEventListener('error', () => {
+      const fb = document.getElementById('users-embed-fallback');
+      if (fb) fb.style.display = 'block';
+    });
+    window._ensureUsersFrame = (addUser) => {
+      const url = '/company/users?embed=users' + (addUser ? '&addUser=1' : '');
+      if (!frame.getAttribute('src') || (addUser && !ready)) { frame.src = url; return; }
+      if (addUser && ready) {
+        try { frame.contentWindow.postMessage({ type: 'nivelato:addUser' }, window.location.origin); } catch (_) {}
+      }
+    };
+  })();
+
+  // ---- barra superior: indicador deslizante con topes (detents) ----
+  // Donde la barra existe (movil, o modo compacto con el riel activo) la
+  // seleccion es una sola pastilla elevada que se MUEVE al boton activo:
+  // animacion rapida con un leve sobreimpulso y topes discretos, uno por
+  // boton. Arrastrar sobre la pista mueve el indicador con el puntero; al
+  // cruzar el centro de un boton se confirma esa vista, igual que un clic.
+  // Con prefers-reduced-motion los saltos son instantaneos.
+  (() => {
+    const tabsEl = document.querySelector('.niv-topbar-tabs');
+    if (!tabsEl) return;
+    const ind = document.createElement('div');
+    ind.className = 'niv-tab-indicator';
+    ind.setAttribute('aria-hidden', 'true');
+    tabsEl.appendChild(ind);
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let dragging = false;
+    let suppressClick = false;
+    const pills = () => Array.from(tabsEl.querySelectorAll('.niv-tab'));
+    const activePill = () => tabsEl.querySelector('.niv-tab.active');
+    function settle(el, animate) {
+      if (!el) { ind.style.opacity = '0'; return; }
+      const instant = !animate || reduceMotion.matches;
+      if (instant) ind.classList.add('dragging');
+      ind.style.left = el.offsetLeft + 'px';
+      ind.style.width = el.offsetWidth + 'px';
+      ind.style.opacity = '1';
+      tabsEl.classList.add('ind-on');
+      if (instant) requestAnimationFrame(() => ind.classList.remove('dragging'));
+    }
+    function place(animate) { if (!dragging) settle(activePill(), animate); }
+    const origChange = window._onDashViewChange;
+    if (typeof origChange === 'function') {
+      window._onDashViewChange = (name) => { origChange(name); place(true); };
+    }
+    window.addEventListener('resize', () => place(false));
+    // arrastre con topes: un tope por boton, en su centro
+    let dragId = null, downX = 0, dragTab = null;
+    const centerOf = (el) => el.offsetLeft + el.offsetWidth / 2;
+    tabsEl.addEventListener('pointerdown', (e) => {
+      if (e.button !== undefined && e.button !== 0) return;
+      dragId = e.pointerId; downX = e.clientX; dragTab = null;
+    });
+    tabsEl.addEventListener('pointermove', (e) => {
+      if (dragId === null || e.pointerId !== dragId) return;
+      if (!dragging) {
+        if (Math.abs(e.clientX - downX) < 6) return;
+        dragging = true;
+        try { tabsEl.setPointerCapture(dragId); } catch (_) {}
+        ind.classList.add('dragging');
+      }
+      const list = pills();
+      if (!list.length) return;
+      const rect = tabsEl.getBoundingClientRect();
+      const x = e.clientX - rect.left + tabsEl.scrollLeft - 4;
+      const lo = list[0], hi = list[list.length - 1];
+      const cur = dragTab || activePill() || lo;
+      const w = cur.offsetWidth;
+      ind.style.left = Math.max(lo.offsetLeft, Math.min(x - w / 2, hi.offsetLeft + hi.offsetWidth - w)) + 'px';
+      ind.style.width = w + 'px';
+      ind.style.opacity = '1';
+      tabsEl.classList.add('ind-on');
+      let near = lo, nd = Infinity;
+      list.forEach((el) => { const d = Math.abs(centerOf(el) - x); if (d < nd) { nd = d; near = el; } });
+      if (near !== dragTab) {
+        dragTab = near;
+        ind.style.width = near.offsetWidth + 'px';
+        near.click();
+      }
+    });
+    const endDrag = (e) => {
+      if (dragId === null || (e && e.pointerId !== dragId)) return;
+      dragId = null;
+      if (!dragging) return;
+      dragging = false;
+      suppressClick = true;
+      setTimeout(() => { suppressClick = false; }, 400);
+      const target = dragTab || activePill();
+      ind.classList.remove('dragging');
+      settle(target, true);
+      dragTab = null;
+    };
+    tabsEl.addEventListener('pointerup', endDrag);
+    tabsEl.addEventListener('pointercancel', endDrag);
+    tabsEl.addEventListener('click', (e) => {
+      // tras un arrastre el navegador dispara un clic: se suprime
+      if (suppressClick) { suppressClick = false; e.stopPropagation(); e.preventDefault(); }
+    }, true);
+    place(false);
   })();
 
   // ---- vista Panel (home): resumen con los datos que el dashboard ya carga ----
@@ -3909,6 +4131,7 @@ let currentUser;
       let v = null;
       try { v = new URLSearchParams(window.location.search).get('view'); } catch (_) {}
       if (v === 'notifications') window.showDashView('notifications');
+      else if (v === 'users') window.showDashView('users');
       else if (v === 'home' || v === 'dashboard') window.showDashView('home');
       else if (v === 'projects') window.openProjectTab();
     };

@@ -590,7 +590,22 @@ function mount() {
   if (new URLSearchParams(window.location.search).get('addUser') === '1') {
     openAddUserModal();
   }
+  if (pendingAddUserMsg) {
+    pendingAddUserMsg = false;
+    openAddUserModal();
+  }
 }
+
+// El panel (dashboard) incrusta esta pagina y puede pedir la apertura del
+// flujo de agregar por postMessage cuando el marco ya cargo sin el
+// parametro ?addUser=1. Solo se honran mensajes del mismo origen.
+let pendingAddUserMsg = false;
+window.addEventListener('message', (e) => {
+  if (e.origin !== window.location.origin) return;
+  if (!e.data || e.data.type !== 'nivelato:addUser') return;
+  if (window.NivelatoAddUser) openAddUserModal();
+  else pendingAddUserMsg = true;
+});
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) return;

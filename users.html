@@ -496,15 +496,34 @@
     }
     .detail { padding: 24px 16px; }
   }
+
+  /* seccion de preferencias de interfaz en el riel de ajustes */
+  .ui-settings { border-top: 1px solid var(--line-soft); padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .ui-settings-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+  .ui-pref-row { display: flex; align-items: center; gap: 10px; }
+  .ui-pref-label { flex: 1; font-size: 14px; font-weight: 500; }
+
+  /* modo incrustado (?embed=users): solo el area de gestion de usuarios.
+     Desaparecen la barra superior propia y el riel de ajustes (tarjeta de
+     empresa, Updates, Projects/Billing "soon", Delete account); la pagina
+     desplaza por dentro de sus columnas, sin barra doble. */
+  html.embed-users .niv-topbar, html.embed-users .sidebar { display: none !important; }
+  html.embed-users body { height: 100vh; overflow: hidden; }
+  html.embed-users .shell { padding: 18px; gap: 18px; flex: 1; min-height: 0; }
 </style>
 <link rel="stylesheet" href="./qgc-theme.css" />
+<script>
+  /* Modo incrustado: la clase va en <html> antes del primer pintado para
+     que la pagina nazca ya recortada al area de gestion. */
+  try { if (new URLSearchParams(window.location.search).get('embed') === 'users') document.documentElement.classList.add('embed-users'); } catch (e) {}
+</script>
 </head>
 <body>
 <header class="niv-topbar">
   <nav class="niv-topbar-tabs" aria-label="Dashboard">
-    <a class="niv-tab" href="/dashboard.html?view=home">Dashboard</a>
-    <a class="niv-tab" href="/dashboard.html?view=projects">Projects</a>
-    <a class="niv-tab" href="/dashboard.html?view=notifications">Notifications</a>
+    <a class="niv-tab" href="https://app.nivelatolabs.com/dashboard.html?view=home">Dashboard</a>
+    <a class="niv-tab" href="https://app.nivelatolabs.com/dashboard.html?view=projects">Projects</a>
+    <a class="niv-tab" href="https://app.nivelatolabs.com/dashboard.html?view=notifications">Notifications</a>
     <span class="niv-tab active" aria-current="page">Users</span>
   </nav>
 </header>
@@ -525,6 +544,13 @@
       <span class="nav-sub" id="updates-sub">Checking...</span>
       <span class="dot" id="updates-dot"></span>
     </a>
+    <div class="ui-settings">
+      <div class="ui-settings-title" id="ui-settings-title">Interfaz</div>
+      <div class="ui-pref-row">
+        <span class="ui-pref-label" id="ui-compact-label">Barra lateral compacta</span>
+        <button class="toggle" id="ui-compact-toggle" role="switch" aria-checked="false" aria-labelledby="ui-compact-label"><span class="knob"></span></button>
+      </div>
+    </div>
     <a class="nav-btn danger" href="/account/settings">
       <span class="nav-label">Delete account</span>
       <span class="nav-sub">Account danger zone</span>
@@ -999,5 +1025,36 @@ onAuthStateChanged(auth, async (user) => {
 </script>
 <script src="./press-yaoi.js"></script>
 <script type="module" src="./add-user.js"></script>
+<script>
+  /* Preferencia de interfaz "Barra lateral compacta": vive con el resto de
+     preferencias locales de la carcasa (misma familia que el ancho y las
+     secciones del panel) para que el panel la lea al cargar, sin destello.
+     El panel aplica el modo; esta pagina solo guarda la preferencia. */
+  (function () {
+    var KEY = 'niv-compact-sidebar';
+    var btn = document.getElementById('ui-compact-toggle');
+    if (!btn) return;
+    var lang = 'es';
+    try { lang = localStorage.getItem('nivelato-login-lang') || 'es'; } catch (e) {}
+    if (lang === 'en') {
+      var label = document.getElementById('ui-compact-label');
+      var title = document.getElementById('ui-settings-title');
+      if (label) label.textContent = 'Compact sidebar';
+      if (title) title.textContent = 'Interface';
+    }
+    function sync() {
+      var on = false;
+      try { on = localStorage.getItem(KEY) === '1'; } catch (e) {}
+      btn.classList.toggle('on', on);
+      btn.setAttribute('aria-checked', on ? 'true' : 'false');
+    }
+    btn.addEventListener('click', function () {
+      var on = btn.classList.contains('on');
+      try { localStorage.setItem(KEY, on ? '0' : '1'); } catch (e) {}
+      sync();
+    });
+    sync();
+  })();
+</script>
 </body>
 </html>
