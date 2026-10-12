@@ -973,16 +973,16 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
   </div><!-- /niv-panel-topzone -->
   <div class="niv-panel-body" id="niv-panel-body">
     <div class="niv-projlist" id="niv-snav-projects-body">
-      <div class="niv-projlist-title">Proyectos</div>
-      <div id="niv-panel-projects"><div class="niv-panel-empty">Sin proyectos</div></div>
+      <div class="niv-projlist-title" id="panel-projects-title">Proyectos</div>
+      <div id="niv-panel-projects"><div class="niv-panel-empty" id="panel-empty-projects">Sin proyectos</div></div>
     </div>
     <div class="niv-panel-sec" data-seckey="customers">
-      <div class="niv-panel-sec-title">Clientes</div>
-      <div class="niv-sec-body" id="niv-panel-customers"><div class="niv-panel-empty">Sin clientes</div></div>
+      <div class="niv-panel-sec-title" id="panel-customers-title">Clientes</div>
+      <div class="niv-sec-body" id="niv-panel-customers"><div class="niv-panel-empty" id="panel-empty-customers">Sin clientes</div></div>
     </div>
     <div class="niv-panel-sec" data-seckey="measures">
-      <div class="niv-panel-sec-title">Medidas</div>
-      <div class="niv-sec-body" id="niv-panel-measures"><div class="niv-panel-empty">Sin medidas</div></div>
+      <div class="niv-panel-sec-title" id="panel-measures-title">Medidas</div>
+      <div class="niv-sec-body" id="niv-panel-measures"><div class="niv-panel-empty" id="panel-empty-measures">Sin medidas</div></div>
     </div>
     <div class="niv-panel-actions">
       <button class="niv-nav-btn" id="btn-pricelist" onclick="document.body.classList.remove('nav-open');togglePriceListView()" style="display:none">Precios</button>
@@ -998,10 +998,10 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
       </div>
     </button>
     <div class="niv-account-popup" id="niv-account-popup" style="display:none">
-      <button class="niv-popup-btn" data-niv-to-settings onclick="window.location.href='/account/settings'">Ajustes de la cuenta</button>
-      <button class="niv-popup-btn" onclick="toggleAboutPopup(event)">Acerca de Nivelato</button>
-      <button class="niv-popup-btn" onclick="window.open('https://legobele.github.io/nivelato/ayuda.html','_blank')">Ayuda</button>
-      <button class="niv-popup-btn niv-popup-logout" onclick="window._popupSignOut()">Cerrar sesión</button>
+      <button class="niv-popup-btn" id="popup-account-settings" data-niv-to-settings onclick="window.location.href='/account/settings'">Ajustes de la cuenta</button>
+      <button class="niv-popup-btn" id="popup-about" onclick="toggleAboutPopup(event)">Acerca de Nivelato</button>
+      <button class="niv-popup-btn" id="popup-help" onclick="window.open('https://legobele.github.io/nivelato/ayuda.html','_blank')">Ayuda</button>
+      <button class="niv-popup-btn niv-popup-logout" id="popup-logout" onclick="window._popupSignOut()">Cerrar sesión</button>
     </div>
   </div>
 </div>
@@ -1940,14 +1940,14 @@ let currentUser;
       const customers = [...new Set(jobs.map(j => j.customer).filter(Boolean))].slice(0, 5);
       custEl.innerHTML = customers.length
         ? customers.map((c, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="window.openCustomer(decodeURIComponent('${custEnc(c)}'))"><span>${esc(c)}</span><span class="dots">...</span></div>`).join('')
-        : '<div class="niv-panel-empty">Sin clientes</div>';
+        : '<div class="niv-panel-empty">' + L('Sin clientes', 'No customers') + '</div>';
     }
     const measEl = document.getElementById('niv-panel-measures');
     if (measEl) {
       const recent = jobs.slice(0, 5);
       measEl.innerHTML = recent.length
         ? recent.map((j, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="openMeasure('${j.id}', 'measures')"><span>${esc(j.customer || j.project || 'Medida')}${j.annotatedPhoto ? ' 📷' : ''}</span><span class="dots">...</span></div>`).join('')
-        : '<div class="niv-panel-empty">Sin medidas</div>';
+        : '<div class="niv-panel-empty">' + L('Sin medidas', 'No measurements') + '</div>';
     }
   };
   });
@@ -3643,7 +3643,7 @@ let currentUser;
     if (el) {
       el.innerHTML = _projects.length
         ? _projects.map((p, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="openProject('${p.id}')"><span>${escapeHtml(p.name || 'Proyecto')}</span><span class="dots">...</span></div>`).join('')
-        : '<div class="niv-panel-empty">Sin proyectos</div>';
+        : '<div class="niv-panel-empty">' + L('Sin proyectos', 'No projects') + '</div>';
     }
     if (window._dashView === 'customer' && window.renderCustomerOverview) window.renderCustomerOverview();
   };
@@ -3664,7 +3664,7 @@ let currentUser;
     const measEl = document.getElementById('proj-measures');
     measEl.innerHTML = meas.length
       ? meas.map(j => `<div class="niv-proj-measure" onclick="openMeasure('${j.id}', 'project')"><span>${escapeHtml(j.customer || j.project || 'Medida')}${j.annotatedPhoto ? '<span class="niv-photo-badge">📷</span>' : ''}</span><span class="dots">...</span></div>`).join('')
-      : '<div class="niv-panel-empty">Sin medidas en este proyecto.</div>';
+      : '<div class="niv-panel-empty">' + L('Sin medidas en este proyecto.', 'No measurements in this project.') + '</div>';
     // assigned users
     renderProjectUsers(p);
     window.showDashView('project');
@@ -3871,6 +3871,18 @@ let currentUser;
     setText('company-menu-users', L('Usuarios', 'Users'));
     setText('company-menu-close', L('Cerrar', 'Close'));
     setText('users-title', L('Usuarios', 'Users'));
+    setText('panel-projects-title', L('Proyectos', 'Projects'));
+    setText('panel-customers-title', L('Clientes', 'Customers'));
+    setText('panel-measures-title', L('Medidas', 'Measurements'));
+    setText('panel-empty-projects', L('Sin proyectos', 'No projects'));
+    setText('panel-empty-customers', L('Sin clientes', 'No customers'));
+    setText('panel-empty-measures', L('Sin medidas', 'No measurements'));
+    setText('btn-pricelist', L('Precios', 'Prices'));
+    setText('btn-quotes', L('Cotizaciones', 'Quotes'));
+    setText('popup-account-settings', L('Ajustes de la cuenta', 'Account settings'));
+    setText('popup-about', L('Acerca de Nivelato', 'About Nivelato'));
+    setText('popup-help', L('Ayuda', 'Help'));
+    setText('popup-logout', L('Cerrar sesión', 'Sign out'));
     setText('cust-back-btn', L('← Volver', '← Back'));
     setText('cust-contact-title', L('Contacto', 'Contact'));
     setText('cust-stat-projects-label', L('Proyectos', 'Projects'));

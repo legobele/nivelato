@@ -114,12 +114,16 @@ function initials(name, email) {
 }
 
 function roleLabel(role) {
-  const map = {
-    owner: "Dueño / Admin",
-    cotizador: "Cotizador",
-    supervisor: "Supervisor",
-    medidor: "Técnico medidor",
-  };
+  // Role labels follow the same resolved language as the menu items
+  // (cookie first, then the stored preference): no mixed-language menus.
+  let en = false;
+  try {
+    const m = document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/);
+    en = m ? m[1] === "en" : localStorage.getItem("nivelato-login-lang") === "en";
+  } catch { /* default Spanish */ }
+  const map = en
+    ? { owner: "Owner / Admin", cotizador: "Quoter", supervisor: "Supervisor", medidor: "Measuring technician" }
+    : { owner: "Dueño / Admin", cotizador: "Cotizador", supervisor: "Supervisor", medidor: "Técnico medidor" };
   return map[role] || role || "";
 }
 
