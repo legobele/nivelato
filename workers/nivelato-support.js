@@ -25,10 +25,11 @@ var DEV_HTML =
   + '<style>body{font-family:Inter,system-ui,-apple-system,sans-serif;background:#0e0e10;color:#f5f5f7;margin:0;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}'
   + '.card{background:#17171a;border:1px solid rgba(255,255,255,0.14);border-radius:18px;padding:36px 32px;max-width:440px;text-align:center}'
   + 'h1{font-size:22px;margin:0 0 10px;letter-spacing:.02em}p{font-size:15px;color:#a7a7ad;line-height:1.6;margin:0 0 18px}'
-  + 'a{color:#4dabf7}</style></head>'
-  + '<body><div class="card"><h1>DEV ENVIRONMENT DETECTED</h1>'
-  + '<p>Info and guidance for dev-flagged devices and accounts will live here.</p>'
-  + '<a href="/">Back to the help center</a></div></body></html>';
+  + 'a{color:#4dabf7}.lang-toggle{position:fixed;top:14px;right:14px;background:transparent;border:1px solid rgba(255,255,255,0.35);border-radius:999px;color:#f5f5f7;font-family:ui-monospace,monospace;font-size:.78rem;letter-spacing:.08em;padding:7px 14px;cursor:pointer}.lang-toggle:hover{border-color:#f5f5f7}</style></head>'
+  + '<body><button class="lang-toggle" aria-label="Switch language / Cambiar idioma">ES</button><div class="card"><h1 data-i18n="dev.h1">DEV ENVIRONMENT DETECTED</h1>'
+  + '<p data-i18n="dev.body">Info and guidance for dev-flagged devices and accounts will live here.</p>'
+  + '<a href="/" data-i18n="dev.back">Back to the help center</a></div>'
+  + '<script>' + 'var I18N = { en: { "meta.title": "Dev environment — Nivelato Support", "dev.h1": "DEV ENVIRONMENT DETECTED", "dev.body": "Info and guidance for dev-flagged devices and accounts will live here.", "dev.back": "Back to the help center" }, es: { "meta.title": "Entorno dev — Soporte de Nivelato", "dev.h1": "ENTORNO DEV DETECTADO", "dev.body": "La información y la guía para dispositivos y cuentas marcados como dev vivirán aquí.", "dev.back": "Volver al centro de ayuda" } }; var FORCED_LANG = null; var LANG_KEY = \'nivelato-lang\'; function currentLang() { try { var saved = localStorage.getItem(LANG_KEY); if (saved === \'en\' || saved === \'es\') return saved; } catch (e) {} if (FORCED_LANG) return FORCED_LANG; var nav = (navigator.language || \'en\').toLowerCase(); return nav.indexOf(\'es\') === 0 ? \'es\' : \'en\'; } function applyLang(l) { var dict = I18N[l] || I18N.en; document.documentElement.lang = l; if (dict[\'meta.title\']) document.title = dict[\'meta.title\']; document.querySelectorAll(\'[data-i18n]\').forEach(function (el) { var k = el.getAttribute(\'data-i18n\'); if (dict[k] !== undefined) el.innerHTML = dict[k]; }); document.querySelectorAll(\'.lang-toggle\').forEach(function (b) { b.textContent = (l === \'en\') ? \'ES\' : \'EN\'; }); try { localStorage.setItem(LANG_KEY, l); } catch (e) {} } document.querySelectorAll(\'.lang-toggle\').forEach(function (b) { b.addEventListener(\'click\', function () { var cur = document.documentElement.lang === \'es\' ? \'es\' : \'en\'; applyLang(cur === \'en\' ? \'es\' : \'en\'); }); }); applyLang(currentLang());' + '</' + 'script></body></html>';
 
 var CT = {
   ".html": "text/html; charset=utf-8",

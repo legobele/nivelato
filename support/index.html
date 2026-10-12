@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0e0e10" />
 <title>Nivelato — Centro de ayuda</title>
+<meta name="description" content="Guías, planes y solución de problemas para medir huecos como un profesional." />
 <link rel="icon" href="icon-192.png" />
 <link rel="manifest" href="manifest.json" />
 <link rel="stylesheet" href="niv-dark.css" />
@@ -32,6 +33,7 @@ body {
   line-height: 1.6; padding: 0 0 60px;
 }
 header {
+  position: relative;
   background: var(--brand); color: #fff;
   padding: 40px 20px 32px; text-align: center;
 }
@@ -90,169 +92,419 @@ footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 2
   font-size: 13px; text-decoration: none; color: var(--text);
 }
 .toc a:hover { border-color: var(--brand); }
+.lang-toggle {
+  position: absolute; top: 14px; right: 14px;
+  background: transparent; border: 1px solid rgba(255,255,255,0.55);
+  border-radius: 999px; color: #fff;
+  font-family: ui-monospace, "JetBrains Mono", monospace;
+  font-size: .78rem; letter-spacing: .08em; padding: 7px 14px; cursor: pointer;
+}
+.lang-toggle:hover { border-color: #fff; }
 </style>
 <link rel="stylesheet" href="./qgc-theme.css">
 </head>
 <body>
 
 <header>
-  <h1>📐 Nivelato — Centro de ayuda</h1>
-  <p>Guías, planes y solución de problemas para medir huecos como un profesional.</p>
+  <button class="lang-toggle" aria-label="Switch language / Cambiar idioma">EN</button>
+  <h1 data-i18n="header.h1">📐 Nivelato — Centro de ayuda</h1>
+  <p data-i18n="header.sub">Guías, planes y solución de problemas para medir huecos como un profesional.</p>
 </header>
 
 <main>
 
 <div class="notice">
-  <b>🌎 ¿Estás fuera de Puerto Rico?</b>
-  El acceso empresarial de Quality Glass (botón "QGC") es solo para el equipo en Puerto Rico.
+  <b data-i18n="notice.b">🌎 ¿Estás fuera de Puerto Rico?</b>
+  <span data-i18n="notice.body">El acceso empresarial de Quality Glass (botón "QGC") es solo para el equipo en Puerto Rico.
   Si estás en otro lugar, usas <b>Nivelato Pro</b> o <b>Nivelato Ultra</b> con tu cuenta de Google Play —
-  todo lo demás en esta página aplica igual para ti.
+  todo lo demás en esta página aplica igual para ti.</span>
 </div>
 
 <nav class="toc">
-  <a href="#empezar">Primeros pasos</a>
-  <a href="#medir">Cómo medir</a>
-  <a href="#planes">Planes y pagos</a>
-  <a href="#cuenta">Cuenta y datos</a>
-  <a href="#problemas">Problemas comunes</a>
-  <a href="#versiones">Versiones</a>
-  <a href="#contacto">Contacto</a>
+  <a href="#empezar" data-i18n="toc.empezar">Primeros pasos</a>
+  <a href="#medir" data-i18n="toc.medir">Cómo medir</a>
+  <a href="#planes" data-i18n="toc.planes">Planes y pagos</a>
+  <a href="#cuenta" data-i18n="toc.cuenta">Cuenta y datos</a>
+  <a href="#problemas" data-i18n="toc.problemas">Problemas comunes</a>
+  <a href="#versiones" data-i18n="toc.versiones">Versiones</a>
+  <a href="#contacto" data-i18n="toc.contacto">Contacto</a>
 </nav>
 
 <section id="empezar">
-  <h2>🚀 Primeros pasos</h2>
+  <h2 data-i18n="empezar.h2">🚀 Primeros pasos</h2>
   <ol>
-    <li><b>Instala Nivelato</b> desde Google Play Store en tu Android.</li>
-    <li><b>Crea tu cuenta</b> — puedes entrar con Google o con email y contraseña.</li>
-    <li><b>Empieza a medir.</b> La cuenta gratuita incluye <b>3 guardados</b> para que pruebes el flujo completo antes de pagar.</li>
+    <li data-i18n="empezar.li1"><b>Instala Nivelato</b> desde Google Play Store en tu Android.</li>
+    <li data-i18n="empezar.li2"><b>Crea tu cuenta</b> — puedes entrar con Google o con email y contraseña.</li>
+    <li data-i18n="empezar.li3"><b>Empieza a medir.</b> La cuenta gratuita incluye <b>3 guardados</b> para que pruebes el flujo completo antes de pagar.</li>
   </ol>
-  <h3>Requisitos</h3>
+  <h3 data-i18n="empezar.h3">Requisitos</h3>
   <ul>
-    <li>Android con Google Play Store y Google Play Billing.</li>
-    <li>Un metro láser (recomendado) o cinta métrica para tomar las medidas.</li>
-    <li>Conexión a internet para iniciar sesión y sincronizar; la medición funciona sin conexión una vez dentro.</li>
+    <li data-i18n="empezar.r1">Android con Google Play Store y Google Play Billing.</li>
+    <li data-i18n="empezar.r2">Un metro láser (recomendado) o cinta métrica para tomar las medidas.</li>
+    <li data-i18n="empezar.r3">Conexión a internet para iniciar sesión y sincronizar; la medición funciona sin conexión una vez dentro.</li>
   </ul>
 </section>
 
 <section id="medir">
-  <h2>📏 Cómo medir un hueco</h2>
-  <p>Cada trabajo sigue los mismos 7 pasos. Las medidas se entran en <b>pulgadas con fracciones</b> (ej. 36 ½").</p>
+  <h2 data-i18n="medir.h2">📏 Cómo medir un hueco</h2>
+  <p data-i18n="medir.p">Cada trabajo sigue los mismos 7 pasos. Las medidas se entran en <b>pulgadas con fracciones</b> (ej. 36 ½").</p>
   <ol class="step-flow">
-    <li><b>Cliente / Proyecto</b>Nombre del cliente, proyecto y ubicación antes de empezar.</li>
-    <li><b>Medidas del hueco</b>Ancho abajo y alto a la izquierda. Las otras dos medidas se calculan solas con los desniveles.</li>
-    <li><b>Pared izquierda</b>Del láser a la pared: punto A (abajo) y punto B (arriba).</li>
-    <li><b>Pared derecha</b>Lo mismo del otro lado: punto A (abajo) y punto B (arriba).</li>
-    <li><b>Arriba</b>Desnivel del techo / parte superior.</li>
-    <li><b>Abajo</b>Desnivel del piso / parte inferior.</li>
-    <li><b>Foto con medidas</b>Toma una foto del hueco con las medidas visibles (requiere plan Pro o superior).</li>
-    <li><b>Resumen</b>Revisa todo, guarda el trabajo y compártelo si tu plan lo permite.</li>
+    <li data-i18n="medir.s1"><b>Cliente / Proyecto</b>Nombre del cliente, proyecto y ubicación antes de empezar.</li>
+    <li data-i18n="medir.s2"><b>Medidas del hueco</b>Ancho abajo y alto a la izquierda. Las otras dos medidas se calculan solas con los desniveles.</li>
+    <li data-i18n="medir.s3"><b>Pared izquierda</b>Del láser a la pared: punto A (abajo) y punto B (arriba).</li>
+    <li data-i18n="medir.s4"><b>Pared derecha</b>Lo mismo del otro lado: punto A (abajo) y punto B (arriba).</li>
+    <li data-i18n="medir.s5"><b>Arriba</b>Desnivel del techo / parte superior.</li>
+    <li data-i18n="medir.s6"><b>Abajo</b>Desnivel del piso / parte inferior.</li>
+    <li data-i18n="medir.s7"><b>Foto con medidas</b>Toma una foto del hueco con las medidas visibles (requiere plan Pro o superior).</li>
+    <li data-i18n="medir.s8"><b>Resumen</b>Revisa todo, guarda el trabajo y compártelo si tu plan lo permite.</li>
   </ol>
-  <h3>Consejos</h3>
+  <h3 data-i18n="medir.h3">Consejos</h3>
   <ul>
-    <li>Mide siempre en el mismo orden para no confundir los puntos A y B.</li>
-    <li>Si un desnivel te da cero en ambos puntos, la pared está a plomo — perfecto.</li>
-    <li>La foto del paso 7 te salva de discusiones: siempre tómala antes de irte del sitio.</li>
+    <li data-i18n="medir.t1">Mide siempre en el mismo orden para no confundir los puntos A y B.</li>
+    <li data-i18n="medir.t2">Si un desnivel te da cero en ambos puntos, la pared está a plomo — perfecto.</li>
+    <li data-i18n="medir.t3">La foto del paso 7 te salva de discusiones: siempre tómala antes de irte del sitio.</li>
   </ul>
 </section>
 
 <section id="planes">
-  <h2>💳 Planes y pagos</h2>
+  <h2 data-i18n="planes.h2">💳 Planes y pagos</h2>
   <table>
-    <tr><th>Plan</th><th>Precio</th><th>Incluye</th></tr>
-    <tr><td><b>Gratis</b></td><td class="price">$0</td><td>3 guardados · sin compartir · sin capturas</td></tr>
-    <tr><td><b>Pro Mensual</b></td><td class="price">$5.99/mes</td><td rowspan="4">Guardados ilimitados · compartir trabajos · capturas de pantalla · foto con medidas</td></tr>
-    <tr><td><b>Pro Semestral</b></td><td class="price">$34.99/6 meses</td></tr>
-    <tr><td><b>Pro Anual</b></td><td class="price">$59.99/año</td></tr>
-    <tr><td><b>Pro Perpetuo</b></td><td class="price">$299.99 único</td></tr>
-    <tr><td><b>Ultra Mensual</b></td><td class="price">$10.99/mes</td><td rowspan="2">Todo lo de Pro · hasta 30 usuarios · enlaces únicos por trabajo · fotos del equipo</td></tr>
-    <tr><td><b>Ultra Anual</b></td><td class="price">$109.99/año</td></tr>
+    <tr><th data-i18n="planes.th1">Plan</th><th data-i18n="planes.th2">Precio</th><th data-i18n="planes.th3">Incluye</th></tr>
+    <tr><td data-i18n="planes.n.free"><b>Gratis</b></td><td class="price" data-i18n="planes.pr.free">$0</td><td data-i18n="planes.inc.free">3 guardados · sin compartir · sin capturas</td></tr>
+    <tr><td data-i18n="planes.n.prom"><b>Pro Mensual</b></td><td class="price" data-i18n="planes.pr.prom">$5.99/mes</td><td rowspan="4" data-i18n="planes.inc.pro">Guardados ilimitados · compartir trabajos · capturas de pantalla · foto con medidas</td></tr>
+    <tr><td data-i18n="planes.n.pros"><b>Pro Semestral</b></td><td class="price" data-i18n="planes.pr.pros">$34.99/6 meses</td></tr>
+    <tr><td data-i18n="planes.n.proa"><b>Pro Anual</b></td><td class="price" data-i18n="planes.pr.proa">$59.99/año</td></tr>
+    <tr><td data-i18n="planes.n.proper"><b>Pro Perpetuo</b></td><td class="price" data-i18n="planes.pr.proper">$299.99 único</td></tr>
+    <tr><td data-i18n="planes.n.ultram"><b>Ultra Mensual</b></td><td class="price" data-i18n="planes.pr.ultram">$10.99/mes</td><td rowspan="2" data-i18n="planes.inc.ultra">Todo lo de Pro · hasta 30 usuarios · enlaces únicos por trabajo · fotos del equipo</td></tr>
+    <tr><td data-i18n="planes.n.ultraa"><b>Ultra Anual</b></td><td class="price" data-i18n="planes.pr.ultraa">$109.99/año</td></tr>
   </table>
-  <h3>Suscripciones y cancelación</h3>
+  <h3 data-i18n="planes.h3subs">Suscripciones y cancelación</h3>
   <ul>
-    <li>Las suscripciones se compran con <b>Google Play Billing</b> y se renuevan automáticamente.</li>
-    <li>Para cancelar o cambiar tu plan: abre <b>Play Store → tu perfil → Pagos y suscripciones → Suscripciones</b> → Nivelato → Cancelar.</li>
-    <li>Al cancelar, mantienes el acceso hasta el fin del período pagado.</li>
-    <li><b>Pro Perpetuo</b> es un pago único, no se renueva.</li>
-    <li>Los reembolsos los procesa Google Play según su política.</li>
+    <li data-i18n="planes.sub1">Las suscripciones se compran con <b>Google Play Billing</b> y se renuevan automáticamente.</li>
+    <li data-i18n="planes.sub2">Para cancelar o cambiar tu plan: abre <b>Play Store → tu perfil → Pagos y suscripciones → Suscripciones</b> → Nivelato → Cancelar.</li>
+    <li data-i18n="planes.sub3">Al cancelar, mantienes el acceso hasta el fin del período pagado.</li>
+    <li data-i18n="planes.sub4"><b>Pro Perpetuo</b> es un pago único, no se renueva.</li>
+    <li data-i18n="planes.sub5">Los reembolsos los procesa Google Play según su política.</li>
   </ul>
-  <h3>¿Pro o Ultra?</h3>
+  <h3 data-i18n="planes.h3which">¿Pro o Ultra?</h3>
   <ul>
-    <li><b>Pro</b> es para ti solo: tus medidas, tus trabajos, tu teléfono.</li>
-    <li><b>Ultra</b> es para equipos: hasta 30 usuarios bajo una sola suscripción, con enlaces únicos para compartir trabajos con el resto del crew.</li>
+    <li data-i18n="planes.w1"><b>Pro</b> es para ti solo: tus medidas, tus trabajos, tu teléfono.</li>
+    <li data-i18n="planes.w2"><b>Ultra</b> es para equipos: hasta 30 usuarios bajo una sola suscripción, con enlaces únicos para compartir trabajos con el resto del crew.</li>
   </ul>
 </section>
 
 <section id="cuenta">
-  <h2>👤 Cuenta y datos</h2>
+  <h2 data-i18n="cuenta.h2">👤 Cuenta y datos</h2>
   <ul>
-    <li><b>Cambiar de teléfono:</b> inicia sesión con la misma cuenta (Google o email) en el nuevo equipo. Tu suscripción de Google Play viaja contigo.</li>
-    <li><b>Borrar tu cuenta:</b> dentro de la app, en la pantalla "Privacidad y datos", puedes eliminar tu cuenta — esto borra tu email, el vínculo con tu equipo y tus datos en la nube.</li>
-    <li><b>Qué guardamos:</b> tu email (identidad de cuenta), el vínculo con tu dispositivo y tus trabajos guardados. Detalles completos en la <a href="privacy.html">política de privacidad</a>.</li>
-    <li><b>¿Olvidaste tu contraseña?</b> Usa "¿Olvidaste tu contraseña?" en la pantalla de login con email.</li>
+    <li data-i18n="cuenta.li1"><b>Cambiar de teléfono:</b> inicia sesión con la misma cuenta (Google o email) en el nuevo equipo. Tu suscripción de Google Play viaja contigo.</li>
+    <li data-i18n="cuenta.li2"><b>Borrar tu cuenta:</b> dentro de la app, en la pantalla "Privacidad y datos", puedes eliminar tu cuenta — esto borra tu email, el vínculo con tu equipo y tus datos en la nube.</li>
+    <li data-i18n="cuenta.li3"><b>Qué guardamos:</b> tu email (identidad de cuenta), el vínculo con tu dispositivo y tus trabajos guardados. Detalles completos en la <a href="privacy.html">política de privacidad</a>.</li>
+    <li data-i18n="cuenta.li4"><b>¿Olvidaste tu contraseña?</b> Usa "¿Olvidaste tu contraseña?" en la pantalla de login con email.</li>
   </ul>
 </section>
 
 <section id="problemas" class="faq">
-  <h2>🔧 Problemas comunes</h2>
+  <h2 data-i18n="problemas.h2">🔧 Problemas comunes</h2>
   <details>
-    <summary>No puedo iniciar sesión con Google</summary>
-    <div class="a">Verifica que el teléfono tenga conexión a internet y que la fecha/hora estén en automático. Si el error persiste, borra el caché de Google Play Services y reintenta.</div>
+    <summary data-i18n="problemas.q1">No puedo iniciar sesión con Google</summary>
+    <div class="a" data-i18n="problemas.a1">Verifica que el teléfono tenga conexión a internet y que la fecha/hora estén en automático. Si el error persiste, borra el caché de Google Play Services y reintenta.</div>
   </details>
   <details>
-    <summary>Compré Pro pero la app sigue en modo gratis</summary>
-    <div class="a">Cierra la app por completo y vuelve a abrirla con internet — la app verifica tu suscripción al iniciar. Si sigue sin activarse, confirma en Play Store → Suscripciones que el pago se procesó, y escríbenos con tu email de cuenta.</div>
+    <summary data-i18n="problemas.q2">Compré Pro pero la app sigue en modo gratis</summary>
+    <div class="a" data-i18n="problemas.a2">Cierra la app por completo y vuelve a abrirla con internet — la app verifica tu suscripción al iniciar. Si sigue sin activarse, confirma en Play Store → Suscripciones que el pago se procesó, y escríbenos con tu email de cuenta.</div>
   </details>
   <details>
-    <summary>Mis trabajos no aparecen / no sincronizan</summary>
-    <div class="a">La sincronización requiere internet. Abre la app conectado y espera unos segundos. Si un trabajo se guardó sin conexión, aparece al reconectarte.</div>
+    <summary data-i18n="problemas.q3">Mis trabajos no aparecen / no sincronizan</summary>
+    <div class="a" data-i18n="problemas.a3">La sincronización requiere internet. Abre la app conectado y espera unos segundos. Si un trabajo se guardó sin conexión, aparece al reconectarte.</div>
   </details>
   <details>
-    <summary>La cámara no abre en el paso de foto</summary>
-    <div class="a">Nivelato necesita permiso de cámara: ve a Ajustes de Android → Apps → Nivelato → Permisos → Cámara → Permitir.</div>
+    <summary data-i18n="problemas.q4">La cámara no abre en el paso de foto</summary>
+    <div class="a" data-i18n="problemas.a4">Nivelato necesita permiso de cámara: ve a Ajustes de Android → Apps → Nivelato → Permisos → Cámara → Permitir.</div>
   </details>
   <details>
-    <summary>Las fracciones no me cuadran</summary>
-    <div class="a">La app trabaja en fracciones de pulgada (½, ¼, ⅛, 1/16). Entra el número entero y elige la fracción del menú — no escribas decimales en el campo de fracción.</div>
+    <summary data-i18n="problemas.q5">Las fracciones no me cuadran</summary>
+    <div class="a" data-i18n="problemas.a5">La app trabaja en fracciones de pulgada (½, ¼, ⅛, 1/16). Entra el número entero y elige la fracción del menú — no escribas decimales en el campo de fracción.</div>
   </details>
   <details>
-    <summary>La app se cierra al abrirla</summary>
-    <div class="a">Asegúrate de tener la última versión desde Play Store. Si el problema sigue, reinicia el teléfono. Como último recurso, reinstala (tus trabajos en la nube no se pierden).</div>
+    <summary data-i18n="problemas.q6">La app se cierra al abrirla</summary>
+    <div class="a" data-i18n="problemas.a6">Asegúrate de tener la última versión desde Play Store. Si el problema sigue, reinicia el teléfono. Como último recurso, reinstala (tus trabajos en la nube no se pierden).</div>
   </details>
   <details>
-    <summary>¿Funciona sin internet?</summary>
-    <div class="a">Sí para medir: una vez iniciada la sesión, puedes completar trabajos sin conexión. Necesitas internet para iniciar sesión, sincronizar y verificar tu suscripción.</div>
+    <summary data-i18n="problemas.q7">¿Funciona sin internet?</summary>
+    <div class="a" data-i18n="problemas.a7">Sí para medir: una vez iniciada la sesión, puedes completar trabajos sin conexión. Necesitas internet para iniciar sesión, sincronizar y verificar tu suscripción.</div>
   </details>
 </section>
 
 <section id="versiones">
-  <h2>🔢 Versiones y volver a una versión anterior</h2>
-  <p>A veces una empresa necesita quedarse en una versión anterior o deshacer un cambio de versión. Esto es lo que se puede hacer hoy:</p>
+  <h2 data-i18n="versiones.h2">🔢 Versiones y volver a una versión anterior</h2>
+  <p data-i18n="versiones.p">A veces una empresa necesita quedarse en una versión anterior o deshacer un cambio de versión. Esto es lo que se puede hacer hoy:</p>
   <ul>
-    <li><b>Posponer una actualización:</b> cuando llega una actualización de datos, el dueño de la empresa puede posponerla desde la página de actualizaciones de la app. El sistema la aplica después, solo cuando nadie de la empresa esté conectado, para no tocar datos a mitad de un turno de trabajo.</li>
-    <li><b>Volver a una etiqueta de interfaz anterior:</b> cada empresa corre con una etiqueta de versión de interfaz. El dueño puede pedir que su empresa vuelva a una etiqueta anterior; el cambio mueve la etiqueta, no los datos.</li>
-    <li><b>Del canal beta al estable:</b> si tu empresa se inscribió en la beta y adoptó el canal beta (en <a href="https://beta.nivelatolabs.com">beta.nivelatolabs.com</a>), el dueño puede volver al canal estable desde los ajustes beta. El cambio queda registrado con fecha y autor.</li>
-    <li><b>Ver qué versión corre tu empresa:</b> en <a href="https://debug.nivelatolabs.com">debug.nivelatolabs.com</a> puedes ver la versión de datos de tu empresa, su canal y qué versión se le está ofreciendo.</li>
+    <li data-i18n="versiones.li1"><b>Posponer una actualización:</b> cuando llega una actualización de datos, el dueño de la empresa puede posponerla desde la página de actualizaciones de la app. El sistema la aplica después, solo cuando nadie de la empresa esté conectado, para no tocar datos a mitad de un turno de trabajo.</li>
+    <li data-i18n="versiones.li2"><b>Volver a una etiqueta de interfaz anterior:</b> cada empresa corre con una etiqueta de versión de interfaz. El dueño puede pedir que su empresa vuelva a una etiqueta anterior; el cambio mueve la etiqueta, no los datos.</li>
+    <li data-i18n="versiones.li3"><b>Del canal beta al estable:</b> si tu empresa se inscribió en la beta y adoptó el canal beta (en <a href="https://beta.nivelatolabs.com">beta.nivelatolabs.com</a>), el dueño puede volver al canal estable desde los ajustes beta. El cambio queda registrado con fecha y autor.</li>
+    <li data-i18n="versiones.li4"><b>Ver qué versión corre tu empresa:</b> en <a href="https://debug.nivelatolabs.com">debug.nivelatolabs.com</a> puedes ver la versión de datos de tu empresa, su canal y qué versión se le está ofreciendo.</li>
   </ul>
-  <h3>Lo que no existe (todavía)</h3>
+  <h3 data-i18n="versiones.h3">Lo que no existe (todavía)</h3>
   <ul>
-    <li><b>No hay reversa automática de datos:</b> la migración de datos de la empresa es de una sola vía por diseño. Si tu empresa necesita volver sus datos a la versión anterior, es una intervención manual del equipo de Nivelato Labs. Se pide con una sesión de soporte: en <a href="https://remote.nivelatolabs.com">remote.nivelatolabs.com</a>, el dueño escribe el código de un solo uso que le da la persona de soporte y la sesión queda registrada y con tiempo límite.</li>
-    <li><b>Google Play no baja versiones:</b> Play no permite instalar una versión anterior de la app sobre una más nueva en un teléfono. Una versión anterior solo puede distribuirse por una pista de prueba.</li>
+    <li data-i18n="versiones.li5"><b>No hay reversa automática de datos:</b> la migración de datos de la empresa es de una sola vía por diseño. Si tu empresa necesita volver sus datos a la versión anterior, es una intervención manual del equipo de Nivelato Labs. Se pide con una sesión de soporte: en <a href="https://remote.nivelatolabs.com">remote.nivelatolabs.com</a>, el dueño escribe el código de un solo uso que le da la persona de soporte y la sesión queda registrada y con tiempo límite.</li>
+    <li data-i18n="versiones.li6"><b>Google Play no baja versiones:</b> Play no permite instalar una versión anterior de la app sobre una más nueva en un teléfono. Una versión anterior solo puede distribuirse por una pista de prueba.</li>
   </ul>
 </section>
 
 <section id="contacto">
-  <h2>✉️ Contacto</h2>
-  <p>¿No encontraste tu respuesta? Escríbenos a <a href="mailto:support@nivelatolabs.com"><b>support@nivelatolabs.com</b></a></p>
-  <p style="margin-top:8px; font-size:13.5px; color: var(--muted);">Incluye tu email de cuenta, modelo de teléfono y versión de Android para ayudarte más rápido.</p>
+  <h2 data-i18n="contacto.h2">✉️ Contacto</h2>
+  <p data-i18n="contacto.p1">¿No encontraste tu respuesta? Escríbenos a <a href="mailto:support@nivelatolabs.com"><b>support@nivelatolabs.com</b></a></p>
+  <p style="margin-top:8px; font-size:13.5px; color: var(--muted);" data-i18n="contacto.p2">Incluye tu email de cuenta, modelo de teléfono y versión de Android para ayudarte más rápido.</p>
 </section>
 
 </main>
 
 <footer>
-  Nivelato · Centro de ayuda<br>
-  <a href="privacy.html">Política de privacidad</a>
+  <span data-i18n="footer.brand">Nivelato · Centro de ayuda</span><br>
+  <a href="privacy.html" data-i18n="footer.privacy">Política de privacidad</a>
 </footer>
 
 <script src="./press-yaoi.js"></script>
+<script>
+const I18N = {
+  en: {
+  "meta.title": "Nivelato — Help Center",
+  "meta.desc": "Guides, plans, and troubleshooting for measuring openings like a pro.",
+  "header.h1": "📐 Nivelato — Help Center",
+  "header.sub": "Guides, plans, and troubleshooting for measuring openings like a pro.",
+  "notice.b": "🌎 Are you outside Puerto Rico?",
+  "notice.body": "Quality Glass company access (the \"QGC\" button) is only for the team in Puerto Rico.\n  If you are somewhere else, you use <b>Nivelato Pro</b> or <b>Nivelato Ultra</b> with your Google Play account —\n  everything else on this page applies to you just the same.",
+  "toc.empezar": "Getting started",
+  "toc.medir": "How to measure",
+  "toc.planes": "Plans and billing",
+  "toc.cuenta": "Account and data",
+  "toc.problemas": "Common problems",
+  "toc.versiones": "Versions",
+  "toc.contacto": "Contact",
+  "empezar.h2": "🚀 Getting started",
+  "empezar.li1": "<b>Install Nivelato</b> from the Google Play Store on your Android.",
+  "empezar.li2": "<b>Create your account</b> — you can sign in with Google or with email and password.",
+  "empezar.li3": "<b>Start measuring.</b> The free account includes <b>3 saves</b> so you can try the full flow before paying.",
+  "empezar.h3": "Requirements",
+  "empezar.r1": "Android with Google Play Store and Google Play Billing.",
+  "empezar.r2": "A laser measure (recommended) or a tape measure to take the measurements.",
+  "empezar.r3": "Internet connection to sign in and sync; measuring works offline once you are in.",
+  "medir.h2": "📏 How to measure an opening",
+  "medir.p": "Every job follows the same 7 steps. Measurements are entered in <b>inches with fractions</b> (e.g. 36 ½\").",
+  "medir.s1": "<b>Customer / Project</b>Customer name, project, and location before you start.",
+  "medir.s2": "<b>Opening measurements</b>Width at the bottom and height on the left. The other two measurements are calculated automatically from the offsets.",
+  "medir.s3": "<b>Left wall</b>From the laser to the wall: point A (bottom) and point B (top).",
+  "medir.s4": "<b>Right wall</b>The same on the other side: point A (bottom) and point B (top).",
+  "medir.s5": "<b>Top</b>Offset of the ceiling / top side.",
+  "medir.s6": "<b>Bottom</b>Offset of the floor / bottom side.",
+  "medir.s7": "<b>Photo with measurements</b>Take a photo of the opening with the measurements visible (requires a Pro plan or higher).",
+  "medir.s8": "<b>Summary</b>Review everything, save the job, and share it if your plan allows it.",
+  "medir.h3": "Tips",
+  "medir.t1": "Always measure in the same order so you don't mix up points A and B.",
+  "medir.t2": "If an offset reads zero at both points, the wall is plumb — perfect.",
+  "medir.t3": "The step 7 photo saves you from arguments: always take it before leaving the site.",
+  "planes.h2": "💳 Plans and billing",
+  "planes.th1": "Plan",
+  "planes.th2": "Price",
+  "planes.th3": "Includes",
+  "planes.n.free": "<b>Free</b>",
+  "planes.n.prom": "<b>Pro Monthly</b>",
+  "planes.n.pros": "<b>Pro Semiannual</b>",
+  "planes.n.proa": "<b>Pro Annual</b>",
+  "planes.n.proper": "<b>Pro Lifetime</b>",
+  "planes.n.ultram": "<b>Ultra Monthly</b>",
+  "planes.n.ultraa": "<b>Ultra Annual</b>",
+  "planes.pr.free": "$0",
+  "planes.pr.prom": "$5.99/mo",
+  "planes.pr.pros": "$34.99/6 months",
+  "planes.pr.proa": "$59.99/yr",
+  "planes.pr.proper": "$299.99 one-time",
+  "planes.pr.ultram": "$10.99/mo",
+  "planes.pr.ultraa": "$109.99/yr",
+  "planes.inc.free": "3 saves · no sharing · no screenshots",
+  "planes.inc.pro": "Unlimited saves · share jobs · screenshots · photo with measurements",
+  "planes.inc.ultra": "Everything in Pro · up to 30 users · unique links per job · team photos",
+  "planes.h3subs": "Subscriptions and cancellation",
+  "planes.sub1": "Subscriptions are bought with <b>Google Play Billing</b> and renew automatically.",
+  "planes.sub2": "To cancel or change your plan: open <b>Play Store → your profile → Payments & subscriptions → Subscriptions</b> → Nivelato → Cancel.",
+  "planes.sub3": "When you cancel, you keep access until the end of the paid period.",
+  "planes.sub4": "<b>Pro Lifetime</b> is a one-time payment; it does not renew.",
+  "planes.sub5": "Refunds are processed by Google Play according to its policy.",
+  "planes.h3which": "Pro or Ultra?",
+  "planes.w1": "<b>Pro</b> is just for you: your measurements, your jobs, your phone.",
+  "planes.w2": "<b>Ultra</b> is for teams: up to 30 users under a single subscription, with unique links to share jobs with the rest of the crew.",
+  "cuenta.h2": "👤 Account and data",
+  "cuenta.li1": "<b>Switching phones:</b> sign in with the same account (Google or email) on the new device. Your Google Play subscription travels with you.",
+  "cuenta.li2": "<b>Deleting your account:</b> inside the app, on the \"Privacy and data\" screen, you can delete your account — this erases your email, your team link, and your cloud data.",
+  "cuenta.li3": "<b>What we keep:</b> your email (account identity), your device link, and your saved jobs. Full details in the <a href=\"privacy.html\">privacy policy</a>.",
+  "cuenta.li4": "<b>Forgot your password?</b> Use \"Forgot your password?\" on the email login screen.",
+  "problemas.h2": "🔧 Common problems",
+  "problemas.q1": "I can't sign in with Google",
+  "problemas.a1": "Check that the phone has an internet connection and that date/time are set to automatic. If the error persists, clear the Google Play Services cache and try again.",
+  "problemas.q2": "I bought Pro but the app is still in free mode",
+  "problemas.a2": "Close the app completely and reopen it with internet — the app verifies your subscription at launch. If it still doesn't activate, confirm in Play Store → Subscriptions that the payment went through, and write to us with your account email.",
+  "problemas.q3": "My jobs don't appear / don't sync",
+  "problemas.a3": "Sync requires internet. Open the app while connected and wait a few seconds. If a job was saved offline, it appears when you reconnect.",
+  "problemas.q4": "The camera won't open at the photo step",
+  "problemas.a4": "Nivelato needs camera permission: go to Android Settings → Apps → Nivelato → Permissions → Camera → Allow.",
+  "problemas.q5": "The fractions don't add up for me",
+  "problemas.a5": "The app works in inch fractions (½, ¼, ⅛, 1/16). Enter the whole number and pick the fraction from the menu — don't type decimals into the fraction field.",
+  "problemas.q6": "The app closes when I open it",
+  "problemas.a6": "Make sure you have the latest version from the Play Store. If the problem continues, restart the phone. As a last resort, reinstall (your cloud jobs are not lost).",
+  "problemas.q7": "Does it work without internet?",
+  "problemas.a7": "Yes for measuring: once your session has started, you can complete jobs offline. You need internet to sign in, sync, and verify your subscription.",
+  "versiones.h2": "🔢 Versions and going back to an earlier version",
+  "versiones.p": "Sometimes a company needs to stay on an earlier version or undo a version change. This is what can be done today:",
+  "versiones.li1": "<b>Postponing an update:</b> when a data update arrives, the company owner can postpone it from the app's updates page. The system applies it later, only when nobody in the company is connected, so data is never touched in the middle of a work shift.",
+  "versiones.li2": "<b>Going back to an earlier interface label:</b> every company runs with an interface version label. The owner can ask for their company to go back to an earlier label; the change moves the label, not the data.",
+  "versiones.li3": "<b>From the beta channel to stable:</b> if your company enrolled in the beta and adopted the beta channel (at <a href=\"https://beta.nivelatolabs.com\">beta.nivelatolabs.com</a>), the owner can return to the stable channel from the beta settings. The change is recorded with its date and author.",
+  "versiones.li4": "<b>Seeing which version your company runs:</b> at <a href=\"https://debug.nivelatolabs.com\">debug.nivelatolabs.com</a> you can see your company's data version, its channel, and which version is being offered to it.",
+  "versiones.h3": "What doesn't exist (yet)",
+  "versiones.li5": "<b>There is no automatic data rollback:</b> company data migration is one-way by design. If your company needs its data returned to the previous version, it is a manual intervention by the Nivelato Labs team. It is requested with a support session: at <a href=\"https://remote.nivelatolabs.com\">remote.nivelatolabs.com</a>, the owner enters the single-use code the support person gives them, and the session is recorded and time-limited.",
+  "versiones.li6": "<b>Google Play doesn't downgrade:</b> Play does not allow installing an older version of the app over a newer one on a phone. An older version can only be distributed through a test track.",
+  "contacto.h2": "✉️ Contact",
+  "contacto.p1": "Didn't find your answer? Write to us at <a href=\"mailto:support@nivelatolabs.com\"><b>support@nivelatolabs.com</b></a>",
+  "contacto.p2": "Include your account email, phone model, and Android version so we can help you faster.",
+  "footer.brand": "Nivelato · Help Center",
+  "footer.privacy": "Privacy policy"
+  },
+  es: {
+  "meta.title": "Nivelato — Centro de ayuda",
+  "meta.desc": "Guías, planes y solución de problemas para medir huecos como un profesional.",
+  "header.h1": "📐 Nivelato — Centro de ayuda",
+  "header.sub": "Guías, planes y solución de problemas para medir huecos como un profesional.",
+  "notice.b": "🌎 ¿Estás fuera de Puerto Rico?",
+  "notice.body": "El acceso empresarial de Quality Glass (botón \"QGC\") es solo para el equipo en Puerto Rico.\n  Si estás en otro lugar, usas <b>Nivelato Pro</b> o <b>Nivelato Ultra</b> con tu cuenta de Google Play —\n  todo lo demás en esta página aplica igual para ti.",
+  "toc.empezar": "Primeros pasos",
+  "toc.medir": "Cómo medir",
+  "toc.planes": "Planes y pagos",
+  "toc.cuenta": "Cuenta y datos",
+  "toc.problemas": "Problemas comunes",
+  "toc.versiones": "Versiones",
+  "toc.contacto": "Contacto",
+  "empezar.h2": "🚀 Primeros pasos",
+  "empezar.li1": "<b>Instala Nivelato</b> desde Google Play Store en tu Android.",
+  "empezar.li2": "<b>Crea tu cuenta</b> — puedes entrar con Google o con email y contraseña.",
+  "empezar.li3": "<b>Empieza a medir.</b> La cuenta gratuita incluye <b>3 guardados</b> para que pruebes el flujo completo antes de pagar.",
+  "empezar.h3": "Requisitos",
+  "empezar.r1": "Android con Google Play Store y Google Play Billing.",
+  "empezar.r2": "Un metro láser (recomendado) o cinta métrica para tomar las medidas.",
+  "empezar.r3": "Conexión a internet para iniciar sesión y sincronizar; la medición funciona sin conexión una vez dentro.",
+  "medir.h2": "📏 Cómo medir un hueco",
+  "medir.p": "Cada trabajo sigue los mismos 7 pasos. Las medidas se entran en <b>pulgadas con fracciones</b> (ej. 36 ½\").",
+  "medir.s1": "<b>Cliente / Proyecto</b>Nombre del cliente, proyecto y ubicación antes de empezar.",
+  "medir.s2": "<b>Medidas del hueco</b>Ancho abajo y alto a la izquierda. Las otras dos medidas se calculan solas con los desniveles.",
+  "medir.s3": "<b>Pared izquierda</b>Del láser a la pared: punto A (abajo) y punto B (arriba).",
+  "medir.s4": "<b>Pared derecha</b>Lo mismo del otro lado: punto A (abajo) y punto B (arriba).",
+  "medir.s5": "<b>Arriba</b>Desnivel del techo / parte superior.",
+  "medir.s6": "<b>Abajo</b>Desnivel del piso / parte inferior.",
+  "medir.s7": "<b>Foto con medidas</b>Toma una foto del hueco con las medidas visibles (requiere plan Pro o superior).",
+  "medir.s8": "<b>Resumen</b>Revisa todo, guarda el trabajo y compártelo si tu plan lo permite.",
+  "medir.h3": "Consejos",
+  "medir.t1": "Mide siempre en el mismo orden para no confundir los puntos A y B.",
+  "medir.t2": "Si un desnivel te da cero en ambos puntos, la pared está a plomo — perfecto.",
+  "medir.t3": "La foto del paso 7 te salva de discusiones: siempre tómala antes de irte del sitio.",
+  "planes.h2": "💳 Planes y pagos",
+  "planes.th1": "Plan",
+  "planes.th2": "Precio",
+  "planes.th3": "Incluye",
+  "planes.n.free": "<b>Gratis</b>",
+  "planes.n.prom": "<b>Pro Mensual</b>",
+  "planes.n.pros": "<b>Pro Semestral</b>",
+  "planes.n.proa": "<b>Pro Anual</b>",
+  "planes.n.proper": "<b>Pro Perpetuo</b>",
+  "planes.n.ultram": "<b>Ultra Mensual</b>",
+  "planes.n.ultraa": "<b>Ultra Anual</b>",
+  "planes.pr.free": "$0",
+  "planes.pr.prom": "$5.99/mes",
+  "planes.pr.pros": "$34.99/6 meses",
+  "planes.pr.proa": "$59.99/año",
+  "planes.pr.proper": "$299.99 único",
+  "planes.pr.ultram": "$10.99/mes",
+  "planes.pr.ultraa": "$109.99/año",
+  "planes.inc.free": "3 guardados · sin compartir · sin capturas",
+  "planes.inc.pro": "Guardados ilimitados · compartir trabajos · capturas de pantalla · foto con medidas",
+  "planes.inc.ultra": "Todo lo de Pro · hasta 30 usuarios · enlaces únicos por trabajo · fotos del equipo",
+  "planes.h3subs": "Suscripciones y cancelación",
+  "planes.sub1": "Las suscripciones se compran con <b>Google Play Billing</b> y se renuevan automáticamente.",
+  "planes.sub2": "Para cancelar o cambiar tu plan: abre <b>Play Store → tu perfil → Pagos y suscripciones → Suscripciones</b> → Nivelato → Cancelar.",
+  "planes.sub3": "Al cancelar, mantienes el acceso hasta el fin del período pagado.",
+  "planes.sub4": "<b>Pro Perpetuo</b> es un pago único, no se renueva.",
+  "planes.sub5": "Los reembolsos los procesa Google Play según su política.",
+  "planes.h3which": "¿Pro o Ultra?",
+  "planes.w1": "<b>Pro</b> es para ti solo: tus medidas, tus trabajos, tu teléfono.",
+  "planes.w2": "<b>Ultra</b> es para equipos: hasta 30 usuarios bajo una sola suscripción, con enlaces únicos para compartir trabajos con el resto del crew.",
+  "cuenta.h2": "👤 Cuenta y datos",
+  "cuenta.li1": "<b>Cambiar de teléfono:</b> inicia sesión con la misma cuenta (Google o email) en el nuevo equipo. Tu suscripción de Google Play viaja contigo.",
+  "cuenta.li2": "<b>Borrar tu cuenta:</b> dentro de la app, en la pantalla \"Privacidad y datos\", puedes eliminar tu cuenta — esto borra tu email, el vínculo con tu equipo y tus datos en la nube.",
+  "cuenta.li3": "<b>Qué guardamos:</b> tu email (identidad de cuenta), el vínculo con tu dispositivo y tus trabajos guardados. Detalles completos en la <a href=\"privacy.html\">política de privacidad</a>.",
+  "cuenta.li4": "<b>¿Olvidaste tu contraseña?</b> Usa \"¿Olvidaste tu contraseña?\" en la pantalla de login con email.",
+  "problemas.h2": "🔧 Problemas comunes",
+  "problemas.q1": "No puedo iniciar sesión con Google",
+  "problemas.a1": "Verifica que el teléfono tenga conexión a internet y que la fecha/hora estén en automático. Si el error persiste, borra el caché de Google Play Services y reintenta.",
+  "problemas.q2": "Compré Pro pero la app sigue en modo gratis",
+  "problemas.a2": "Cierra la app por completo y vuelve a abrirla con internet — la app verifica tu suscripción al iniciar. Si sigue sin activarse, confirma en Play Store → Suscripciones que el pago se procesó, y escríbenos con tu email de cuenta.",
+  "problemas.q3": "Mis trabajos no aparecen / no sincronizan",
+  "problemas.a3": "La sincronización requiere internet. Abre la app conectado y espera unos segundos. Si un trabajo se guardó sin conexión, aparece al reconectarte.",
+  "problemas.q4": "La cámara no abre en el paso de foto",
+  "problemas.a4": "Nivelato necesita permiso de cámara: ve a Ajustes de Android → Apps → Nivelato → Permisos → Cámara → Permitir.",
+  "problemas.q5": "Las fracciones no me cuadran",
+  "problemas.a5": "La app trabaja en fracciones de pulgada (½, ¼, ⅛, 1/16). Entra el número entero y elige la fracción del menú — no escribas decimales en el campo de fracción.",
+  "problemas.q6": "La app se cierra al abrirla",
+  "problemas.a6": "Asegúrate de tener la última versión desde Play Store. Si el problema sigue, reinicia el teléfono. Como último recurso, reinstala (tus trabajos en la nube no se pierden).",
+  "problemas.q7": "¿Funciona sin internet?",
+  "problemas.a7": "Sí para medir: una vez iniciada la sesión, puedes completar trabajos sin conexión. Necesitas internet para iniciar sesión, sincronizar y verificar tu suscripción.",
+  "versiones.h2": "🔢 Versiones y volver a una versión anterior",
+  "versiones.p": "A veces una empresa necesita quedarse en una versión anterior o deshacer un cambio de versión. Esto es lo que se puede hacer hoy:",
+  "versiones.li1": "<b>Posponer una actualización:</b> cuando llega una actualización de datos, el dueño de la empresa puede posponerla desde la página de actualizaciones de la app. El sistema la aplica después, solo cuando nadie de la empresa esté conectado, para no tocar datos a mitad de un turno de trabajo.",
+  "versiones.li2": "<b>Volver a una etiqueta de interfaz anterior:</b> cada empresa corre con una etiqueta de versión de interfaz. El dueño puede pedir que su empresa vuelva a una etiqueta anterior; el cambio mueve la etiqueta, no los datos.",
+  "versiones.li3": "<b>Del canal beta al estable:</b> si tu empresa se inscribió en la beta y adoptó el canal beta (en <a href=\"https://beta.nivelatolabs.com\">beta.nivelatolabs.com</a>), el dueño puede volver al canal estable desde los ajustes beta. El cambio queda registrado con fecha y autor.",
+  "versiones.li4": "<b>Ver qué versión corre tu empresa:</b> en <a href=\"https://debug.nivelatolabs.com\">debug.nivelatolabs.com</a> puedes ver la versión de datos de tu empresa, su canal y qué versión se le está ofreciendo.",
+  "versiones.h3": "Lo que no existe (todavía)",
+  "versiones.li5": "<b>No hay reversa automática de datos:</b> la migración de datos de la empresa es de una sola vía por diseño. Si tu empresa necesita volver sus datos a la versión anterior, es una intervención manual del equipo de Nivelato Labs. Se pide con una sesión de soporte: en <a href=\"https://remote.nivelatolabs.com\">remote.nivelatolabs.com</a>, el dueño escribe el código de un solo uso que le da la persona de soporte y la sesión queda registrada y con tiempo límite.",
+  "versiones.li6": "<b>Google Play no baja versiones:</b> Play no permite instalar una versión anterior de la app sobre una más nueva en un teléfono. Una versión anterior solo puede distribuirse por una pista de prueba.",
+  "contacto.h2": "✉️ Contacto",
+  "contacto.p1": "¿No encontraste tu respuesta? Escríbenos a <a href=\"mailto:support@nivelatolabs.com\"><b>support@nivelatolabs.com</b></a>",
+  "contacto.p2": "Incluye tu email de cuenta, modelo de teléfono y versión de Android para ayudarte más rápido.",
+  "footer.brand": "Nivelato · Centro de ayuda",
+  "footer.privacy": "Política de privacidad"
+  }
+};
+const FORCED_LANG = null;
+
+const LANG_KEY = 'nivelato-lang';
+function currentLang() {
+  try {
+    const saved = localStorage.getItem(LANG_KEY);
+    if (saved === 'en' || saved === 'es') return saved;
+  } catch (e) {}
+  if (FORCED_LANG) return FORCED_LANG;
+  const nav = (navigator.language || 'en').toLowerCase();
+  return nav.indexOf('es') === 0 ? 'es' : 'en';
+}
+function applyLang(l) {
+  const dict = I18N[l] || I18N.en;
+  document.documentElement.lang = l;
+  if (dict['meta.title']) document.title = dict['meta.title'];
+  const metaDescEl = document.querySelector('meta[name="description"]');
+  if (metaDescEl && dict['meta.desc']) metaDescEl.setAttribute('content', dict['meta.desc']);
+  document.querySelectorAll('[data-i18n]').forEach(function (el) {
+    const k = el.getAttribute('data-i18n');
+    if (dict[k] !== undefined) el.innerHTML = dict[k];
+  });
+  document.querySelectorAll('.lang-toggle').forEach(function (b) {
+    b.textContent = (l === 'en') ? 'ES' : 'EN';
+  });
+  try { localStorage.setItem(LANG_KEY, l); } catch (e) {}
+}
+document.querySelectorAll('.lang-toggle').forEach(function (b) {
+  b.addEventListener('click', function () {
+    const cur = document.documentElement.lang === 'es' ? 'es' : 'en';
+    applyLang(cur === 'en' ? 'es' : 'en');
+  });
+});
+applyLang(currentLang());
+</script>
+
 </body>
 </html>
