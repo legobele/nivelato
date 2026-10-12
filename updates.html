@@ -766,24 +766,11 @@ onAuthStateChanged(auth, async (user) => {
       }
     } catch (e) { /* ignore */ }
 
-    /* Referrer-aware Back, same semantics nav-referrer.js applies on the
-       account settings page: an allowlisted same origin referrer wins,
-       the /dashboard.html?view=home fallback in the markup otherwise.
-       (nav-referrer.js itself only consumes its saved referrer on
-       /account/settings, so this page mirrors its allowlist against
-       document.referrer without touching the one-shot saved key, which
-       belongs to the account settings visit.) */
-    var ALLOWED = ['/', '/dashboard.html', '/company/users', '/company/settings', '/company/updates', '/photo.html'];
-    try {
-      if (document.referrer) {
-        var u = new URL(document.referrer, window.location.origin);
-        if (u.origin === window.location.origin && ALLOWED.indexOf(u.pathname) !== -1 &&
-            u.pathname + u.search !== window.location.pathname + window.location.search) {
-          var btn = document.getElementById('btn-back');
-          if (btn) btn.setAttribute('href', u.pathname + u.search);
-        }
-      }
-    } catch (e) { /* keep the fallback href */ }
+    /* Referrer-aware Back: owned by nav-referrer.js (loaded above), which
+       consumes document.referrer for this page under its /company/updates
+       entry (allowlist, never self by path + search). No saved key is
+       touched here: the settings keys belong to the settings visits.
+       The fallback href in the markup stands otherwise. */
   })();
 </script>
 <script src="./press-yaoi.js"></script>
