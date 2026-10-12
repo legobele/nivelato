@@ -1181,12 +1181,12 @@ try {
           <button class="btn-save" onclick="saveEdit()">💾 Guardar cambios</button>
           <button class="btn-cancel" onclick="cancelEdit()">Cancelar</button>
         </div>
-        <button class="btn-share-modal" id="modal-share-btn" onclick="toggleSharePanel()" style="display:none;margin-top:8px;background:rgba(245,165,36,.12);color:#f5a524;border:1px solid #f5a524;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;">🔗 Compartir medida</button>
-        <div id="share-panel" style="display:none;margin-top:8px;padding:12px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;">
-          <div style="font-size:12px;font-weight:600;color:#495057;margin-bottom:8px;">Compartir con:</div>
+        <button class="btn-share-modal" id="modal-share-btn" onclick="toggleSharePanel()" style="display:none;margin-top:8px;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;">🔗 Compartir medida</button>
+        <div id="share-panel" class="niv-share-panel" style="display:none;margin-top:8px;padding:12px;border-radius:8px;">
+          <div class="niv-share-title" style="font-size:12px;font-weight:600;margin-bottom:8px;">Compartir con:</div>
           <div id="share-member-list"></div>
-          <button onclick="saveShare()" style="margin-top:8px;padding:6px 14px;background:#f5a524;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Guardar</button>
-          <span id="share-status" style="font-size:12px;color:#2f9e44;margin-left:8px;display:none;">✓</span>
+          <button class="niv-share-save" onclick="saveShare()" style="margin-top:8px;padding:6px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Guardar</button>
+          <span id="share-status" style="font-size:12px;margin-left:8px;display:none;">✓</span>
         </div>
         <button class="btn-close" onclick="closeModal()">Cerrar</button>
       </div>
@@ -1431,14 +1431,14 @@ const showUpgradeModal = async () => {
   overlay.id = 'upgrade-overlay';
   overlay.innerHTML =
     '<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">'
-    + '<div style="background:#fff;border-radius:16px;padding:32px 28px;max-width:360px;width:100%;text-align:center;font-family:Inter,sans-serif;box-shadow:0 24px 60px rgba(0,0,0,.35)">'
+    + '<div style="background:var(--niv-surface);border:1px solid var(--niv-border);color:var(--niv-text);border-radius:16px;padding:32px 28px;max-width:360px;width:100%;text-align:center;font-family:Inter,sans-serif;box-shadow:0 24px 60px rgba(0,0,0,.35)">'
     + '<div style="font-size:44px;margin-bottom:8px">📊</div>'
-    + '<h2 style="color:#212529;margin:0 0 8px;font-size:20px">Mejora tu plan</h2>'
-    + '<p style="color:#868e96;font-size:14px;margin:0 0 16px;line-height:1.5">Escanea el código con tu teléfono para abrir las opciones de suscripción en la app de Nivelato. Al escanearlo, el teléfono queda vinculado a tu cuenta. Al completar la compra, las funciones de pago se activan aquí solas.</p>'
-    + '<div id="upgrade-qr-body" style="min-height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin-bottom:16px"><p style="color:#868e96;font-size:14px;margin:0">Generando tu código…</p></div>'
+    + '<h2 style="color:var(--niv-text);margin:0 0 8px;font-size:20px">Mejora tu plan</h2>'
+    + '<p style="color:var(--niv-text-dim);font-size:14px;margin:0 0 16px;line-height:1.5">Escanea el código con tu teléfono para abrir las opciones de suscripción en la app de Nivelato. Al escanearlo, el teléfono queda vinculado a tu cuenta. Al completar la compra, las funciones de pago se activan aquí solas.</p>'
+    + '<div id="upgrade-qr-body" style="min-height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin-bottom:16px"><p style="color:var(--niv-text-dim);font-size:14px;margin:0">Generando tu código…</p></div>'
     + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
-    + '<button onclick="window._upgradeRetry()" style="padding:10px 22px;background:#f5a524;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Ya compré, reintentar</button>'
-    + '<button onclick="window._upgradeClose()" style="padding:10px 22px;background:#f1f3f5;color:#495057;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Cerrar</button>'
+    + '<button onclick="window._upgradeRetry()" style="padding:10px 22px;background:var(--niv-accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Ya compré, reintentar</button>'
+    + '<button onclick="window._upgradeClose()" style="padding:10px 22px;background:var(--niv-surface-2);color:var(--niv-text);border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Cerrar</button>'
     + '</div></div></div>';
   document.body.appendChild(overlay);
   const body = document.getElementById('upgrade-qr-body');
@@ -1451,14 +1451,14 @@ const showUpgradeModal = async () => {
       (data.qrSvg
         ? '<div style="background:#fff;border:1px solid #e9ecef;border-radius:12px;padding:10px;line-height:0">' + data.qrSvg + '</div>'
         : '')
-      + '<code style="font-size:11px;color:#495057;word-break:break-all;max-width:280px">' + escapeHtml(data.url || '') + '</code>'
-      + '<p style="color:#adb5bd;font-size:12px;margin:0">El código vence en 10 minutos. Si expira, cierra y vuelve a abrir.</p>';
+      + '<code style="font-size:11px;color:var(--niv-text-dim);word-break:break-all;max-width:280px">' + escapeHtml(data.url || '') + '</code>'
+      + '<p style="color:var(--niv-text-dim);font-size:12px;margin:0">El código vence en 10 minutos. Si expira, cierra y vuelve a abrir.</p>';
   } catch (e) {
     console.error('[Nivelato] createUpgradeLink falló:', e);
     if (!document.getElementById('upgrade-qr-body')) return;
     body.innerHTML =
-      '<p style="color:#c92a2a;font-size:14px;margin:0;line-height:1.5">No se pudo generar el código. Revisa tu conexión y vuelve a intentarlo.</p>'
-      + '<button onclick="window._upgradeRegen()" style="padding:10px 22px;background:#f5a524;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Reintentar</button>';
+      '<p style="color:#f87171;font-size:14px;margin:0;line-height:1.5">No se pudo generar el código. Revisa tu conexión y vuelve a intentarlo.</p>'
+      + '<button onclick="window._upgradeRegen()" style="padding:10px 22px;background:var(--niv-accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Reintentar</button>';
   }
 };
 window.showUpgradeModal = showUpgradeModal;
@@ -1911,7 +1911,7 @@ let currentUser;
     html += row('Techo',      dval(desn.techo));
     html += row('Piso',       dval(desn.piso));
     if (job.warnings && job.warnings.length > 0) {
-      html += `<div style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;color:#e67700">${job.warnings.map(w=>`⚠ ${escapeHtml(w)}`).join('<br>')}</div>`;
+      html += `<div class="niv-warn-box" style="margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px">${job.warnings.map(w=>`⚠ ${escapeHtml(w)}`).join('<br>')}</div>`;
     }
     if (job.notas) html += `<div class="modal-notes">📝 ${escapeHtml(job.notas)}</div>`;
     document.getElementById('modal-body').innerHTML = html;
@@ -2176,7 +2176,7 @@ let currentUser;
         .filter(m => m.uid !== currentUser.uid)
         .map(m => {
           const checked = shared.includes(m.uid);
-          return `<label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:4px;cursor:pointer;">
+          return `<label class="niv-share-member" style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:4px;cursor:pointer;">
             <input type="checkbox" class="share-check" data-uid="${escapeHtml(m.uid)}" ${checked ? 'checked' : ''} />
             ${escapeHtml(m.name || m.email || 'Usuario')}
           </label>`;

@@ -538,3 +538,34 @@ body:not(.has-sidebar) .niv-shell {
 .date-input-wrap input[type="date"] { color: transparent; }
 .date-input-wrap.has-value input[type="date"],
 .date-input-wrap input[type="date"]:focus { color: var(--niv-text); }
+
+/* ---- measure share flow (dashboard job modal) ----
+   The share panel used to be a hardcoded light box (#f8f9fa panel, #dee2e6
+   border, #495057 title) inside the dark modal, and the member labels
+   inherited the modal's light text onto that white surface, which made
+   them unreadable. The whole flow now rides the tokens; the per-element
+   layout stays inline in dashboard.html, only colors live here. */
+.btn-share-modal {
+  background: rgba(25, 113, 194, 0.12);
+  color: #60a5fa;
+  border: 1px solid var(--niv-accent);
+}
+.btn-share-modal:hover { background: rgba(25, 113, 194, 0.22); }
+.niv-share-panel {
+  background: var(--niv-surface-2);
+  border: 1px solid var(--niv-border-soft);
+  color: var(--niv-text);
+}
+.niv-share-title { color: var(--niv-text-dim); }
+.niv-share-member { color: var(--niv-text); }
+.niv-share-member input[type="checkbox"] { accent-color: var(--niv-accent); }
+.niv-share-save { background: var(--niv-accent); color: #fff; }
+.niv-share-save:hover { filter: brightness(1.15); }
+#share-status { color: #4ade80; }
+
+/* job warnings box in the same modal: was #fff3bf / #e67700 (light theme);
+   now mirrors the dark .tag-warn treatment. */
+.niv-warn-box {
+  background: rgba(230, 119, 0, 0.18);
+  color: #fbbf24;
+}
