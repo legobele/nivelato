@@ -107,7 +107,9 @@
 .niv-nav-btn.linklike { text-decoration: underline; }
 
 /* ---- cards ---- */
-.niv-card {
+/* .niv-settings-card is an alias of .niv-card (same rule, not a copy):
+   settings pages use the settings name, other pages use .niv-card. */
+.niv-card, .niv-settings-card {
   border: 1px solid var(--niv-border);
   border-radius: var(--niv-radius);
   background: var(--niv-surface);
@@ -679,4 +681,443 @@ body:not(.has-sidebar) .niv-shell {
   .filter-row .niv-select,
   .filter-row .niv-select-btn { width: 100%; }
   .niv-select-list { max-width: 100%; }
+}
+
+/* ==========================================================================
+   DESIGN SYSTEM CONSOLIDATION (wave 1): slim scrollbars, sidebar row
+   hitboxes, and the settings component kit. Page workers build strictly
+   from the CLASS API below and must not add page-private styles for
+   anything listed here. Every new rule is token based (var(--niv-*));
+   the only literal colors are the status tint foregrounds and tints
+   this file already uses in .niv-status and .niv-warn-box.
+
+   CLASS API (new classes; markup shape, one line each):
+   .niv-scroll            <div class="niv-scroll">: any overflow region that wants the slim themed scrollbar (also applied to the built-in sidebar scroll regions, see below).
+   .niv-tabs              <div class="niv-tabs"><button class="niv-tab-btn">...</button></div>: segmented tab bar container.
+   .niv-tab-btn           <button class="niv-tab-btn active">Label</button>: one tab inside .niv-tabs; .active marks the current tab.
+   .niv-tab-panel         <div class="niv-tab-panel active">...</div>: panel for one tab; hidden unless .active.
+   .niv-form-row          <div class="niv-form-row"><div class="niv-field">...</div><div class="niv-field">...</div></div>: side by side fields, stacks on narrow screens.
+   .niv-field-mono        <div class="niv-field niv-field-mono"><label>...</label><input></div>: .niv-field variant with a monospace input (URLs, codes, backend fields).
+   .niv-perm-member       <div class="niv-perm-member"><div class="niv-perm-member-header">Name <span class="niv-perm-member-role">Role</span></div><div class="niv-perm-grid">...</div></div>: one member block in a permissions list.
+   .niv-perm-member-header  Text line at the top of .niv-perm-member (member name).
+   .niv-perm-member-role  <span class="niv-perm-member-role">Role</span>: dim role label inside .niv-perm-member-header.
+   .niv-perm-grid         <div class="niv-perm-grid"><label><input type="checkbox">Label</label>...</div>: wrapping row of permission chips; a chip lights up in the accent when its input is checked (:has).
+   .niv-request-card      <div class="niv-request-card"><div><div class="niv-request-name">...</div><div class="niv-request-email">...</div></div><div class="niv-request-actions">...</div></div>: one pending request row.
+   .niv-request-name      <div class="niv-request-name">Name</div>: requester name inside .niv-request-card.
+   .niv-request-email     <div class="niv-request-email">mail</div>: dim requester email inside .niv-request-card.
+   .niv-request-actions   <div class="niv-request-actions"><button class="niv-btn-sm approve">...</button></div>: action button row inside .niv-request-card.
+   .niv-btn-sm            <button class="niv-btn-sm">Label</button>: small action button; add .approve or .reject for the status tint variants.
+   .niv-info-row          <div class="niv-info-row"><span class="niv-info-label">Label</span><span class="niv-info-value">Value</span></div>: one label/value line.
+   .niv-info-label        <span class="niv-info-label">Label</span>: fixed width dim label inside .niv-info-row.
+   .niv-info-value        <span class="niv-info-value">Value</span>: value inside .niv-info-row.
+   .niv-status-line       <div class="niv-status-line ok">Text</div>: status message; hidden until .ok, .warn or .err is added.
+   .niv-setting-row       <div class="niv-setting-row"><div><div class="niv-setting-label">...</div><div class="niv-setting-desc">...</div></div><label class="niv-switch">...</label></div>: label plus control row (notification and preference rows).
+   .niv-setting-label     <div class="niv-setting-label">Label</div>: label inside .niv-setting-row.
+   .niv-setting-desc      <div class="niv-setting-desc">Text</div>: dim description under .niv-setting-label.
+   .niv-saved-msg         <div class="niv-saved-msg">Text</div>: centered saved confirmation; hidden until the page sets display via .show or inline style.
+   .niv-btn-back          <a class="niv-btn-back" href="...">Back</a>: back link above a page title.
+   .niv-btn-secondary     <button class="niv-btn-secondary">Label</button>: full width secondary button; .lang-active marks the selected language option.
+   .niv-settings-card     Alias of .niv-card (defined with it above): dark settings card; use with .niv-card-title and .niv-card-desc.
+
+   CLASS API (pre-existing classes that already cover part of the kit;
+   use these, they are NOT redefined here):
+   .niv-card / .niv-card-title / .niv-card-desc   Dark card and its heading pair (see the cards section above; .niv-settings-card is its alias).
+   .niv-field             <div class="niv-field"><label>...</label><input></div>: labelled field; input, select and textarea are already styled on tokens.
+   .niv-switch            <label class="niv-switch"><input type="checkbox"><span class="track"></span></label>: iOS style toggle, green when checked; this is the settings page toggle.
+   .niv-status            Older status line with .ok and .err only; prefer .niv-status-line when a .warn state is needed.
+   .niv-btn-pill          Pill button; add .niv-btn-primary (accent) or .niv-btn-danger (solid red, full width) from the pill buttons section.
+   .niv-page-title / .niv-page-sub   Page heading and dim subheading.
+   .niv-user-row          Selectable user list row with .niv-user-avatar, .niv-user-name and .niv-user-email.
+   .niv-select            Custom dropdown component (see its own section above).
+   ========================================================================== */
+
+/* ---- slim themed scrollbar ----
+   Reusable through .niv-scroll, and applied to every scroll region the
+   dashboard and the shared sidebars already use:
+     .niv-float-panel   the dashboard floating panel itself
+     .niv-panel-body    the dashboard panel's scrolling middle zone
+     .niv-snav-body     the expanded sidebar nav unit body (projects list)
+     .niv-sidebar       the settings shell sidebar (.niv-shell > .niv-sidebar)
+     .niv-side          the shared company sidebar (users, updates)
+     .niv-select-list   the niv-select dropdown list
+   The top bar tab strips are deliberately NOT covered: they hide their
+   scrollbar on purpose in their own page rules. */
+.niv-scroll,
+.niv-float-panel,
+.niv-panel-body,
+.niv-snav-body,
+.niv-sidebar,
+.niv-side,
+.niv-select-list {
+  scrollbar-width: thin;
+  scrollbar-color: var(--niv-border) transparent;
+}
+.niv-scroll::-webkit-scrollbar,
+.niv-float-panel::-webkit-scrollbar,
+.niv-panel-body::-webkit-scrollbar,
+.niv-snav-body::-webkit-scrollbar,
+.niv-sidebar::-webkit-scrollbar,
+.niv-side::-webkit-scrollbar,
+.niv-select-list::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.niv-scroll::-webkit-scrollbar-track,
+.niv-float-panel::-webkit-scrollbar-track,
+.niv-panel-body::-webkit-scrollbar-track,
+.niv-snav-body::-webkit-scrollbar-track,
+.niv-sidebar::-webkit-scrollbar-track,
+.niv-side::-webkit-scrollbar-track,
+.niv-select-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.niv-scroll::-webkit-scrollbar-thumb,
+.niv-float-panel::-webkit-scrollbar-thumb,
+.niv-panel-body::-webkit-scrollbar-thumb,
+.niv-snav-body::-webkit-scrollbar-thumb,
+.niv-sidebar::-webkit-scrollbar-thumb,
+.niv-side::-webkit-scrollbar-thumb,
+.niv-select-list::-webkit-scrollbar-thumb {
+  background: var(--niv-border);
+  border-radius: var(--niv-pill);
+}
+.niv-scroll::-webkit-scrollbar-thumb:hover,
+.niv-float-panel::-webkit-scrollbar-thumb:hover,
+.niv-panel-body::-webkit-scrollbar-thumb:hover,
+.niv-snav-body::-webkit-scrollbar-thumb:hover,
+.niv-sidebar::-webkit-scrollbar-thumb:hover,
+.niv-side::-webkit-scrollbar-thumb:hover,
+.niv-select-list::-webkit-scrollbar-thumb:hover {
+  background: var(--niv-text-dim);
+}
+
+/* ---- sidebar row hitboxes ----
+   Rows are full content width targets inside the padded panel or side
+   card: the hover feedback and the click land on the whole row, not
+   just on the row's text. Panel geometry (inset, widths, detents) is
+   untouched; these rules only stretch rows that already exist. */
+.niv-panel-item,
+.niv-home-row {
+  width: 100%;
+  box-sizing: border-box;
+}
+/* the label takes the slack so the trailing menu target sits at the
+   row's right edge and the row stays one full width target */
+.niv-panel-item > :first-child,
+.niv-home-row > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+/* the "..." menu target inside a row keeps its own distinct hitbox:
+   it paints and clicks above the row instead of merging into it */
+.niv-panel-item .dots,
+.niv-home-row .dots {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 28px;
+  box-sizing: border-box;
+  color: var(--niv-text-dim);
+  letter-spacing: 2px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.niv-home-row .dots:hover {
+  background: var(--niv-surface-2);
+  color: var(--niv-text);
+}
+/* sidebar nav buttons and rows in the panel, the settings sidebar and
+   the shared .niv-side card all stretch to the padded container width */
+.niv-panel-actions .niv-nav-btn,
+.niv-sidebar .niv-nav-btn,
+.niv-side .niv-nav-btn {
+  width: 100%;
+  box-sizing: border-box;
+}
+.niv-side .niv-nav,
+.niv-side .niv-nav-group,
+.niv-sidebar .niv-nav,
+.niv-sidebar .niv-nav-group {
+  width: 100%;
+}
+/* main nav inside the dashboard panel: the unit and its row fill the
+   panel width, and the nav button itself flexes across the row (the
+   collapsed rail rule in the dashboard still wins on specificity and
+   keeps its 40px icon target) */
+.niv-navunit,
+.niv-snav-row {
+  width: 100%;
+  box-sizing: border-box;
+}
+.niv-navunit > .niv-snav {
+  width: 100%;
+  box-sizing: border-box;
+}
+.niv-snav-row .niv-snav {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+}
+/* the small sibling buttons in a nav row (add, chevron) stay their own
+   targets and never get stretched by the row rules above */
+.niv-snav-row .niv-snav-plus,
+.niv-snav-row .niv-plus-btn {
+  flex: none;
+  position: relative;
+  z-index: 1;
+}
+/* section collapse headers: the chevron button is appended at the
+   right edge of .niv-panel-sec-title, inside the scrolling panel body,
+   so the header gets right padding that clears the 8px scrollbar plus
+   a gap instead of sitting under it */
+.niv-panel-sec-title {
+  padding-right: 12px;
+  box-sizing: border-box;
+}
+.niv-panel-sec-title .niv-sec-chev {
+  flex: none;
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- settings component kit: tabs ---- */
+.niv-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  background: var(--niv-surface-2);
+  border: 1px solid var(--niv-border-soft);
+  border-radius: 14px;
+  padding: 4px;
+}
+.niv-tab-btn {
+  flex: 1;
+  padding: 10px 16px;
+  min-height: 44px;
+  border: none;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  background: transparent;
+  color: var(--niv-text-dim);
+  transition: background 0.15s, color 0.15s;
+}
+.niv-tab-btn:hover { color: var(--niv-text); }
+.niv-tab-btn.active {
+  background: rgba(25, 113, 194, 0.22);
+  color: var(--niv-text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.niv-tab-btn:focus-visible {
+  outline: 2px solid var(--niv-accent);
+  outline-offset: 1px;
+}
+.niv-tab-panel { display: none; }
+.niv-tab-panel.active { display: block; }
+
+/* ---- settings component kit: form rows ----
+   .niv-field itself is pre-existing (see the form fields section);
+   this only adds the row layout and the monospace variant. */
+.niv-form-row {
+  display: flex;
+  gap: 12px;
+}
+.niv-form-row > .niv-field {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .niv-form-row { flex-direction: column; gap: 0; }
+}
+.niv-field.niv-field-mono input {
+  font-family: monospace;
+  font-size: 13px;
+}
+
+/* ---- settings component kit: permission chips ---- */
+.niv-perm-member {
+  border-bottom: 1px solid var(--niv-border-soft);
+  padding: 14px 0;
+}
+.niv-perm-member:last-child { border-bottom: none; }
+.niv-perm-member-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--niv-text);
+  margin-bottom: 8px;
+}
+.niv-perm-member-role {
+  font-size: 12px;
+  color: var(--niv-text-dim);
+  font-weight: 500;
+}
+.niv-perm-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.niv-perm-grid label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--niv-text-dim);
+  cursor: pointer;
+  padding: 4px 10px;
+  background: var(--niv-surface-2);
+  border-radius: 8px;
+  border: 1px solid var(--niv-border-soft);
+}
+.niv-perm-grid label:has(input:checked) {
+  background: rgba(25, 113, 194, 0.18);
+  border-color: var(--niv-accent);
+  color: var(--niv-text);
+}
+.niv-perm-grid input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--niv-accent);
+}
+
+/* ---- settings component kit: request cards and small buttons ---- */
+.niv-request-card {
+  background: var(--niv-surface);
+  border: 1px solid var(--niv-border);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.niv-request-name { font-size: 14px; font-weight: 600; color: var(--niv-text); }
+.niv-request-email { font-size: 12px; color: var(--niv-text-dim); }
+.niv-request-actions { display: flex; gap: 8px; }
+.niv-btn-sm {
+  padding: 7px 16px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--niv-border-soft);
+  border-radius: 8px;
+  background: var(--niv-surface-2);
+  color: var(--niv-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.niv-btn-sm:hover { background: var(--niv-surface); }
+.niv-btn-sm:disabled { opacity: 0.5; cursor: default; }
+.niv-btn-sm:focus-visible {
+  outline: 2px solid var(--niv-accent);
+  outline-offset: 1px;
+}
+/* status tint variants, mirroring .niv-status in this file */
+.niv-btn-sm.approve {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: var(--niv-green);
+  color: #4ade80;
+}
+.niv-btn-sm.approve:hover { background: rgba(34, 197, 94, 0.25); }
+.niv-btn-sm.reject {
+  background: rgba(229, 72, 77, 0.15);
+  border-color: var(--niv-red);
+  color: #f87171;
+}
+.niv-btn-sm.reject:hover { background: rgba(229, 72, 77, 0.25); }
+
+/* ---- settings component kit: info rows, setting rows, status ---- */
+.niv-info-row {
+  display: flex;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--niv-border-soft);
+  font-size: 14px;
+}
+.niv-info-row:last-child { border-bottom: none; }
+.niv-info-label {
+  font-weight: 600;
+  color: var(--niv-text-dim);
+  min-width: 120px;
+  flex: none;
+}
+.niv-info-value {
+  color: var(--niv-text);
+  flex: 1;
+  min-width: 0;
+}
+.niv-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--niv-border-soft);
+}
+.niv-setting-row:last-child { border-bottom: none; }
+.niv-setting-label { font-size: 14px; font-weight: 600; color: var(--niv-text); }
+.niv-setting-desc { font-size: 12px; color: var(--niv-text-dim); margin-top: 2px; }
+.niv-status-line {
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  margin-top: 12px;
+  display: none;
+}
+/* status tints mirror .niv-status, plus the warn tint from .niv-warn-box */
+.niv-status-line.ok { display: block; background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+.niv-status-line.warn { display: block; background: rgba(230, 119, 0, 0.18); color: #fbbf24; }
+.niv-status-line.err { display: block; background: rgba(229, 72, 77, 0.15); color: #f87171; }
+.niv-saved-msg {
+  font-size: 13px;
+  color: #4ade80;
+  font-weight: 600;
+  text-align: center;
+  padding: 8px;
+  display: none;
+}
+.niv-saved-msg.show { display: block; }
+
+/* ---- settings component kit: back link and secondary button ---- */
+.niv-btn-back {
+  display: inline-block;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--niv-accent);
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.niv-btn-back:hover { text-decoration: underline; }
+.niv-btn-secondary {
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px 16px;
+  min-height: 48px;
+  background: var(--niv-surface-2);
+  color: var(--niv-text);
+  border: 1.5px solid var(--niv-border-soft);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.niv-btn-secondary:hover { border-color: var(--niv-border); }
+.niv-btn-secondary:disabled { opacity: 0.6; cursor: default; }
+.niv-btn-secondary.lang-active {
+  border-color: var(--niv-accent);
+  color: var(--niv-text);
+  background: rgba(25, 113, 194, 0.15);
 }
