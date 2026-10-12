@@ -224,6 +224,30 @@
     </div>
   </aside>
 
+<script>
+/* Early target guard (classic script, runs before the module script):
+   in the markup above, the company aside is the only one NOT marked
+   hidden, so any failure of the main module script before its
+   visibility toggles run (a stale SW-substituted document, a blocked
+   import) left the FULL workspace sidebar on screen in whatever page
+   embedded the module, including the account settings page invoking
+   it with target=user (incident 2026-10-12). Remove the non-selected
+   asides from the DOM right here, before anything else can fail: in
+   the user (settings) context the workspace asides then do not exist
+   at all, and no later code or stylesheet can surface them. */
+(function () {
+  var t = new URLSearchParams(window.location.search).get('target');
+  var target = (t === 'user' || t === 'shell') ? t : 'company';
+  window.__nivSidebarTarget = target;
+  document.body.setAttribute('data-target', target);
+  var keep = target === 'user' ? 'side-user' : (target === 'shell' ? 'side-shell' : 'side-company');
+  ['side-company', 'side-shell', 'side-user'].forEach(function (id) {
+    if (id === keep) return;
+    var el = document.getElementById(id);
+    if (el) el.remove();
+  });
+})();
+</script>
 <script type="module">
 /* modules/sidebar.html: settings tier sidebar module.
    Contract: see modules/README.md. Messages are { niv: 1, type, ... }
@@ -232,6 +256,9 @@
    data only, so QA can screenshot the chrome without auth. */
 const params = new URLSearchParams(window.location.search);
 const TARGET = (() => {
+  /* The early target guard has already resolved and enforced the
+     target (non-selected asides are gone from the DOM); trust it. */
+  if (window.__nivSidebarTarget) return window.__nivSidebarTarget;
   const t = params.get('target');
   return t === 'user' || t === 'shell' ? t : 'company';
 })();
@@ -299,9 +326,11 @@ const L = (key) => (STRINGS[lang] && STRINGS[lang][key]) || STRINGS.es[key] || k
 
 if (readKey('niv-compact-sidebar') === '1') document.body.classList.add('niv-mod-compact');
 document.body.setAttribute('data-target', TARGET);
-document.getElementById('side-company').hidden = TARGET !== 'company';
-document.getElementById('side-shell').hidden = TARGET !== 'shell';
-document.getElementById('side-user').hidden = TARGET !== 'user';
+/* Null-safe: the early target guard removed the non-selected asides. */
+[['side-company', 'company'], ['side-shell', 'shell'], ['side-user', 'user']].forEach(([id, t]) => {
+  const el = document.getElementById(id);
+  if (el) el.hidden = TARGET !== t;
+});
 
 function applyLang() {
   document.documentElement.lang = lang;
@@ -479,6 +508,55 @@ function initialsOf(name) {
 }
 let orgData = null;
 const dataVersion = () => (orgData && orgData.dataVersion) ? String(orgData.dataVersion) : '0.9';
+/* Header version display: the version REGISTRY wins, never the org
+   doc and never a hardcoded string. app_updates is public-read
+   (SUPPORT_SURFACES.md section 3); the projection follows the org's
+   update channel: beta orgs read app_updates/beta-latest, everyone
+   else reads app_updates/backend when it carries a stable stamp (the
+   same doc the new flow's testing watermark reads). The legacy
+   app_updates/latest pointer predates the registry and its bare
+   version field is stale (still the Oct 5 value), so it is
+   deliberately NOT a display source. When the registry cannot be
+   read, the header falls back to the repo VERSION value below (keep
+   it in sync with the repo-root VERSION file). The org doc's
+   dataVersion keeps its own job: it is the org's update-check state
+   for the Updates dot, not a display string. */
+const FALLBACK_VERSION = '1.1.0'; /* mirrors repo-root VERSION */
+let displayVersion = null;
+function paintVersion() {
+  if (!orgData && !displayVersion) return; /* skeleton keeps its plain label until something real resolves */
+  const v = displayVersion || dataVersion();
+  document.querySelectorAll('.js-org-version').forEach((el) => { el.textContent = 'Nivelato v' + v; });
+}
+async function resolveRegistryVersion(db, fs, channel) {
+  try {
+    if (channel === 'beta') {
+      const s = await fs.getDoc(fs.doc(db, 'app_updates', 'beta-latest'));
+      if (s.exists()) {
+        const d = s.data() || {};
+        const v = d.friendlyVersion || d.version;
+        if (v) return String(v);
+      }
+      return null;
+    }
+    const s = await fs.getDoc(fs.doc(db, 'app_updates', 'backend'));
+    if (s.exists()) {
+      const d = s.data() || {};
+      if ((!d.channel || d.channel === 'stable') && d.friendlyVersion) return String(d.friendlyVersion);
+    }
+  } catch (_) { /* registry unreachable: the caller falls back */ }
+  return null;
+}
+let versionKickStarted = false;
+function kickVersionResolution(db, fs) {
+  if (versionKickStarted) return;
+  versionKickStarted = true;
+  const channel = orgData && orgData.updateChannel ? String(orgData.updateChannel) : 'stable';
+  resolveRegistryVersion(db, fs, channel).then((v) => {
+    displayVersion = v || FALLBACK_VERSION;
+    paintVersion();
+  });
+}
 function renderCompanyHead() {
   const name = orgData && orgData.name ? orgData.name : L('companyFallback');
   document.querySelectorAll('.js-org-avatar').forEach((el) => { el.textContent = initialsOf(name); });
@@ -486,7 +564,7 @@ function renderCompanyHead() {
     el.textContent = name;
     el.removeAttribute('data-state');
   });
-  document.querySelectorAll('.js-org-version').forEach((el) => { el.textContent = 'Nivelato v' + dataVersion(); });
+  paintVersion();
 }
 function setUpdatesState(state) {
   const sub = document.getElementById('updates-sub');
@@ -683,7 +761,10 @@ async function initFirebase() {
   onAuthStateChanged(auth, async (user) => {
     authResolved = true;
     if (!user) {
-      /* No signed in user: static skeleton only, no redirect, no error. */
+      /* No signed in user: static skeleton only, no redirect, no error.
+         The registry is public-read, so the header version still
+         resolves (stable channel default) instead of going stale. */
+      kickVersionResolution(db, fsMod);
       showSkeletonHead();
       return;
     }
@@ -720,6 +801,7 @@ async function initFirebase() {
     }
     if (TARGET === 'company' || TARGET === 'shell') {
       renderCompanyHead();
+      kickVersionResolution(db, fsMod);
       loadLists(db, fsMod, orgId);
     }
     if (TARGET === 'company') {
@@ -903,6 +985,11 @@ if (DEMO) {
   setTimeout(() => { if (!authResolved) showSkeletonHead(); }, 8000);
 }
 /* The user target never needs Firebase: it is pure in page navigation. */
+
+/* QA handle: lets a headless harness exercise the registry resolver
+   with stubbed Firestore reads (the module's live path needs a
+   signed in org session, which a harness does not have). */
+window.NivSidebarModule = { resolveRegistryVersion: resolveRegistryVersion, FALLBACK_VERSION: FALLBACK_VERSION };
 </script>
 </body>
 </html>

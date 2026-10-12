@@ -808,7 +808,7 @@ applyStaticLang();
     } catch (err2) {}
     window.__nivSidebarHandle = window.NivShell.mountSidebar('#chrome-sidebar', { target: 'shell', active: 'users', lang: lang });
     if (window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
-      window.NivShell.mountTopbar('#chrome-topbar', { active: 'users' });
+      window.NivShell.mountTopbar('#chrome-topbar', { active: 'users', context: 'settings' });
     }
   })();
 </script>

@@ -6,7 +6,8 @@
    { niv: 1, type, ... }. Types:
      niv:ready   module to host  { target }
      niv:init    host to module  { target, active, section, lang }
-                   (topbar init also accepts a project field)
+                   (topbar init also accepts a project field, and a
+                   context field: 'settings' makes its tabs inert)
      niv:nav     module to host  { href }   host navigates the top frame
      niv:resize  module to host  { height } host sizes the iframe
      niv:section module to host  { section } user target sub nav clicks
@@ -60,6 +61,9 @@
     } else {
       if (opts.active) qs.set('active', String(opts.active));
       if (opts.project) qs.set('project', String(opts.project));
+      /* Settings-shell hosts pass context: 'settings' so the bar
+         renders its dashboard tabs inert (see modules/topbar.html). */
+      if (opts.context === 'settings') qs.set('ctx', 'settings');
     }
     var lang = langOf(opts);
     qs.set('lang', lang);
@@ -98,7 +102,8 @@
       active: opts.active || null,
       section: opts.section || null,
       lang: lang,
-      project: opts.project || null
+      project: opts.project || null,
+      context: opts.context === 'settings' ? 'settings' : null
     };
     function sendInit() {
       if (!iframe.contentWindow) return;
@@ -106,6 +111,7 @@
       if (state.active) msg.active = state.active;
       if (state.section) msg.section = state.section;
       if (!isSidebar && state.project != null) msg.project = state.project;
+      if (!isSidebar && state.context) msg.context = state.context;
       try { iframe.contentWindow.postMessage(msg, window.location.origin); } catch (e) { /* not loaded yet */ }
     }
 

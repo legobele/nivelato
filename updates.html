@@ -762,7 +762,7 @@ onAuthStateChanged(auth, async (user) => {
     } catch (e) { /* shell bridge unavailable: the card still works */ }
     try {
       if (window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
-        window.__nivTopbar = window.NivShell.mountTopbar('#chrome-topbar', { active: 'home', lang: lang });
+        window.__nivTopbar = window.NivShell.mountTopbar('#chrome-topbar', { active: 'home', lang: lang, context: 'settings' });
       }
     } catch (e) { /* ignore */ }
 

@@ -26,8 +26,14 @@ own copies from nested paths.
 ### Targets (query param `target`)
 
 - `?target=company` (default; any unknown value falls back to company):
-  company head at the top (avatar initials, name, `Nivelato v<dataVersion>`
-  line, populated from the signed in user's org doc like the pages do),
+  company head at the top (avatar initials, name, and a
+  `Nivelato v<version>` line whose version comes from the version
+  registry: the `app_updates` projection for the org's update
+  channel, `app_updates/beta-latest` for beta orgs and
+  `app_updates/backend` for a stable stamp, falling back to the
+  repo `VERSION` value when the registry is unreachable; the org
+  doc's `dataVersion` is only the Updates-dot comparison state,
+  never the displayed version),
   the three panel list sections, then the tier nav groups:
   - Company group: Users (`/company/users`), Company settings
     (`/company/settings`), Updates (`/company/updates`), Billing (see
@@ -48,6 +54,16 @@ own copies from nested paths.
   Datos y privacidad). The host page maps those section keys to its own
   sections. This target never loads Firebase; it is pure in page
   navigation.
+
+Target enforcement: an early classic script in the module document
+resolves the target before the main module script runs and REMOVES
+the two non-selected asides from the DOM. The company aside is the
+only one not marked `hidden` in markup, so before this guard any
+early failure of the main script left the full workspace sidebar
+visible in every context, including account settings. With the
+guard, the workspace asides do not exist at all in the user and
+shell documents (and vice versa), so no later code or stylesheet
+can surface them.
 
 ### Users routing (IA rule): same label, target decides
 
@@ -196,6 +212,14 @@ module: Dashboard, Projects, Notifications and Users pills plus the
   field of `niv:init` (a topbar only extension, below). There is no
   notification badge: the locked contract has no count channel, and
   the module has no data source of its own.
+- Settings context (`?ctx=settings`, or `context: 'settings'` on the
+  mount / in `niv:init`): hosts in the settings shell (account and
+  company settings, users administration, updates) mount the bar
+  this way. The bar is then a frame, not a navigation surface: the
+  pills render inert (no `href`, no `target`, no `niv:nav`, no
+  active pill), because every pill destination is a dashboard view
+  and following one would yank the user out of the settings surface.
+  The project label still shows. Default context is unchanged.
 - This module carries no account menu or popover. See the
   localization audit below.
 
@@ -209,7 +233,7 @@ iframe it created, and only navigates to same origin hrefs.
 | Type | Direction | Payload | Meaning |
 | --- | --- | --- | --- |
 | `niv:ready` | module to host | `{ target }` | Module loaded. `target` is `company`, `shell`, `user` or `topbar`. Host replies with `niv:init`; the bridge also sends init on iframe load, and init is idempotent. |
-| `niv:init` | host to module | `{ target, active, section, lang }` | Configure the module. `lang` is `es` or `en`. For the sidebar company target, `active` is a nav key (`users`, `settings`, `updates`, `billing`, `account`) or an href or path such as `/company/users`. For the shell target, `active` is `home`, `projects`, `notifications` or `users`. For the user target, `section` (or `active`) is one of the five `data-section` keys. Topbar only extension: `project` sets the current project label. |
+| `niv:init` | host to module | `{ target, active, section, lang }` | Configure the module. `lang` is `es` or `en`. For the sidebar company target, `active` is a nav key (`users`, `settings`, `updates`, `billing`, `account`) or an href or path such as `/company/users`. For the shell target, `active` is `home`, `projects`, `notifications` or `users`. For the user target, `section` (or `active`) is one of the five `data-section` keys. Topbar only extensions: `project` sets the current project label; `context: 'settings'` switches the bar to its inert settings context. |
 | `niv:nav` | module to host | `{ href }` | A nav anchor was clicked. The host performs the top frame navigation. Embedded modules suppress the anchor default after posting, so hosts MUST navigate on this message. Module anchors also carry `target="_top"` as the no JS fallback: standalone, or a host that never loads the module script, still navigates. |
 | `niv:resize` | module to host | `{ height }` | Content height in CSS pixels (uncapped measurement). Auto mode hosts set the iframe height from it. Fixed mode hosts (the company sidebar default) ignore it. |
 | `niv:section` | module to host | `{ section }` | User target only: a subsettings button was clicked. The module marks it active itself, then the host shows the matching section. |

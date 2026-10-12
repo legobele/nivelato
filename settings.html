@@ -69,7 +69,7 @@ html, body { overflow-y: auto !important; }
       <div class="niv-company-avatar" id="set-company-avatar">N</div>
       <div>
         <div class="niv-company-name" id="set-company-name">…</div>
-        <div class="niv-company-ver">Nivelato v1.0</div>
+        <div class="niv-company-ver" id="set-company-ver">Nivelato</div>
       </div>
     </div>
   </div>
@@ -78,13 +78,11 @@ html, body { overflow-y: auto !important; }
       <div class="niv-nav-group-title">Mi cuenta</div>
       <a class="niv-nav-btn active" href="/account/settings">Mi cuenta</a>
     </div>
-    <div class="niv-nav-group" id="set-company-group" style="display:none">
-      <div class="niv-nav-group-title">Compañía</div>
-      <a class="niv-nav-btn" href="/company/users">Usuarios</a>
-      <a class="niv-nav-btn" href="/company/settings">Ajustes de la compañía</a>
-      <a class="niv-nav-btn" href="/company/updates">Updates</a>
-      <button class="niv-nav-btn soon" disabled>Billing<span class="soon-badge">soon</span></button>
-    </div>
+    <!-- Account settings shows ONLY account navigation in its sidebar
+         (Giulia, 2026-10-12): no company zone here. The company doors
+         (Usuarios, Ajustes de la compañía, Updates, Billing) live in
+         the company sidebar module on the company pages, not on the
+         user settings surface. -->
   </nav>
 </aside>
 <div class="niv-main">
@@ -542,13 +540,9 @@ onAuthStateChanged(auth, async (user) => {
     if (drStatus) drStatus.style.display = 'block';
   }
 
-  // Company doors live in the company sidebar (shown for managers there).
-  // The old in-body company settings link was removed on purpose: the
-  // sidebar already carries that door.
-  if (_can('userManagement')) {
-    const _snu = document.getElementById('set-company-group');
-    if (_snu) _snu.style.display = 'flex';
-  }
+  // The sidebar on this page carries account navigation only; the
+  // company doors live in the company sidebar module on the company
+  // pages (see the markup note at #set-company-group's old spot).
   // sidebar company card
   try {
     const _os = await getDoc(doc(db, 'orgs', orgId));
@@ -556,6 +550,29 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('set-company-name').textContent = _on;
     document.getElementById('set-company-avatar').textContent =
       _on.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    // Header version: read the version registry (app_updates public
+    // projections, channel aware), never a hardcoded string. Beta orgs
+    // read app_updates/beta-latest; everyone else reads
+    // app_updates/backend when it carries a stable stamp (the legacy
+    // app_updates/latest pointer is stale and is not a display
+    // source). Fallback: the repo VERSION value, 1.1.0.
+    try {
+      const _chan = _os.data()?.updateChannel;
+      let _ver = null;
+      if (_chan === 'beta') {
+        const _bs = await getDoc(doc(db, 'app_updates', 'beta-latest'));
+        if (_bs.exists()) _ver = _bs.data()?.friendlyVersion || _bs.data()?.version || null;
+      } else {
+        const _bs = await getDoc(doc(db, 'app_updates', 'backend'));
+        if (_bs.exists()) {
+          const _bd = _bs.data() || {};
+          if ((!_bd.channel || _bd.channel === 'stable') && _bd.friendlyVersion) _ver = _bd.friendlyVersion;
+        }
+      }
+      document.getElementById('set-company-ver').textContent = 'Nivelato v' + (_ver || '1.1.0');
+    } catch (_) { /* registry unreachable: repo VERSION fallback */
+      document.getElementById('set-company-ver').textContent = 'Nivelato v1.1.0';
+    }
   } catch (_) { /* keep placeholder */ }
 
   initPasswordSection();

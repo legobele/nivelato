@@ -120,6 +120,15 @@
    Contract: see modules/README.md. */
 const params = new URLSearchParams(window.location.search);
 const TARGET = 'topbar';
+/* Context: hosts in the settings shell (account/company settings,
+   users administration, updates) mount this bar with ctx=settings.
+   There the bar is a frame, not a navigation surface: its tabs all
+   point at /dashboard.html views, and following one yanks the user
+   out of the settings surface they are working in (defect
+   2026-10-12). In settings context the tabs render inert: no href,
+   no niv:nav, no active pill; the project label still shows.
+   Default context (the dashboard family) is unchanged. */
+let CTX = params.get('ctx') === 'settings' ? 'settings' : 'default';
 
 const STRINGS = {
   es: { title: 'Nivelato', home: 'Panel', projects: 'Proyectos', notifications: 'Notificaciones', users: 'Usuarios' },
@@ -151,6 +160,7 @@ function applyLang() {
 
 const ACTIVE_KEYS = ['home', 'projects', 'notifications', 'users'];
 function setActive(key) {
+  if (CTX === 'settings') return; /* no dashboard tab is "current" inside settings */
   if (!ACTIVE_KEYS.includes(key)) return;
   document.querySelectorAll('.niv-tab[data-nav-key]').forEach((el) => {
     const on = el.getAttribute('data-nav-key') === key;
@@ -179,8 +189,21 @@ function reportHeight() {
   });
 }
 
+function applyContext() {
+  if (CTX !== 'settings') return;
+  document.querySelectorAll('.niv-tab[data-nav-key]').forEach((a) => {
+    a.removeAttribute('href');
+    a.removeAttribute('target');
+    a.classList.remove('active');
+    a.removeAttribute('aria-current');
+    a.setAttribute('aria-disabled', 'true');
+    a.setAttribute('data-inert', '1');
+  });
+}
+
 document.querySelectorAll('.niv-tab[data-nav-key]').forEach((a) => {
   a.addEventListener('click', (ev) => {
+    if (CTX === 'settings') { ev.preventDefault(); return; } /* inert: never leave settings */
     if (a.classList.contains('active')) { ev.preventDefault(); return; }
     post({ type: 'niv:nav', href: a.getAttribute('href') });
     /* Embedded: the host performs the top frame navigation. Standalone:
@@ -194,12 +217,14 @@ window.addEventListener('message', (ev) => {
   const d = ev.data;
   if (!d || d.niv !== 1 || d.type !== 'niv:init') return;
   if (d.lang === 'es' || d.lang === 'en') { lang = d.lang; applyLang(); }
+  if (d.context === 'settings' && CTX !== 'settings') { CTX = 'settings'; applyContext(); }
   if (d.active) setActive(d.active);
   if (d.project !== undefined) setProject(d.project);
   reportHeight();
 });
 
 applyLang();
+applyContext();
 setActive(params.get('active') || 'home');
 if (params.get('project')) setProject(params.get('project'));
 post({ type: 'niv:ready', target: TARGET });
