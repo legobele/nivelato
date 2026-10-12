@@ -4,6 +4,11 @@
 <base href="/">
 <meta charset="UTF-8" />
 <script src="../company-theme.js"></script>
+<script>
+try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|$)/);if(cm&&cm[1]==='1')document.documentElement.classList.add('niv-compact');var lm=c.match(/; nivelato-login-lang=(es|en)(?:;|$)/);if(lm)document.documentElement.lang=lm[1];}catch(e){}
+</script>
+<script src="../niv-settings.js"></script>
+<script src="../modules/shell-bridge.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#121212" />
 <link rel="manifest" href="../manifest.json" />
@@ -11,156 +16,149 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="../autism.css" />
 <link rel="stylesheet" href="../niv-dark.css" />
-
 <style>
-  .settings-shell { max-width: 640px; margin: 0 auto; padding: 24px 20px; }
-  h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-  .sub { font-size: 14px; color: #868e96; margin-bottom: 24px; }
-  .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: #f1f3f5; border-radius: 14px; padding: 4px; }
-  .tab-btn { flex: 1; padding: 10px 16px; min-height: 44px; border: none; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; background: transparent; color: #495057; transition: all 0.15s; }
-  .tab-btn.active { background: #fff; color: #1971c2; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.06); }
-  .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
-  .card { background: #fff; border: 1px solid #e9ecef; border-radius: 18px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.06); }
-  .card-title { font-size: 15px; font-weight: 700; color: #212529; margin-bottom: 4px; }
-  .card-desc { font-size: 13px; color: #868e96; margin-bottom: 16px; }
-  .perm-member { border-bottom: 1px solid #f1f3f5; padding: 14px 0; }
-  .perm-member:last-child { border-bottom: none; }
-  .perm-member-header { font-size: 14px; font-weight: 600; color: #212529; margin-bottom: 8px; }
-  .perm-member-role { font-size: 12px; color: #868e96; font-weight: 500; }
-  .perm-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-  .perm-grid label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: #495057; cursor: pointer; padding: 4px 10px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6; }
-  .perm-grid label:has(input:checked) { background: #e7f5ff; border-color: #1971c2; color: #1971c2; }
-  .perm-grid input { width: 14px; height: 14px; accent-color: #1971c2; }
-  .request-card { background: #fff; border: 1px solid #e9ecef; border-radius: 14px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .request-name { font-size: 14px; font-weight: 600; }
-  .request-email { font-size: 12px; color: #868e96; }
-  .request-actions { display: flex; gap: 8px; }
-  .btn-sm { padding: 7px 16px; min-height: 44px; display: inline-flex; align-items: center; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
-  .btn-sm.approve { background: #2f9e44; color: #fff; }
-  .btn-sm.reject { background: #e03131; color: #fff; }
-  .btn-back { display: inline-block; margin-bottom: 16px; font-size: 13px; color: #1971c2; text-decoration: none; font-weight: 600; cursor: pointer; }
-  .btn-back:hover { text-decoration: underline; }
-  .info-row { display: flex; padding: 10px 0; border-bottom: 1px solid #f1f3f5; font-size: 14px; }
-  .info-row:last-child { border-bottom: none; }
-  .info-label { font-weight: 600; color: #495057; min-width: 120px; }
-  .info-value { color: #212529; }
-  .saved-msg { font-size: 13px; color: #2f9e44; font-weight: 600; text-align: center; padding: 8px; display: none; }
-  .btn-secondary.lang-active { border-color: #1971c2; color: #1971c2; background: #e7f1fb; }
-  .btn-delete-account { width: 100%; margin-top: 16px; padding: 12px 16px; min-height: 44px; background: #fff; border: 1.5px solid #ffc9c9; border-radius: 12px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; color: #c92a2a; transition: background 0.15s; }
-  .btn-delete-account:hover { background: #fff5f5; }
-  .btn-delete-account:disabled { opacity: 0.5; cursor: default; }
-  /* toggles de notificaciones */
-  .notif-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f1f3f5; }
-  .notif-row:last-child { border-bottom: none; }
-  .notif-label { font-size: 14px; font-weight: 600; color: #212529; }
-  .notif-desc { font-size: 12px; color: #868e96; margin-top: 2px; }
-  .switch { position: relative; width: 48px; height: 28px; flex: none; cursor: pointer; }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .switch .track { position: absolute; inset: 0; background: #dee2e6; border-radius: 9999px; transition: background 0.2s; }
-  .switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; background: #fff; border-radius: 9999px; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.06); transition: transform 0.2s; }
-  .switch input:checked + .track { background: #1971c2; }
-  .switch input:checked + .track::after { transform: translateX(20px); }
-  /* backend personalizado */
-  .backend-field { margin-bottom: 10px; }
-  .backend-field label { display: block; font-size: 12px; font-weight: 600; color: #495057; margin-bottom: 4px; }
-  .backend-field input { width: 100%; padding: 10px 12px; font-size: 13px; font-family: monospace; border: 1.5px solid #dee2e6; border-radius: 12px; box-sizing: border-box; }
-  .backend-field input:focus { outline: none; border-color: #1971c2; box-shadow: 0 0 0 3px #e7f5ff; }
-  .btn-primary { width: 100%; padding: 12px 16px; min-height: 48px; background: #1971c2; color: #fff; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
-  .btn-primary:active { transform: scale(0.98); background: #1864ab; }
-  .btn-primary:disabled { opacity: 0.6; cursor: default; }
-  .btn-secondary { width: 100%; margin-top: 8px; padding: 12px 16px; min-height: 48px; background: #fff; color: #495057; border: 1.5px solid #dee2e6; border-radius: 12px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
-  .status-line { font-size: 13px; padding: 10px 14px; border-radius: 12px; margin-top: 12px; display: none; }
-  .status-line.ok { display: block; background: #ebfbee; color: #2f9e44; }
-  .status-line.warn { display: block; background: #fff3bf; color: #e67700; }
-  .status-line.err { display: block; background: #fff5f5; color: #c92a2a; }
-  .backend-current { font-size: 13px; color: #495057; background: #f8f9fa; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
-  .backend-current b { color: #212529; }
-html, body { overflow-y: auto !important; }
-</style></head>
+  /* Layout only: the shell sidebar mount point. All surfaces and controls
+     come from the niv-dark.css settings kit; no page-private colors here. */
+  #chrome-sidebar { width: 300px; flex: none; position: sticky; top: var(--niv-inset); height: calc(100vh - (2 * var(--niv-inset))); }
+  @media (max-width: 900px) {
+    #chrome-sidebar { width: auto; position: static; height: min(560px, 80vh); }
+  }
+  .co-note { font-size: 12px; color: var(--niv-text-dim); margin: 0 0 12px; }
+  .co-loading { color: var(--niv-text-dim); font-size: 13px; }
+  html, body { overflow-y: auto !important; }
+</style>
+</head>
 <body>
 <div class="niv-shell">
-<aside class="niv-sidebar">
-  <div class="niv-company-card">
-    <div class="niv-company-top">
-      <div class="niv-company-avatar" id="co-company-avatar">N</div>
-      <div>
-        <div class="niv-company-name" id="co-company-name">…</div>
-        <div class="niv-company-ver">Nivelato v1.0</div>
-      </div>
-    </div>
-  </div>
-  <nav class="niv-nav">
-    <div class="niv-nav-group">
-      <div class="niv-nav-group-title">Mi cuenta</div>
-      <a class="niv-nav-btn" href="/account/settings">Mi cuenta</a>
-    </div>
-    <div class="niv-nav-group">
-      <div class="niv-nav-group-title">Compañía</div>
-      <a class="niv-nav-btn" href="/company/users">Usuarios</a>
-      <a class="niv-nav-btn active" href="/company/settings">Ajustes de la compañía</a>
-      <a class="niv-nav-btn" href="/company/updates">Updates</a>
-      <button class="niv-nav-btn soon" disabled>Billing<span class="soon-badge">soon</span></button>
-    </div>
-  </nav>
-</aside>
+<aside id="chrome-sidebar" aria-label="Nivelato sidebar"></aside>
 <div class="niv-main">
-  <a class="btn-back" href="/company" onclick="if (history.length > 1) { history.back(); return false; }">← Volver</a>
-  <h1 class="niv-page-title">Ajustes de la compañía</h1>
-  <div class="niv-page-sub">Configuración del taller. Solo usuarios con permiso de gestión.</div>
-  <div id="company-denied" style="display:none;" class="card">
-    <div class="niv-card-title">Sin acceso</div>
-    <div class="niv-card-desc">No tienes permiso para ver los ajustes de la compañía.</div>
+  <a class="niv-btn-back" href="/dashboard.html?view=home" data-i18n="back">← Volver</a>
+  <h1 class="niv-page-title" data-i18n="heading">Ajustes de la compañía</h1>
+  <div class="niv-page-sub" data-i18n="sub">Configuración del taller. Solo usuarios con permiso de gestión.</div>
+  <div id="company-denied" style="display:none;" class="niv-settings-card">
+    <div class="niv-card-title" data-i18n="deniedTitle">Sin acceso</div>
+    <div class="niv-card-desc" data-i18n="deniedDesc">No tienes permiso para ver los ajustes de la compañía.</div>
   </div>
   <div id="company-area">
 
-  <div class="niv-card" id="card-company-profile">
-    <div class="niv-card-title">Perfil de la compañía</div>
-    <div class="niv-card-desc">Nombre de la compañía como aparece en la app.</div>
-    <div class="niv-field"><label>Nombre de la compañía</label><input id="co-name" type="text" autocomplete="off" /></div>
-    <p id="co-profile-note" style="font-size:12px;color:#868e96;display:none;margin:0 0 12px;">Solo el dueño puede editar el perfil.</p>
-    <button class="niv-btn-pill niv-btn-primary" style="width:100%" id="btn-co-profile-save" onclick="saveCompanyProfile()">Guardar perfil</button>
-    <div class="status-line" id="co-profile-status"></div>
+  <div class="niv-settings-card" id="card-company-profile">
+    <div class="niv-card-title" data-i18n="profileTitle">Perfil de la compañía</div>
+    <div class="niv-card-desc" data-i18n="profileDesc">Nombre de la compañía como aparece en la app.</div>
+    <div class="niv-field"><label data-i18n="nameLabel">Nombre de la compañía</label><input id="co-name" type="text" autocomplete="off" /></div>
+    <p id="co-profile-note" class="co-note" style="display:none;" data-i18n="ownerOnlyProfile">Solo el dueño puede editar el perfil.</p>
+    <button class="niv-btn-pill niv-btn-primary" style="width:100%" id="btn-co-profile-save" onclick="saveCompanyProfile()" data-i18n="saveProfile">Guardar perfil</button>
+    <div class="niv-status-line" id="co-profile-status"></div>
   </div>
-  <div class="niv-card" id="card-quote-settings">
-    <div class="niv-card-title">Ajustes de cotización</div>
-    <div class="niv-card-desc">Valores por defecto al crear cotizaciones nuevas.</div>
-    <div class="niv-field"><label>Prefijo de folio</label><input id="co-prefijo" type="text" placeholder="NIV" autocomplete="off" /></div>
-    <div class="niv-field"><label>Tasa de IVU (0.115 = 11.5%)</label><input id="co-tasaivu" type="number" step="0.001" min="0" /></div>
-    <div class="niv-field"><label>Validez (días)</label><input id="co-validez" type="number" step="1" min="1" /></div>
-    <p id="co-quote-note" style="font-size:12px;color:#868e96;display:none;margin:0 0 12px;">Solo el dueño puede editar los ajustes.</p>
-    <button class="niv-btn-pill niv-btn-primary" style="width:100%" id="btn-co-quote-save" onclick="saveQuoteSettings()">Guardar ajustes</button>
-    <div class="status-line" id="co-quote-status"></div>
+  <div class="niv-settings-card" id="card-quote-settings">
+    <div class="niv-card-title" data-i18n="quoteTitle">Ajustes de cotización</div>
+    <div class="niv-card-desc" data-i18n="quoteDesc">Valores por defecto al crear cotizaciones nuevas.</div>
+    <div class="niv-field"><label data-i18n="prefixLabel">Prefijo de folio</label><input id="co-prefijo" type="text" placeholder="NIV" autocomplete="off" /></div>
+    <div class="niv-form-row">
+      <div class="niv-field"><label data-i18n="ivuLabel">Tasa de IVU (0.115 = 11.5%)</label><input id="co-tasaivu" type="number" step="0.001" min="0" /></div>
+      <div class="niv-field"><label data-i18n="validityLabel">Validez (días)</label><input id="co-validez" type="number" step="1" min="1" /></div>
+    </div>
+    <p id="co-quote-note" class="co-note" style="display:none;" data-i18n="ownerOnlyQuote">Solo el dueño puede editar los ajustes.</p>
+    <button class="niv-btn-pill niv-btn-primary" style="width:100%" id="btn-co-quote-save" onclick="saveQuoteSettings()" data-i18n="saveQuote">Guardar ajustes</button>
+    <div class="niv-status-line" id="co-quote-status"></div>
   </div>
-<div class="niv-card">
-      <div class="niv-card-title">API de 2FA</div>
-      <div class="niv-card-desc">Dominio o URL del API que el taller usa para el segundo factor de autenticación. Nivel de compañía, no por usuario.</div>
-      <div class="niv-field"><label>URL del API de 2FA</label><input id="tfa-url" type="url" placeholder="https://taller.example.com/api/2fa" autocomplete="off" /></div>
-      <button class="niv-btn-pill niv-btn-primary" style="width:100%" id="btn-tfa-save" onclick="saveTfaApi()">Guardar</button>
-      <div class="status-line" id="tfa-status"></div>
-    </div>
-    <div class="niv-card">
-      <div class="niv-card-title">Permisos de miembros</div>
-      <div class="niv-card-desc">Gestiona las capacidades de cada miembro del taller.</div>
-      <div id="permissions-list"><p style="color:#868e96;font-size:13px;">Cargando miembros…</p></div>
-      <div class="saved-msg" id="perm-saved">✓ Cambios guardados</div>
-    </div>
-
-    <div class="niv-card">
-      <div class="niv-card-title">Solicitudes de acceso</div>
-      <div class="niv-card-desc">Cuentas pendientes de aprobación para unirse al taller.</div>
-      <div id="requests-list"><p style="color:#868e96;font-size:13px;">Cargando solicitudes…</p></div>
-    </div>
-
-    <div class="card company-member-card" id="delete-requests-card" style="display:none;">
-      <div class="niv-card-title">🗑 Solicitudes de eliminación</div>
-      <div class="niv-card-desc">Usuarios que han solicitado eliminar su cuenta.</div>
-      <div id="delete-requests-list"><p style="color:#868e96;font-size:13px;">Cargando…</p></div>
-    </div>
+  <div class="niv-settings-card">
+    <div class="niv-card-title" data-i18n="tfaTitle">API de 2FA</div>
+    <div class="niv-card-desc" data-i18n="tfaDesc">Dominio o URL del API que el taller usa para el segundo factor de autenticación. Nivel de compañía, no por usuario.</div>
+    <div class="niv-field niv-field-mono"><label data-i18n="tfaUrlLabel">URL del API de 2FA</label><input id="tfa-url" type="url" placeholder="https://taller.example.com/api/2fa" autocomplete="off" /></div>
+    <button class="niv-btn-pill niv-btn-primary" style="width:100%" id="btn-tfa-save" onclick="saveTfaApi()" data-i18n="save">Guardar</button>
+    <div class="niv-status-line" id="tfa-status"></div>
+  </div>
+  <div class="niv-settings-card">
+    <div class="niv-card-title" data-i18n="permTitle">Permisos de miembros</div>
+    <div class="niv-card-desc" data-i18n="permDesc">Gestiona las capacidades de cada miembro del taller.</div>
+    <div id="permissions-list"><p class="co-loading" data-i18n="loadingMembers">Cargando miembros…</p></div>
+    <div class="niv-saved-msg" id="perm-saved" data-i18n="permSaved">✓ Cambios guardados</div>
+    <div class="niv-status-line" id="perm-status"></div>
+  </div>
+  <div class="niv-settings-card">
+    <div class="niv-card-title" data-i18n="requestsTitle">Solicitudes de acceso</div>
+    <div class="niv-card-desc" data-i18n="requestsDesc">Cuentas pendientes de aprobación para unirse al taller.</div>
+    <div id="requests-list"><p class="co-loading" data-i18n="loadingRequests">Cargando solicitudes…</p></div>
+    <div class="niv-status-line" id="requests-status"></div>
+  </div>
+  <div class="niv-settings-card" id="delete-requests-card" style="display:none;">
+    <div class="niv-card-title" data-i18n="deleteTitle">Solicitudes de eliminación</div>
+    <div class="niv-card-desc" data-i18n="deleteDesc">Usuarios que han solicitado eliminar su cuenta.</div>
+    <div id="delete-requests-list"><p class="co-loading" data-i18n="loading">Cargando…</p></div>
+    <div class="niv-status-line" id="delete-requests-status"></div>
+  </div>
 
   </div>
 </div><!-- /niv-main -->
 </div><!-- /niv-shell -->
+<script>
+/* Company sidebar from the shell module (target=company). The module owns
+   the company head, the panel lists and the manager gate for its doors;
+   this page carries no sidebar markup of its own. No topbar module is
+   mounted: at 900px and below the sidebar is the only navigation. */
+(function () {
+  var lang = 'es';
+  try { if (window.NivSettings) lang = window.NivSettings.getLang(); } catch (e) { /* default es */ }
+  window.__coLang = lang;
+  try {
+    window.__coSidebar = window.NivShell.mountSidebar('#chrome-sidebar', {
+      target: 'company', active: 'settings', lang: lang
+    });
+  } catch (e) { window.__coSidebar = null; }
+})();
+</script>
+<script>
+/* Referrer-aware back button, the nav-referrer.js pattern applied to this
+   page (that file's consume side only runs on /account/settings, so the
+   same pattern lives here until the platform file is generalized):
+   capture the page a click into Company settings came from, consume it
+   one-shot on load, honor only allowlisted same-origin paths and never
+   this page itself, and fall back to document.referrer, then to the
+   dashboard panel. No history.back(). */
+(function () {
+  var KEY = 'niv:company-settings-referrer';
+  var SETTINGS_PATH = '/company/settings';
+  var FALLBACK = '/dashboard.html?view=home';
+  var ALLOWED = ['/', '/dashboard.html', '/company/users', '/company/updates', '/account/settings', '/users', '/photo.html'];
+  function cleanTarget(raw) {
+    if (!raw) return null;
+    try {
+      var u = new URL(raw, window.location.origin);
+      if (u.origin !== window.location.origin) return null;
+      if (u.pathname === SETTINGS_PATH) return null;
+      if (ALLOWED.indexOf(u.pathname) === -1) return null;
+      return u.pathname + u.search;
+    } catch (e) { return null; }
+  }
+  function save() {
+    try { sessionStorage.setItem(KEY, window.location.pathname + window.location.search); } catch (e) { /* fallback chain still works */ }
+  }
+  window.nivSaveCompanySettingsReferrer = save;
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t || !t.closest) return;
+    var a = t.closest('a[href]');
+    if (!a) return;
+    var dest = null;
+    try { dest = new URL(a.getAttribute('href'), window.location.origin).pathname; } catch (err) { dest = null; }
+    if (dest === SETTINGS_PATH) save();
+  }, true);
+  if (window.location.pathname !== SETTINGS_PATH) return;
+  var target = null;
+  try {
+    var saved = sessionStorage.getItem(KEY);
+    if (saved) { sessionStorage.removeItem(KEY); target = cleanTarget(saved); }
+  } catch (e) { /* ignore */ }
+  if (!target) target = cleanTarget(document.referrer);
+  if (!target) target = FALLBACK;
+  var apply = function () {
+    var btn = document.querySelector('.niv-btn-back');
+    if (btn) btn.setAttribute('href', target);
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+  else apply();
+})();
+</script>
 <script type="module">
 import { auth, db } from '../firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
@@ -168,6 +166,111 @@ import { getDoc, doc, setDoc, updateDoc, collection, query, where, getDocs, serv
 import { makePermChecker } from '../permissions.js';
 import { PERM_DEFS, orgHasQuotes } from '../permissions.js';
 import { ensureFlowClaims } from '../geo.js';
+
+/* ------------------------------------------------------------------
+   Localization at the USER level: page chrome resolves from
+   NivSettings.getLang() and the niv:lang event (the signed-in user's
+   preference). No company language field is read for chrome, and this
+   page edits no company language field: where a company language
+   exists in the product, it only seeds NEW users at signup.
+   ------------------------------------------------------------------ */
+const STR = {
+  es: {
+    docTitle: 'Nivelato - Ajustes de la compañía',
+    back: '← Volver', heading: 'Ajustes de la compañía',
+    sub: 'Configuración del taller. Solo usuarios con permiso de gestión.',
+    deniedTitle: 'Sin acceso', deniedDesc: 'No tienes permiso para ver los ajustes de la compañía.',
+    profileTitle: 'Perfil de la compañía', profileDesc: 'Nombre de la compañía como aparece en la app.',
+    nameLabel: 'Nombre de la compañía', ownerOnlyProfile: 'Solo el dueño puede editar el perfil.',
+    saveProfile: 'Guardar perfil',
+    quoteTitle: 'Ajustes de cotización', quoteDesc: 'Valores por defecto al crear cotizaciones nuevas.',
+    prefixLabel: 'Prefijo de folio', ivuLabel: 'Tasa de IVU (0.115 = 11.5%)', validityLabel: 'Validez (días)',
+    ownerOnlyQuote: 'Solo el dueño puede editar los ajustes.', saveQuote: 'Guardar ajustes',
+    tfaTitle: 'API de 2FA',
+    tfaDesc: 'Dominio o URL del API que el taller usa para el segundo factor de autenticación. Nivel de compañía, no por usuario.',
+    tfaUrlLabel: 'URL del API de 2FA', save: 'Guardar',
+    permTitle: 'Permisos de miembros', permDesc: 'Gestiona las capacidades de cada miembro del taller.',
+    loadingMembers: 'Cargando miembros…', permSaved: '✓ Cambios guardados',
+    requestsTitle: 'Solicitudes de acceso', requestsDesc: 'Cuentas pendientes de aprobación para unirse al taller.',
+    loadingRequests: 'Cargando solicitudes…', noRequests: 'No hay solicitudes pendientes.',
+    approve: 'Aprobar', reject: 'Rechazar',
+    deleteTitle: 'Solicitudes de eliminación', deleteDesc: 'Usuarios que han solicitado eliminar su cuenta.',
+    loading: 'Cargando…', noDeleteRequests: 'No hay solicitudes de eliminación pendientes.',
+    deleteAccountBtn: 'Eliminar cuenta', requestedOn: 'Solicitado',
+    noName: 'Sin nombre',
+    role_owner: 'Dueño / Admin', role_cotizador: 'Cotizador', role_supervisor: 'Supervisor', role_medidor: 'Técnico medidor',
+    profileSaved: 'Perfil guardado.', profileReadErr: 'No se pudo leer el perfil: ', profileSaveErr: 'No se pudo guardar: ',
+    unknownErr: 'error desconocido', nameEmpty: 'El nombre no puede estar vacío.',
+    quoteSaved: 'Ajustes guardados.', quoteReadErr: 'No se pudieron leer los ajustes: ', quoteSaveErr: 'No se pudo guardar: ',
+    ivuErr: 'La tasa de IVU debe ser 0 o más (0.115 = 11.5%).', validityErr: 'La validez debe ser al menos 1 día.',
+    tfaSaved: 'API de 2FA guardada.', tfaSaveErr: 'No se pudo guardar. Intenta de nuevo.', tfaUrlErr: 'La URL debe empezar con https://',
+    permSaveErr: 'Error al guardar permiso: ', approveErr: 'Error al aprobar: ', rejectErr: 'Error al rechazar: ',
+    processErr: 'Error: ',
+    rejectConfirm: '¿Rechazar a este usuario? Su cuenta será eliminada.',
+    deleteRejectConfirm: '¿Rechazar esta solicitud? La cuenta permanecerá activa.',
+    deleteApproveConfirm: '⚠️ ¿Eliminar permanentemente esta cuenta? Se borrarán su perfil, sus mediciones y su acceso. Esta acción NO se puede deshacer.',
+    missingProfile: 'No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.'
+  },
+  en: {
+    docTitle: 'Nivelato - Company settings',
+    back: '← Back', heading: 'Company settings',
+    sub: 'Shop configuration. Only users with the management permission.',
+    deniedTitle: 'No access', deniedDesc: 'You do not have permission to view company settings.',
+    profileTitle: 'Company profile', profileDesc: 'Company name as it appears in the app.',
+    nameLabel: 'Company name', ownerOnlyProfile: 'Only the owner can edit the profile.',
+    saveProfile: 'Save profile',
+    quoteTitle: 'Quote settings', quoteDesc: 'Defaults used when creating new quotes.',
+    prefixLabel: 'Folio prefix', ivuLabel: 'IVU rate (0.115 = 11.5%)', validityLabel: 'Validity (days)',
+    ownerOnlyQuote: 'Only the owner can edit these settings.', saveQuote: 'Save settings',
+    tfaTitle: '2FA API',
+    tfaDesc: 'Domain or URL of the API the shop uses for the authentication second factor. Company level, not per user.',
+    tfaUrlLabel: '2FA API URL', save: 'Save',
+    permTitle: 'Member permissions', permDesc: 'Manage the capabilities of each shop member.',
+    loadingMembers: 'Loading members…', permSaved: '✓ Changes saved',
+    requestsTitle: 'Access requests', requestsDesc: 'Accounts pending approval to join the shop.',
+    loadingRequests: 'Loading requests…', noRequests: 'No pending requests.',
+    approve: 'Approve', reject: 'Reject',
+    deleteTitle: 'Deletion requests', deleteDesc: 'Users who have asked to delete their account.',
+    loading: 'Loading…', noDeleteRequests: 'No pending deletion requests.',
+    deleteAccountBtn: 'Delete account', requestedOn: 'Requested',
+    noName: 'No name',
+    role_owner: 'Owner / Admin', role_cotizador: 'Quoter', role_supervisor: 'Supervisor', role_medidor: 'Measurement tech',
+    profileSaved: 'Profile saved.', profileReadErr: 'Could not read the profile: ', profileSaveErr: 'Could not save: ',
+    unknownErr: 'unknown error', nameEmpty: 'The name cannot be empty.',
+    quoteSaved: 'Settings saved.', quoteReadErr: 'Could not read the settings: ', quoteSaveErr: 'Could not save: ',
+    ivuErr: 'The IVU rate must be 0 or more (0.115 = 11.5%).', validityErr: 'Validity must be at least 1 day.',
+    tfaSaved: '2FA API saved.', tfaSaveErr: 'Could not save. Try again.', tfaUrlErr: 'The URL must start with https://',
+    permSaveErr: 'Error saving permission: ', approveErr: 'Error approving: ', rejectErr: 'Error rejecting: ',
+    processErr: 'Error: ',
+    rejectConfirm: 'Reject this user? Their account will be deleted.',
+    deleteRejectConfirm: 'Reject this request? The account will stay active.',
+    deleteApproveConfirm: '⚠️ Permanently delete this account? Their profile, measurements and access will be erased. This action CANNOT be undone.',
+    missingProfile: 'We could not find your user profile. Sign in again to repair it.'
+  }
+};
+/* PERM_DEFS labels ship in Spanish from permissions.js; English pairs live here. */
+const PERM_LABELS_EN = {
+  viewDashboard: 'View dashboard', createMeasurements: 'Create measurements',
+  viewOwnMeasurements: 'View my measurements', editOwnMeasurements: 'Edit my measurements',
+  viewOthersMeasurements: 'View others measurements', editOthersMeasurements: 'Edit others measurements',
+  managePriceList: 'Manage price list', createQuotes: 'Create quotes',
+  approveQuotes: 'Approve quotes', userManagement: 'User management'
+};
+let currentLang = (window.__coLang === 'en' || window.__coLang === 'es') ? window.__coLang : 'es';
+const t = (key) => (STR[currentLang] && STR[currentLang][key]) || STR.es[key] || key;
+let _listsLoaded = false;
+
+function applyLang(lang) {
+  if (lang !== 'es' && lang !== 'en') return;
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.title = t('docTitle');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
+  if (window.__coSidebar && window.__coSidebar.setLang) { try { window.__coSidebar.setLang(lang); } catch (_) {} }
+  if (_listsLoaded) { renderPermissions(); renderRequests(); renderDeleteRequests(); }
+}
+document.addEventListener('niv:lang', (e) => { if (e && e.detail) applyLang(e.detail.lang); });
+
 let currentUser = null;
 let currentUserData = null;
 let orgMembers = [];
@@ -180,17 +283,33 @@ const escapeHtml = (s) => String(s ?? '')
   .replace(/'/g, '&#39;');
 let _companyOrgId = null;
 const _isOwner = () => !!(currentUserData && currentUserData.role === 'owner');
+
+/* Button safety: one in-flight registry for every action on the page.
+   A second press while an action runs is a no-op, controls stay disabled
+   until the action settles, and failures surface in a status line
+   instead of blocking the page. */
+const _inFlight = new Set();
+function beginAction(key, btn) {
+  if (_inFlight.has(key)) return false;
+  _inFlight.add(key);
+  if (btn) btn.disabled = true;
+  return true;
+}
+function endAction(key, btn) {
+  _inFlight.delete(key);
+  if (btn) btn.disabled = false;
+}
+function setCardButtons(card, disabled) {
+  if (!card) return;
+  card.querySelectorAll('button').forEach(b => { b.disabled = disabled; });
+}
+
 function coStatus(elId, kind, text) {
   const el = document.getElementById(elId);
   if (!el) return;
-  el.className = 'status-line ' + kind;
+  el.className = 'niv-status-line ' + kind;
   el.textContent = text;
 }
-
-// Tarjetas nuevas de company-settings: perfil de la compañía y ajustes de
-// cotización. Se insertan al inicio del panel (que en esta ruta ya contiene
-// las tarjetas de miembros). Edición solo para el dueño; los demás las ven
-// de solo lectura.
 
 async function loadCompanyProfile() {
   const owner = _isOwner();
@@ -198,7 +317,7 @@ async function loadCompanyProfile() {
     const snap = await getDoc(doc(db, 'orgs', _companyOrgId));
     document.getElementById('co-name').value = snap.exists() ? (snap.data().name || '') : '';
   } catch (e) {
-    coStatus('co-profile-status', 'err', 'No se pudo leer el perfil: ' + (e.message || 'error desconocido'));
+    coStatus('co-profile-status', 'err', t('profileReadErr') + (e.message || t('unknownErr')));
   }
   if (!owner) {
     document.getElementById('co-name').disabled = true;
@@ -208,18 +327,18 @@ async function loadCompanyProfile() {
 }
 
 window.saveCompanyProfile = async () => {
-  const name = document.getElementById('co-name').value.trim();
-  if (!name) { coStatus('co-profile-status', 'err', 'El nombre no puede estar vacío.'); return; }
   const btn = document.getElementById('btn-co-profile-save');
-  btn.disabled = true;
+  if (!beginAction('profile-save', btn)) return;
   try {
+    const name = document.getElementById('co-name').value.trim();
+    if (!name) { coStatus('co-profile-status', 'err', t('nameEmpty')); return; }
     // las reglas solo permiten al dueño actualizar el doc de la org
     await updateDoc(doc(db, 'orgs', _companyOrgId), { name });
-    coStatus('co-profile-status', 'ok', 'Perfil guardado.');
+    coStatus('co-profile-status', 'ok', t('profileSaved'));
   } catch (e) {
-    coStatus('co-profile-status', 'err', 'No se pudo guardar: ' + (e.message || 'error desconocido'));
+    coStatus('co-profile-status', 'err', t('profileSaveErr') + (e.message || t('unknownErr')));
   } finally {
-    btn.disabled = false;
+    endAction('profile-save', btn);
   }
 };
 
@@ -232,7 +351,7 @@ async function loadQuoteSettings() {
     document.getElementById('co-tasaivu').value = ajustes.tasaIVU != null ? ajustes.tasaIVU : 0.115;
     document.getElementById('co-validez').value = ajustes.validezDias != null ? ajustes.validezDias : 30;
   } catch (e) {
-    coStatus('co-quote-status', 'err', 'No se pudieron leer los ajustes: ' + (e.message || 'error desconocido'));
+    coStatus('co-quote-status', 'err', t('quoteReadErr') + (e.message || t('unknownErr')));
   }
   if (!owner) {
     ['co-prefijo', 'co-tasaivu', 'co-validez'].forEach(id => { document.getElementById(id).disabled = true; });
@@ -242,60 +361,60 @@ async function loadQuoteSettings() {
 }
 
 window.saveQuoteSettings = async () => {
-  const prefijo = document.getElementById('co-prefijo').value.trim();
-  const tasa = Number(document.getElementById('co-tasaivu').value);
-  const validez = Math.round(Number(document.getElementById('co-validez').value));
-  if (!Number.isFinite(tasa) || tasa < 0) { coStatus('co-quote-status', 'err', 'La tasa de IVU debe ser 0 o más (0.115 = 11.5%).'); return; }
-  if (!Number.isFinite(validez) || validez < 1) { coStatus('co-quote-status', 'err', 'La validez debe ser al menos 1 día.'); return; }
   const btn = document.getElementById('btn-co-quote-save');
-  btn.disabled = true;
+  if (!beginAction('quote-save', btn)) return;
   try {
+    const prefijo = document.getElementById('co-prefijo').value.trim();
+    const tasa = Number(document.getElementById('co-tasaivu').value);
+    const validez = Math.round(Number(document.getElementById('co-validez').value));
+    if (!Number.isFinite(tasa) || tasa < 0) { coStatus('co-quote-status', 'err', t('ivuErr')); return; }
+    if (!Number.isFinite(validez) || validez < 1) { coStatus('co-quote-status', 'err', t('validityErr')); return; }
     // notación de puntos: no pisa otros campos que pueda tener ajustes
     await updateDoc(doc(db, 'companies', _companyOrgId), {
       'ajustes.prefijoFolio': prefijo,
       'ajustes.tasaIVU': tasa,
       'ajustes.validezDias': validez,
     });
-    coStatus('co-quote-status', 'ok', 'Ajustes guardados.');
+    coStatus('co-quote-status', 'ok', t('quoteSaved'));
   } catch (e) {
-    coStatus('co-quote-status', 'err', 'No se pudo guardar: ' + (e.message || 'error desconocido'));
+    coStatus('co-quote-status', 'err', t('quoteSaveErr') + (e.message || t('unknownErr')));
   } finally {
-    btn.disabled = false;
+    endAction('quote-save', btn);
   }
 };
 
+/* The 2FA API config and the security requirements live on the same org
+   doc (orgs/{orgId}): twoFactorApiUrl plus the requirement flags
+   requireTwoFactor and requireLoginNotifications, loaded in one read. */
 async function loadTfaApi(orgId) {
   try {
     const snap = await getDoc(doc(db, 'orgs', orgId));
-    const url = snap.data()?.twoFactorApiUrl || '';
-    document.getElementById('tfa-url').value = url;
+    const data = snap.data() || {};
+    document.getElementById('tfa-url').value = data.twoFactorApiUrl || '';
   } catch (_) { /* best effort */ }
 }
 
-function tfaStatus(kind, text) {
-  const el = document.getElementById('tfa-status');
-  el.className = 'status-line ' + kind;
-  el.textContent = text;
-}
+function tfaStatus(kind, text) { coStatus('tfa-status', kind, text); }
 
 window.saveTfaApi = async () => {
-  const url = document.getElementById('tfa-url').value.trim();
-  if (url && !/^https?:\/\//i.test(url)) {
-    tfaStatus('err', 'La URL debe empezar con https://');
-    return;
-  }
   const btn = document.getElementById('btn-tfa-save');
-  btn.disabled = true;
+  if (!beginAction('tfa-save', btn)) return;
   try {
+    const url = document.getElementById('tfa-url').value.trim();
+    if (url && !/^https?:\/\//i.test(url)) {
+      tfaStatus('err', t('tfaUrlErr'));
+      return;
+    }
     await updateDoc(doc(db, 'orgs', currentUserData.orgId), { twoFactorApiUrl: url });
-    tfaStatus('ok', 'API de 2FA guardada.');
+    tfaStatus('ok', t('tfaSaved'));
   } catch (e) {
     console.error('[Nivelato] save 2FA API failed:', e);
-    tfaStatus('err', 'No se pudo guardar. Intenta de nuevo.');
+    tfaStatus('err', t('tfaSaveErr'));
   } finally {
-    btn.disabled = false;
+    endAction('tfa-save', btn);
   }
 };
+
 
 async function loadOrgMembers(orgId) {
   const q = query(collection(db, 'users'), where('orgId', '==', orgId));
@@ -309,15 +428,15 @@ function renderPermissions() {
   const visiblePerms = orgHasQuotes(currentUserData) ? PERM_DEFS : PERM_DEFS.filter(p => !['managePriceList', 'createQuotes', 'approveQuotes'].includes(p.key));
   container.innerHTML = orgMembers.map(m => {
     const perms = m.permissions || {};
-    const roleLabel = { owner: 'Dueño / Admin', cotizador: 'Cotizador', supervisor: 'Supervisor', medidor: 'Técnico medidor' }[m.role] || m.role || '—';
+    const roleLabel = t('role_' + m.role) !== ('role_' + m.role) ? t('role_' + m.role) : (m.role || '-');
     return `
-      <div class="perm-member" data-uid="${escapeHtml(m.uid)}">
-        <div class="perm-member-header">${escapeHtml(m.name) || 'Sin nombre'} <span class="perm-member-role">${escapeHtml(roleLabel)}</span></div>
-        <div class="perm-grid">
+      <div class="niv-perm-member" data-uid="${escapeHtml(m.uid)}">
+        <div class="niv-perm-member-header">${escapeHtml(m.name) || escapeHtml(t('noName'))} <span class="niv-perm-member-role">${escapeHtml(roleLabel)}</span></div>
+        <div class="niv-perm-grid">
           ${visiblePerms.map(p => `
             <label>
-              <input type="checkbox" class="perm-check" data-perm="${p.key}" ${!!perms[p.key] ? 'checked' : ''} ${(m.role === 'owner' || (window._currentUser && m.uid === window._currentUser.uid)) ? 'disabled' : ''} />
-              ${p.label}
+              <input type="checkbox" class="perm-check" data-perm="${p.key}" ${!!perms[p.key] ? 'checked' : ''} ${(m.role === 'owner' || (currentUser && m.uid === currentUser.uid)) ? 'disabled' : ''} />
+              ${escapeHtml(currentLang === 'en' ? (PERM_LABELS_EN[p.key] || p.label) : p.label)}
             </label>
           `).join('')}
         </div>
@@ -325,48 +444,59 @@ function renderPermissions() {
     `;
   }).join('');
 
-  // attach change listeners
   container.querySelectorAll('.perm-check:not([disabled])').forEach(cb => {
     cb.addEventListener('change', async (e) => {
-      const memberEl = e.target.closest('.perm-member');
+      const memberEl = e.target.closest('.niv-perm-member');
       const uid = memberEl.dataset.uid;
       const permKey = e.target.dataset.perm;
       const checked = e.target.checked;
+      const key = 'perm:' + uid + ':' + permKey;
+      if (!beginAction(key, null)) { e.target.checked = !checked; return; }
+      e.target.disabled = true;
       try {
         const userRef = doc(db, 'users', uid);
         await updateDoc(userRef, { [`permissions.${permKey}`]: checked });
-        document.getElementById('perm-saved').style.display = 'block';
-        setTimeout(() => document.getElementById('perm-saved').style.display = 'none', 2500);
+        const saved = document.getElementById('perm-saved');
+        saved.classList.add('show');
+        setTimeout(() => saved.classList.remove('show'), 2500);
       } catch(err) {
-        alert('Error al guardar permiso: ' + err.message);
+        coStatus('perm-status', 'err', t('permSaveErr') + err.message);
         e.target.checked = !checked; // revert
+      } finally {
+        e.target.disabled = false;
+        endAction(key, null);
       }
     });
   });
 }
 
-async function loadRequests(orgId) {
+function renderRequests() {
   const container = document.getElementById('requests-list');
   const pending = orgMembers.filter(m => m.disabled === true);
   if (pending.length === 0) {
-    container.innerHTML = '<p style="color:#868e96;font-size:13px;">No hay solicitudes pendientes.</p>';
+    container.innerHTML = '<p class="co-loading">' + escapeHtml(t('noRequests')) + '</p>';
     return;
   }
   container.innerHTML = pending.map(m => `
-    <div class="request-card" data-uid="${escapeHtml(m.uid)}">
+    <div class="niv-request-card" data-uid="${escapeHtml(m.uid)}">
       <div>
-        <div class="request-name">${escapeHtml(m.name) || 'Sin nombre'}</div>
-        <div class="request-email">${escapeHtml(m.email) || ''}</div>
+        <div class="niv-request-name">${escapeHtml(m.name) || escapeHtml(t('noName'))}</div>
+        <div class="niv-request-email">${escapeHtml(m.email) || ''}</div>
       </div>
-      <div class="request-actions">
-        <button class="btn-sm approve" onclick="approveRequest('${escapeHtml(m.uid)}')">Aprobar</button>
-        <button class="btn-sm reject" onclick="rejectRequest('${escapeHtml(m.uid)}')">Rechazar</button>
+      <div class="niv-request-actions">
+        <button class="niv-btn-sm approve" onclick="approveRequest('${escapeHtml(m.uid)}', this)">${escapeHtml(t('approve'))}</button>
+        <button class="niv-btn-sm reject" onclick="rejectRequest('${escapeHtml(m.uid)}', this)">${escapeHtml(t('reject'))}</button>
       </div>
     </div>
   `).join('');
 }
 
-window.approveRequest = async (uid) => {
+async function loadRequests(orgId) { renderRequests(); }
+
+window.approveRequest = async (uid, btn) => {
+  const card = btn ? btn.closest('.niv-request-card') : document.querySelector(`.niv-request-card[data-uid="${uid}"]`);
+  if (!beginAction('approve:' + uid, null)) return;
+  setCardButtons(card, true);
   try {
     const m = orgMembers.find(x => x.uid === uid);
     const patch = { disabled: false };
@@ -387,57 +517,71 @@ window.approveRequest = async (uid) => {
     }
     await updateDoc(doc(db, 'users', uid), patch);
     if (invRef) { try { await updateDoc(invRef, { status: 'accepted' }); } catch (_) {} }
-    // remove the card from DOM
-    const card = document.querySelector(`.request-card[data-uid="${uid}"]`);
     if (card) card.remove();
-    // also update in-memory
     if (m) {
       m.disabled = false;
       if (patch.role) m.role = patch.role;
       if (patch.permissions) m.permissions = patch.permissions;
     }
+    if (!document.querySelector('#requests-list .niv-request-card')) renderRequests();
   } catch(e) {
-    alert('Error al aprobar: ' + e.message);
+    coStatus('requests-status', 'err', t('approveErr') + e.message);
+    setCardButtons(card, false);
+  } finally {
+    endAction('approve:' + uid, null);
   }
 };
 
-window.rejectRequest = async (uid) => {
-  if (!confirm('¿Rechazar a este usuario? Su cuenta será eliminada.')) return;
+window.rejectRequest = async (uid, btn) => {
+  if (!confirm(t('rejectConfirm'))) return;
+  const card = btn ? btn.closest('.niv-request-card') : document.querySelector(`.niv-request-card[data-uid="${uid}"]`);
+  if (!beginAction('reject:' + uid, null)) return;
+  setCardButtons(card, true);
   try {
     // For real rejection we'd delete the user doc; for now just disable permanently
     await updateDoc(doc(db, 'users', uid), { disabled: 'rejected' });
-    const card = document.querySelector(`.request-card[data-uid="${uid}"]`);
     if (card) card.remove();
+    if (!document.querySelector('#requests-list .niv-request-card')) renderRequests();
   } catch(e) {
-    alert('Error al rechazar: ' + e.message);
+    coStatus('requests-status', 'err', t('rejectErr') + e.message);
+    setCardButtons(card, false);
+  } finally {
+    endAction('reject:' + uid, null);
   }
 };
 
-async function loadDeleteRequests() {
+function renderDeleteRequests() {
   const container = document.getElementById('delete-requests-list');
   const drs = orgMembers.filter(m => !!m.deleteRequestedAt);
   document.getElementById('delete-requests-card').style.display = drs.length ? 'block' : 'none';
   if (drs.length === 0) {
-    container.innerHTML = '<p style="color:#868e96;font-size:13px;">No hay solicitudes de eliminación pendientes.</p>';
+    container.innerHTML = '<p class="co-loading">' + escapeHtml(t('noDeleteRequests')) + '</p>';
     return;
   }
+  const locale = currentLang === 'en' ? 'en-US' : 'es-PR';
   container.innerHTML = drs.map(m => `
-    <div class="request-card" data-uid="${escapeHtml(m.uid)}">
+    <div class="niv-request-card" data-uid="${escapeHtml(m.uid)}">
       <div>
-        <div class="request-name">${escapeHtml(m.name) || 'Sin nombre'}</div>
-        <div class="request-email">${escapeHtml(m.email) || ''} · Solicitado ${escapeHtml(new Date(m.deleteRequestedAt).toLocaleDateString('es-PR'))}</div>
+        <div class="niv-request-name">${escapeHtml(m.name) || escapeHtml(t('noName'))}</div>
+        <div class="niv-request-email">${escapeHtml(m.email) || ''} · ${escapeHtml(t('requestedOn'))} ${escapeHtml(new Date(m.deleteRequestedAt).toLocaleDateString(locale))}</div>
       </div>
-      <div class="request-actions">
-        <button class="btn-sm approve" onclick="processDeleteRequest('${escapeHtml(m.uid)}', true)">Eliminar cuenta</button>
-        <button class="btn-sm reject" onclick="processDeleteRequest('${escapeHtml(m.uid)}', false)">Rechazar</button>
+      <div class="niv-request-actions">
+        <button class="niv-btn-sm approve" onclick="processDeleteRequest('${escapeHtml(m.uid)}', true, this)">${escapeHtml(t('deleteAccountBtn'))}</button>
+        <button class="niv-btn-sm reject" onclick="processDeleteRequest('${escapeHtml(m.uid)}', false, this)">${escapeHtml(t('reject'))}</button>
       </div>
     </div>
   `).join('');
 }
 
-window.processDeleteRequest = async (uid, approved) => {
-  if (!approved && !confirm('¿Rechazar esta solicitud? La cuenta permanecerá activa.')) return;
-  if (approved && !confirm('⚠️ ¿Eliminar permanentemente esta cuenta? Se borrarán su perfil, sus mediciones y su acceso. Esta acción NO se puede deshacer.')) return;
+async function loadDeleteRequests() { renderDeleteRequests(); }
+
+window.processDeleteRequest = async (uid, approved, btn) => {
+  if (!approved && !confirm(t('deleteRejectConfirm'))) return;
+  if (approved && !confirm(t('deleteApproveConfirm'))) return;
+  const card = btn ? btn.closest('.niv-request-card') : document.querySelector(`#delete-requests-list .niv-request-card[data-uid="${uid}"]`);
+  const key = 'delete:' + uid;
+  if (!beginAction(key, null)) return;
+  setCardButtons(card, true);
   try {
     if (approved) {
       // Admin approval: stamps deleteApprovedAt. The processAccountDeletion
@@ -449,15 +593,17 @@ window.processDeleteRequest = async (uid, approved) => {
       // Reject: clear the request, the account stays active.
       await updateDoc(doc(db, 'users', uid), { deleteRequestedAt: null });
     }
-    const card = document.querySelector(`#delete-requests-list .request-card[data-uid="${uid}"]`);
     if (card) card.remove();
-    // recheck if empty
-    if (!document.querySelector('#delete-requests-list .request-card')) {
+    if (!document.querySelector('#delete-requests-list .niv-request-card')) {
       document.getElementById('delete-requests-card').style.display = 'none';
-      document.getElementById('delete-requests-list').innerHTML = '<p style="color:#868e96;font-size:13px;">No hay solicitudes de eliminación pendientes.</p>';
+      document.getElementById('delete-requests-list').innerHTML = '<p class="co-loading">' + escapeHtml(t('noDeleteRequests')) + '</p>';
     }
   } catch(e) {
-    alert('Error: ' + e.message);
+    coStatus('delete-requests-status', 'err', t('processErr') + e.message);
+    setCardButtons(card, false);
+    document.getElementById('delete-requests-card').style.display = 'block';
+  } finally {
+    endAction(key, null);
   }
 };
 
@@ -470,7 +616,7 @@ onAuthStateChanged(auth, async (user) => {
   const userSnap = await getDoc(doc(db, 'users', user.uid));
   if (window.applyCompanyTheme) { try { window.applyCompanyTheme(userSnap.data()); } catch (_) {} }
   if (!userSnap.exists()) {
-    alert('No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.');
+    alert(t('missingProfile'));
     window.location.href = 'https://login.nivelatolabs.com/?missingProfile=1';
     return;
   }
@@ -486,7 +632,9 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
+  applyLang(currentLang);
   await loadOrgMembers(orgId);
+  _listsLoaded = true;
   renderPermissions();
   await loadRequests(orgId);
   await loadDeleteRequests();
@@ -497,14 +645,8 @@ onAuthStateChanged(auth, async (user) => {
   } else {
     await loadQuoteSettings();
   }
-  // sidebar company card
-  try {
-    const _cs = await getDoc(doc(db, 'orgs', orgId));
-    const _cn = _cs.data()?.name || orgId;
-    document.getElementById('co-company-name').textContent = _cn;
-    document.getElementById('co-company-avatar').textContent =
-      _cn.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
-  } catch (_) { /* keep placeholder */ }
+  // The sidebar module owns the company head now (name, avatar, version):
+  // it reads the org doc itself, so this page no longer fills it in.
 });
 
 </script>
