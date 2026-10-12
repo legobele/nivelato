@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0e0e10" />
+<link rel="icon" href="/icon-192.png" />
+<title>Nivelato - Topbar</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/niv-dark.css" />
+<style>
+  /* Static top bar module. The sliding detent indicator belongs to the
+     dashboard shell and stays there; this module renders the plain
+     .niv-topbar with the active pill filled, exactly as users.html and
+     updates.html render it. Tokens and metrics mirror dashboard.html. */
+  :root { --niv-topbar-h: 60px; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--niv-bg);
+    color: var(--niv-text);
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .niv-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: var(--niv-topbar-h);
+    padding: 10px 32px;
+    box-sizing: border-box;
+    background: var(--niv-bg, #0e0e10);
+    border-bottom: 1px solid var(--niv-border-soft, rgba(255, 255, 255, 0.14));
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  .niv-topbar-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0 auto;
+    background: var(--niv-surface-2, #1e1e22);
+    border: 1px solid var(--niv-border-soft, rgba(255, 255, 255, 0.14));
+    border-radius: 999px;
+    padding: 4px;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .niv-topbar-tabs::-webkit-scrollbar { display: none; }
+  .niv-tab {
+    border: none;
+    background: transparent;
+    color: var(--niv-text-dim, #a7a7ad);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  a.niv-tab:hover { color: var(--niv-text, #f5f5f7); }
+  .niv-tab.active {
+    background: linear-gradient(135deg, #0ea5a5, #1971c2);
+    color: #fff;
+    cursor: default;
+  }
+  .niv-topbar-project {
+    position: absolute;
+    right: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--niv-text, #f5f5f7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 34vw;
+  }
+  header.niv-topbar { position: relative; }
+  @media (max-width: 900px) {
+    .niv-topbar { padding: 10px 16px; }
+    .niv-tab { padding: 8px 13px; }
+    .niv-topbar-project { max-width: 22vw; font-size: 13px; right: 16px; }
+  }
+</style>
+</head>
+<body>
+<header class="niv-topbar" id="niv-topbar">
+  <nav class="niv-topbar-tabs" aria-label="Dashboard">
+    <a class="niv-tab" href="/dashboard.html?view=home" target="_top" data-nav-key="home"><span data-i18n="home">Panel</span></a>
+    <a class="niv-tab" href="/dashboard.html?view=projects" target="_top" data-nav-key="projects"><span data-i18n="projects">Proyectos</span></a>
+    <a class="niv-tab" href="/dashboard.html?view=notifications" target="_top" data-nav-key="notifications"><span data-i18n="notifications">Notificaciones</span></a>
+    <a class="niv-tab" href="/dashboard.html?view=users" target="_top" data-nav-key="users"><span data-i18n="users">Usuarios</span></a>
+  </nav>
+  <div class="niv-topbar-project" id="niv-topbar-project"></div>
+</header>
+
+<script type="module">
+/* modules/topbar.html: static top bar module. No Firebase, no data of
+   its own: the current project label arrives via ?project= or the
+   niv:init message (project field, a topbar only extension of init).
+   Contract: see modules/README.md. */
+const params = new URLSearchParams(window.location.search);
+const TARGET = 'topbar';
+
+const STRINGS = {
+  es: { title: 'Nivelato', home: 'Panel', projects: 'Proyectos', notifications: 'Notificaciones', users: 'Usuarios' },
+  en: { title: 'Nivelato', home: 'Dashboard', projects: 'Projects', notifications: 'Notifications', users: 'Users' }
+};
+function readKey(name) {
+  try {
+    const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    if (m) return decodeURIComponent(m[1]);
+  } catch (_) { /* cookies unavailable */ }
+  try { return window.localStorage.getItem(name); } catch (_) { return null; }
+}
+let lang = (() => {
+  const q = params.get('lang');
+  if (q === 'es' || q === 'en') return q;
+  return readKey('nivelato-login-lang') === 'en' ? 'en' : 'es';
+})();
+const L = (key) => (STRINGS[lang] && STRINGS[lang][key]) || STRINGS.es[key] || key;
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = L('title');
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    el.textContent = L(el.getAttribute('data-i18n'));
+  });
+  const nav = document.querySelector('.niv-topbar-tabs');
+  if (nav) nav.setAttribute('aria-label', L('home'));
+}
+
+const ACTIVE_KEYS = ['home', 'projects', 'notifications', 'users'];
+function setActive(key) {
+  if (!ACTIVE_KEYS.includes(key)) return;
+  document.querySelectorAll('.niv-tab[data-nav-key]').forEach((el) => {
+    const on = el.getAttribute('data-nav-key') === key;
+    el.classList.toggle('active', on);
+    if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
+  });
+}
+function setProject(name) {
+  const el = document.getElementById('niv-topbar-project');
+  if (el) el.textContent = name == null ? '' : String(name);
+}
+
+function post(msg) {
+  if (window.parent === window) return;
+  try { window.parent.postMessage(Object.assign({ niv: 1 }, msg), window.location.origin); } catch (_) { /* no host */ }
+}
+let resizeQueued = false;
+function reportHeight() {
+  if (resizeQueued) return;
+  resizeQueued = true;
+  requestAnimationFrame(() => {
+    resizeQueued = false;
+    const bar = document.getElementById('niv-topbar');
+    const h = bar ? Math.ceil(bar.getBoundingClientRect().height) : 0;
+    if (h > 0) post({ type: 'niv:resize', height: h });
+  });
+}
+
+document.querySelectorAll('.niv-tab[data-nav-key]').forEach((a) => {
+  a.addEventListener('click', (ev) => {
+    if (a.classList.contains('active')) { ev.preventDefault(); return; }
+    post({ type: 'niv:nav', href: a.getAttribute('href') });
+    /* Embedded: the host performs the top frame navigation. Standalone:
+       target=_top on the anchor is the fallback. */
+    if (window.parent !== window) ev.preventDefault();
+  });
+});
+
+window.addEventListener('message', (ev) => {
+  if (ev.origin !== window.location.origin) return;
+  const d = ev.data;
+  if (!d || d.niv !== 1 || d.type !== 'niv:init') return;
+  if (d.lang === 'es' || d.lang === 'en') { lang = d.lang; applyLang(); }
+  if (d.active) setActive(d.active);
+  if (d.project !== undefined) setProject(d.project);
+  reportHeight();
+});
+
+applyLang();
+setActive(params.get('active') || 'home');
+if (params.get('project')) setProject(params.get('project'));
+post({ type: 'niv:ready', target: TARGET });
+reportHeight();
+window.addEventListener('resize', reportHeight);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(reportHeight).catch(() => {});
+</script>
+</body>
+</html>
