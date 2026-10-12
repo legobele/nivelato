@@ -6,6 +6,19 @@
 //   app_updates/1.0    — the update descriptor the app shows in its banner
 //   app_updates/latest — pointer the app polls (public read via firestore.rules)
 //
+// Descriptor text fields (app_updates/{version}):
+//   notes               : legacy release notes text. Still the fallback the
+//                         updates page shows when `description` is empty.
+//   description         : user-visible short description, shown by default
+//                         (no expansion needed). Reserved; '' for now.
+//   extendedDescription : user-visible extended description, revealed by the
+//                         updates page's "Show more" toggle. Reserved; ''.
+//   internalNotes       : INTERNAL ONLY. Never rendered by any client (the
+//                         updates page does not read this field). Reserved;
+//                         '' for now. Note: app_updates docs are public-read
+//                         per firestore.rules, so treat this as
+//                         internal-by-convention, never confidential.
+//
 // Run on the laptop that has the firebase CLI logged in:
 //   node tools/seed-app-updates.js
 //
@@ -107,6 +120,9 @@ async function main() {
     title: 'Nivelato v1.0',
     notes: 'Company data migration: version stamping, user count recompute, '
       + 'permission and notification backfills. No data is deleted.',
+    description: '',
+    extendedDescription: '',
+    internalNotes: '',
     requiresMigration: true,
     createdAt: now,
   });

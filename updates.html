@@ -185,6 +185,17 @@
   .notes-box p { margin: 0 0 12px; }
   .notes-box p:last-child { margin-bottom: 0; }
   .notes-box a { color: var(--text); text-decoration: underline; word-break: break-all; }
+  .notes-more { margin-top: 4px; }
+  .notes-more-btn {
+    display: inline;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: var(--text);
+    text-decoration: underline;
+    cursor: pointer;
+  }
   .btn {
     display: block;
     width: 100%;
@@ -405,12 +416,24 @@ function ownerButtons(html) {
   return isOwner() ? html : '<p class="note-owner">Only org owners can apply updates. Contact an owner to update.</p>';
 }
 
+// User-visible short description for an update descriptor: the reserved
+// `description` field wins; legacy `notes` is the fallback so descriptors
+// seeded before the field existed render exactly as before. The reserved
+// `extendedDescription` is only revealed by the "Show more" toggle in
+// renderAvailable. `internalNotes` is internal-only and is never read here.
+function visibleDescription(u) {
+  const d = String((u && u.description) || '').trim();
+  if (d) return d;
+  return String((u && u.notes) || '');
+}
+
 // ---- state (a): update available ----
 function renderAvailable() {
   const u = updateDocData || {};
   const version = escapeHtml(u.version || (latestDoc && latestDoc.version) || '');
   const title = escapeHtml(u.title || ('Nivelato v' + version));
-  const notes = escapeHtml(u.notes || 'This update includes new features and improvements.');
+  const notes = escapeHtml(visibleDescription(u) || 'This update includes new features and improvements.');
+  const extended = escapeHtml(String(u.extendedDescription || '').trim());
   card.innerHTML = `
     <div class="card-top">
       <div class="mini-logo">N</div>
@@ -418,6 +441,9 @@ function renderAvailable() {
     </div>
     <div class="notes-box">
       <p>${notes}</p>
+      ${extended ? `
+      <div class="notes-more" id="notes-more" hidden><p>${extended}</p></div>
+      <p><button type="button" class="notes-more-btn" id="btn-show-more">Show more</button></p>` : ''}
       <p>For information about the security of updates see <a href="https://${SECURITY_URL}" target="_blank" rel="noopener">${SECURITY_URL}</a>.</p>
     </div>
     ${ownerButtons(`
@@ -430,6 +456,15 @@ function renderAvailable() {
   const btnTonight = document.getElementById('btn-update-tonight');
   if (btnNow) btnNow.addEventListener('click', onUpdateNow);
   if (btnTonight) btnTonight.addEventListener('click', onUpdateTonight);
+  const btnMore = document.getElementById('btn-show-more');
+  const notesMore = document.getElementById('notes-more');
+  if (btnMore && notesMore) {
+    btnMore.addEventListener('click', () => {
+      const opening = notesMore.hidden;
+      notesMore.hidden = !opening;
+      btnMore.textContent = opening ? 'Show less' : 'Show more';
+    });
+  }
 }
 
 // ---- state (b): applying ----
@@ -437,7 +472,7 @@ function renderApplying(stepLabel, pct) {
   const u = updateDocData || {};
   const version = escapeHtml(u.version || (latestDoc && latestDoc.version) || '');
   const title = escapeHtml(u.title || ('Nivelato v' + version));
-  const notes = escapeHtml(u.notes || '');
+  const notes = escapeHtml(visibleDescription(u));
   card.innerHTML = `
     <div class="card-top">
       <div class="mini-logo">N</div>
@@ -496,7 +531,7 @@ function renderScheduled() {
   const u = updateDocData || {};
   const version = escapeHtml(u.version || (latestDoc && latestDoc.version) || '');
   const title = escapeHtml(u.title || ('Nivelato v' + version));
-  const notes = escapeHtml(u.notes || '');
+  const notes = escapeHtml(visibleDescription(u));
   const pend = orgData.pendingUpdate || {};
   const scheduledVer = escapeHtml(pend.version || version);
   card.innerHTML = `
@@ -631,5 +666,6 @@ onAuthStateChanged(auth, async (user) => {
     });
 });
 </script>
+<script src="./press-yaoi.js"></script>
 </body>
 </html>

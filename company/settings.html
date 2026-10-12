@@ -369,13 +369,34 @@ async function loadRequests(orgId) {
 
 window.approveRequest = async (uid) => {
   try {
-    await updateDoc(doc(db, 'users', uid), { disabled: false });
+    const m = orgMembers.find(x => x.uid === uid);
+    const patch = { disabled: false };
+    // Add User invite: if this member was invited (orgs/{orgId}/invites),
+    // the approval also applies the invite's role + permission overrides
+    // and closes the invite out. flowGate normally applies invites at
+    // first sign-in; this is the same application on the manual path.
+    let invRef = null;
+    if (m && m.email && m.orgId) {
+      const ref = doc(db, 'orgs', m.orgId, 'invites', String(m.email).trim().toLowerCase());
+      const invSnap = await getDoc(ref);
+      if (invSnap.exists() && invSnap.data().status === 'pending') {
+        const inv = invSnap.data();
+        if (['medidor', 'supervisor', 'cotizador'].includes(inv.role)) patch.role = inv.role;
+        if (inv.permissions && typeof inv.permissions === 'object') patch.permissions = inv.permissions;
+        invRef = ref;
+      }
+    }
+    await updateDoc(doc(db, 'users', uid), patch);
+    if (invRef) { try { await updateDoc(invRef, { status: 'accepted' }); } catch (_) {} }
     // remove the card from DOM
     const card = document.querySelector(`.request-card[data-uid="${uid}"]`);
     if (card) card.remove();
     // also update in-memory
-    const m = orgMembers.find(x => x.uid === uid);
-    if (m) m.disabled = false;
+    if (m) {
+      m.disabled = false;
+      if (patch.role) m.role = patch.role;
+      if (patch.permissions) m.permissions = patch.permissions;
+    }
   } catch(e) {
     alert('Error al aprobar: ' + e.message);
   }

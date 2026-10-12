@@ -452,6 +452,16 @@
       display: block;
     }
     .main-panel { flex: 1; min-width: 0; }
+    /* Company select: the companies list is a scroll area and the panel's
+       trailing action (Add personal account) stays pinned to the bottom. */
+    .main-panel.pinned-panel { display: flex; flex-direction: column; min-height: 0; }
+    #company-select-list.scroll-region {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+    .pinned-action { flex: none; margin-top: 16px; margin-bottom: 0; }
     .accounts-section { margin-bottom: 20px; }
     .accounts-title {
       font-size: 12px;
@@ -745,7 +755,7 @@
         select_language: 'Seleccionar idioma',
         change_language: 'Cambiar idioma',
         company_details: 'Detalles de la empresa',
-        qgc_only_msg: 'Solo puedes iniciar sesión en Quality Glazing Contractors ya que estás en Puerto Rico. También puedes usar una cuenta personal (solo Pro)',
+        qgc_only_msg: 'Solo puedes iniciar sesión en Quality Glazing Contractors ya que estás en Puerto Rico. También puedes usar una cuenta personal',
         tagline_qgc_brand: 'Medidas de campo, niveladas.',
         account_kind_qgc: 'Quality Glass - Trabajo',
         account_kind_work: 'Trabajo',
@@ -854,7 +864,7 @@
         select_language: 'Select language',
         change_language: 'Change language',
         company_details: 'Company Details',
-        qgc_only_msg: 'You may only sign into Quality Glazing Contractors since you are in Puerto Rico. However you can also use a personal account (Pro only)',
+        qgc_only_msg: 'You may only sign into Quality Glazing Contractors since you are in Puerto Rico. However you can also use a personal account',
         tagline_qgc_brand: 'Field measurements, leveled.',
         account_kind_qgc: 'Quality Glass - Work',
         account_kind_work: 'Work',
@@ -1983,9 +1993,8 @@
       try { window.__nivelatoAdoptDbLang(dbLang); } catch (_) { /* ignore */ }
     }
     // QGC orgs: role-based routing (existing behavior). Personal/external
-    // accounts: the dashboard is tier-gated against the current tier —
-    // free sees the upgrade popup there, Pro gets the limited form,
-    // Ultra gets the full dashboard.
+    // accounts: the dashboard works for every tier, free included;
+    // upgrading is voluntary via the dashboard's upgrade modal.
     const dest = isQgc
       ? ((role === 'owner' || role === 'cotizador') ? 'https://dashboard.nivelatolabs.com/' : 'https://app.nivelatolabs.com/')
       : 'https://dashboard.nivelatolabs.com/';
@@ -2304,9 +2313,9 @@
   }
 
   // Personal account escape hatch for PR: leave QGC mode and add a personal
-  // (external) account. The tier gate runs after sign-in against the
-  // account's current tier: Pro/Ultra get the dashboard, free gets the
-  // upgrade popup.
+  // (external) account. Open to every tier: after sign-in the account lands
+  // on the dashboard, and upgrading is voluntary via the dashboard's
+  // upgrade modal (no Pro gate on personal accounts).
   function switchToPersonalMode() {
     qgcEscape = QGI; // remember we came from the QGC screen
     renderForm('external', true);
@@ -2591,6 +2600,15 @@
     }
     return null;
   }
+  // Ephemeral company-select UI state. renderCompanySelectUI rebuilds the
+  // card with innerHTML on every render (view entry, language change, geo
+  // re-sort, history back), which used to reset the companies list scroll
+  // and the domain form: Add personal account -> back landed on a fresh
+  // selector. Listeners bound in the render keep this snapshot current and
+  // the render restores from it (same idea as renderForm's collectValues).
+  // Language and the QGI mode flag need no snapshot: language lives in the
+  // classic script's store and QGI/qgcEscape ride the history state.
+  const companySelectUiState = { scroll: 0, domainOpen: false, domainValue: '' };
   function renderCompanySelectUI() {
     const t = window.nivT;
     const card = document.getElementById('app-card');
@@ -2617,13 +2635,13 @@
         + '<div class="qgc-only-notice">' + t('qgc_only_msg') + '</div>'
         + '<div class="brand-logo-box"><img src="./qgc-logo.jpg" alt="QGC" /></div>'
         + '</div>'
-        + '<div class="main-panel">'
+        + '<div class="main-panel pinned-panel">'
         + '<div class="accounts-title">' + t('signin_with') + '</div>'
-        + '<div id="company-select-list">' + pills
-        + '<button type="button" class="account-pill" id="btn-personal-account" style="margin-top:16px">'
+        + '<div id="company-select-list" class="scroll-region">' + pills
+        + '</div>'
+        + '<button type="button" class="account-pill pinned-action" id="btn-personal-account">'
         + '<span class="account-avatar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg></span>'
         + '<span class="account-meta"><span class="account-name">' + t('personal_account') + '</span></span></button>'
-        + '</div>'
         + '</div>'
         + '</div>';
     } else {
@@ -2636,7 +2654,7 @@
         + '</div>'
         + '<div class="main-panel">'
         + '<div class="accounts-title">' + t('nearby') + '</div>'
-        + '<div id="company-select-list">' + pills + '</div>'
+        + '<div id="company-select-list" class="scroll-region">' + pills + '</div>'
         + '<button type="button" class="btn-google" id="btn-another-company" style="margin-top:16px"><span>' + t('or_signin_another') + '</span></button>'
         + '<form id="company-domain-form" style="display:none;margin-top:12px" onsubmit="return false">'
         + '<div class="field">'
@@ -2668,6 +2686,7 @@
         const f = document.getElementById('company-domain-form');
         const showing = f.style.display !== 'none';
         f.style.display = showing ? 'none' : 'block';
+        companySelectUiState.domainOpen = !showing;
         if (!showing) {
           const inp = document.getElementById('company-domain-input');
           const err = document.getElementById('company-domain-error');
@@ -2686,6 +2705,28 @@
           err.classList.add('visible');
         }
       });
+    }
+    // Restore the snapshotted UI state (see companySelectUiState above) and
+    // keep it current: without this, every innerHTML rebuild (Add personal
+    // account -> back, language toggle, geo re-sort) reset the list scroll
+    // and closed/cleared the domain form.
+    const listEl = document.getElementById('company-select-list');
+    if (listEl) {
+      listEl.scrollTop = companySelectUiState.scroll;
+      listEl.addEventListener('scroll', function () {
+        companySelectUiState.scroll = listEl.scrollTop;
+      }, { passive: true });
+    }
+    if (!qgi) {
+      const dForm = document.getElementById('company-domain-form');
+      const dInp = document.getElementById('company-domain-input');
+      if (dForm && companySelectUiState.domainOpen) dForm.style.display = 'block';
+      if (dInp) {
+        if (companySelectUiState.domainValue) dInp.value = companySelectUiState.domainValue;
+        dInp.addEventListener('input', function () {
+          companySelectUiState.domainValue = dInp.value;
+        });
+      }
     }
     ensureUserCoords(); // lazy proximity; re-renders nearest-first when coords land
   }
@@ -3324,5 +3365,6 @@
   });
   }
 </script>
+<script src="./press-yaoi.js"></script>
 </body>
 </html>

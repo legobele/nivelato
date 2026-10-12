@@ -349,10 +349,22 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
   if (!userSnap.exists) {
     throw new HttpsError('failed-precondition', 'No user profile yet.');
   }
-  const user = userSnap.data();
+  let user = userSnap.data();
   if (user.disabled) {
-    // Pending/rejected users get no claims and no geo verdict beyond this.
-    return { verdict: 'block', reason: 'account-disabled', flow: null, geoOk: false, licenseStatus: null };
+    // Add User invites: a pending joiner (disabled === true, exactly —
+    // 'rejected' is a string and never auto-applies) whose sign-in email
+    // has a pending invite in their org gets the invite's role +
+    // permission overrides applied here and is activated in place, so
+    // invited users skip the manual approval queue. No invite (or any
+    // error applying it) keeps the normal block below.
+    const applied = user.disabled === true
+      ? await applyPendingInvite(uid, user, request.auth.token)
+      : null;
+    if (!applied) {
+      // Pending/rejected users get no claims and no geo verdict beyond this.
+      return { verdict: 'block', reason: 'account-disabled', flow: null, geoOk: false, licenseStatus: null };
+    }
+    user = applied;
   }
   const orgId = user.orgId;
   if (!orgId) throw new HttpsError('failed-precondition', 'User has no org.');
@@ -423,6 +435,18 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
     lastGeoCheck: admin.firestore.FieldValue.serverTimestamp(),
     ...(country ? { lastSeenRegion: country } : {}),
   }, { merge: true });
+
+  // 5b. Home region: the region detected at signup (this gate runs in the
+  // same login flow, right after account creation) becomes the account's
+  // home region. Set-once: an already-set homeRegion is never overwritten
+  // here. The QR upgrade flow (redeemUpgradeLink) is the backfill for
+  // accounts this never ran for; it follows the same set-once rule.
+  if (country && !user.homeRegion) {
+    await db.doc(`users/${uid}`).set({ homeRegion: country }, { merge: true });
+  }
+  if (country && orgId && !org.homeRegion) {
+    await db.doc(`orgs/${orgId}`).set({ homeRegion: country }, { merge: true });
+  }
 
   // 6. Review verdicts land in Giulia's triage queue.
   if (verdict === 'review') {
@@ -601,6 +625,495 @@ exports.homeRegionMonitor = onSchedule(
     return { casesOpened, orgsScanned: orgsSnap.size };
   }
 );
+
+// ---------------------------------------------------------------------------
+// Upgrade link pairing (QR) — web mints, the Android app redeems.
+//
+// Flow: a signed-in web user opens "Mejorar plan" on the dashboard. The web
+// computes a stable fingerprint of the PC (SHA-1 over hardware/browser
+// signals) and calls createUpgradeLink, which stores an upgradeLinks doc and
+// returns a QR (SVG) of:
+//
+//     nivelato://upgrade/<fp>?t=<token>
+//
+// The fingerprint IDENTIFIES the web machine (same PC, same hash, forever);
+// it is low-entropy and public by design, so it authorizes NOTHING. The
+// token authorizes the binding: 192-bit random, doc-id keyed, 10-minute
+// TTL, single-use, attempt-capped. The app opens the link, and once the user
+// is signed in there, NivelatoCloud calls redeemUpgradeLink over HTTPS with
+// { token, fp, email, deviceUuid }. The server checks the token, the
+// fingerprint, and that the app account email matches the web account email
+// on the record; then it links the device to the account and sets the home
+// region if unset. The purchase itself still happens in the app (Play
+// Billing) and the tier syncs back to users/{uid} via the existing
+// syncTierToAccount path.
+//
+// Home region source: the country the SERVER observes for the web request
+// (ipIntel, same derivation flowGate uses), captured at mint time on the
+// link record. "Home region" in this system is orgs/{orgId}.homeRegion;
+// it is set only when empty, and mirrored onto users/{uid}.homeRegion for
+// org-less personal accounts (also only when empty).
+// ---------------------------------------------------------------------------
+const UPGRADE_LINK_TTL_MS = 10 * 60 * 1000;
+const UPGRADE_LINK_MAX_ATTEMPTS = 5;
+
+exports.createUpgradeLink = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'createUpgradeLink requires a signed-in user.');
+  }
+  const uid = request.auth.uid;
+  const email = String((request.auth.token && request.auth.token.email) || '').trim().toLowerCase();
+  const fp = String((request.data && request.data.fp) || '').trim().toLowerCase();
+  if (!/^[0-9a-f]{40}$/.test(fp)) {
+    throw new HttpsError('invalid-argument', 'Huella del equipo inválida.');
+  }
+  const userSnap = await db.doc(`users/${uid}`).get();
+  if (!userSnap.exists) {
+    throw new HttpsError('failed-precondition', 'No user profile yet.');
+  }
+  const user = userSnap.data();
+  if (user.disabled) {
+    throw new HttpsError('permission-denied', 'Cuenta deshabilitada.');
+  }
+  const orgId = user.orgId || null;
+
+  // Region for the home-region default: server-observed IP country, exactly
+  // the way flowGate derives it. Country-level only, never precise location.
+  const callerIp = request.rawRequest ? request.rawRequest.ip : null;
+  const intel = await ipIntel(callerIp);
+  const region = intel.ok ? (intel.country || null) : null;
+
+  // Reuse a live link for the same account + machine: repeat visits from
+  // the same PC produce the same pairing while the token is still valid.
+  const now = Date.now();
+  let token = null;
+  let expiresAtMs = 0;
+  const existing = await db.collection('upgradeLinks')
+    .where('uid', '==', uid).where('fp', '==', fp).where('usedAt', '==', null)
+    .limit(5).get();
+  existing.forEach((d) => {
+    const data = d.data();
+    const exp = data.expiresAt && data.expiresAt.toMillis ? data.expiresAt.toMillis() : 0;
+    if (!token && exp > now) { token = d.id; expiresAtMs = exp; }
+  });
+  if (!token) {
+    token = crypto.randomBytes(24).toString('base64url'); // 192-bit, unguessable
+    expiresAtMs = now + UPGRADE_LINK_TTL_MS;
+    await db.doc(`upgradeLinks/${token}`).set({
+      uid, email: email || null, orgId, fp, region,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      expiresAt: admin.firestore.Timestamp.fromMillis(expiresAtMs),
+      usedAt: null, attempts: 0, deviceUuid: null,
+    });
+  }
+  const url = `nivelato://upgrade/${fp}?t=${token}`;
+  let qrSvg = null;
+  try {
+    const QRCode = require('qrcode');
+    qrSvg = await QRCode.toString(url, { type: 'svg', margin: 1, width: 240 });
+  } catch (e) {
+    console.error('[upgradeLink] QR render failed', e);
+    qrSvg = null;
+  }
+  return { url, qrSvg, expiresAt: expiresAtMs };
+});
+
+exports.redeemUpgradeLink = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  // No Firebase Auth on this call by design: the caller is the native app
+  // (authed against the nivelato-android project, not this one). The
+  // single-use token IS the credential; fp + account email must match the
+  // record, and failed attempts burn the token.
+  const data = request.data || {};
+  const token = String(data.token || '');
+  const fp = String(data.fp || '').trim().toLowerCase();
+  const email = String(data.email || '').trim().toLowerCase();
+  const deviceUuid = String(data.deviceUuid || '').trim();
+  // App version reported by the redeeming build (linked-devices freshness).
+  const appVersionName = typeof data.appVersionName === 'string' && /^[A-Za-z0-9._-]{1,32}$/.test(data.appVersionName)
+    ? data.appVersionName : '';
+  const appVersionCode = Number.isInteger(data.appVersionCode) ? data.appVersionCode : 0;
+  if (!token || !/^[0-9a-f]{40}$/.test(fp) || !EMAIL_RE.test(email) || !deviceUuid || deviceUuid.length > 128) {
+    throw new HttpsError('invalid-argument', 'Datos de vinculación incompletos.');
+  }
+  const ref = db.doc(`upgradeLinks/${token}`);
+  const link = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new HttpsError('not-found', 'Enlace no encontrado o expirado.');
+    const rec = snap.data();
+    if (rec.usedAt) throw new HttpsError('failed-precondition', 'Este enlace ya fue usado.');
+    const exp = rec.expiresAt && rec.expiresAt.toMillis ? rec.expiresAt.toMillis() : 0;
+    if (exp <= Date.now()) throw new HttpsError('deadline-exceeded', 'El enlace expiró. Genera uno nuevo desde la web.');
+    const attempts = (rec.attempts || 0) + 1;
+    if (attempts > UPGRADE_LINK_MAX_ATTEMPTS) {
+      tx.update(ref, { attempts, usedAt: admin.firestore.FieldValue.serverTimestamp(), burnReason: 'too-many-attempts' });
+      throw new HttpsError('resource-exhausted', 'Demasiados intentos. Genera un enlace nuevo desde la web.');
+    }
+    if (rec.fp !== fp || (rec.email && rec.email !== email)) {
+      tx.update(ref, { attempts });
+      throw new HttpsError('permission-denied', 'El enlace no coincide con esta cuenta o este equipo.');
+    }
+    tx.update(ref, {
+      usedAt: admin.firestore.FieldValue.serverTimestamp(),
+      attempts,
+      deviceUuid,
+      redeemedEmail: email,
+    });
+    return rec;
+  });
+
+  const uid = link.uid;
+  const orgId = link.orgId || null;
+
+  // Link the device to the account on the backend.
+  await db.doc(`users/${uid}`).set({
+    linkedDevices: admin.firestore.FieldValue.arrayUnion(deviceUuid),
+    lastLinkedDevice: deviceUuid,
+    lastDeviceLinkAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+  const deviceRef = db.doc(`devices/${deviceUuid}`);
+  const deviceFields = {
+    uid, email, fp, via: 'upgrade-link', orgId,
+    linkedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+  if (appVersionName) {
+    deviceFields.appVersionName = appVersionName;
+    deviceFields.appVersionCode = appVersionCode;
+    deviceFields.versionReportedAt = admin.firestore.FieldValue.serverTimestamp();
+  }
+  await deviceRef.set(deviceFields, { merge: true });
+  // Renameable display name: initialize ONCE. A re-link must never wipe a
+  // name the user already gave the device (renameDevice owns the field).
+  const devSnap = await deviceRef.get();
+  if (!devSnap.exists || typeof (devSnap.data() || {}).displayName !== 'string') {
+    await deviceRef.set({ displayName: '' }, { merge: true });
+  }
+  // Notification (data layer): the device-linked event lands in the user's
+  // notifications. Best effort: a notification failure never fails a redeem.
+  try {
+    await pushNotification(uid, {
+      type: 'device',
+      title: 'Dispositivo vinculado',
+      body: 'Un dispositivo se vinculó a tu cuenta desde la web.',
+      data: { deviceUuid },
+    });
+  } catch (e) {
+    console.error('[notifications] device-linked write failed', e);
+  }
+
+  // Home region: set only if unset (org field is the system's home region;
+  // mirror onto the user doc for org-less personal accounts).
+  let homeRegionSet = null;
+  if (link.region) {
+    if (orgId) {
+      const orgRef = db.doc(`orgs/${orgId}`);
+      const orgSnap = await orgRef.get();
+      if (orgSnap.exists && !orgSnap.data().homeRegion) {
+        await orgRef.set({ homeRegion: link.region }, { merge: true });
+        homeRegionSet = link.region;
+      }
+    }
+    const uSnap = await db.doc(`users/${uid}`).get();
+    if (uSnap.exists && !uSnap.data().homeRegion) {
+      await db.doc(`users/${uid}`).set({ homeRegion: link.region }, { merge: true });
+      homeRegionSet = homeRegionSet || link.region;
+    }
+  }
+  return { ok: true, homeRegionSet };
+});
+
+// ---------------------------------------------------------------------------
+// Linked devices + notifications — DATA LAYER ONLY (v1.1).
+//
+// The dashboard UI for both is PARKED until Giulia's dashboard redesign
+// lands; everything below is the backend those screens will read, built on
+// the existing registries (no parallel device store):
+//
+//   devices/{deviceUuid}   — written by redeemUpgradeLink (QR pairing):
+//     { uid, email, fp, via, orgId, linkedAt, displayName,
+//       appVersionName, appVersionCode, versionReportedAt }
+//     orgId is the company context the device was linked under (null =
+//     personal account). displayName is the user-renameable label (''
+//     means unnamed; clients fall back to a model/version label).
+//
+//   users/{uid}/notifications/{id} — the notification record:
+//     { type: 'device'|'update'|'account'|'org', title, body,
+//       data: { ...refs (deviceUuid, orgId, version) }, createdAt,
+//       readAt: null | Timestamp }
+//     Producers call pushNotification(); readers use listNotifications.
+//     Wired producer today: device-linked (in redeemUpgradeLink).
+//     Update notices still surface via updates.html / app_updates and are
+//     NOT duplicated here yet; device-outdated warnings are derived at
+//     read time by listLinkedDevices (outdated flag), not stored.
+// ---------------------------------------------------------------------------
+
+// Dotted-numeric version compare ("1.1.0" vs "1.0"): -1 / 0 / 1.
+function compareVersionNames(a, b) {
+  const pa = String(a || '').split('.').map((x) => parseInt(x, 10) || 0);
+  const pb = String(b || '').split('.').map((x) => parseInt(x, 10) || 0);
+  const n = Math.max(pa.length, pb.length);
+  for (let i = 0; i < n; i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d !== 0) return d < 0 ? -1 : 1;
+  }
+  return 0;
+}
+
+// Current release versionName from the app_updates pointer (Job A config).
+async function latestAppVersionName() {
+  const snap = await db.doc('app_updates/latest').get();
+  if (!snap.exists) return '';
+  const v = (snap.data() || {}).version;
+  return typeof v === 'string' ? v : '';
+}
+
+// A linked device is outdated when its last reported versionName is older
+// than the current release. A device that never reported a version (linked
+// by a build predating the field) counts as outdated.
+function deviceIsOutdated(device, latestVersion) {
+  if (!latestVersion) return false;
+  if (!device.appVersionName) return true;
+  return compareVersionNames(device.appVersionName, latestVersion) < 0;
+}
+
+// The caller's linked devices, grouped by company context (orgId, with
+// 'personal' for org-less links). Each entry carries its renameable
+// displayName, last reported app version, and the outdated warning flag.
+exports.listLinkedDevices = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'listLinkedDevices requires a signed-in user.');
+  }
+  const uid = request.auth.uid;
+  const latest = await latestAppVersionName();
+  const snap = await db.collection('devices').where('uid', '==', uid).get();
+  const groups = {};
+  snap.forEach((d) => {
+    const dev = d.data() || {};
+    const key = dev.orgId || 'personal';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push({
+      uuid: d.id,
+      displayName: typeof dev.displayName === 'string' ? dev.displayName : '',
+      email: dev.email || null,
+      via: dev.via || null,
+      linkedAt: dev.linkedAt && dev.linkedAt.toMillis ? dev.linkedAt.toMillis() : null,
+      appVersionName: dev.appVersionName || null,
+      appVersionCode: dev.appVersionCode || null,
+      outdated: deviceIsOutdated(dev, latest),
+    });
+  });
+  return { latestVersion: latest || null, groups };
+});
+
+// Shared device-rename validation + write (renameDevice and
+// renameMemberDevice): the device uuid must be present and sane; the
+// display name is trimmed, capped at 60 chars, and must not end up
+// empty.
+function parseDeviceRenameArgs(data) {
+  const deviceUuid = String((data && data.deviceUuid) || '').trim();
+  const displayName = String((data && data.displayName) || '').trim().slice(0, 60);
+  if (!deviceUuid || deviceUuid.length > 128) {
+    throw new HttpsError('invalid-argument', 'Dispositivo inválido.');
+  }
+  if (!displayName) {
+    throw new HttpsError('invalid-argument', 'El nombre no puede estar vacío.');
+  }
+  return { deviceUuid, displayName };
+}
+
+async function writeDeviceDisplayName(deviceUuid, displayName) {
+  await db.doc(`devices/${deviceUuid}`).set({ displayName }, { merge: true });
+  return { ok: true, displayName };
+}
+
+// Rename a linked device. Only the owning account can rename its devices.
+exports.renameDevice = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'renameDevice requires a signed-in user.');
+  }
+  const uid = request.auth.uid;
+  const { deviceUuid, displayName } = parseDeviceRenameArgs(request.data);
+  const ref = db.doc(`devices/${deviceUuid}`);
+  const snap = await ref.get();
+  if (!snap.exists || (snap.data() || {}).uid !== uid) {
+    throw new HttpsError('not-found', 'Dispositivo no encontrado.');
+  }
+  return writeDeviceDisplayName(deviceUuid, displayName);
+});
+
+// Shared org-scoped member authorization (listUserDevices and
+// renameMemberDevice): the caller must have a profile in an org, the
+// target user must belong to that same org, and when caller !== target
+// the caller must be the org owner (org doc ownerId === caller, or the
+// caller's user doc role === 'owner'). ownerDenyMessage lets each
+// callable phrase the owner-only denial for its own action. Returns
+// { caller, orgId }.
+async function authorizeOrgMemberAccess(callerUid, targetUid, ownerDenyMessage) {
+  const callerSnap = await db.doc(`users/${callerUid}`).get();
+  if (!callerSnap.exists) throw new HttpsError('failed-precondition', 'No user profile.');
+  const caller = callerSnap.data();
+  const orgId = caller.orgId || null;
+  if (!orgId) {
+    throw new HttpsError('permission-denied', 'Tu cuenta no pertenece a una empresa.');
+  }
+  const targetSnap = await db.doc(`users/${targetUid}`).get();
+  if (!targetSnap.exists) throw new HttpsError('not-found', 'Usuario no encontrado.');
+  if ((targetSnap.data() || {}).orgId !== orgId) {
+    throw new HttpsError('permission-denied', 'Ese usuario no pertenece a tu empresa.');
+  }
+  if (callerUid !== targetUid) {
+    const orgSnap = await db.doc(`orgs/${orgId}`).get();
+    const org = orgSnap.exists ? orgSnap.data() : {};
+    if (org.ownerId !== callerUid && caller.role !== 'owner') {
+      throw new HttpsError('permission-denied', ownerDenyMessage);
+    }
+  }
+  return { caller, orgId };
+}
+
+// A company member's linked devices, for the Users screen device panel.
+// listLinkedDevices above is caller-scoped and cannot serve this: the
+// panel shows ANOTHER member's devices, and devices/{id} is not
+// client-readable by rules, so the read has to happen here.
+//
+// Auth rule (same owner check as setUiVersion): the caller must be
+// signed in, belong to the same org as the target user, and be either
+// the target themselves or the org owner (org doc ownerId === caller,
+// or the caller's user doc role === 'owner'). Only devices linked
+// under that org context are returned.
+exports.listUserDevices = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'listUserDevices requires a signed-in user.');
+  }
+  const callerUid = request.auth.uid;
+  const targetUid = String((request.data && request.data.uid) || '').trim();
+  if (!targetUid || targetUid.length > 128) {
+    throw new HttpsError('invalid-argument', 'Falta el usuario.');
+  }
+  const { orgId } = await authorizeOrgMemberAccess(callerUid, targetUid,
+    'Solo el dueño de la empresa puede ver los dispositivos de su equipo.');
+  const latest = await latestAppVersionName();
+  // Single-field query (like listLinkedDevices) + in-code org filter:
+  // a two-field where would need a composite index for no benefit.
+  const snap = await db.collection('devices').where('uid', '==', targetUid).get();
+  const devices = [];
+  snap.forEach((d) => {
+    const dev = d.data() || {};
+    if ((dev.orgId || null) !== orgId) return;
+    devices.push({
+      uuid: d.id,
+      displayName: typeof dev.displayName === 'string' ? dev.displayName : '',
+      brand: dev.brand || null,
+      model: dev.model || null,
+      email: dev.email || null,
+      via: dev.via || null,
+      linkedAt: dev.linkedAt && dev.linkedAt.toMillis ? dev.linkedAt.toMillis() : null,
+      appVersionName: dev.appVersionName || null,
+      appVersionCode: dev.appVersionCode || null,
+      outdated: deviceIsOutdated(dev, latest),
+    });
+  });
+  devices.sort((a, b) => (b.linkedAt || 0) - (a.linkedAt || 0));
+  return { latestVersion: latest || null, orgId, devices, total: devices.length, limit: 5 };
+});
+
+// Rename a company member's linked device. The org-scoped counterpart
+// to renameDevice: same name validation and write (parseDeviceRenameArgs
+// / writeDeviceDisplayName), but authorization follows the
+// listUserDevices rule via authorizeOrgMemberAccess instead of device
+// ownership alone, so the org owner can rename a member's device from
+// the Users screen. The device must belong to the target user and be
+// linked under the caller's org context (the only devices the panel
+// ever shows); anything else reads as not-found, like renameDevice.
+// renameDevice itself is unchanged and stays device-owner-only.
+exports.renameMemberDevice = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'renameMemberDevice requires a signed-in user.');
+  }
+  const callerUid = request.auth.uid;
+  const targetUid = String((request.data && request.data.uid) || '').trim();
+  if (!targetUid || targetUid.length > 128) {
+    throw new HttpsError('invalid-argument', 'Falta el usuario.');
+  }
+  const { deviceUuid, displayName } = parseDeviceRenameArgs(request.data);
+  const { orgId } = await authorizeOrgMemberAccess(callerUid, targetUid,
+    'Solo el dueño de la empresa puede renombrar los dispositivos de su equipo.');
+  const ref = db.doc(`devices/${deviceUuid}`);
+  const snap = await ref.get();
+  const dev = snap.exists ? (snap.data() || {}) : null;
+  if (!dev || dev.uid !== targetUid || (dev.orgId || null) !== orgId) {
+    throw new HttpsError('not-found', 'Dispositivo no encontrado.');
+  }
+  return writeDeviceDisplayName(deviceUuid, displayName);
+});
+
+// The one write path for notifications. Server-side producers only;
+// clients never write this subcollection directly.
+async function pushNotification(uid, { type, title, body, data }) {
+  const ref = db.collection(`users/${uid}/notifications`).doc();
+  await ref.set({
+    type: type || 'account',
+    title: String(title || ''),
+    body: String(body || ''),
+    data: data || {},
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    readAt: null,
+  });
+  return ref.id;
+}
+
+exports.listNotifications = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'listNotifications requires a signed-in user.');
+  }
+  const uid = request.auth.uid;
+  const snap = await db.collection(`users/${uid}/notifications`)
+    .orderBy('createdAt', 'desc').limit(50).get();
+  const items = [];
+  let unreadCount = 0;
+  snap.forEach((d) => {
+    const n = d.data() || {};
+    const read = !!n.readAt;
+    if (!read) unreadCount++;
+    items.push({
+      id: d.id,
+      type: n.type || 'account',
+      title: n.title || '',
+      body: n.body || '',
+      data: n.data || {},
+      createdAt: n.createdAt && n.createdAt.toMillis ? n.createdAt.toMillis() : null,
+      read,
+    });
+  });
+  return { items, unreadCount };
+});
+
+exports.markNotificationRead = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'markNotificationRead requires a signed-in user.');
+  }
+  const uid = request.auth.uid;
+  const col = db.collection(`users/${uid}/notifications`);
+  const id = String((request.data && request.data.id) || '').trim();
+  const all = !!(request.data && request.data.all);
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  if (all) {
+    const snap = await col.where('readAt', '==', null).limit(200).get();
+    const batch = db.batch();
+    snap.forEach((d) => batch.set(d.ref, { readAt: now }, { merge: true }));
+    await batch.commit();
+    return { ok: true, marked: snap.size };
+  }
+  if (!id) {
+    throw new HttpsError('invalid-argument', 'Falta el id de la notificación.');
+  }
+  const ref = col.doc(id);
+  const snap = await ref.get();
+  if (!snap.exists) {
+    throw new HttpsError('not-found', 'Notificación no encontrada.');
+  }
+  await ref.set({ readAt: now }, { merge: true });
+  return { ok: true, marked: 1 };
+});
 
 // ---------------------------------------------------------------------------
 // qgcLogin — Quality Glazing Contractors company login.
@@ -812,6 +1325,8 @@ const DEV_FUNCTION_INVENTORY = [
   { name: 'applyCompanyUpdate', type: 'callable', region: 'us-central1' },
   { name: 'requestTravelVerification', type: 'callable', region: 'us-central1' },
   { name: 'redeemTravelVerification', type: 'callable', region: 'us-central1' },
+  { name: 'createUpgradeLink', type: 'callable', region: 'us-central1' },
+  { name: 'redeemUpgradeLink', type: 'callable', region: 'us-central1' },
   { name: 'devPing', type: 'callable', region: 'us-central1' },
   { name: 'processAccountDeletion', type: 'firestore-trigger', region: 'us-central1' },
   { name: 'homeRegionMonitor', type: 'scheduled', region: 'us-central1' },
@@ -1286,4 +1801,132 @@ exports.redeemTravelVerification = onCall({ region: 'us-central1', memory: '256M
     },
   }, { merge: true });
   return { validUntil };
+});
+
+// ---------------------------------------------------------------------------
+// Company invites (Add User flow) — orgs/{orgId}/invites/{email}.
+//
+// Membership still works exactly like it always has: the org has a
+// joinCode, the joiner signs up and creates their user doc pinned to
+// role 'medidor' + disabled (firestore.rules), and the owner approves.
+// An invite is a pre-approval the owner writes ahead of time (client
+// write, owner-only + shape-pinned in firestore.rules) binding an email
+// to a role + permission overrides. It is applied when the invitee joins:
+//
+//   - flowGate (above) calls applyPendingInvite for pending joiners, so
+//     the first sign-in after signup activates the account with the
+//     invite's role/permissions already on it.
+//   - The manual approval path (company/settings approveRequest) checks
+//     for an invite too, as a fallback.
+//
+// sendCompanyInviteEmail is the only piece that had to be a callable:
+// the Resend key is server-side. It verifies the caller owns the org and
+// that a pending invite exists for the address before sending, and
+// rides the same rate limiter as the other email callables.
+// ---------------------------------------------------------------------------
+const INVITE_ROLES = ['medidor', 'supervisor', 'cotizador']; // never 'owner'
+const INVITE_PERM_KEYS = [
+  'viewDashboard', 'createMeasurements', 'viewOwnMeasurements',
+  'editOwnMeasurements', 'viewOthersMeasurements', 'editOthersMeasurements',
+  'managePriceList', 'createQuotes', 'approveQuotes', 'userManagement',
+];
+const INVITE_ROLE_LABELS = {
+  medidor: 'Técnico medidor',
+  supervisor: 'Supervisor',
+  cotizador: 'Cotizador',
+};
+
+// Applies a pending invite to a freshly-joined (disabled) user doc.
+// Returns the updated user object on success, null when there is no
+// applicable invite or anything fails (caller keeps the pending block).
+async function applyPendingInvite(uid, user, token) {
+  try {
+    const email = String((token && token.email) || user.email || '')
+      .trim().toLowerCase();
+    const orgId = user.orgId;
+    if (!email || !orgId) return null;
+    const invRef = db.doc(`orgs/${orgId}/invites/${email}`);
+    const invSnap = await invRef.get();
+    if (!invSnap.exists) return null;
+    const inv = invSnap.data();
+    if (inv.status !== 'pending') return null;
+
+    const patch = { disabled: false };
+    // Belt and braces: an invite can never grant 'owner', whatever a
+    // hand-edited doc claims (rules already pin the role set).
+    if (INVITE_ROLES.includes(inv.role)) patch.role = inv.role;
+    if (inv.permissions && typeof inv.permissions === 'object') {
+      const clean = {};
+      for (const k of INVITE_PERM_KEYS) {
+        if (typeof inv.permissions[k] === 'boolean') clean[k] = inv.permissions[k];
+      }
+      if (Object.keys(clean).length) patch.permissions = clean;
+    }
+    await db.doc(`users/${uid}`).update(patch);
+    await invRef.update({
+      status: 'accepted',
+      acceptedAt: admin.firestore.FieldValue.serverTimestamp(),
+      acceptedUid: uid,
+    });
+    console.log('[invite] applied for', email, 'org', orgId);
+    return { ...user, ...patch };
+  } catch (e) {
+    console.error('[invite] apply failed:', e && e.message);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// sendCompanyInviteEmail - callable. Sends the invite email (org name,
+// role, join code, signup link) for an invite the owner already created
+// from the Add User flow. Does NOT create the invite itself.
+// ---------------------------------------------------------------------------
+exports.sendCompanyInviteEmail = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Sign in first.');
+  }
+  const uid = request.auth.uid;
+  const data = request.data || {};
+  const orgId = String(data.orgId || '');
+  const email = cleanEmail(data.email);
+  if (!orgId) throw new HttpsError('invalid-argument', 'Falta la empresa.');
+
+  const callerSnap = await db.doc(`users/${uid}`).get();
+  if (!callerSnap.exists) {
+    throw new HttpsError('failed-precondition', 'No user profile yet.');
+  }
+  const caller = callerSnap.data();
+  if (caller.disabled || caller.role !== 'owner' || caller.orgId !== orgId) {
+    throw new HttpsError('permission-denied', 'Only the company owner can send invites.');
+  }
+
+  const invSnap = await db.doc(`orgs/${orgId}/invites/${email}`).get();
+  if (!invSnap.exists || invSnap.data().status !== 'pending') {
+    throw new HttpsError('failed-precondition', 'There is no pending invite for that email.');
+  }
+  const invite = invSnap.data();
+
+  const orgSnap = await db.doc(`orgs/${orgId}`).get();
+  const org = orgSnap.exists ? orgSnap.data() : {};
+  const orgName = String(org.name || 'tu taller');
+  const joinCode = String(org.joinCode || orgId);
+  const roleLabel = INVITE_ROLE_LABELS[invite.role] || 'Técnico medidor';
+
+  const today = new Date().toISOString().slice(0, 10);
+  await checkRateLimit(`invite:${orgId}:${email}:${today}`, 5);
+
+  const html = emailShell(`Invitación a ${esc(orgName)}`, `
+    <p>Hola,</p>
+    <p>Te invitaron a unirte a <b>${esc(orgName)}</b> en Nivelato con el rol de <b>${esc(roleLabel)}</b>.</p>
+    <p>Crea tu cuenta con este mismo correo e ingresa el código del taller cuando te lo pida:</p>
+    <p style="font-size:22px;font-weight:700;letter-spacing:0.12em;color:#1971C2;">${esc(joinCode)}</p>
+    <p><a href="https://login.nivelatolabs.com/" style="color:#1971C2;">Crear mi cuenta en Nivelato</a></p>
+    <p>Tu acceso se activa automáticamente al registrarte con este correo, sin esperar aprobación.</p>`);
+  await sendEmail({
+    to: email,
+    subject: `Invitación a ${orgName} en Nivelato`,
+    html,
+    text: `Te invitaron a unirte a ${orgName} en Nivelato con el rol de ${roleLabel}. Crea tu cuenta con este correo en https://login.nivelatolabs.com/ e ingresa el código del taller: ${joinCode}. Tu acceso se activa automáticamente al registrarte.`,
+  });
+  return { ok: true };
 });

@@ -253,11 +253,70 @@ service cloud.firestore {
         allow delete: if canWriteOrgData(orgId) && myOrgId() == orgId
           && myUser().role == 'owner';
       }
+
+      // Invites — orgs/{orgId}/invites/{email}. Written by the owner from
+      // the Add User flow (users.html + add-user.js): an email-bound
+      // pre-approval carrying the role + permission overrides the new
+      // member receives when they join. The joiner still signs up and
+      // creates their user doc the normal way (role 'medidor', disabled,
+      // no permissions — the create rule above still pins that); the
+      // invite is applied server-side by flowGate on first sign-in, with
+      // the owner approval path (company/settings) as a fallback. The
+      // invitee never reads the invite directly.
+      // - read/list: org owner only (the pending-invites list in the
+      //   Users view).
+      // - create: org owner; doc id IS the invitee email; role can never
+      //   be 'owner'; permissions keys pinned to the known set
+      //   (permissions.js PERM_DEFS); status starts 'pending'.
+      // - update: org owner; only the status field may change (revoke /
+      //   mark accepted) — email and payload are immutable.
+      // - delete: org owner.
+      match /invites/{inviteId} {
+        allow get, list: if isSignedIn() && isActive()
+          && myUser().role == 'owner' && myOrgId() == orgId;
+        allow create: if isSignedIn() && isActive()
+          && myUser().role == 'owner' && myOrgId() == orgId
+          && request.resource.data.keys().hasOnly(
+               ['email', 'role', 'permissions', 'status', 'createdBy', 'createdAt'])
+          && request.resource.data.keys().hasAll(
+               ['email', 'role', 'permissions', 'status', 'createdBy', 'createdAt'])
+          && request.resource.data.email == inviteId
+          && request.resource.data.email is string
+          && request.resource.data.role in ['medidor', 'supervisor', 'cotizador']
+          && request.resource.data.status == 'pending'
+          && request.resource.data.createdBy == myUid()
+          && request.resource.data.permissions is map
+          && request.resource.data.permissions.keys().hasOnly(
+               ['viewDashboard', 'createMeasurements', 'viewOwnMeasurements',
+                'editOwnMeasurements', 'viewOthersMeasurements',
+                'editOthersMeasurements', 'managePriceList', 'createQuotes',
+                'approveQuotes', 'userManagement']);
+        allow update: if isSignedIn() && isActive()
+          && myUser().role == 'owner' && myOrgId() == orgId
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['status']);
+        allow delete: if isSignedIn() && isActive()
+          && myUser().role == 'owner' && myOrgId() == orgId;
+      }
     }
 
     // Geo review queue — console/function-only. Clients never read or write
     // (dashboard triage UI is future work; Giulia triages in console).
     match /geoReviews/{reviewId} {
+      allow read, write: if false;
+    }
+
+    // Upgrade pairing links (QR flow) — function-only. Minted by
+    // createUpgradeLink and redeemed by redeemUpgradeLink via the Admin
+    // SDK; the doc id is a single-use secret token, so clients never get
+    // direct access.
+    match /upgradeLinks/{token} {
+      allow read, write: if false;
+    }
+
+    // Device link records written by redeemUpgradeLink — function-only.
+    match /devices/{deviceId} {
       allow read, write: if false;
     }
 

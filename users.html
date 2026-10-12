@@ -33,15 +33,20 @@
     background: var(--bg);
     color: var(--text);
     font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
-    min-height: 100vh;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
-  .shell { display: flex; min-height: 100vh; }
+  /* Tarjetas flotantes, igual que el dashboard: nada toca los bordes. */
+  .shell { display: flex; flex: 1; min-height: 0; padding: 20px; gap: 16px; box-sizing: border-box; }
 
   /* ---------- sidebar (shared component with updates.html) ---------- */
   .sidebar {
     width: 300px;
     flex: none;
-    border-right: 1px solid var(--line);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
     padding: 24px 18px;
     display: flex;
     flex-direction: column;
@@ -134,13 +139,15 @@
   .users-col {
     width: 340px;
     flex: none;
-    border-right: 1px solid var(--line);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: #0b0b0d;
     padding: 24px 18px;
     display: flex;
     flex-direction: column;
     gap: 12px;
     overflow-y: auto;
-    max-height: 100vh;
+    max-height: none;
   }
   .users-title { font-size: 13px; font-weight: 600; color: var(--faint); text-transform: uppercase; letter-spacing: .12em; padding: 4px 6px 0; }
   .user-card {
@@ -209,6 +216,10 @@
     flex: 1;
     padding: 40px 36px;
     min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: #0b0b0d;
+    overflow-y: auto;
   }
   .detail-head { text-align: center; margin-bottom: 28px; }
   .detail-name { font-size: 20px; font-weight: 700; }
@@ -331,15 +342,149 @@
   }
   .perm-note { font-size: 12px; color: var(--faint); text-align: center; margin-top: 10px; }
 
+  /* ---------- top bar (same persistent header as the dashboard) ---------- */
+  .niv-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 24px;
+    background: #0b0b0d;
+    border-bottom: 1px solid var(--line);
+  }
+  .niv-topbar-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #17171a;
+    border: 1px solid var(--line-soft);
+    border-radius: 9999px;
+    padding: 4px;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .niv-topbar-tabs::-webkit-scrollbar { display: none; }
+  .niv-tab {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 18px;
+    border-radius: 9999px;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  a.niv-tab:hover { color: var(--text); }
+  .niv-tab.active { background: linear-gradient(135deg, var(--teal1), var(--teal2)); color: #06281f; cursor: default; }
+
+  /* company column: account danger entry, pinned to the bottom */
+  .nav-btn.danger { color: #ff8787; border-color: #5c2121; margin-top: auto; }
+  .nav-btn.danger:hover { border-color: var(--red); }
+  .nav-btn.danger .nav-sub { display: block; font-size: 12px; color: var(--faint); margin-top: 3px; }
+
+  /* detail header: name with the email in parens on the same line */
+  .detail-name .detail-email-inline {
+    font-size: 15px;
+    color: var(--muted);
+    font-weight: 500;
+    word-break: break-all;
+  }
+
+  /* ---------- registered devices panel ---------- */
+  .devices-panel { max-width: 880px; margin: 20px auto 0; }
+  .dev-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .dev-row.outdated { border-color: #8a6d1f; }
+  .dev-icon {
+    width: 26px;
+    height: 44px;
+    flex: none;
+    border: 1.5px solid var(--faint);
+    border-radius: 6px;
+    position: relative;
+  }
+  .dev-icon::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 3px;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 2px;
+    background: var(--faint);
+    border-radius: 2px;
+  }
+  .dev-meta { min-width: 0; flex: 1; }
+  .dev-name { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .dev-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .dev-warn {
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffd43b;
+    border: 1px solid #8a6d1f;
+    border-radius: 9999px;
+    padding: 1px 8px;
+  }
+  .dev-rename {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    border-radius: 9999px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .dev-rename:hover { color: var(--text); border-color: var(--faint); }
+  .dev-edit { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .dev-edit input {
+    flex: 1;
+    min-width: 140px;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .dev-edit button {
+    padding: 8px 14px;
+    border-radius: 9999px;
+    border: 1.5px solid var(--line);
+    background: transparent;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .dev-edit button:disabled { opacity: .55; cursor: default; }
+
   @media (max-width: 1100px) {
     .detail-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 900px) {
-    .shell { flex-direction: column; }
+    body { height: auto; overflow: visible; }
+    .shell { flex-direction: column; flex: none; padding: 12px; }
     .sidebar {
       width: 100%;
-      border-right: 0;
-      border-bottom: 1px solid var(--line);
       padding: 16px;
     }
     .sidebar .nav-btn { display: none; }
@@ -347,8 +492,6 @@
     .org-avatar { width: 48px; height: 48px; font-size: 16px; }
     .users-col {
       width: 100%;
-      border-right: 0;
-      border-bottom: 1px solid var(--line);
       max-height: none;
     }
     .detail { padding: 24px 16px; }
@@ -357,6 +500,14 @@
 <link rel="stylesheet" href="./qgc-theme.css" />
 </head>
 <body>
+<header class="niv-topbar">
+  <nav class="niv-topbar-tabs" aria-label="Dashboard">
+    <a class="niv-tab" href="/dashboard.html?view=home">Dashboard</a>
+    <a class="niv-tab" href="/dashboard.html?view=projects">Projects</a>
+    <a class="niv-tab" href="/dashboard.html?view=notifications">Notifications</a>
+    <span class="niv-tab active" aria-current="page">Users</span>
+  </nav>
+</header>
 <div class="shell">
   <aside class="sidebar" aria-label="Company navigation">
     <div class="org-head">
@@ -374,6 +525,10 @@
       <span class="nav-sub" id="updates-sub">Checking...</span>
       <span class="dot" id="updates-dot"></span>
     </a>
+    <a class="nav-btn danger" href="/account/settings">
+      <span class="nav-label">Delete account</span>
+      <span class="nav-sub">Account danger zone</span>
+    </a>
   </aside>
 
   <section class="users-col" aria-label="Company users">
@@ -390,6 +545,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/f
 import {
   getDoc, doc, getDocs, collection, query, where, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
 import { startPresence, getOnlineUsers } from './presence.js';
 import { PERM_DEFS, makePermChecker, orgHasQuotes } from './permissions.js';
 import { ensureFlowClaims, routeAfterGate } from './geo.js';
@@ -445,8 +601,11 @@ let selectedUid = null;
 let onlineUids = new Set();
 let expandedProjects = false;
 let expandedPerms = false;
+let expandedDevices = false;
 
 const isOwner = () => currentUserData && currentUserData.role === 'owner';
+// Mirrors the server owner rule (org doc ownerId, or the owner role).
+const viewerIsOrgOwner = () => isOwner() || !!(orgData && currentUser && orgData.ownerId === currentUser.uid);
 const dataVersion = () => (orgData && orgData.dataVersion) ? String(orgData.dataVersion) : '0.9';
 const memberById = (uid) => members.find(m => m.uid === uid);
 
@@ -481,8 +640,10 @@ function sortedMembers() {
 }
 
 function displayName(m) {
-  if (m.uid === (currentUser && currentUser.uid)) return roleLabel(m.role) + ' (you)';
-  return m.name || m.email || 'Unknown user';
+  const self = m.uid === (currentUser && currentUser.uid);
+  if (m.role === 'owner') return 'Owner' + (self ? ' (you)' : '');
+  const base = m.name || m.email || 'Unknown user';
+  return self ? base + ' (you)' : base;
 }
 
 function renderList() {
@@ -536,6 +697,7 @@ async function loadProjects(uid) {
 }
 
 function renderDetail() {
+  expandedDevices = false;
   const detail = document.getElementById('detail');
   const m = memberById(selectedUid);
   if (!m) {
@@ -545,8 +707,7 @@ function renderDetail() {
   const name = m.name || m.email || 'Unknown user';
   detail.innerHTML = `
     <div class="detail-head">
-      <div class="detail-name">${escapeHtml(name)}</div>
-      <div class="detail-email">${escapeHtml(m.email || '')}</div>
+      <div class="detail-name">${escapeHtml(name)} <span class="detail-email-inline">(${escapeHtml(m.email || '')})</span></div>
     </div>
     <div class="detail-grid">
       <div class="panel" id="projects-panel">
@@ -559,11 +720,108 @@ function renderDetail() {
         ${isOwner() ? '' : '<div class="perm-note">Only owners can change permissions.</div>'}
       </div>
     </div>
+    <div class="panel devices-panel" id="devices-panel">
+      <h3 id="devices-title">Registered devices</h3>
+      <div id="devices-body"><div class="empty">Loading devices...</div></div>
+    </div>
     <div id="delete-zone"></div>
   `;
   renderProjects(m);
   renderPerms(m);
+  renderDevices(m);
   renderDelete(m);
+}
+
+// Registered devices for the selected user. The read goes through the
+// owner-scoped listUserDevices callable (devices/{id} is not
+// client-readable by rules). Renaming your own devices uses
+// renameDevice (device-owner-only on the server); the org owner also
+// gets the Rename action on member devices, saved through
+// renameMemberDevice, which applies the same org-owner rule server-side.
+async function renderDevices(m) {
+  const body = document.getElementById('devices-body');
+  const title = document.getElementById('devices-title');
+  if (!body) return;
+  body.innerHTML = '<div class="empty">Loading devices...</div>';
+  try {
+    const fn = httpsCallable(getFunctions(auth.app, 'us-central1'), 'listUserDevices');
+    const { data } = await fn({ uid: m.uid });
+    if (!body.isConnected) return;
+    const devices = (data && data.devices) || [];
+    const limit = (data && data.limit) || 5;
+    if (title) title.textContent = `Registered devices (${devices.length}/${limit})`;
+    if (!devices.length) {
+      body.innerHTML = '<div class="empty">No linked devices yet.</div>';
+      return;
+    }
+    const visible = expandedDevices ? devices : devices.slice(0, limit);
+    const isSelfView = m.uid === (currentUser && currentUser.uid);
+    const canRename = isSelfView || viewerIsOrgOwner();
+    body.innerHTML = visible.map((d) => {
+      const name = d.displayName || 'Unnamed device';
+      const modelBits = [d.brand, d.model].filter(Boolean).join(' ');
+      const sub = modelBits || (d.appVersionName ? 'Nivelato v' + d.appVersionName : 'Nivelato');
+      const linked = d.linkedAt
+        ? new Date(d.linkedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : '';
+      return `<div class="dev-row${d.outdated ? ' outdated' : ''}">
+        <div class="dev-icon" aria-hidden="true"></div>
+        <div class="dev-meta">
+          <div class="dev-name"><span class="dev-name-text">${escapeHtml(name)}</span>${d.outdated ? '<span class="dev-warn">Update available</span>' : ''}${canRename ? `<button class="dev-rename" data-rename="${escapeHtml(d.uuid)}">Rename</button>` : ''}</div>
+          <div class="dev-sub">${escapeHtml(sub)}${linked ? ' · Linked ' + escapeHtml(linked) : ''}</div>
+          <div class="dev-edit-slot"></div>
+        </div>
+      </div>`;
+    }).join('') +
+    (devices.length > limit ? `<button class="btn" id="btn-more-devices">${expandedDevices ? 'Show less' : 'View more'}</button>` : '');
+    const more = document.getElementById('btn-more-devices');
+    if (more) more.addEventListener('click', () => { expandedDevices = !expandedDevices; renderDevices(m); });
+    body.querySelectorAll('[data-rename]').forEach((btn) => {
+      btn.addEventListener('click', () => openDeviceRename(btn, m));
+    });
+  } catch (e) {
+    if (body.isConnected) body.innerHTML = '<div class="empty">Could not load devices.</div>';
+  }
+}
+
+function openDeviceRename(btn, m) {
+  const row = btn.closest('.dev-row');
+  const slot = row && row.querySelector('.dev-edit-slot');
+  if (!slot || slot.dataset.open === '1') return;
+  slot.dataset.open = '1';
+  const uuid = btn.getAttribute('data-rename');
+  const nameEl = row.querySelector('.dev-name-text');
+  const current = nameEl ? nameEl.textContent.trim() : '';
+  slot.innerHTML = `<div class="dev-edit">
+    <input type="text" maxlength="60" value="${escapeHtml(current === 'Unnamed device' ? '' : current)}" placeholder="Device name" aria-label="Device name" />
+    <button class="dev-save">Save</button>
+    <button class="dev-cancel">Cancel</button>
+  </div>`;
+  const input = slot.querySelector('input');
+  input.focus();
+  input.select();
+  slot.querySelector('.dev-cancel').addEventListener('click', () => renderDevices(m));
+  slot.querySelector('.dev-save').addEventListener('click', async () => {
+    const saveBtn = slot.querySelector('.dev-save');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+    try {
+      // Own devices go through renameDevice (device-owner-only);
+      // a member's devices go through the org-scoped renameMemberDevice.
+      const isSelfView = m.uid === (currentUser && currentUser.uid);
+      const fn = httpsCallable(getFunctions(auth.app, 'us-central1'),
+        isSelfView ? 'renameDevice' : 'renameMemberDevice');
+      const payload = isSelfView
+        ? { deviceUuid: uuid, displayName: input.value.trim() }
+        : { uid: m.uid, deviceUuid: uuid, displayName: input.value.trim() };
+      await fn(payload);
+      renderDevices(m);
+    } catch (e) {
+      alert('Could not rename device: ' + (e.message || 'unknown error'));
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save';
+    }
+  });
 }
 
 async function renderProjects(m) {
@@ -739,5 +997,7 @@ onAuthStateChanged(auth, async (user) => {
   setInterval(refreshOnline, 60000);
 });
 </script>
+<script src="./press-yaoi.js"></script>
+<script type="module" src="./add-user.js"></script>
 </body>
 </html>

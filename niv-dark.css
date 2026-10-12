@@ -306,16 +306,38 @@
   font-size: 12px; color: var(--niv-text-dim);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.niv-float-panel.collapsed .niv-account-card { justify-content: center; padding: 10px 6px; }
-.niv-float-panel.collapsed .niv-account-meta { display: none; }
-
-.niv-float-panel.collapsed { width: 76px; min-width: 76px; max-width: 76px; resize: none; padding: 20px 10px 16px; }
+/* ---- collapsed: icon rail ----
+   The rail is its own layout, not the expanded panel squeezed: 76px wide,
+   uniform 16px/10px padding (56px content column), every visible child a
+   40px mark centered on that single axis. Nothing shares a row in the rail:
+   the old head kept the 44px avatar, the 12px gap and the 28px toggle side
+   by side (84px of flex:none children in a 52px content box), which clipped
+   the avatar on one side and pushed the chevron out on the other. The
+   account card likewise keeps its expanded box framing unless it is
+   explicitly dissolved into a bare avatar here. */
+.niv-float-panel.collapsed { width: 76px; min-width: 76px; max-width: 76px; resize: none; padding: 16px 10px; }
+.niv-float-panel.collapsed .niv-panel-head {
+  flex-direction: column; align-items: center; justify-content: flex-start;
+  gap: 8px; padding: 2px 0 10px;
+}
+.niv-float-panel.collapsed .niv-panel-head .niv-company-avatar { width: 40px; height: 40px; font-size: 14px; }
 .niv-float-panel.collapsed .niv-panel-body,
 .niv-float-panel.collapsed .niv-company-name,
 .niv-float-panel.collapsed .org-badge { display: none; }
-.niv-float-panel.collapsed .niv-panel-bottom { display: block; padding: 0; }
+.niv-float-panel.collapsed .niv-panel-bottom {
+  margin-top: auto; /* the hidden panel body no longer pushes it down: anchor it */
+  display: flex; justify-content: center;
+  padding: 12px 0 0;
+}
+.niv-float-panel.collapsed .niv-account-card {
+  width: 40px; height: 40px; flex: none;
+  padding: 0; margin: 0;
+  border: none; border-radius: 50%; background: transparent;
+  justify-content: center;
+}
+.niv-float-panel.collapsed .niv-account-avatar { width: 40px; height: 40px; }
+.niv-float-panel.collapsed .niv-account-meta { display: none; }
 .niv-float-panel.collapsed .niv-account-popup { left: 84px; right: auto; width: 260px; bottom: 16px; }
-.niv-float-panel.collapsed .niv-panel-head { justify-content: center; }
 
 .niv-panel-head {
   display: flex; align-items: center; gap: 12px;

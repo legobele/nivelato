@@ -503,9 +503,255 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
 
   </style>
   <link rel="stylesheet" href="./qgc-theme.css?v=2" />
+<style id="niv-redesign-css">
+/* ============ DASHBOARD REDESIGN — Giulia's annotated wireframes (Oct 2026) ============
+   Law from the wireframe: (1) the tab bar goes ON TOP across ALL the dashboard,
+   (2) sidebar sections collapse individually, (3) sidebar pinned to the edge,
+   resizable by drag, auto-collapses when narrow, (4) PADDING IS AN ACCEPTANCE
+   CHECK — content must never sit glued to the sidebar or the viewport edges. */
+:root { --niv-topbar-h: 60px; }
+
+/* ---- (1) top bar: full width, persistent, above sidebar + content ---- */
+.niv-topbar {
+  position: sticky; top: 0; z-index: 640;
+  display: flex; align-items: center; gap: 14px;
+  min-height: var(--niv-topbar-h);
+  padding: 10px 32px;
+  background: var(--niv-bg, #0e0e10);
+  border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.niv-topbar-tabs {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--niv-surface-2, #1e1e22);
+  border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+  border-radius: 999px; padding: 4px;
+  max-width: 100%; overflow-x: auto; scrollbar-width: none;
+}
+.niv-topbar-tabs::-webkit-scrollbar { display: none; }
+.niv-tab {
+  border: none; background: transparent; color: var(--niv-text-dim, #a7a7ad);
+  font-family: inherit; font-size: 14px; font-weight: 600;
+  padding: 8px 18px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.niv-tab:hover { color: var(--niv-text, #f5f5f7); }
+.niv-tab.active { background: linear-gradient(135deg, #0ea5a5, #1971c2); color: #fff; }
+.niv-notif-badge {
+  display: none; min-width: 20px; height: 20px; padding: 0 6px;
+  border-radius: 999px; background: var(--niv-red, #e5484d); color: #fff;
+  font-size: 11px; font-weight: 700; align-items: center; justify-content: center;
+}
+.niv-notif-badge.on { display: inline-flex; }
+.niv-topbar-project {
+  margin-left: auto; font-size: 15px; font-weight: 600;
+  color: var(--niv-text, #f5f5f7); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; max-width: 34vw;
+}
+
+/* shell + sidebar live below the top bar */
+body.has-sidebar .niv-shell { min-height: calc(100vh - var(--niv-topbar-h)); }
+body.has-sidebar .niv-float-panel {
+  top: var(--niv-topbar-h);
+  min-height: calc(100vh - var(--niv-topbar-h));
+  max-height: calc(100vh - var(--niv-topbar-h));
+  resize: none; /* the native corner resize is replaced by the drag handle */
+}
+
+/* ---- (4) PADDING: the acceptance check ----
+   28px vertical / 32px horizontal around ALL view content, 20px between
+   the project panels, 20px between home panels. This block loads after
+   niv-dark.css and the legacy `main { padding: 0 }` rule, and outranks
+   both, so the glued-to-the-edge layout cannot come back. */
+body.has-sidebar .niv-shell > main {
+  padding: 28px 32px 40px;
+  max-width: none; margin: 0;
+}
+.niv-proj-grid { gap: 20px; }
+.niv-home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+.niv-stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+
+/* ---- (3) sidebar drag-resize handle ---- */
+.niv-resize-handle {
+  flex: none; width: 8px; margin-left: -4px; margin-right: -4px;
+  cursor: col-resize; z-index: 510; position: relative; background: transparent;
+  touch-action: none;
+}
+.niv-resize-handle::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 3px; width: 2px;
+  background: transparent; transition: background 0.15s;
+}
+.niv-resize-handle:hover::after, .niv-resize-handle.dragging::after { background: var(--niv-accent, #1971c2); }
+body.sidebar-collapsed .niv-resize-handle { display: none; }
+body.niv-resizing { cursor: col-resize; user-select: none; }
+
+/* ---- (2) per-section collapse (separate from the sidebar's own collapse) ---- */
+.niv-panel-sec-title { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.niv-sec-chev {
+  margin-left: auto; width: 22px; height: 22px; border-radius: 50%;
+  border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+  background: transparent; color: var(--niv-text-dim, #a7a7ad);
+  font-size: 12px; line-height: 1; cursor: pointer; font-family: inherit;
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  transition: transform 0.18s;
+}
+.niv-sec-chev:hover { color: var(--niv-text, #f5f5f7); }
+.niv-panel-sec.sec-collapsed .niv-sec-chev { transform: rotate(-90deg); }
+.niv-panel-sec.sec-collapsed .niv-sec-body { display: none; }
+
+/* ---- home overview ---- */
+.niv-home-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 4px; border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+  cursor: pointer; font-size: 14px;
+}
+.niv-home-row:last-child { border-bottom: none; }
+.niv-home-row:hover { background: var(--niv-surface-2, #1e1e22); }
+.niv-home-count { color: var(--niv-text-dim, #a7a7ad); font-size: 12px; flex: none; }
+.niv-update-banner {
+  display: none; align-items: center; gap: 16px;
+  border: 1px solid var(--niv-accent, #1971c2); border-radius: 18px;
+  background: var(--niv-surface, #17171a); padding: 18px 22px; margin-bottom: 20px;
+}
+.niv-update-banner-title { font-weight: 700; font-size: 15px; }
+.niv-update-banner-desc { color: var(--niv-text-dim, #a7a7ad); font-size: 13px; margin-top: 2px; white-space: pre-line; }
+.niv-update-banner .niv-btn-pill { margin-left: auto; flex: none; text-decoration: none; }
+
+/* ---- notifications ---- */
+.niv-notif-item {
+  display: flex; gap: 14px; padding: 16px 18px;
+  border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); border-radius: 14px;
+  margin-bottom: 10px; background: var(--niv-surface, #17171a); cursor: pointer;
+}
+.niv-notif-item:hover { background: var(--niv-surface-2, #1e1e22); }
+.niv-notif-item.unread { border-color: var(--niv-border, rgba(255,255,255,0.28)); }
+.niv-notif-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex: none; }
+.niv-notif-main { flex: 1; min-width: 0; }
+.niv-notif-title { font-weight: 600; font-size: 15px; }
+.niv-notif-body { color: var(--niv-text-dim, #a7a7ad); font-size: 13px; margin-top: 2px; }
+.niv-notif-date { color: var(--niv-text-dim, #a7a7ad); font-size: 12px; flex: none; }
+
+@media (max-width: 1100px) { .niv-home-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) {
+  .niv-topbar { padding: 10px 16px; }
+  body.has-sidebar .niv-shell > main { padding: 20px 16px 32px; }
+  body.has-sidebar .niv-float-panel {
+    top: var(--niv-topbar-h); height: calc(100dvh - var(--niv-topbar-h));
+    min-height: 0; max-height: none;
+  }
+  .niv-resize-handle { display: none; }
+  .niv-topbar-project { max-width: 22vw; font-size: 13px; }
+}
+
+/* ============ REVISION 2: navegacion en la barra + tarjetas flotantes ============
+   Correcciones de Giulia sobre el rediseno: (a) la navegacion principal vive
+   tambien dentro de la barra lateral, con iconos, y el item seleccionado se
+   expande en el sitio; (b) la barra lateral NO va pegada al borde de la
+   pantalla: es una tarjeta flotante con margenes y esquinas redondeadas, y el
+   contenido principal flota igual. Nada toca los bordes del viewport salvo la
+   barra superior, que se queda a todo lo ancho segun su anotacion original. */
+:root { --niv-inset: 20px; }
+body.has-sidebar { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+body.has-sidebar .niv-topbar { flex: none; }
+body.has-sidebar .niv-shell {
+  flex: 1; min-height: 0; height: auto;
+  padding: var(--niv-inset); box-sizing: border-box;
+}
+body.has-sidebar .niv-float-panel {
+  top: auto; height: auto; min-height: 0; max-height: none;
+  border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+  border-radius: 18px;
+  box-shadow: 0 10px 34px rgba(0,0,0,0.38);
+}
+body.has-sidebar .niv-shell > main {
+  min-height: 0; overflow-y: auto;
+  background: var(--niv-surface, #17171a);
+  border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+  border-radius: 18px;
+  box-shadow: 0 10px 34px rgba(0,0,0,0.38);
+}
+@media print {
+  body.has-sidebar { height: auto; overflow: visible; display: block; }
+}
+
+/* ---- navegacion principal dentro de la barra lateral ---- */
+.niv-side-nav {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 8px 0 10px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+}
+.niv-navunit { border: 1px solid transparent; border-radius: 14px; padding: 3px; }
+.niv-navunit.active {
+  background: rgba(255,255,255,0.03);
+  border-color: var(--niv-border-soft, rgba(255,255,255,0.14));
+}
+.niv-snav-row { display: flex; align-items: center; gap: 6px; }
+.niv-snav {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 11px;
+  padding: 8px 9px; border: none; border-radius: 10px; background: transparent;
+  color: var(--niv-text-dim, #a7a7ad); font-family: inherit; font-size: 14.5px; font-weight: 500;
+  cursor: pointer; text-align: left; transition: background 0.15s, color 0.15s;
+}
+.niv-snav:hover { background: var(--niv-surface-2, #1e1e22); color: var(--niv-text, #f5f5f7); }
+.niv-navunit.active .niv-snav { color: var(--niv-text, #f5f5f7); font-weight: 700; }
+.niv-snav-ico { width: 24px; height: 24px; flex: none; display: inline-flex; }
+.niv-snav-ico svg { width: 24px; height: 24px; display: block; }
+.niv-snav-label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.niv-snav .niv-notif-badge { margin-left: auto; }
+.niv-snav-plus { flex: none; }
+.niv-snav-body { display: none; padding: 6px 2px 4px 14px; }
+.niv-navunit.expanded .niv-snav-body { display: block; max-height: 34vh; overflow-y: auto; }
+
+/* barra colapsada: riel de iconos. Botones de 40px centrados en el eje del
+   riel, estado activo legible a ese ancho y badge reducido a un punto para
+   que nunca desborde. El boton de mejorar plan no cabe en el riel: se oculta
+   y vuelve al expandir. */
+.niv-float-panel.collapsed .niv-navunit {
+  padding: 0; border-color: transparent; background: transparent;
+  display: flex; justify-content: center;
+}
+.niv-float-panel.collapsed .niv-snav-row { justify-content: center; }
+.niv-float-panel.collapsed .niv-snav {
+  position: relative; flex: none;
+  width: 40px; height: 40px; padding: 0;
+  justify-content: center; border-radius: 12px;
+}
+.niv-float-panel.collapsed .niv-navunit.active .niv-snav { background: var(--niv-surface-2, #1e1e22); }
+.niv-float-panel.collapsed .niv-snav-label,
+.niv-float-panel.collapsed .niv-snav-body,
+.niv-float-panel.collapsed .niv-snav-plus { display: none; }
+.niv-float-panel.collapsed .niv-snav .niv-notif-badge { display: none; }
+.niv-float-panel.collapsed .niv-snav .niv-notif-badge.on {
+  display: block; position: absolute; top: 5px; right: 5px;
+  width: 9px; height: 9px; min-width: 0; padding: 0;
+  border-radius: 50%; overflow: hidden; color: transparent; font-size: 0; line-height: 0;
+}
+.niv-float-panel.collapsed #btn-upgrade-plan { display: none !important; }
+
+@media (max-width: 900px) {
+  :root { --niv-inset: 12px; }
+  body.has-sidebar { height: 100dvh; }
+  body.has-sidebar .niv-float-panel {
+    top: calc(var(--niv-topbar-h) + var(--niv-inset));
+    left: var(--niv-inset); bottom: var(--niv-inset); height: auto;
+  }
+}
+</style>
 </head>
 <body class="has-sidebar">
 <canvas id="drawing-canvas" style="display:none;width:340px;height:420px"></canvas>
+
+<!-- TOP BAR: on top across ALL the dashboard (wireframe law #1) -->
+<header class="niv-topbar" id="niv-topbar">
+  <button class="niv-hamburger" onclick="document.body.classList.toggle('nav-open')" aria-label="Menú">☰</button>
+  <nav class="niv-topbar-tabs" aria-label="Dashboard">
+    <button class="niv-tab" id="tab-home" onclick="window.showDashView('home')"><span class="niv-tab-label">Panel</span></button>
+    <button class="niv-tab" id="tab-projects" onclick="window.openProjectTab()"><span class="niv-tab-label">Proyectos</span></button>
+    <button class="niv-tab" id="tab-notifications" onclick="window.showDashView('notifications')"><span class="niv-tab-label">Notificaciones</span><span class="niv-notif-badge" id="niv-notif-badge">0</span></button>
+    <button class="niv-tab" id="tab-users" onclick="window.location.href='/company/users'"><span class="niv-tab-label">Usuarios</span></button>
+  </nav>
+  <div class="niv-topbar-project" id="niv-topbar-project"></div>
+</header>
 
 <div class="niv-shell">
 <div class="niv-scrim" id="niv-scrim" onclick="document.body.classList.remove('nav-open')"></div>
@@ -516,18 +762,48 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     <button class="niv-panel-collapse" id="niv-panel-collapse" title="Colapsar">‹</button>
   </div>
   <div class="org-badge" id="tier-badge" style="display:none;">Pro</div>
+  <button class="btn-save" id="btn-upgrade-plan" onclick="window.showUpgradeModal && window.showUpgradeModal()" style="display:none;margin:10px 16px 0;">Mejorar plan</button>
+  <nav class="niv-side-nav" aria-label="Dashboard">
+    <div class="niv-navunit" data-navunit="home">
+      <button class="niv-snav" id="snav-home" onclick="window._sideNavGo('home')">
+        <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#4CD964"/><path d="M12 5l7 6.3h-1.9V18a1.2 1.2 0 0 1-1.2 1.2h-2.9v-4.7h-2v4.7H8.1A1.2 1.2 0 0 1 6.9 18v-6.7H5z" fill="#fff"/></svg></span>
+        <span class="niv-snav-label" id="snav-home-label">Panel</span>
+      </button>
+    </div>
+    <div class="niv-navunit" data-navunit="projects">
+      <div class="niv-snav-row">
+        <button class="niv-snav" id="snav-projects" onclick="window._sideNavGo('projects')">
+          <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#AF52DE"/><path d="M3.5 7.5A1.6 1.6 0 0 1 5.1 5.9h3.6c.44 0 .86.18 1.16.5l1.54 1.65h7.5A1.6 1.6 0 0 1 20.5 9.65v6.9a1.6 1.6 0 0 1-1.6 1.6H5.1a1.6 1.6 0 0 1-1.6-1.6z" fill="#fff"/></svg></span>
+          <span class="niv-snav-label" id="snav-projects-label">Proyectos</span>
+        </button>
+        <button class="niv-plus-btn niv-snav-plus" onclick="openNewProject()" title="Nuevo proyecto" aria-label="Nuevo proyecto">+</button>
+      </div>
+      <div class="niv-snav-body" id="niv-snav-projects-body">
+        <div id="niv-panel-projects"><div class="niv-panel-empty">Sin proyectos</div></div>
+      </div>
+    </div>
+    <div class="niv-navunit" data-navunit="notifications">
+      <button class="niv-snav" id="snav-notifications" onclick="window._sideNavGo('notifications')">
+        <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#FF3B30"/><path d="M12 4.2a5.3 5.3 0 0 0-5.3 5.3v3L5.2 15.5a.75.75 0 0 0 .67 1.1h12.26a.75.75 0 0 0 .67-1.1l-1.5-3v-3A5.3 5.3 0 0 0 12 4.2zM10.1 18.6a1.9 1.9 0 0 0 3.8 0z" fill="#fff"/></svg></span>
+        <span class="niv-snav-label" id="snav-notifications-label">Notificaciones</span>
+        <span class="niv-notif-badge" id="niv-snav-badge">0</span>
+      </button>
+    </div>
+    <div class="niv-navunit" data-navunit="users">
+      <button class="niv-snav" id="snav-users" onclick="window._sideNavGo('users')">
+        <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#0A84FF"/><path d="M9.2 6.1a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4zM3.9 18.7c.7-3.1 2.8-4.7 5.3-4.7s4.6 1.6 5.3 4.7zM16.6 7.6a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zM15.9 14.3c2.1.3 3.7 1.8 4.3 4.4h-4.5c.35-1.6.42-3.05.2-4.4z" fill="#fff"/></svg></span>
+        <span class="niv-snav-label" id="snav-users-label">Usuarios</span>
+      </button>
+    </div>
+  </nav>
   <div class="niv-panel-body" id="niv-panel-body">
-    <div class="niv-panel-sec">
-      <div class="niv-panel-sec-title" style="display:flex;align-items:center;justify-content:space-between;">Proyectos<button class="niv-plus-btn" onclick="openNewProject()" title="Nuevo proyecto">+</button></div>
-      <div id="niv-panel-projects"><div class="niv-panel-empty">Sin proyectos</div></div>
-    </div>
-    <div class="niv-panel-sec">
+    <div class="niv-panel-sec" data-seckey="customers">
       <div class="niv-panel-sec-title">Clientes</div>
-      <div id="niv-panel-customers"><div class="niv-panel-empty">Sin clientes</div></div>
+      <div class="niv-sec-body" id="niv-panel-customers"><div class="niv-panel-empty">Sin clientes</div></div>
     </div>
-    <div class="niv-panel-sec">
+    <div class="niv-panel-sec" data-seckey="measures">
       <div class="niv-panel-sec-title">Medidas</div>
-      <div id="niv-panel-measures"><div class="niv-panel-empty">Sin medidas</div></div>
+      <div class="niv-sec-body" id="niv-panel-measures"><div class="niv-panel-empty">Sin medidas</div></div>
     </div>
     <div class="niv-panel-actions">
       <button class="niv-nav-btn" id="nav-measures" onclick="document.body.classList.remove('nav-open');window.showDashView('measures')">Medidas</button>
@@ -552,8 +828,46 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     </div>
   </div>
 </div>
+<div class="niv-resize-handle" id="niv-resize-handle" role="separator" aria-orientation="vertical" title="Arrastrar para redimensionar"></div>
 
 <main>
+ <div id="view-home" style="display:none">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <h1 style="margin:0;" id="home-title">Panel</h1>
+  </div>
+  <div class="subtitle" id="home-subtitle"></div>
+  <div class="niv-update-banner" id="home-update-banner">
+    <div style="min-width:0;">
+      <div class="niv-update-banner-title" id="home-update-title"></div>
+      <div class="niv-update-banner-desc" id="home-update-desc"></div>
+    </div>
+    <a class="niv-btn-pill niv-btn-primary" href="/company/updates" id="home-update-link">Ver actualización</a>
+  </div>
+  <div class="niv-stats-row">
+    <div class="stat-card"><div class="stat-num" id="home-stat-projects">-</div><div class="stat-label" id="home-stat-projects-label">Proyectos</div></div>
+    <div class="stat-card"><div class="stat-num" id="home-stat-total">-</div><div class="stat-label" id="home-stat-total-label">Medidas totales</div></div>
+    <div class="stat-card"><div class="stat-num" id="home-stat-today">-</div><div class="stat-label" id="home-stat-today-label">Hoy</div></div>
+    <div class="stat-card"><div class="stat-num" id="home-stat-members">-</div><div class="stat-label" id="home-stat-members-label">Miembros</div></div>
+  </div>
+  <div class="niv-home-grid">
+    <div class="niv-card">
+      <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="home-recent-projects-title">Proyectos recientes</div>
+      <div id="home-projects"><div class="niv-panel-empty">Cargando…</div></div>
+    </div>
+    <div class="niv-card">
+      <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="home-recent-measures-title">Medidas recientes</div>
+      <div id="home-measures"><div class="niv-panel-empty">Cargando…</div></div>
+    </div>
+  </div>
+ </div><!-- /view-home -->
+ <div id="view-notifications" style="display:none">
+  <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+    <h1 style="margin:0;" id="notif-title">Notificaciones</h1>
+    <button class="niv-btn-pill" id="notif-mark-all" style="margin-left:auto;" onclick="window.markAllNotificationsRead()">Marcar todas como leídas</button>
+  </div>
+  <div class="subtitle" id="notif-subtitle"></div>
+  <div id="notif-list"><div class="loading">Cargando notificaciones…</div></div>
+ </div><!-- /view-notifications -->
  <div id="view-measures">
   <div style="display:flex; align-items:center; gap:12px; min-width:0;">
     <button class="niv-hamburger" onclick="document.body.classList.toggle('nav-open')" aria-label="Menú" style="flex-shrink:0;">☰</button>
@@ -874,7 +1188,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
 import { auth, db, centralFunctions, isCustomBackend } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getDoc, doc, setDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
 import { makePermChecker, canEditJob, orgHasQuotes, userCanQuote } from './permissions.js';
 import { ensureFlowClaims, routeAfterGate } from './geo.js';
 // Flow claims (flow/geoOk/licenseStatus) are minted server-side by flowGate.
@@ -925,37 +1239,114 @@ const showMissingProfileScreen = () => {
   document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⚠️</div><h2 style="color:#212529">No se encontró tu perfil</h2><p style="color:#868e96;max-width:340px">Tu sesión es válida pero no hay un perfil de usuario asociado. Si acabas de registrarte, espera unos segundos y reintenta; si no, cierra sesión y pide a tu administrador un enlace de registro nuevo.</p><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button onclick="window._missingRetry()" style="padding:12px 28px;background:#f5a524;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Reintentar</button><button onclick="window._missingSignOut()" style="padding:12px 28px;background:#f1f3f5;color:#495057;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div></div>';
 };
 
-// Upgrade popup for free-tier accounts: QR deep-links into the Android app
-// (nivelato://upgrade) where the purchase options pop up. The app syncs the
-// new tier to users/{uid} async; this watcher unlocks the dashboard live.
-const showUpgradePopup = (uid) => {
-  if (window._upgradeShown) return;
-  window._upgradeShown = true;
-  window._upgradeSignOut = async () => { await signOut(auth); window.location.href = 'https://login.nivelatolabs.com/?signout=1'; };
-  window._upgradeRetry = () => window.location.reload();
-  const overlay = document.createElement('div');
-  overlay.id = 'upgrade-overlay';
-  overlay.innerHTML =
-    '<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">'
-    + '<div style="background:#fff;border-radius:16px;padding:32px 28px;max-width:360px;width:100%;text-align:center;font-family:Inter,sans-serif;box-shadow:0 24px 60px rgba(0,0,0,.35)">'
-    + '<div style="font-size:44px;margin-bottom:8px">📊</div>'
-    + '<h2 style="color:#212529;margin:0 0 8px;font-size:20px">El dashboard necesita un plan</h2>'
-    + '<p style="color:#868e96;font-size:14px;margin:0 0 16px;line-height:1.5">Escanea el código con tu teléfono para abrir las opciones de suscripción en la app de Nivelato. Al completar la compra, esta pantalla se desbloquea sola.</p>'
-    + '<img src="./upgrade-qr.png" alt="Abrir opciones de suscripción en la app" style="width:200px;height:200px;border:1px solid #e9ecef;border-radius:12px;margin-bottom:16px" />'
-    + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
-    + '<button onclick="window._upgradeRetry()" style="padding:10px 22px;background:#f5a524;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Ya compré, reintentar</button>'
-    + '<button onclick="window._upgradeSignOut()" style="padding:10px 22px;background:#f1f3f5;color:#495057;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Cerrar sesión</button>'
-    + '</div></div></div>';
-  document.body.appendChild(overlay);
-  // Watch for the tier sync from the app: unlock live, no refresh needed.
+// ─── Huella del equipo web ───
+// SHA-1 over this PC's stable signals (hardware + browser). The same PC
+// always produces the same hash, so it identifies the WEB MACHINE in the
+// upgrade pairing: nivelato://upgrade/<huella>?t=<token>. The hash is an
+// identity, NOT a credential (it is low-entropy and travels in plain sight
+// inside the QR); the pairing is authorized by the token, a single-use
+// secret minted server-side by createUpgradeLink.
+async function webPcFingerprint() {
+  const parts = [];
+  parts.push('ua=' + (navigator.userAgent || ''));
+  parts.push('platform=' + (navigator.platform || ''));
+  parts.push('cores=' + (navigator.hardwareConcurrency || 0));
+  parts.push('mem=' + (('deviceMemory' in navigator) ? navigator.deviceMemory : 'na'));
+  parts.push('screen=' + screen.width + 'x' + screen.height + 'x' + screen.colorDepth + '@' + (window.devicePixelRatio || 1));
+  let gl = 'na';
+  try {
+    const c = document.createElement('canvas');
+    const g = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (g) {
+      const ext = g.getExtension('WEBGL_debug_renderer_info');
+      const v = ext ? g.getParameter(ext.UNMASKED_VENDOR_WEBGL) : g.getParameter(g.VENDOR);
+      const r = ext ? g.getParameter(ext.UNMASKED_RENDERER_WEBGL) : g.getParameter(g.RENDERER);
+      gl = String(v) + '/' + String(r);
+    }
+  } catch (_) { /* sin WebGL: el resto de las señales alcanza */ }
+  parts.push('webgl=' + gl);
+  let tz = 'na';
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'na'; } catch (_) {}
+  parts.push('tz=' + tz);
+  parts.push('lang=' + ((navigator.languages && navigator.languages.join(',')) || navigator.language || ''));
+  // Señales de automatización: un navegador controlado por scripts (o
+  // headless) produce una huella distinta y detectable a la de uno normal.
+  const auto = [];
+  if (navigator.webdriver) auto.push('webdriver');
+  if (/HeadlessChrome|PhantomJS|Selenium|Awesomium/i.test(navigator.userAgent || '')) auto.push('headless-ua');
+  auto.push('plugins=' + ((navigator.plugins && navigator.plugins.length) || 0));
+  parts.push('auto=' + auto.join(','));
+  const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(parts.join('|')));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Watch for the tier sync from the app: when a free account upgrades, the
+// app writes the new tier to users/{uid} and this reloads the dashboard so
+// the paid features appear live, no manual refresh needed.
+const watchTierForUpgrade = (uid) => {
+  if (window._tierUnsub) return;
   try {
     const uref = doc(db, 'users', uid);
     window._tierUnsub = onSnapshot(uref, (snap) => {
       const t = (snap.data()?.tier || 'free').toLowerCase();
       if (['ultra', 'pro', 'qgc'].includes(t)) window.location.reload();
     });
-  } catch (_) { /* watcher is best-effort; the retry button covers it */ }
+  } catch (_) { /* watcher is best-effort */ }
 };
+
+// Upgrade modal for free-tier accounts. NOT a wall: free accounts use the
+// dashboard normally and open this only when they choose to upgrade. The
+// QR deep-links into the Android app, where the purchase options pop up;
+// scanning it also links the phone to this account and sets the home
+// region if unset (redeemUpgradeLink, server-side). The QR itself is
+// rendered by createUpgradeLink and encodes
+// nivelato://upgrade/<huella>?t=<token>.
+const showUpgradeModal = async () => {
+  if (document.getElementById('upgrade-overlay')) return;
+  const user = auth.currentUser;
+  if (!user) return;
+  watchTierForUpgrade(user.uid);
+  window._upgradeRetry = () => window.location.reload();
+  window._upgradeClose = () => {
+    const o = document.getElementById('upgrade-overlay');
+    if (o) o.remove();
+  };
+  window._upgradeRegen = () => { window._upgradeClose(); showUpgradeModal(); };
+  const overlay = document.createElement('div');
+  overlay.id = 'upgrade-overlay';
+  overlay.innerHTML =
+    '<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">'
+    + '<div style="background:#fff;border-radius:16px;padding:32px 28px;max-width:360px;width:100%;text-align:center;font-family:Inter,sans-serif;box-shadow:0 24px 60px rgba(0,0,0,.35)">'
+    + '<div style="font-size:44px;margin-bottom:8px">📊</div>'
+    + '<h2 style="color:#212529;margin:0 0 8px;font-size:20px">Mejora tu plan</h2>'
+    + '<p style="color:#868e96;font-size:14px;margin:0 0 16px;line-height:1.5">Escanea el código con tu teléfono para abrir las opciones de suscripción en la app de Nivelato. Al escanearlo, el teléfono queda vinculado a tu cuenta. Al completar la compra, las funciones de pago se activan aquí solas.</p>'
+    + '<div id="upgrade-qr-body" style="min-height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin-bottom:16px"><p style="color:#868e96;font-size:14px;margin:0">Generando tu código…</p></div>'
+    + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
+    + '<button onclick="window._upgradeRetry()" style="padding:10px 22px;background:#f5a524;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Ya compré, reintentar</button>'
+    + '<button onclick="window._upgradeClose()" style="padding:10px 22px;background:#f1f3f5;color:#495057;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Cerrar</button>'
+    + '</div></div></div>';
+  document.body.appendChild(overlay);
+  const body = document.getElementById('upgrade-qr-body');
+  try {
+    const fp = await webPcFingerprint();
+    const create = httpsCallable(getFunctions(auth.app, 'us-central1'), 'createUpgradeLink');
+    const { data } = await create({ fp });
+    if (!document.getElementById('upgrade-qr-body')) return; // closed while generating
+    body.innerHTML =
+      (data.qrSvg
+        ? '<div style="background:#fff;border:1px solid #e9ecef;border-radius:12px;padding:10px;line-height:0">' + data.qrSvg + '</div>'
+        : '')
+      + '<code style="font-size:11px;color:#495057;word-break:break-all;max-width:280px">' + escapeHtml(data.url || '') + '</code>'
+      + '<p style="color:#adb5bd;font-size:12px;margin:0">El código vence en 10 minutos. Si expira, cierra y vuelve a abrir.</p>';
+  } catch (e) {
+    console.error('[Nivelato] createUpgradeLink falló:', e);
+    if (!document.getElementById('upgrade-qr-body')) return;
+    body.innerHTML =
+      '<p style="color:#c92a2a;font-size:14px;margin:0;line-height:1.5">No se pudo generar el código. Revisa tu conexión y vuelve a intentarlo.</p>'
+      + '<button onclick="window._upgradeRegen()" style="padding:10px 22px;background:#f5a524;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Reintentar</button>';
+  }
+};
+window.showUpgradeModal = showUpgradeModal;
 
 // redraw open modal graph when bread mode toggles
 document.addEventListener('breadchange', function () {
@@ -1114,15 +1505,19 @@ let currentUser;
       window.location.href = 'index.html'; return;
     }
     const orgId = userData.orgId;
-    // Tier gate: QGC orgs and Ultra get the full dashboard; Pro gets the
-    // limited form (own measurements only, enforced in makePermChecker);
-    // free accounts get the upgrade popup with a QR deep-link into the app.
-    // The tier syncs async from the Android app after purchase.
+    // Tier behavior: the dashboard works for EVERY tier, free included.
+    // Per-feature gates live in makePermChecker (quoting is Ultra-only,
+    // Pro sees own measurements only). Free accounts get a "Mejorar plan"
+    // button that opens the QR upgrade modal, plus a watcher that reloads
+    // when the app syncs a purchased tier to users/{uid}.
     const _tier = (userData.tier || 'free').toLowerCase();
     const _isQgcOrg = !orgHasQuotes(userData); // QGC org: no tiers, full access
     if (!_isQgcOrg && !['ultra', 'pro', 'qgc'].includes(_tier)) {
-      showUpgradePopup(user.uid);
-      return;
+      const _ub = document.getElementById('btn-upgrade-plan');
+      if (_ub) _ub.style.display = 'block';
+      const _fb = document.getElementById('tier-badge');
+      if (_fb) { _fb.style.display = 'inline-block'; _fb.textContent = 'Gratis'; }
+      watchTierForUpgrade(user.uid);
     }
     if (_tier === 'pro' && !_isQgcOrg) {
       const _pb = document.getElementById('tier-badge');
@@ -1157,6 +1552,9 @@ let currentUser;
       const _em = user.email || userData.email || '';
       if (_an) _an.textContent = _dn || _em.split('@')[0] || 'Usuario';
       if (_ae) _ae.textContent = _em;
+      // en el riel colapsado no se ven nombre ni correo: quedan en el tooltip
+      const _ac = document.getElementById('niv-account-card');
+      if (_ac) _ac.title = (_dn && _em) ? _dn + ' · ' + _em : (_dn || _em || '');
       if (_aa) {
         const _pu = user.photoURL || userData.photoURL;
         if (_pu) { _aa.innerHTML = ''; const _img = document.createElement('img'); _img.src = _pu; _img.alt = ''; _aa.appendChild(_img); }
@@ -1267,6 +1665,7 @@ let currentUser;
 
     applyFilters();
       refreshFloatPanel(allJobs);
+      if (window._dashView === 'home' && window.renderHomeOverview) window.renderHomeOverview();
     };
 
   // floating panel: customers + measurements lists
@@ -2084,7 +2483,7 @@ let currentUser;
     document.body.classList.remove('nav-open');
     // orgs sin quoting (QGC): las vistas de precios/cotizaciones no existen
     if (!userCanQuote(window._currentUserData) && ['pricelist', 'quotes', 'builder'].includes(name)) name = 'measures';
-    const views = { measures: 'view-measures', pricelist: 'view-pricelist', quotes: 'view-quotes', builder: 'view-builder', project: 'view-project', measure: 'view-measure' };
+    const views = { home: 'view-home', notifications: 'view-notifications', measures: 'view-measures', pricelist: 'view-pricelist', quotes: 'view-quotes', builder: 'view-builder', project: 'view-project', measure: 'view-measure' };
     Object.keys(views).forEach(k => {
       const el = document.getElementById(views[k]);
       if (el) el.style.display = (k === name) ? '' : 'none';
@@ -2100,6 +2499,9 @@ let currentUser;
     if (btnQ) btnQ.classList.toggle('active', name === 'quotes' || name === 'builder');
     if (name === 'pricelist') ensurePriceList();
     if (name === 'quotes') ensureQuotes();
+    // redesign: la barra superior se entera de cada cambio de vista
+    window._dashView = name;
+    if (window._onDashViewChange) window._onDashViewChange(name);
     window.scrollTo(0, 0);
   };
   window.togglePriceListView = () => {
@@ -2983,6 +3385,8 @@ let currentUser;
     const p = _projects.find(x => x.id === projectId);
     if (!p) return;
     _currentProject = p;
+    const _tp = document.getElementById('niv-topbar-project');
+    if (_tp) _tp.textContent = p.name || 'Proyecto';
     document.getElementById('proj-title').textContent = p.name || 'Proyecto';
     document.getElementById('proj-subtitle').textContent = p.customer || '';
     // measurements in this project
@@ -3012,8 +3416,9 @@ let currentUser;
   }
 
   window.openAssignUsers = () => {
-    // TODO: member picker modal — for now, jump to company users
-    window.location.href = '/company/settings';
+    // "Add more" del panel de usuarios asignados: abre la pantalla de
+    // usuarios de la empresa con el flujo de agregar usuario ya abierto.
+    window.location.href = '/company/users?addUser=1';
   };
 
 
@@ -3125,6 +3530,371 @@ let currentUser;
       collapseBtn.title = panel.classList.contains('collapsed') ? 'Expandir' : 'Colapsar';
     });
   })();
+
+  // ================= REDESIGN (wireframes de Giulia, Oct 2026) =================
+  // Barra superior persistente, secciones colapsables, sidebar redimensionable,
+  // vista Panel (home) y vista de Notificaciones.
+  // Idioma de la chrome nueva: la misma señal que login/ajustes
+  // (localStorage 'nivelato-login-lang'); por defecto español.
+  const NIV_LANG = (() => { try { return localStorage.getItem('nivelato-login-lang') === 'en' ? 'en' : 'es'; } catch (_) { return 'es'; } })();
+  const L = (es, en) => (NIV_LANG === 'en' ? en : es);
+  const _callable = (name) => httpsCallable(getFunctions(auth.app, 'us-central1'), name);
+  const _fmtDateTime = (ms) => {
+    if (!ms) return '';
+    try {
+      return new Date(ms).toLocaleDateString(NIV_LANG === 'en' ? 'en-US' : 'es-PR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
+        new Date(ms).toLocaleTimeString(NIV_LANG === 'en' ? 'en-US' : 'es-PR', { hour: '2-digit', minute: '2-digit', hour12: true });
+    } catch (_) { return ''; }
+  };
+
+  // textos estáticos de la chrome nueva (EN/ES)
+  (() => {
+    const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    const setTab = (id, txt) => { const el = document.querySelector('#' + id + ' .niv-tab-label'); if (el) el.textContent = txt; };
+    setTab('tab-home', L('Panel', 'Dashboard'));
+    setTab('tab-projects', L('Proyectos', 'Projects'));
+    setTab('tab-notifications', L('Notificaciones', 'Notifications'));
+    setTab('tab-users', L('Usuarios', 'Users'));
+    setText('snav-home-label', L('Panel', 'Dashboard'));
+    setText('snav-projects-label', L('Proyectos', 'Projects'));
+    setText('snav-notifications-label', L('Notificaciones', 'Notifications'));
+    setText('snav-users-label', L('Usuarios', 'Users'));
+    setText('home-title', L('Panel', 'Dashboard'));
+    setText('home-stat-projects-label', L('Proyectos', 'Projects'));
+    setText('home-stat-total-label', L('Medidas totales', 'Total measurements'));
+    setText('home-stat-today-label', L('Hoy', 'Today'));
+    setText('home-stat-members-label', L('Miembros', 'Members'));
+    setText('home-recent-projects-title', L('Proyectos recientes', 'Recent projects'));
+    setText('home-recent-measures-title', L('Medidas recientes', 'Recent measurements'));
+    setText('home-update-link', L('Ver actualización', 'See update'));
+    setText('notif-title', L('Notificaciones', 'Notifications'));
+    setText('notif-mark-all', L('Marcar todas como leídas', 'Mark all as read'));
+  })();
+
+  // ---- barra superior: pestaña activa según la vista ----
+  window._onDashViewChange = (name) => {
+    const map = { home: 'tab-home', project: 'tab-projects', notifications: 'tab-notifications' };
+    ['tab-home', 'tab-projects', 'tab-notifications', 'tab-users'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('active', map[name] === id);
+    });
+    if (name === 'home') window.renderHomeOverview();
+    if (name === 'notifications') window.renderNotifications();
+    window.refreshNotifBadge();
+    // la navegacion lateral se sincroniza con la misma vista
+    if (window._syncSideNav) window._syncSideNav(name);
+    // el contenido principal tiene su propio scroll: vuelve arriba al cambiar
+    const mainEl = document.querySelector('.niv-shell > main');
+    if (mainEl) mainEl.scrollTop = 0;
+  };
+
+  // pestaña Proyectos: abre el proyecto actual (o el primero, o la vista vacía)
+  window.openProjectTab = () => {
+    if (_currentProject) {
+      const tp = document.getElementById('niv-topbar-project');
+      if (tp) tp.textContent = _currentProject.name || L('Proyecto', 'Project');
+      window.showDashView('project');
+      return;
+    }
+    if (_projects.length) { window.openProject(_projects[0].id); return; }
+    document.getElementById('proj-title').textContent = L('Proyectos', 'Projects');
+    document.getElementById('proj-subtitle').textContent = '';
+    document.getElementById('proj-measures').innerHTML = '<div class="niv-panel-empty">' + L('Sin proyectos todavía.', 'No projects yet.') + '</div>';
+    document.getElementById('proj-users').innerHTML = '';
+    const tp = document.getElementById('niv-topbar-project');
+    if (tp) tp.textContent = '';
+    window.showDashView('project');
+  };
+
+  // ---- navegacion principal dentro de la barra lateral (revision 2) ----
+  // Los items viven en la barra; el seleccionado se marca como activo y, si
+  // tiene lista (Proyectos), se expande en el sitio: el item y su lista son
+  // una sola unidad. Seleccionar otro item colapsa la expansion anterior
+  // (acordeon). El estado se guarda en el mismo almacen que el colapso de
+  // secciones ('niv-panel-sections', clave 'nav-open'), sin almacen paralelo.
+  (() => {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem('niv-panel-sections') || '{}'); } catch (_) {}
+    const store = () => { try { localStorage.setItem('niv-panel-sections', JSON.stringify(saved)); } catch (_) {} };
+    const units = {};
+    document.querySelectorAll('#niv-panel .niv-navunit').forEach((u) => { units[u.getAttribute('data-navunit')] = u; });
+    const setExpanded = (key, on) => {
+      const u = units[key];
+      if (!u) return;
+      u.classList.toggle('expanded', on);
+      if (key === 'projects') { saved['nav-open'] = on ? 'projects' : null; store(); }
+    };
+    const expandOnly = (key) => { Object.keys(units).forEach((k) => setExpanded(k, k === key)); };
+    // restaura la expansion guardada sin cambiar de vista
+    if (saved['nav-open'] === 'projects' && units.projects) units.projects.classList.add('expanded');
+    window._sideNavGo = (key) => {
+      document.body.classList.remove('nav-open');
+      if (key === 'home') { expandOnly(null); window.showDashView('home'); return; }
+      if (key === 'notifications') { expandOnly(null); window.showDashView('notifications'); return; }
+      if (key === 'users') { window.location.href = '/company/users'; return; }
+      if (key === 'projects') {
+        const u = units.projects;
+        // segundo toque sobre el item ya activo: colapsa solo la lista
+        if (u && u.classList.contains('expanded') && window._dashView === 'project') { setExpanded('projects', false); return; }
+        expandOnly('projects');
+        window.openProjectTab();
+      }
+    };
+    window._syncSideNav = (name) => {
+      let key = null;
+      if (name === 'home') key = 'home';
+      else if (name === 'notifications') key = 'notifications';
+      else if (name === 'project') key = 'projects';
+      else if (name === 'measure' && typeof _measureReturnView !== 'undefined' && _measureReturnView === 'project') key = 'projects';
+      Object.keys(units).forEach((k) => units[k].classList.toggle('active', k === key));
+      if (key === 'projects') expandOnly('projects');
+    };
+  })();
+
+  // ---- vista Panel (home): resumen con los datos que el dashboard ya carga ----
+  window.renderHomeOverview = () => {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('home-stat-projects', String(_projects.length));
+    set('home-stat-total', String(allJobs.length));
+    const today = prDay(new Date());
+    const todayCount = allJobs.filter((j) => {
+      const d = j.createdAt && j.createdAt.toDate ? j.createdAt.toDate() : (j.createdAt ? new Date(j.createdAt) : null);
+      return d && !isNaN(d) && prDay(d) === today;
+    }).length;
+    set('home-stat-today', String(todayCount));
+    set('home-stat-members', String((window._orgMembers || []).length));
+    const orgName = (document.getElementById('org-name-badge')?.textContent || '').replace('E2', '').trim();
+    set('home-subtitle', orgName && orgName !== '…' ? orgName : '');
+    const hp = document.getElementById('home-projects');
+    if (hp) {
+      hp.innerHTML = _projects.length
+        ? _projects.slice(0, 5).map((p) => {
+            const n = allJobs.filter((j) => j.projectId === p.id).length;
+            return `<div class="niv-home-row" onclick="openProject('${p.id}')"><span>${escapeHtml(p.name || 'Proyecto')}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span></div>`;
+          }).join('')
+        : '<div class="niv-panel-empty">' + L('Sin proyectos', 'No projects') + '</div>';
+    }
+    const hm = document.getElementById('home-measures');
+    if (hm) {
+      hm.innerHTML = allJobs.length
+        ? allJobs.slice(0, 6).map((j) => `<div class="niv-home-row" onclick="openMeasure('${j.id}', 'home')"><span>${escapeHtml(j.customer || j.project || 'Medida')}${j.annotatedPhoto ? '<span class="niv-photo-badge">📷</span>' : ''}</span><span class="dots">...</span></div>`).join('')
+        : '<div class="niv-panel-empty">' + L('Sin medidas', 'No measurements') + '</div>';
+    }
+    // aviso de actualización: puntero app_updates/latest (config de Job A);
+    // la descripción visible es el campo `description` de esa config.
+    (async () => {
+      const banner = document.getElementById('home-update-banner');
+      if (!banner) return;
+      try {
+        const snap = await getDoc(doc(db, 'app_updates', 'latest'));
+        const d = snap.exists() ? snap.data() : null;
+        if (d && d.version) {
+          document.getElementById('home-update-title').textContent = L('Nueva versión disponible: v', 'New version available: v') + d.version;
+          document.getElementById('home-update-desc').textContent = d.description || '';
+          banner.style.display = 'flex';
+        } else {
+          banner.style.display = 'none';
+        }
+      } catch (_) { banner.style.display = 'none'; }
+    })();
+  };
+
+  // ---- notificaciones (data layer: listNotifications / markNotificationRead) ----
+  let _notifItems = [];
+  const _setNotifBadge = (n) => {
+    // el mismo contador vive en la barra superior y en la navegacion lateral
+    document.querySelectorAll('.niv-notif-badge').forEach((badge) => {
+      badge.textContent = n > 99 ? '99+' : String(n);
+      badge.classList.toggle('on', n > 0);
+    });
+  };
+  window.refreshNotifBadge = async () => {
+    if (!auth.currentUser) return;
+    try {
+      const { data } = await _callable('listNotifications')({});
+      _setNotifBadge((data && data.unreadCount) || 0);
+    } catch (_) { /* backend sin desplegar: falla suave, sin badge */ }
+  };
+  const _notifDotColor = (type) => ({ device: '#2dd4bf', update: '#f5a524', org: '#1971c2', account: '#a7a7ad' }[type] || '#a7a7ad');
+  window.renderNotifications = async () => {
+    const list = document.getElementById('notif-list');
+    if (!list) return;
+    list.innerHTML = '<div class="loading">' + L('Cargando notificaciones…', 'Loading notifications…') + '</div>';
+    try {
+      const { data } = await _callable('listNotifications')({});
+      _notifItems = (data && data.items) || [];
+      _setNotifBadge((data && data.unreadCount) || 0);
+      const sub = document.getElementById('notif-subtitle');
+      if (sub) {
+        const unread = (data && data.unreadCount) || 0;
+        sub.textContent = unread ? unread + ' ' + L('sin leer', 'unread') : '';
+      }
+      if (!_notifItems.length) {
+        list.innerHTML = '<div class="niv-panel-empty">' + L('No tienes notificaciones.', 'No notifications yet.') + '</div>';
+        return;
+      }
+      list.innerHTML = _notifItems.map((n) => `
+        <div class="niv-notif-item${n.read ? '' : ' unread'}" data-notif-id="${escapeHtml(n.id)}">
+          <span class="niv-notif-dot" style="background:${_notifDotColor(n.type)}"></span>
+          <div class="niv-notif-main">
+            <div class="niv-notif-title">${escapeHtml(n.title || '')}</div>
+            ${n.body ? `<div class="niv-notif-body">${escapeHtml(n.body)}</div>` : ''}
+          </div>
+          <div class="niv-notif-date">${escapeHtml(_fmtDateTime(n.createdAt))}</div>
+        </div>`).join('');
+      list.querySelectorAll('.niv-notif-item').forEach((el) => {
+        el.addEventListener('click', () => window.openNotification(el.getAttribute('data-notif-id')));
+      });
+    } catch (e) {
+      list.innerHTML = '<div class="niv-panel-empty">' + L('No se pudieron cargar las notificaciones.', 'Could not load notifications.') + '</div>';
+    }
+  };
+  window.openNotification = async (id) => {
+    const n = _notifItems.find((x) => x.id === id);
+    if (n && !n.read) {
+      try { await _callable('markNotificationRead')({ id }); } catch (_) { /* se reintenta al recargar */ }
+      n.read = true;
+    }
+    window.renderNotifications();
+  };
+  window.markAllNotificationsRead = async () => {
+    try { await _callable('markNotificationRead')({ all: true }); } catch (_) { /* falla suave */ }
+    window.renderNotifications();
+  };
+
+  // ---- sidebar: secciones colapsables individualmente (ley #2) ----
+  (() => {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem('niv-panel-sections') || '{}'); } catch (_) {}
+    document.querySelectorAll('#niv-panel .niv-panel-sec').forEach((sec, i) => {
+      const key = sec.getAttribute('data-seckey') || ('sec' + i);
+      const title = sec.querySelector('.niv-panel-sec-title');
+      if (!title) return;
+      const chev = document.createElement('button');
+      chev.className = 'niv-sec-chev';
+      chev.type = 'button';
+      chev.textContent = '▾';
+      chev.title = L('Colapsar sección', 'Collapse section');
+      title.appendChild(chev);
+      if (saved[key]) sec.classList.add('sec-collapsed');
+      const toggle = () => {
+        sec.classList.toggle('sec-collapsed');
+        saved[key] = sec.classList.contains('sec-collapsed');
+        try { localStorage.setItem('niv-panel-sections', JSON.stringify(saved)); } catch (_) {}
+      };
+      chev.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+      title.addEventListener('click', (e) => {
+        if (e.target.closest('.niv-plus-btn') || e.target.closest('.niv-sec-chev')) return;
+        toggle();
+      });
+    });
+  })();
+
+  // ---- sidebar: arrastre para redimensionar + auto-colapso (ley #3) ----
+  (() => {
+    const panel = document.getElementById('niv-panel');
+    const handle = document.getElementById('niv-resize-handle');
+    const collapseBtn = document.getElementById('niv-panel-collapse');
+    if (!panel) return;
+    const WKEY = 'niv-panel-width';
+    let autoCollapsed = false;
+    const savedWidth = () => {
+      try { const w = parseInt(localStorage.getItem(WKEY) || '', 10); return (w >= 220 && w <= 520) ? w : null; } catch (_) { return null; }
+    };
+    const w0 = savedWidth();
+    if (w0 && !panel.classList.contains('collapsed')) panel.style.width = w0 + 'px';
+    // Snap al riel: arrastrar por debajo de 200px colapsa la barra en vez de
+    // seguir encogiendo el panel hasta dejarlo inutil. El umbral queda 20px
+    // por debajo del minimo expandido (220): hay que cruzar el minimo con
+    // intencion, no basta rozarlo; y a menos de ~200px el contenido expandido
+    // (avatar + nombre + boton de colapso, titulos de seccion) ya no cabe.
+    const SNAP_W = 200;
+    if (handle) {
+      handle.addEventListener('pointerdown', (e) => {
+        if (panel.classList.contains('collapsed') || window.innerWidth <= 900) return;
+        e.preventDefault();
+        handle.classList.add('dragging');
+        document.body.classList.add('niv-resizing');
+        let snapped = false;
+        // Ultimo ancho expandido valido de ESTE arrastre: es el que se
+        // recuerda si hay snap (nunca el umbral ni el ancho del riel).
+        let lastGoodW = Math.min(520, Math.max(220, panel.offsetWidth || 300));
+        const endDrag = () => {
+          handle.classList.remove('dragging');
+          document.body.classList.remove('niv-resizing');
+          document.removeEventListener('pointermove', move);
+          document.removeEventListener('pointerup', up);
+        };
+        const move = (ev) => {
+          if (snapped) return; // el arrastre ya termino: cero parpadeo en el borde
+          if (ev.clientX < SNAP_W) {
+            snapped = true;
+            try { localStorage.setItem(WKEY, String(lastGoodW)); } catch (_) {}
+            autoCollapsed = false; // gesto manual: applyAuto no lo resucita al ensanchar
+            setCollapsed(true); // la misma maquinaria que el toggle y el auto-colapso
+            endDrag(); // se suelta aqui: el resto del gesto ya no se sigue
+            return;
+          }
+          const w = Math.min(520, Math.max(220, ev.clientX));
+          lastGoodW = w;
+          panel.style.width = w + 'px';
+        };
+        const up = () => {
+          endDrag();
+          if (snapped) return; // WKEY ya guarda lastGoodW; el width quedo limpio
+          const w = parseInt(panel.style.width, 10);
+          if (w) { try { localStorage.setItem(WKEY, String(w)); } catch (_) {} }
+        };
+        document.addEventListener('pointermove', move);
+        document.addEventListener('pointerup', up);
+      });
+    }
+    const setCollapsed = (on) => {
+      panel.classList.toggle('collapsed', on);
+      document.body.classList.toggle('sidebar-collapsed', on);
+      if (collapseBtn) {
+        collapseBtn.textContent = on ? '›' : '‹';
+        collapseBtn.title = on ? 'Expandir' : 'Colapsar';
+      }
+      if (on) { panel.style.width = ''; }
+      else { const w = savedWidth(); if (w) panel.style.width = w + 'px'; }
+    };
+    if (collapseBtn) collapseBtn.addEventListener('click', () => {
+      autoCollapsed = false;
+      // El toggle (registrado antes que este listener) limpia el width inline
+      // en ambos sentidos: al expandir, reaplicar el ancho recordado (p. ej.
+      // el previo a un snap por arrastre), no el default de la hoja.
+      if (!panel.classList.contains('collapsed')) {
+        const w = savedWidth();
+        if (w) panel.style.width = w + 'px';
+      }
+    });
+    const applyAuto = () => {
+      const narrow = window.innerWidth <= 1150 && window.innerWidth > 900;
+      if (narrow && !panel.classList.contains('collapsed')) { autoCollapsed = true; setCollapsed(true); }
+      else if (!narrow && autoCollapsed) { autoCollapsed = false; setCollapsed(false); }
+    };
+    window.addEventListener('resize', applyAuto);
+    applyAuto();
+  })();
+
+  // ---- vista inicial por URL (?view=home|projects|notifications) + badge ----
+  (() => {
+    let applied = false;
+    const apply = () => {
+      if (applied) return;
+      applied = true;
+      window.refreshNotifBadge();
+      let v = null;
+      try { v = new URLSearchParams(window.location.search).get('view'); } catch (_) {}
+      if (v === 'notifications') window.showDashView('notifications');
+      else if (v === 'home' || v === 'dashboard') window.showDashView('home');
+      else if (v === 'projects') window.openProjectTab();
+    };
+    if (auth.currentUser) { apply(); return; }
+    const un = onAuthStateChanged(auth, (u) => { if (u) { try { un(); } catch (_) {} setTimeout(apply, 400); } });
+    setTimeout(() => { try { un(); } catch (_) {} }, 12000);
+  })();
 </script>
 <div id="qpdf-print-area" aria-hidden="true"></div>
 
@@ -3211,6 +3981,7 @@ document.addEventListener('keydown', function(e) {
 </div>
   <!-- the measurements are leveled. the whimsy is load-bearing. 🦀 -->
   <script type="module" src="/crab.js"></script>
+<script src="./press-yaoi.js"></script>
 </body>
 </html>
 
