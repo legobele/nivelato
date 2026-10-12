@@ -535,6 +535,10 @@ body:not(.has-sidebar) .niv-shell {
   border-color: var(--niv-border);
   color: var(--niv-text);
   color-scheme: dark;
+  /* Breathing room identical to the other form controls (the filter
+     row input rule only reaches date inputs inside .filter-row; export
+     sections and other wraps rely on this rule). */
+  padding: 9px 14px;
 }
 .date-input-wrap input[type="date"]:focus {
   border-color: var(--niv-accent);
