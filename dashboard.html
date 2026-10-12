@@ -1546,6 +1546,12 @@ document.addEventListener('breadchange', function () {
 // El worker de Cloudflare inyecta window.NIVELATO_ROUTE antes del cierre del body.
 // Al abrir el archivo directo (GitHub Pages) la variable no existe:
 // en ese caso, o con ruta "dashboard", se usa el dashboard normal.
+// Alcance: ningun enlace del repo apunta a /company a secas (todos van a
+// /company/settings, /company/users o /company/updates), asi que esta vista
+// solo la alcanza quien aterriza en la URL pelada a traves del worker, que
+// vive fuera del repo y tambien es la senal que presence.js usa para su
+// ruta. No es codigo muerto demostrable: se conserva la ruta y se unifica
+// su aspecto sobre los tokens del sistema de diseno (abajo).
 const NIV_ROUTE = window.NIVELATO_ROUTE;
 
 const CO_ROLE_LABEL = { owner: 'Dueño / Admin', cotizador: 'Cotizador', supervisor: 'Supervisor', medidor: 'Técnico medidor' };
@@ -1581,15 +1587,24 @@ async function initCompanyView(user) {
 
   const nEstado = (s) => quotes.filter(q => (q.estado || 'borrador') === s).length;
 
-  const rowStyle = 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #f1f3f5';
-  const cardStyle = 'background:#fff;border-radius:12px;padding:4px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-bottom:24px';
+  // Unificada sobre los tokens del sistema de diseno (niv-dark.css): esta
+  // vista es una pagina completa que reemplaza el body, asi que sale de la
+  // carcasa has-sidebar y pinta su fondo y superficies con las variables
+  // --niv-* en vez de los colores claros heredados (#fff, #212529, #f5a524).
+  const rowStyle = 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--niv-border-soft, rgba(255,255,255,0.14))';
+  const cardStyle = 'background:var(--niv-surface, #17171a);border:1px solid var(--niv-border-soft, rgba(255,255,255,0.14));border-radius:var(--niv-radius, 18px);padding:4px 16px;box-shadow:0 10px 34px rgba(0,0,0,0.38);margin-bottom:24px';
+  const statCardStyle = 'background:var(--niv-surface, #17171a);border:1px solid var(--niv-border-soft, rgba(255,255,255,0.14));border-radius:var(--niv-radius, 18px);padding:16px;box-shadow:0 10px 34px rgba(0,0,0,0.38)';
+  const statNumStyle = 'font-size:28px;font-weight:700;color:var(--niv-text, #f5f5f7)';
+  const statLabelStyle = 'font-size:12px;color:var(--niv-text-dim, #a7a7ad);margin-top:2px';
+  const textStyle = 'color:var(--niv-text, #f5f5f7)';
+  const dimStyle = 'color:var(--niv-text-dim, #a7a7ad)';
 
   const memberRows = members.map(m => {
     const rl = CO_ROLE_LABEL[m.role] || m.role || 'Sin rol';
     return '<div style="' + rowStyle + '">' +
-      '<div><div style="font-size:14px;font-weight:600;color:#212529">' + escapeHtml(m.name || 'Sin nombre') + '</div>' +
-      '<div style="font-size:12px;color:#868e96">' + escapeHtml(m.email || '') + '</div></div>' +
-      '<span style="font-size:12px;font-weight:600;color:#f5a524;background:rgba(245,165,36,.12);padding:4px 10px;border-radius:20px;white-space:nowrap">' + escapeHtml(rl) + '</span></div>';
+      '<div><div style="font-size:14px;font-weight:600;' + textStyle + '">' + escapeHtml(m.name || 'Sin nombre') + '</div>' +
+      '<div style="font-size:12px;' + dimStyle + '">' + escapeHtml(m.email || '') + '</div></div>' +
+      '<span style="font-size:12px;font-weight:600;color:var(--niv-text, #f5f5f7);background:var(--niv-surface-2, #1e1e22);padding:4px 10px;border-radius:20px;white-space:nowrap">' + escapeHtml(rl) + '</span></div>';
   }).join('');
 
   const recentRows = quotes.slice(0, 10).map(q => {
@@ -1597,31 +1612,34 @@ async function initCompanyView(user) {
     const estadoLabel = CO_ESTADOS[estado] || estado;
     const total = '$' + (Number(q.totales && q.totales.total) || 0).toFixed(2);
     return '<div style="' + rowStyle + '">' +
-      '<div><div style="font-size:14px;font-weight:600;color:#212529">' + escapeHtml(q.numero || 'Sin folio') +
-      ' <span style="font-size:11px;font-weight:600;color:#495057;background:#f1f3f5;padding:3px 8px;border-radius:20px;white-space:nowrap">' + escapeHtml(estadoLabel) + '</span></div>' +
-      '<div style="font-size:12px;color:#868e96">' + escapeHtml((q.cliente && q.cliente.nombre) || 'Sin cliente') + '</div></div>' +
-      '<div style="font-size:14px;font-weight:700;color:#212529;white-space:nowrap">' + escapeHtml(total) + '</div></div>';
+      '<div><div style="font-size:14px;font-weight:600;' + textStyle + '">' + escapeHtml(q.numero || 'Sin folio') +
+      ' <span style="font-size:11px;font-weight:600;color:var(--niv-text-dim, #a7a7ad);background:var(--niv-surface-2, #1e1e22);padding:3px 8px;border-radius:20px;white-space:nowrap">' + escapeHtml(estadoLabel) + '</span></div>' +
+      '<div style="font-size:12px;' + dimStyle + '">' + escapeHtml((q.cliente && q.cliente.nombre) || 'Sin cliente') + '</div></div>' +
+      '<div style="font-size:14px;font-weight:700;' + textStyle + ';white-space:nowrap">' + escapeHtml(total) + '</div></div>';
   }).join('');
 
+  document.body.classList.remove('has-sidebar');
+  document.body.style.background = 'var(--niv-bg, #0e0e10)';
+  document.body.style.color = 'var(--niv-text, #f5f5f7)';
   document.body.innerHTML =
-    '<main style="padding:24px 20px;max-width:720px;margin:0 auto">' +
-    '<h1>' + escapeHtml(orgName) + '</h1>' +
-    '<p class="subtitle">Vista de compañía</p>' +
+    '<main style="padding:24px 20px;max-width:720px;margin:0 auto;background:var(--niv-bg, #0e0e10);color:var(--niv-text, #f5f5f7);font-family:Inter,system-ui,sans-serif;min-height:100dvh">' +
+    '<h1 style="' + textStyle + '">' + escapeHtml(orgName) + '</h1>' +
+    '<p class="subtitle" style="' + dimStyle + '">Vista de compañía</p>' +
     '<div class="stats-row" style="grid-template-columns:repeat(2,1fr)">' +
       (_hasQuotes ?
-        '<div class="stat-card"><div class="stat-num">' + nEstado('borrador') + '</div><div class="stat-label">Cotizaciones en borrador</div></div>' +
-        '<div class="stat-card"><div class="stat-num">' + nEstado('aprobada') + '</div><div class="stat-label">Cotizaciones aprobadas</div></div>' +
-        '<div class="stat-card"><div class="stat-num">' + nEstado('enviada') + '</div><div class="stat-label">Cotizaciones enviadas</div></div>' : '') +
-      '<div class="stat-card"><div class="stat-num">' + members.length + '</div><div class="stat-label">Miembros del equipo</div></div>' +
+        '<div class="stat-card" style="' + statCardStyle + '"><div class="stat-num" style="' + statNumStyle + '">' + nEstado('borrador') + '</div><div class="stat-label" style="' + statLabelStyle + '">Cotizaciones en borrador</div></div>' +
+        '<div class="stat-card" style="' + statCardStyle + '"><div class="stat-num" style="' + statNumStyle + '">' + nEstado('aprobada') + '</div><div class="stat-label" style="' + statLabelStyle + '">Cotizaciones aprobadas</div></div>' +
+        '<div class="stat-card" style="' + statCardStyle + '"><div class="stat-num" style="' + statNumStyle + '">' + nEstado('enviada') + '</div><div class="stat-label" style="' + statLabelStyle + '">Cotizaciones enviadas</div></div>' : '') +
+      '<div class="stat-card" style="' + statCardStyle + '"><div class="stat-num" style="' + statNumStyle + '">' + members.length + '</div><div class="stat-label" style="' + statLabelStyle + '">Miembros del equipo</div></div>' +
     '</div>' +
-    '<h2 style="font-size:16px;font-weight:700;color:#212529;margin:8px 0 12px">Equipo</h2>' +
+    '<h2 style="font-size:16px;font-weight:700;' + textStyle + ';margin:8px 0 12px">Equipo</h2>' +
     '<div style="' + cardStyle + '">' +
-      (memberRows || '<p style="padding:16px 0;font-size:13px;color:#868e96">No hay miembros en esta compañía.</p>') +
+      (memberRows || '<p style="padding:16px 0;font-size:13px;' + dimStyle + '">No hay miembros en esta compañía.</p>') +
     '</div>' +
     (_hasQuotes ?
-      '<h2 style="font-size:16px;font-weight:700;color:#212529;margin:8px 0 12px">Cotizaciones recientes</h2>' +
+      '<h2 style="font-size:16px;font-weight:700;' + textStyle + ';margin:8px 0 12px">Cotizaciones recientes</h2>' +
       '<div style="' + cardStyle + '">' +
-        (recentRows || '<p style="padding:16px 0;font-size:13px;color:#868e96">Aún no hay cotizaciones.</p>') +
+        (recentRows || '<p style="padding:16px 0;font-size:13px;' + dimStyle + '">Aún no hay cotizaciones.</p>') +
       '</div>' : '') +
     '</main>';
 }
