@@ -832,10 +832,28 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 
 /* vista Usuarios incrustada: el iframe llena la tarjeta y la pagina
    incrustada desplaza por dentro, sin doble barra de desplazamiento */
-#view-users { height: 100%; }
-#users-embed-frame { display: block; width: 100%; height: 100%; border: 0; border-radius: 12px; background: transparent; }
+#view-users { height: 100%; display: flex; flex-direction: column; }
+.niv-users-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.niv-users-head h1 { margin: 0; flex: 1; min-width: 0; }
+#users-embed-frame { display: block; width: 100%; flex: 1; min-height: 0; border: 0; border-radius: 12px; background: transparent; }
 #users-embed-fallback { padding: 28px; text-align: center; color: var(--niv-text-dim, #a7a7ad); font-size: 14px; }
 #users-embed-fallback a { color: var(--niv-accent, #1971c2); }
+
+/* menu de empresa dentro de la barra lateral (sustituye al dialogo modal):
+   vive en la zona superior del panel, bajo la cabecera de la empresa, y
+   en el riel colapsado no se muestra (no cabe y la cabecera lo reabre al
+   expandir). */
+.niv-company-menu {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px 16px 12px;
+  border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+}
+.niv-company-menu-title {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+  color: var(--niv-text-dim, #a7a7ad);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.niv-float-panel.collapsed .niv-company-menu { display: none !important; }
 
 /* barra superior: centrado + indicador deslizante con topes. La pastilla
    activa conserva su degradado hasta que el indicador esta vivo (ind-on);
@@ -891,6 +909,12 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
     <div class="niv-company-avatar" id="sidebar-avatar">N</div>
     <div class="niv-company-name" id="org-name-badge">…<span id="estradiol-indicator">E2</span></div>
     <button class="niv-panel-collapse" id="niv-panel-collapse" title="Colapsar" aria-label="Colapsar">‹</button>
+  </div>
+  <div class="niv-company-menu" id="niv-company-menu" style="display:none">
+    <div class="niv-company-menu-title" id="company-menu-title">Empresa</div>
+    <button class="niv-nav-btn" id="company-menu-settings" onclick="window.location.href='/company/settings'">Ajustes de la empresa</button>
+    <button class="niv-nav-btn" id="company-menu-users" onclick="window.closeCompanyDialog();window.showDashView('users')" style="display:none">Usuarios</button>
+    <button class="niv-nav-btn" id="company-menu-close" onclick="window.closeCompanyDialog()">Cerrar</button>
   </div>
   <div class="org-badge" id="tier-badge" style="display:none;">Pro</div>
   <button class="btn-save" id="btn-upgrade-plan" onclick="window.showUpgradeModal && window.showUpgradeModal()" style="display:none;margin:10px 16px 0;">Mejorar plan</button>
@@ -1031,8 +1055,12 @@ try {
   <div id="notif-list"><div class="loading">Cargando notificaciones…</div></div>
  </div><!-- /view-notifications -->
  <div id="view-users" style="display:none">
+  <div class="niv-users-head">
+    <h1 id="users-title">Usuarios</h1>
+    <button class="niv-btn-pill niv-btn-primary" id="users-admin-btn" style="display:none" onclick="window._toggleUsersAdmin()">Administrar usuarios</button>
+  </div>
   <iframe id="users-embed-frame" title="Usuarios" loading="lazy"></iframe>
-  <div id="users-embed-fallback" style="display:none">No se pudo cargar la gestión de usuarios. <a href="/company/users" target="_top">Abrir la página completa</a></div>
+  <div id="users-embed-fallback" style="display:none"><span id="users-fallback-text">No se pudo cargar la vista de usuarios.</span> <a id="users-fallback-link" href="/users" target="_top">Abrir la página completa</a></div>
  </div><!-- /view-users -->
  <div id="view-measures">
   <div style="display:flex; align-items:center; gap:12px; min-width:0;">
@@ -1321,16 +1349,6 @@ try {
 
 
 <!-- NEW PROJECT MODAL -->
-<div class="modal-overlay" id="company-modal-overlay" role="dialog" aria-modal="true" onclick="closeCompanyDialog(event)">
-  <div class="modal" style="max-width:380px">
-    <div class="modal-title" id="company-dialog-title">Empresa</div>
-    <div id="company-dialog-body">
-      <button class="btn-save" onclick="window.location.href='/company/settings'">Ajustes de la empresa</button>
-      <button class="btn-save" id="company-dialog-users" onclick="closeCompanyDialog();window.showDashView('users')" style="display:none;margin-top:8px">Usuarios</button>
-    </div>
-    <button class="btn-cancel" onclick="closeCompanyDialog()">Cerrar</button>
-  </div>
-</div>
 <div class="modal-overlay" id="np-modal-overlay" role="dialog" aria-modal="true" onclick="closeNewProject(event)">
   <div class="modal" style="max-width:440px">
     <div class="modal-title">Nuevo proyecto</div>
@@ -1739,6 +1757,9 @@ let currentUser;
       const jcs = document.getElementById('join-code-section');
       jcs.classList.add('show');
       document.getElementById('join-code-display').textContent = orgDoc.data()?.joinCode || orgId;
+      // el camino a la administracion de usuarios solo existe para gerentes
+      const uab = document.getElementById('users-admin-btn');
+      if (uab) uab.style.display = '';
     }
 
     // load all org members for share panel
@@ -3666,18 +3687,27 @@ let currentUser;
     }
   };
 
-  // ---- company dialog ----
+  // ---- menu de empresa en la barra lateral ----
+  // Antes esto abria un dialogo modal sobre el contenido principal. Ahora
+  // la cabecera del panel despliega el menu DENTRO de la propia barra
+  // lateral: Usuarios aterriza en la vista de usuarios de esta carcasa y
+  // Ajustes de la empresa navega a su pagina desde el menu lateral.
+  // El permiso es el mismo de antes: sin userManagement no hay menu.
   window.openCompanyDialog = (e) => {
     if (e && e.target && e.target.id === 'niv-panel-collapse') return;
-    if (!window._can || !window._can('userManagement')) return; // no perms: no dialog
-    const orgName = document.getElementById('org-name-badge')?.textContent?.replace('E2','').trim() || 'Empresa';
-    document.getElementById('company-dialog-title').textContent = orgName;
-    document.getElementById('company-dialog-users').style.display = 'block';
-    document.getElementById('company-modal-overlay').classList.add('open');
+    if (!window._can || !window._can('userManagement')) return; // no perms: no menu
+    const menu = document.getElementById('niv-company-menu');
+    if (!menu) return;
+    const orgName = document.getElementById('org-name-badge')?.textContent?.replace('E2','').trim() || L('Empresa', 'Company');
+    const title = document.getElementById('company-menu-title');
+    if (title) title.textContent = orgName;
+    const usersBtn = document.getElementById('company-menu-users');
+    if (usersBtn) usersBtn.style.display = 'block';
+    menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
   };
-  window.closeCompanyDialog = (e) => {
-    if (e && e.type === 'click' && e.target && !e.target.classList.contains('modal-overlay') && e.target.textContent.trim() !== 'Cerrar') return;
-    document.getElementById('company-modal-overlay').classList.remove('open');
+  window.closeCompanyDialog = () => {
+    const menu = document.getElementById('niv-company-menu');
+    if (menu) menu.style.display = 'none';
   };
 
   // ---- sidebar: collapse ----
@@ -3862,15 +3892,35 @@ let currentUser;
     };
   })();
 
-  // ---- vista Usuarios: users.html incrustado en modo embed (?embed=users) ----
-  // La pagina completa de usuarios sigue siendo Ajustes; aqui solo vive el
-  // area de gestion. La carga es perezosa (primer uso) y el enlace "Add more"
-  // pide la apertura del flujo de agregar por postMessage si el marco ya
-  // cargo, o por parametro si todavia no.
+  // ---- vista Usuarios: dos superficies, dos puertas (regla IA) ----
+  // La vista incrusta el RESUMEN de usuarios para todo espectador con
+  // permiso: la pagina raiz de usuarios servida en /users, en modo embed
+  // (?embed=1). La ADMINISTRACION vive en /company/users (invitaciones,
+  // roles, estado, eliminacion) y solo se incrusta aqui cuando un gerente
+  // la pide: el flujo "Add more" (?addUser=1, los parametros embed se
+  // conservan) o el boton de administrar de la cabecera de la vista, que
+  // alterna entre resumen y administracion. La carga es perezosa (primer
+  // uso) y "Add more" pide la apertura del flujo por postMessage si el
+  // marco de administracion ya cargo, o por parametro si todavia no.
   (() => {
     const frame = document.getElementById('users-embed-frame');
     if (!frame) return;
     let ready = false;
+    let mode = null; // 'overview' | 'admin'
+    const OVERVIEW_URL = '/users?embed=1';
+    const ADMIN_URL = '/company/users?embed=users';
+    window._syncUsersAdminBtn = () => {
+      const btn = document.getElementById('users-admin-btn');
+      if (btn) btn.textContent = mode === 'admin' ? L('Ver resumen', 'View overview') : L('Administrar usuarios', 'Manage users');
+      const fbLink = document.getElementById('users-fallback-link');
+      if (fbLink) fbLink.href = mode === 'admin' ? '/company/users' : '/users';
+    };
+    const setMode = (next, url) => {
+      mode = next;
+      ready = false;
+      frame.src = url;
+      window._syncUsersAdminBtn();
+    };
     frame.addEventListener('load', () => {
       if (!frame.getAttribute('src')) return;
       ready = true;
@@ -3883,12 +3933,17 @@ let currentUser;
       if (fb) fb.style.display = 'block';
     });
     window._ensureUsersFrame = (addUser) => {
-      const url = '/company/users?embed=users' + (addUser ? '&addUser=1' : '');
-      if (!frame.getAttribute('src') || (addUser && !ready)) { frame.src = url; return; }
-      if (addUser && ready) {
+      if (addUser) {
+        if (mode !== 'admin' || !ready) { setMode('admin', ADMIN_URL + '&addUser=1'); return; }
         try { frame.contentWindow.postMessage({ type: 'nivelato:addUser' }, window.location.origin); } catch (_) {}
+        return;
       }
+      if (mode !== 'overview' || !frame.getAttribute('src')) { setMode('overview', OVERVIEW_URL); return; }
     };
+    window._openUsersAdmin = () => { if (mode !== 'admin') setMode('admin', ADMIN_URL); };
+    window._showUsersOverview = () => { if (mode !== 'overview') setMode('overview', OVERVIEW_URL); };
+    window._toggleUsersAdmin = () => { if (mode === 'admin') window._showUsersOverview(); else window._openUsersAdmin(); };
+    window._syncUsersAdminBtn();
   })();
 
   // ---- barra superior: indicador deslizante con topes (detents) ----
