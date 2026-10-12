@@ -39,7 +39,7 @@ const db = admin.firestore();
 // Firestore-trigger-based. A shop on their own Firebase project never
 // touches the central project's Firestore, so triggers on the central
 // project would silently miss their events. Instead the app reports events
-// explicitly (reportQuoteEvent / requestWelcomeEmail) to these callables,
+// explicitly (reportQuoteEvent / requestWelcomeEmail / reportLoginAlert) to these callables,
 // which run on the central project and send via Resend. The app gates on
 // notification_prefs client-side; these functions are a dumb pipe with
 // rate limits, so a hostile client can at worst spam its own address.
@@ -263,6 +263,145 @@ exports.reportQuoteEvent = onCall({ region: 'us-central1', memory: '256MiB' }, a
     }
   }
   return { ok: true, mode: 'fanout', sent };
+});
+
+// ---------------------------------------------------------------------------
+// reportLoginAlert - callable. The login-alert replacement for the old
+// welcome-email pref. The client (niv-user.js maybeSendLoginAlert) calls
+// this right after a genuine sign-in, gated client-side on the user's
+// notification_prefs/{uid}.loginAlert against the ACTIVE backend (BYOB
+// shops keep prefs in their own project, which this function cannot
+// read; same limitation as reportQuoteEvent's direct mode). When the
+// central project DOES hold a prefs doc with loginAlert === false, the
+// server honors it too (defense in depth).
+//
+// Pref semantics: loginAlert DEFAULTS ON, matching the repo's existing
+// defaults pattern (NOTIF_DEFAULTS / NOTIF_UPDATE_DEFAULTS are all-true
+// and the quote fan-out only skips on an explicit false). The legacy
+// welcomeEmail field is no longer read by any consumer; stored values
+// are left in place, inert.
+//
+// Sends BOTH:
+//   (a) an in-app notification via pushNotification (the only write
+//       path for users/{uid}/notifications), and
+//   (b) an email via the Resend pipeline, in the user's language.
+// Dedupe (anti-spam): loginAlertState/{uid} stamps the sign-in session
+// key (the client's user.metadata.lastSignInTime, which only a genuine
+// sign-in moves; token refresh never changes it) plus the last send
+// time. The stamp is CLAIMED transactionally before sending: the same
+// session key, or any alert within LOGIN_ALERT_DEDUPE_WINDOW_MS, is
+// deduped. Claiming first means a failed send suppresses retries for
+// the window instead of risking a duplicate alert; for a notification
+// that trade is correct. A per-user daily rate limit backs this up.
+// ---------------------------------------------------------------------------
+const LOGIN_ALERT_DEDUPE_WINDOW_MS = 10 * 60 * 1000;
+
+const LOGIN_ALERT_COPY = {
+  es: {
+    locale: 'es',
+    subject: 'Nuevo inicio de sesión en Nivelato',
+    title: 'Nuevo inicio de sesión',
+    body: (when, device) => `Detectamos un nuevo inicio de sesión en tu cuenta de Nivelato el ${when}${device ? ` desde: ${device}` : ''}. Si fuiste tú, no tienes que hacer nada. Si no lo reconoces, cambia tu contraseña cuanto antes.`,
+  },
+  en: {
+    locale: 'en',
+    subject: 'New sign-in to Nivelato',
+    title: 'New sign-in',
+    body: (when, device) => `We detected a new sign-in to your Nivelato account on ${when}${device ? ` from: ${device}` : ''}. If this was you, no action is needed. If you do not recognize it, change your password right away.`,
+  },
+};
+
+exports.reportLoginAlert = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'reportLoginAlert requires a signed-in user.');
+  }
+  const uid = request.auth.uid;
+  const data = request.data || {};
+  const sessionKey = String(data.sessionKey || '').slice(0, 64);
+  if (!sessionKey) throw new HttpsError('invalid-argument', 'Falta la clave de sesión.');
+  const lang = data.lang === 'en' ? 'en' : 'es';
+  const copy = LOGIN_ALERT_COPY[lang];
+  const device = String(data.device || '').slice(0, 120);
+  let timezone = String(data.timezone || '').slice(0, 64);
+  try { new Intl.DateTimeFormat(copy.locale, { timeZone: timezone }); } catch (_) { timezone = 'America/Puerto_Rico'; }
+
+  // Server-side pref re-check (central copy only; BYOB prefs live in
+  // the shop's project and were already gated client-side).
+  const pSnap = await db.doc(`notification_prefs/${uid}`).get();
+  if (pSnap.exists && (pSnap.data() || {}).loginAlert === false) {
+    return { ok: true, sent: false, reason: 'pref-off' };
+  }
+
+  // Dedupe peek (cheap path: most post-sign-in page loads land here and
+  // must not burn rate-limit quota).
+  const stateRef = db.doc(`loginAlertState/${uid}`);
+  const peek = await stateRef.get();
+  if (peek.exists) {
+    const st = peek.data() || {};
+    const lastMs = st.lastSentAt && st.lastSentAt.toMillis ? st.lastSentAt.toMillis() : 0;
+    if (st.lastSessionKey === sessionKey || Date.now() - lastMs < LOGIN_ALERT_DEDUPE_WINDOW_MS) {
+      return { ok: true, sent: false, reason: 'deduped' };
+    }
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  await checkRateLimit(`login-alert:${uid}:${today}`, 10);
+
+  // Claim the stamp transactionally (re-check inside the transaction).
+  const claimed = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(stateRef);
+    if (snap.exists) {
+      const st = snap.data() || {};
+      const lastMs = st.lastSentAt && st.lastSentAt.toMillis ? st.lastSentAt.toMillis() : 0;
+      if (st.lastSessionKey === sessionKey || Date.now() - lastMs < LOGIN_ALERT_DEDUPE_WINDOW_MS) {
+        return false;
+      }
+    }
+    tx.set(stateRef, {
+      lastSessionKey: sessionKey,
+      lastSentAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    return true;
+  });
+  if (!claimed) return { ok: true, sent: false, reason: 'deduped' };
+
+  const when = new Intl.DateTimeFormat(copy.locale, {
+    dateStyle: 'medium', timeStyle: 'short', timeZone: timezone,
+  }).format(new Date());
+  const body = copy.body(when, device);
+
+  // (a) In-app notification (best effort: never blocks the email).
+  let inApp = false;
+  try {
+    await pushNotification(uid, {
+      type: 'account',
+      title: copy.title,
+      body,
+      data: { kind: 'login-alert' },
+    });
+    inApp = true;
+  } catch (e) {
+    console.warn('[login-alert] in-app notification failed', uid, e.message);
+  }
+
+  // (b) Email via Resend. Address: auth token first, profile doc as
+  // fallback. No address anywhere means in-app only.
+  let email = String((request.auth.token && request.auth.token.email) || '').trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) {
+    const uSnap = await db.doc(`users/${uid}`).get();
+    email = uSnap.exists ? String((uSnap.data() || {}).email || '').trim().toLowerCase() : '';
+  }
+  let emailed = false;
+  if (EMAIL_RE.test(email)) {
+    await sendEmail({
+      to: email,
+      subject: copy.subject,
+      html: emailShell(copy.title, `<p>${esc(body)}</p>`),
+      text: body,
+    });
+    emailed = true;
+  }
+  return { ok: true, sent: true, inApp, email: emailed, ...(emailed ? {} : { reason: 'no-email' }) };
 });
 
 // ---------------------------------------------------------------------------
@@ -1343,6 +1482,7 @@ const DEV_FUNCTION_INVENTORY = [
   { name: 'requestWelcomeEmail', type: 'callable', region: 'us-central1' },
   { name: 'requestPasswordReset', type: 'callable', region: 'us-central1' },
   { name: 'reportQuoteEvent', type: 'callable', region: 'us-central1' },
+  { name: 'reportLoginAlert', type: 'callable', region: 'us-central1' },
   { name: 'setUiVersion', type: 'callable', region: 'us-central1' },
   { name: 'provisionBundleKey', type: 'callable', region: 'us-central1' },
   { name: 'applyCompanyUpdate', type: 'callable', region: 'us-central1' },
@@ -1485,6 +1625,7 @@ const PREVIOUS_DATA_VERSION = '0.9';
 
 const NOTIF_UPDATE_DEFAULTS = {
   welcomeEmail: true,
+  loginAlert: true,
   newProject: true,
   projectEdit: true,
   quoteReady: true,
