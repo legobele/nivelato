@@ -4225,6 +4225,197 @@ document.addEventListener('keydown', function(e) {
 </div>
   <!-- the measurements are leveled. the whimsy is load-bearing. 🦀 -->
   <script type="module" src="/crab.js"></script>
+<script>
+/* niv-select: custom dropdown for the measurement filter selects.
+   The native <select> popup is the OS's (white, unstyled, 2008), so this
+   wraps #filter-installer / #filter-customer in .niv-select and renders
+   their options as a design-system listbox. The real select stays in the
+   DOM (visually hidden) as the source of truth: the jobs loader keeps
+   populating its <option>s and applyFilters() keeps reading .value.
+   Choosing an option writes back to the select and dispatches 'change',
+   which is what the inline onchange="applyFilters()" hooks into. A
+   MutationObserver re-syncs the listbox whenever the loader rebuilds the
+   option list. Styles: .niv-select* in niv-dark.css. */
+(function () {
+  var CHEVRON = '<svg width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var openApi = null;
+
+  function enhanceNivSelect(select) {
+    if (!select || select.dataset.nivSelect) return;
+    select.dataset.nivSelect = '1';
+
+    var wrap = document.createElement('div');
+    wrap.className = 'niv-select';
+    select.parentNode.insertBefore(wrap, select);
+    wrap.appendChild(select);
+    select.classList.add('niv-select-native');
+    select.tabIndex = -1;
+    select.setAttribute('aria-hidden', 'true');
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'niv-select-btn';
+    btn.setAttribute('aria-haspopup', 'listbox');
+    btn.setAttribute('aria-expanded', 'false');
+    var label = document.createElement('span');
+    label.className = 'niv-select-label';
+    var chev = document.createElement('span');
+    chev.className = 'niv-select-chevron';
+    chev.innerHTML = CHEVRON;
+    btn.appendChild(label);
+    btn.appendChild(chev);
+    wrap.appendChild(btn);
+
+    var list = document.createElement('div');
+    list.className = 'niv-select-list';
+    list.setAttribute('role', 'listbox');
+    list.hidden = true;
+    if (select.id) {
+      list.id = select.id + '-listbox';
+      btn.setAttribute('aria-controls', list.id);
+    }
+    wrap.appendChild(list);
+
+    var activeIdx = -1;
+    var typeBuffer = '';
+    var typeTimer = null;
+
+    function isOpen() { return !list.hidden; }
+
+    function setActive(i) {
+      var els = list.children;
+      if (activeIdx >= 0 && els[activeIdx]) els[activeIdx].classList.remove('active');
+      activeIdx = i;
+      if (i >= 0 && els[i]) {
+        els[i].classList.add('active');
+        btn.setAttribute('aria-activedescendant', els[i].id);
+        if (typeof els[i].scrollIntoView === 'function') els[i].scrollIntoView({ block: 'nearest' });
+      } else {
+        btn.removeAttribute('aria-activedescendant');
+      }
+    }
+
+    function sync() {
+      var wasOpen = isOpen();
+      list.innerHTML = '';
+      Array.prototype.forEach.call(select.options, function (opt, i) {
+        var el = document.createElement('div');
+        el.className = 'niv-select-option' + (opt.value === select.value ? ' selected' : '');
+        el.id = (select.id || 'niv-select') + '-opt-' + i;
+        el.setAttribute('role', 'option');
+        el.setAttribute('aria-selected', opt.value === select.value ? 'true' : 'false');
+        el.textContent = opt.textContent;
+        el.addEventListener('mousedown', function (e) { e.preventDefault(); });
+        el.addEventListener('click', function () { choose(i); close(); btn.focus(); });
+        el.addEventListener('mousemove', function () { if (activeIdx !== i) setActive(i); });
+        list.appendChild(el);
+      });
+      var sel = select.options[select.selectedIndex];
+      label.textContent = sel ? sel.textContent : '';
+      btn.disabled = !!select.disabled;
+      activeIdx = -1;
+      if (wasOpen) setActive(select.selectedIndex >= 0 ? select.selectedIndex : 0);
+    }
+
+    function open() {
+      if (btn.disabled || isOpen()) return;
+      if (openApi && openApi !== api) openApi.close();
+      sync();
+      list.hidden = false;
+      wrap.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+      openApi = api;
+      setActive(select.selectedIndex >= 0 ? select.selectedIndex : 0);
+    }
+
+    function close() {
+      if (!isOpen()) return;
+      list.hidden = true;
+      wrap.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.removeAttribute('aria-activedescendant');
+      activeIdx = -1;
+      if (openApi === api) openApi = null;
+    }
+
+    function choose(i) {
+      var opt = select.options[i];
+      if (!opt) return;
+      if (select.selectedIndex !== i) {
+        select.selectedIndex = i;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      sync();
+    }
+
+    function typeAhead(key) {
+      typeBuffer += key.toLowerCase();
+      if (typeTimer) clearTimeout(typeTimer);
+      typeTimer = setTimeout(function () { typeBuffer = ''; }, 600);
+      var opts = select.options;
+      var start = (isOpen() ? activeIdx : select.selectedIndex) + 1;
+      for (var n = 0; n < opts.length; n++) {
+        var idx = (start + n) % opts.length;
+        if (opts[idx].textContent.trim().toLowerCase().indexOf(typeBuffer) === 0) {
+          if (isOpen()) setActive(idx); else choose(idx);
+          return;
+        }
+      }
+    }
+
+    var api = { close: close };
+
+    btn.addEventListener('click', function () { if (isOpen()) close(); else open(); });
+    btn.addEventListener('keydown', function (e) {
+      var len = select.options.length;
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          if (!isOpen()) open(); else setActive(Math.min(activeIdx + 1, len - 1));
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          if (!isOpen()) open(); else setActive(Math.max(activeIdx - 1, 0));
+          break;
+        case 'Home':
+          if (isOpen()) { e.preventDefault(); setActive(0); }
+          break;
+        case 'End':
+          if (isOpen()) { e.preventDefault(); setActive(len - 1); }
+          break;
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          if (!isOpen()) open(); else if (activeIdx >= 0) { choose(activeIdx); close(); }
+          break;
+        case 'Escape':
+          if (isOpen()) { e.preventDefault(); close(); }
+          break;
+        case 'Tab':
+          close();
+          break;
+        default:
+          if (e.key && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) typeAhead(e.key);
+      }
+    });
+    document.addEventListener('mousedown', function (e) {
+      if (isOpen() && !wrap.contains(e.target)) close();
+    });
+    select.addEventListener('change', sync);
+    if (window.MutationObserver) {
+      new MutationObserver(sync).observe(select, {
+        childList: true,
+        attributes: true,
+        attributeFilter: ['disabled']
+      });
+    }
+    sync();
+  }
+
+  enhanceNivSelect(document.getElementById('filter-installer'));
+  enhanceNivSelect(document.getElementById('filter-customer'));
+})();
+</script>
 <script src="./nav-referrer.js"></script>
 <script src="./press-yaoi.js"></script>
 </body>
