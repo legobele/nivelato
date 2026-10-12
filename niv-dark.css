@@ -15,6 +15,7 @@
   --niv-red: #e5484d;
   --niv-radius: 18px;
   --niv-pill: 999px;
+  --niv-inset: 30px;
 }
 
 /* ---- app shell: sidebar + main ---- */
@@ -216,11 +217,116 @@
 .niv-status.ok { display: block; background: rgba(34,197,94,0.15); color: #4ade80; }
 .niv-status.err { display: block; background: rgba(229,72,77,0.15); color: #f87171; }
 
+/* ---- settings shell: floating cards, same language as the dashboard ----
+   The settings pages (account + company) use .niv-shell with .niv-sidebar
+   and .niv-main. Both become floating cards on the shared inset token:
+   nothing touches the viewport edges, the sidebar is a surface card and
+   the main area a bordered frame the inner cards pop against. */
+body:not(.has-sidebar) .niv-shell {
+  padding: var(--niv-inset);
+  gap: var(--niv-inset);
+  box-sizing: border-box;
+}
+.niv-sidebar {
+  top: var(--niv-inset);
+  height: calc(100vh - (2 * var(--niv-inset)));
+  background: var(--niv-surface);
+  border: 1px solid var(--niv-border);
+  border-radius: var(--niv-radius);
+}
+.niv-main {
+  background: var(--niv-bg);
+  border: 1px solid var(--niv-border);
+  border-radius: var(--niv-radius);
+}
+/* inside the floating sidebar the company head is flat, like the panel head */
+.niv-sidebar .niv-company-card {
+  border: none;
+  background: transparent;
+  padding: 4px 6px 8px;
+  text-align: left;
+}
+.niv-sidebar .niv-company-top { margin-bottom: 0; }
+
+/* ---- tiered nav groups (user tier vs company tier) ---- */
+.niv-nav-group { display: flex; flex-direction: column; gap: 12px; }
+.niv-nav-group + .niv-nav-group {
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--niv-border-soft);
+}
+.niv-nav-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--niv-text-dim);
+  padding: 0 4px;
+}
+.niv-nav-btn { position: relative; }
+.niv-nav-btn .nav-sub {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--niv-text-dim);
+  margin-top: 3px;
+}
+.niv-nav-btn.active .nav-sub { color: rgba(255, 255, 255, 0.85); }
+.niv-nav-btn .dot {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.5px solid var(--niv-text-dim);
+  background: transparent;
+}
+.niv-nav-btn .dot.on { background: var(--niv-accent); border-color: var(--niv-accent); }
+.niv-nav-btn.soon { color: var(--niv-text-dim); cursor: default; }
+.niv-nav-btn .soon-badge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--niv-text-dim);
+  border: 1px solid var(--niv-border-soft);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+/* ---- shared company sidebar (.niv-side) ----
+   One component for the company pages (users, updates): floating card,
+   flat company head, tiered nav groups. Pages only size it in their shell. */
+.niv-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 18px;
+  background: var(--niv-surface);
+  border: 1px solid var(--niv-border);
+  border-radius: var(--niv-radius);
+  overflow-y: auto;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--niv-text);
+  box-sizing: border-box;
+}
+.niv-side-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 6px 8px;
+}
+.niv-side-head .niv-company-avatar { width: 56px; height: 56px; font-size: 18px; }
+.niv-side-head .niv-company-ver { text-decoration: none; }
+
 @media (max-width: 900px) {
   .niv-shell { flex-direction: column; }
+  body:not(.has-sidebar) .niv-shell { padding: 12px; gap: 16px; }
   .niv-sidebar {
     width: auto; height: auto; position: static;
-    border-right: none; border-bottom: 1px solid var(--niv-border-soft);
   }
   .niv-main { padding: 20px 16px; }
 }
