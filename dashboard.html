@@ -2,6 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
+  <script>
+  try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|$)/);if(cm&&cm[1]==='1')document.documentElement.classList.add('niv-compact');var lm=c.match(/; nivelato-login-lang=(es|en)(?:;|$)/);if(lm)document.documentElement.lang=lm[1];}catch(e){}
+  </script>
+  <script src="./niv-settings.js"></script>
   <script src="./company-theme.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#121212" />
@@ -960,9 +964,22 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 /* Modo "Barra lateral compacta" (preferencia de interfaz guardada en
    Ajustes, clave 'niv-compact-sidebar'): se lee y se aplica durante el
    parseo, antes del primer pintado, para que la carcasa nazca ya como
-   riel y con la barra superior visible, sin destello del estado contrario. */
+   riel y con la barra superior visible, sin destello del estado contrario.
+   La fuente de verdad es NivSettings (cookie, ver niv-settings.js); el
+   snippet de arranque en <head> ya marco <html> con la clase niv-compact
+   y este bloque reconcilia <body> con esa marca. Solo si la plataforma
+   de ajustes no cargo se cae a la lectura localStorage anterior, que
+   NivSettings sigue espejando. */
 try {
-  if (localStorage.getItem('niv-compact-sidebar') === '1') {
+  var _compactOn = false;
+  if (window.NivSettings && typeof window.NivSettings.getCompact === 'function') {
+    _compactOn = window.NivSettings.getCompact();
+  } else if (document.documentElement.classList.contains('niv-compact')) {
+    _compactOn = true;
+  } else {
+    _compactOn = localStorage.getItem('niv-compact-sidebar') === '1';
+  }
+  if (_compactOn) {
     document.body.classList.add('niv-compact');
     var _cp = document.getElementById('niv-panel');
     if (_cp) {
@@ -1605,6 +1622,16 @@ let currentUser;
   onAuthStateChanged(auth, async (user) => {
     if (NIV_ROUTE === 'company') return; // la ruta /company usa initCompanyView (arriba)
     if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
+    // Alerta de inicio de sesion (niv-user.js): disparo sin bloqueo en el
+    // aterrizaje autenticado; nunca debe romper el inicio de sesion.
+    import('./niv-user.js').then(m => m.maybeSendLoginAlert(user)).catch(() => {});
+    // Idioma resuelto (niv-user.js): users/{uid}.language manda sobre la
+    // cadena local; al resolver se aplica a NivSettings y a la chrome.
+    import('./niv-user.js').then(async (m) => {
+      const lang = await m.resolveLang(user.uid);
+      m.applyResolvedLang(lang);
+      if (window._applyDashLang) window._applyDashLang(lang);
+    }).catch(() => {});
     // Mint flow claims before any org data read (rules require them).
     // If flowGate says block/review on a fresh call, route to the
     // geo-blocked page instead of failing silently with permission-denied
@@ -3672,10 +3699,28 @@ let currentUser;
   // ================= REDESIGN (wireframes de Giulia, Oct 2026) =================
   // Barra superior persistente, secciones colapsables, sidebar redimensionable,
   // vista Panel (home) y vista de Notificaciones.
-  // Idioma de la chrome nueva: la misma señal que login/ajustes
-  // (localStorage 'nivelato-login-lang'); por defecto español.
-  const NIV_LANG = (() => { try { return localStorage.getItem('nivelato-login-lang') === 'en' ? 'en' : 'es'; } catch (_) { return 'es'; } })();
+  // Idioma de la chrome nueva: la fuente de verdad es NivSettings
+  // (getLang(), cookie 'nivelato-login-lang' con espejo localStorage);
+  // por defecto español. Tras el inicio de sesion el resolvedor de
+  // niv-user.js manda (users/{uid}.language) y _applyDashLang actualiza
+  // este valor y repinta los textos estaticos.
+  let NIV_LANG = (() => {
+    try { if (window.NivSettings && typeof window.NivSettings.getLang === 'function') return window.NivSettings.getLang(); } catch (_) {}
+    try { return localStorage.getItem('nivelato-login-lang') === 'en' ? 'en' : 'es'; } catch (_) { return 'es'; }
+  })();
   const L = (es, en) => (NIV_LANG === 'en' ? en : es);
+  // Persistencia del panel (ancho y secciones) a traves de NivSettings:
+  // la cookie es la fuente y set() mantiene los espejos localStorage que
+  // los lectores antiguos aun usan. Si la plataforma no cargo, se cae al
+  // localStorage de antes con la misma clave y el mismo formato.
+  const _nivGetSetting = (key) => {
+    try { if (window.NivSettings) { const v = window.NivSettings.get(key); if (v !== null && v !== undefined) return v; } } catch (_) {}
+    try { return localStorage.getItem(key); } catch (_) { return null; }
+  };
+  const _nivSetSetting = (key, value) => {
+    try { if (window.NivSettings && window.NivSettings.set(key, value)) return true; } catch (_) {}
+    try { localStorage.setItem(key, value); return true; } catch (_) { return false; }
+  };
   const _callable = (name) => httpsCallable(getFunctions(auth.app, 'us-central1'), name);
   const _fmtDateTime = (ms) => {
     if (!ms) return '';
@@ -3686,7 +3731,7 @@ let currentUser;
   };
 
   // textos estáticos de la chrome nueva (EN/ES)
-  (() => {
+  const _applyDashChromeTexts = () => {
     const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
     const setTab = (id, txt) => { const el = document.querySelector('#' + id + ' .niv-tab-label'); if (el) el.textContent = txt; };
     setTab('tab-home', L('Panel', 'Dashboard'));
@@ -3707,7 +3752,25 @@ let currentUser;
     setText('home-update-link', L('Ver actualización', 'See update'));
     setText('notif-title', L('Notificaciones', 'Notifications'));
     setText('notif-mark-all', L('Marcar todas como leídas', 'Mark all as read'));
-  })();
+    setText('company-menu-settings', L('Ajustes de la empresa', 'Company settings'));
+    setText('company-menu-users', L('Usuarios', 'Users'));
+    setText('company-menu-close', L('Cerrar', 'Close'));
+    setText('users-title', L('Usuarios', 'Users'));
+    setText('users-fallback-text', L('No se pudo cargar la vista de usuarios.', 'Could not load the users view.'));
+    setText('users-fallback-link', L('Abrir la página completa', 'Open the full page'));
+    const _ph = document.getElementById('niv-panel-head');
+    if (_ph) _ph.title = L('Ajustes de la empresa', 'Company settings');
+    if (window._syncUsersAdminBtn) window._syncUsersAdminBtn();
+  };
+  _applyDashChromeTexts();
+  // Punto de entrada del resolvedor de idioma (niv-user.js): cuando el
+  // idioma de la cuenta difiere del local, la chrome se repinta entera.
+  window._applyDashLang = (lang) => {
+    if (lang !== 'es' && lang !== 'en') return;
+    if (lang === NIV_LANG) { _applyDashChromeTexts(); return; }
+    NIV_LANG = lang;
+    _applyDashChromeTexts();
+  };
 
   // ---- barra superior: pestaña activa según la vista ----
   window._onDashViewChange = (name) => {
@@ -3755,8 +3818,8 @@ let currentUser;
   // secciones ('niv-panel-sections', clave 'nav-open'), sin almacen paralelo.
   (() => {
     let saved = {};
-    try { saved = JSON.parse(localStorage.getItem('niv-panel-sections') || '{}'); } catch (_) {}
-    const store = () => { try { localStorage.setItem('niv-panel-sections', JSON.stringify(saved)); } catch (_) {} };
+    try { saved = JSON.parse(_nivGetSetting('niv-panel-sections') || '{}'); } catch (_) {}
+    const store = () => { _nivSetSetting('niv-panel-sections', JSON.stringify(saved)); };
     const units = {};
     document.querySelectorAll('#niv-panel .niv-navunit').forEach((u) => { units[u.getAttribute('data-navunit')] = u; });
     // la lista de proyectos expandida vive en la zona desplazable del panel,
@@ -4032,7 +4095,7 @@ let currentUser;
   // ---- sidebar: secciones colapsables individualmente (ley #2) ----
   (() => {
     let saved = {};
-    try { saved = JSON.parse(localStorage.getItem('niv-panel-sections') || '{}'); } catch (_) {}
+    try { saved = JSON.parse(_nivGetSetting('niv-panel-sections') || '{}'); } catch (_) {}
     document.querySelectorAll('#niv-panel .niv-panel-sec').forEach((sec, i) => {
       const key = sec.getAttribute('data-seckey') || ('sec' + i);
       const title = sec.querySelector('.niv-panel-sec-title');
@@ -4047,7 +4110,7 @@ let currentUser;
       const toggle = () => {
         sec.classList.toggle('sec-collapsed');
         saved[key] = sec.classList.contains('sec-collapsed');
-        try { localStorage.setItem('niv-panel-sections', JSON.stringify(saved)); } catch (_) {}
+        _nivSetSetting('niv-panel-sections', JSON.stringify(saved));
       };
       chev.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
       title.addEventListener('click', (e) => {
@@ -4066,7 +4129,7 @@ let currentUser;
     const WKEY = 'niv-panel-width';
     let autoCollapsed = false;
     const savedWidth = () => {
-      try { const w = parseInt(localStorage.getItem(WKEY) || '', 10); return (w >= 220 && w <= 520) ? w : null; } catch (_) { return null; }
+      try { const w = parseInt(_nivGetSetting(WKEY) || '', 10); return (w >= 220 && w <= 520) ? w : null; } catch (_) { return null; }
     };
     const w0 = savedWidth();
     if (w0 && !panel.classList.contains('collapsed')) panel.style.width = w0 + 'px';
@@ -4102,7 +4165,7 @@ let currentUser;
           const rawW = ev.clientX - startLeft;
           if (rawW < SNAP_W) {
             snapped = true;
-            try { localStorage.setItem(WKEY, String(lastGoodW)); } catch (_) {}
+            _nivSetSetting(WKEY, String(lastGoodW));
             autoCollapsed = false; // gesto manual: applyAuto no lo resucita al ensanchar
             setCollapsed(true); // la misma maquinaria que el toggle y el auto-colapso
             endDrag(); // se suelta aqui: el resto del gesto ya no se sigue
@@ -4116,7 +4179,7 @@ let currentUser;
           endDrag();
           if (snapped) return; // WKEY ya guarda lastGoodW; el width quedo limpio
           const w = parseInt(panel.style.width, 10);
-          if (w) { try { localStorage.setItem(WKEY, String(w)); } catch (_) {} }
+          if (w) { _nivSetSetting(WKEY, String(w)); }
         };
         document.addEventListener('pointermove', move);
         document.addEventListener('pointerup', up);
