@@ -513,6 +513,11 @@ body:not(.has-sidebar) .niv-shell {
     background: rgba(0,0,0,.55);
   }
   body.nav-open .niv-scrim { display: block; }
+  /* Shell rule (mobile): no top bar; navigation is the sidebar drawer and
+     the document scrolls (pull-to-refresh). Each shell page applies it in
+     its own mobile block, where its shell geometry lives: dashboard.html
+     carries the reference implementation. Module hosts suppress the
+     topbar module mount at the same widths. */
 }
 
 /* ---- filter row: dark mode ---- */

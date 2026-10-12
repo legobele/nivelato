@@ -689,6 +689,40 @@ body.has-sidebar .niv-shell > main {
   body.has-sidebar { height: auto; overflow: visible; display: block; }
 }
 
+/* ---- movil: sin barra superior y scroll del documento ----
+   Este bloque va DESPUES de REVISION 2 a proposito: empata en
+   especificidad con las reglas de la cascara y gana por orden, igual
+   que el bloque de padding de arriba. */
+@media (max-width: 900px) {
+  /* Shell rule: la barra superior NO existe en movil. La navegacion es
+     siempre el cajon lateral, sin importar el modo compacto (ese ajuste
+     manda solo en escritorio). Del chrome de la barra (pastillas,
+     proyecto actual, chip de cuenta, fondo, borde, sombra) no queda
+     nada; el hamburger sobrevive como boton flotante que abre el
+     cajon, y las acciones de cuenta viven en el pie del panel. */
+  .niv-topbar {
+    position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 12px;
+    right: auto; width: auto; height: auto; min-height: 0; margin: 0; padding: 0;
+    background: transparent; border: none; box-shadow: none;
+    visibility: visible; z-index: 580;
+  }
+  .niv-topbar > *:not(.niv-hamburger) { display: none !important; }
+  .niv-topbar .niv-hamburger {
+    background: var(--niv-surface, #17171a);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  }
+  /* El documento es el que scrollea: la cascara de escritorio atrapa el
+     contenido en un contenedor con scroll propio dentro de un body de
+     100dvh, el gesto vertical nunca llega al documento y iOS nunca
+     ofrece pull-to-refresh (sin forma de recargar, la pagina vieja se
+     queda pegada). Aqui se desenvuelve la cascara, overscroll queda en
+     auto y el contenido gana arriba el espacio del boton flotante.
+     El cajon y los modales son fixed: no participan. */
+  body.has-sidebar { height: auto; min-height: 100dvh; overflow: visible; overscroll-behavior-y: auto; }
+  body.has-sidebar .niv-shell { flex: none; min-height: 0; }
+  body.has-sidebar .niv-shell > main { overflow: visible; padding-top: calc(62px + env(safe-area-inset-top)); }
+}
+
 /* ---- navegacion principal dentro de la barra lateral ---- */
 .niv-side-nav {
   display: flex; flex-direction: column; gap: 4px;
@@ -3690,6 +3724,8 @@ let currentUser;
     // el contenido principal tiene su propio scroll: vuelve arriba al cambiar
     const mainEl = document.querySelector('.niv-shell > main');
     if (mainEl) mainEl.scrollTop = 0;
+    // en movil el scroll es del documento, no del contenedor: tambien arriba
+    if (window.innerWidth <= 900) window.scrollTo(0, 0);
     if (name === 'users' && window._ensureUsersFrame) window._ensureUsersFrame(false);
   };
 
