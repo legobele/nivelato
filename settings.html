@@ -77,8 +77,6 @@
   .backend-current { font-size: 13px; color: #495057; background: #f8f9fa; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
   .backend-current b { color: #212529; }
 html, body { overflow-y: auto !important; }
-.notif-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--niv-accent, #f5a524); flex: none; box-shadow: 0 0 8px var(--niv-accent, #f5a524); }
-.updates-link:hover span:first-child { text-decoration: underline; }
 </style>
 
   <style>
@@ -117,20 +115,21 @@ html, body { overflow-y: auto !important; }
     </div>
   </div>
   <nav class="niv-nav">
-    <a class="niv-nav-btn active" href="/account/settings">Mi cuenta</a>
-    <a class="niv-nav-btn" id="set-nav-users" href="/company/settings" style="display:none">Users</a>
-    <a class="niv-nav-btn linklike" href="#" onclick="return false;">Billing</a>
-    <div class="niv-card" style="margin:0;">
-      <div class="niv-card-title">Updates</div>
-      <a href="/company/updates" class="updates-link" style="margin:0; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px; cursor:pointer;">
-        <span>New version available</span>
-        <span class="notif-dot"></span>
-      </a>
+    <div class="niv-nav-group">
+      <div class="niv-nav-group-title">Mi cuenta</div>
+      <a class="niv-nav-btn active" href="/account/settings">Mi cuenta</a>
+    </div>
+    <div class="niv-nav-group" id="set-company-group" style="display:none">
+      <div class="niv-nav-group-title">Compañía</div>
+      <a class="niv-nav-btn" href="/company/users">Usuarios</a>
+      <a class="niv-nav-btn" href="/company/settings">Ajustes de la compañía</a>
+      <a class="niv-nav-btn" href="/company/updates">Updates</a>
+      <button class="niv-nav-btn soon" disabled>Billing<span class="soon-badge">soon</span></button>
     </div>
   </nav>
 </aside>
 <div class="niv-main">
-  <a class="btn-back" href="/" onclick="if (history.length > 1) { history.back(); return false; }">← Volver</a>
+  <a class="btn-back" href="/dashboard.html?view=home">← Volver</a>
   <h1 class="niv-page-title">Ajustes</h1>
   <div class="niv-page-sub">Configuración de tu cuenta</div>
 
@@ -190,6 +189,15 @@ html, body { overflow-y: auto !important; }
         <button class="btn-secondary" id="lang-btn-en" style="margin-top:0">English</button>
       </div>
       <div class="saved-msg" id="lang-saved">✓ Idioma guardado</div>
+    </div>
+
+    <div class="niv-card">
+      <div class="niv-card-title">Interfaz</div>
+      <div class="niv-card-desc">Preferencias de apariencia de tu cuenta. Se guardan en este dispositivo y el panel las aplica al cargar.</div>
+      <div class="notif-row">
+        <div><div class="notif-label">Barra lateral compacta</div><div class="notif-desc">Compacta la barra lateral del panel a un riel de iconos y muestra la barra superior.</div></div>
+        <label class="switch"><input type="checkbox" id="ui-compact-sidebar" /><span class="track"></span></label>
+      </div>
     </div>
 
   </div>
@@ -309,8 +317,8 @@ onAuthStateChanged(auth, async (user) => {
   // company settings live at company/settings.html; link it for managers
   if (_can('userManagement')) {
     document.getElementById('company-link').style.display = 'block';
-    const _snu = document.getElementById('set-nav-users');
-    if (_snu) _snu.style.display = 'block';
+    const _snu = document.getElementById('set-company-group');
+    if (_snu) _snu.style.display = 'flex';
   }
   // sidebar company card
   try {
@@ -441,6 +449,22 @@ window.doLogout = async () => {
 };
 
 </script>
+<script>
+  /* Preferencia de interfaz "Barra lateral compacta": es una preferencia
+     de usuario y vive aqui, en Ajustes de cuenta. Misma clave que lee el
+     panel al cargar ('niv-compact-sidebar'), sin cambios de almacenamiento:
+     solo se movio el control desde la pagina de usuarios de la compañia. */
+  (function () {
+    var KEY = 'niv-compact-sidebar';
+    var el = document.getElementById('ui-compact-sidebar');
+    if (!el) return;
+    try { el.checked = localStorage.getItem(KEY) === '1'; } catch (e) {}
+    el.addEventListener('change', function () {
+      try { localStorage.setItem(KEY, el.checked ? '1' : '0'); } catch (e) {}
+    });
+  })();
+</script>
+<script src="./nav-referrer.js"></script>
 <script src="./press-yaoi.js"></script>
 </body>
 </html>
