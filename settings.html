@@ -4,10 +4,12 @@
 <base href="/">
 <meta charset="UTF-8" />
 <script src="./company-theme.js"></script>
+<script src="./niv-settings.js"></script>
+<script src="./modules/shell-bridge.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#121212" />
 <link rel="manifest" href="manifest.json" />
-<title>Nivelato - Ajustes</title>
+<title data-i18n="docTitle">Nivelato - Ajustes</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="autism.css" />
 <link rel="stylesheet" href="niv-dark.css" />
@@ -16,66 +18,35 @@
   .settings-shell { max-width: 640px; margin: 0 auto; padding: 24px 20px; }
   h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
   .sub { font-size: 14px; color: #868e96; margin-bottom: 24px; }
-  .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: #f1f3f5; border-radius: 14px; padding: 4px; }
-  .tab-btn { flex: 1; padding: 10px 16px; min-height: 44px; border: none; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; background: transparent; color: #495057; transition: all 0.15s; }
-  .tab-btn.active { background: #fff; color: #1971c2; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.06); }
-  .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
-  .card { background: #fff; border: 1px solid #e9ecef; border-radius: 18px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.06); }
-  .card-title { font-size: 15px; font-weight: 700; color: #212529; margin-bottom: 4px; }
-  .card-desc { font-size: 13px; color: #868e96; margin-bottom: 16px; }
-  .perm-member { border-bottom: 1px solid #f1f3f5; padding: 14px 0; }
-  .perm-member:last-child { border-bottom: none; }
-  .perm-member-header { font-size: 14px; font-weight: 600; color: #212529; margin-bottom: 8px; }
-  .perm-member-role { font-size: 12px; color: #868e96; font-weight: 500; }
-  .perm-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-  .perm-grid label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: #495057; cursor: pointer; padding: 4px 10px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6; }
-  .perm-grid label:has(input:checked) { background: #e7f5ff; border-color: #1971c2; color: #1971c2; }
-  .perm-grid input { width: 14px; height: 14px; accent-color: #1971c2; }
-  .request-card { background: #fff; border: 1px solid #e9ecef; border-radius: 14px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .request-name { font-size: 14px; font-weight: 600; }
-  .request-email { font-size: 12px; color: #868e96; }
-  .request-actions { display: flex; gap: 8px; }
-  .btn-sm { padding: 7px 16px; min-height: 44px; display: inline-flex; align-items: center; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
-  .btn-sm.approve { background: #2f9e44; color: #fff; }
-  .btn-sm.reject { background: #e03131; color: #fff; }
-  .btn-back { display: inline-block; margin-bottom: 16px; font-size: 13px; color: #1971c2; text-decoration: none; font-weight: 600; cursor: pointer; }
-  .btn-back:hover { text-decoration: underline; }
-  .info-row { display: flex; padding: 10px 0; border-bottom: 1px solid #f1f3f5; font-size: 14px; }
-  .info-row:last-child { border-bottom: none; }
-  .info-label { font-weight: 600; color: #495057; min-width: 120px; }
-  .info-value { color: #212529; }
-  .saved-msg { font-size: 13px; color: #2f9e44; font-weight: 600; text-align: center; padding: 8px; display: none; }
-  .btn-secondary.lang-active { border-color: #1971c2; color: #1971c2; background: #e7f1fb; }
   .btn-delete-account { width: 100%; margin-top: 16px; padding: 12px 16px; min-height: 44px; background: #fff; border: 1.5px solid #ffc9c9; border-radius: 12px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; color: #c92a2a; transition: background 0.15s; }
   .btn-delete-account:hover { background: #fff5f5; }
   .btn-delete-account:disabled { opacity: 0.5; cursor: default; }
-  /* toggles de notificaciones */
-  .notif-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f1f3f5; }
-  .notif-row:last-child { border-bottom: none; }
-  .notif-label { font-size: 14px; font-weight: 600; color: #212529; }
-  .notif-desc { font-size: 12px; color: #868e96; margin-top: 2px; }
-  .switch { position: relative; width: 48px; height: 28px; flex: none; cursor: pointer; }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .switch .track { position: absolute; inset: 0; background: #dee2e6; border-radius: 9999px; transition: background 0.2s; }
-  .switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; background: #fff; border-radius: 9999px; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.06); transition: transform 0.2s; }
-  .switch input:checked + .track { background: #1971c2; }
-  .switch input:checked + .track::after { transform: translateX(20px); }
-  /* backend personalizado */
-  .backend-field { margin-bottom: 10px; }
-  .backend-field label { display: block; font-size: 12px; font-weight: 600; color: #495057; margin-bottom: 4px; }
-  .backend-field input { width: 100%; padding: 10px 12px; font-size: 13px; font-family: monospace; border: 1.5px solid #dee2e6; border-radius: 12px; box-sizing: border-box; }
-  .backend-field input:focus { outline: none; border-color: #1971c2; box-shadow: 0 0 0 3px #e7f5ff; }
   .btn-primary { width: 100%; padding: 12px 16px; min-height: 48px; background: #1971c2; color: #fff; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
   .btn-primary:active { transform: scale(0.98); background: #1864ab; }
   .btn-primary:disabled { opacity: 0.6; cursor: default; }
-  .btn-secondary { width: 100%; margin-top: 8px; padding: 12px 16px; min-height: 48px; background: #fff; color: #495057; border: 1.5px solid #dee2e6; border-radius: 12px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
-  .status-line { font-size: 13px; padding: 10px 14px; border-radius: 12px; margin-top: 12px; display: none; }
-  .status-line.ok { display: block; background: #ebfbee; color: #2f9e44; }
-  .status-line.warn { display: block; background: #fff3bf; color: #e67700; }
-  .status-line.err { display: block; background: #fff5f5; color: #c92a2a; }
-  .backend-current { font-size: 13px; color: #495057; background: #f8f9fa; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
-  .backend-current b { color: #212529; }
+  /* second sidebar layout: company sidebar stays in .niv-shell, the
+     module sidebar (target=user) sits inside the main column next to
+     the section panels. */
+  .settings-layout { display: flex; gap: 20px; align-items: flex-start; }
+  .user-settings-sidebar { width: 260px; flex: none; }
+  .settings-sections { flex: 1; min-width: 0; }
+  .settings-section { display: none; }
+  .settings-section.active { display: block; }
+  @media (max-width: 900px) {
+    .settings-layout { flex-direction: column; }
+    .user-settings-sidebar { width: 100%; }
+    .settings-sections { width: 100%; }
+  }
+  /* linked devices rows: page local, token based (not part of the kit) */
+  .device-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--niv-border-soft); }
+  .device-row:last-child { border-bottom: none; }
+  .device-meta { flex: 1; min-width: 0; }
+  .device-name { font-size: 14px; font-weight: 600; color: var(--niv-text); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .device-sub { font-size: 12px; color: var(--niv-text-dim); margin-top: 2px; }
+  .device-badge { font-size: 11px; font-weight: 600; color: #fbbf24; border: 1px solid rgba(230,119,0,0.5); border-radius: 999px; padding: 1px 8px; }
+  .device-edit { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .device-edit input { flex: 1; min-width: 140px; padding: 9px 12px; font-size: 13px; font-family: inherit; color: var(--niv-text); background: var(--niv-surface-2); border: 1px solid var(--niv-border-soft); border-radius: 10px; box-sizing: border-box; }
+  .devices-empty { font-size: 13px; color: var(--niv-text-dim); padding: 8px 0; }
 html, body { overflow-y: auto !important; }
 </style>
 
@@ -83,21 +54,9 @@ html, body { overflow-y: auto !important; }
   /* settings dark theme */
   body { background: #0e0e10; color: #f5f5f7; }
   .settings-shell { max-width: none; padding: 0; }
-  .btn-back { color: #60a5fa; }
-  .info-row { border-bottom: 1px solid rgba(255,255,255,0.08); }
-  .info-label { color: #a7a7ad; }
-  .info-value { color: #f5f5f7; }
-  .notif-row { border-bottom: 1px solid rgba(255,255,255,0.08); }
-  .notif-label { color: #f5f5f7; }
-  .notif-desc { color: #a7a7ad; }
-  .switch .track { background: #3a3a3e; }
-  .switch input:checked + .track { background: #22c55e; }
-  .btn-secondary { background: #1e1e22; border: 1.5px solid rgba(255,255,255,0.14); color: #f5f5f7; }
-  .btn-secondary.lang-active { border-color: #1971c2; color: #60a5fa; background: rgba(25,113,194,0.15); }
+  #profile-pic-fallback { background: #1971c2; }
   .btn-delete-account { background: transparent; border-color: rgba(229,72,77,0.5); color: #f87171; }
   .btn-delete-account:hover { background: rgba(229,72,77,0.1); }
-  .saved-msg { color: #4ade80; }
-  #profile-pic-fallback { background: #1971c2; }
   #delete-request-status { background: rgba(230,119,0,0.15) !important; color: #fbbf24 !important; }
   </style>
 <link rel="stylesheet" href="/qgc-theme.css?v=2" />
@@ -129,96 +88,344 @@ html, body { overflow-y: auto !important; }
   </nav>
 </aside>
 <div class="niv-main">
-  <a class="btn-back" href="/dashboard.html?view=home">← Volver</a>
-  <h1 class="niv-page-title">Ajustes</h1>
-  <div class="niv-page-sub">Configuración de tu cuenta</div>
+  <a class="niv-btn-back" href="/dashboard.html?view=home" data-i18n="back">← Volver</a>
+  <h1 class="niv-page-title" data-i18n="pageTitle">Ajustes</h1>
+  <div class="niv-page-sub" data-i18n="pageSub">Configuración de tu cuenta</div>
 
-  <!-- MI CUENTA -->
-  <div id="tab-cuenta">
-    <div class="niv-card">
-      <div class="niv-card-title">Información de la cuenta</div>
-      <div class="niv-card-desc">Datos de tu perfil en Nivelato.</div>
+  <div class="settings-layout">
+  <div id="user-settings-sidebar" class="user-settings-sidebar"></div>
+  <div class="settings-sections">
+
+  <!-- CUENTA -->
+  <section class="settings-section active" data-section-panel="cuenta" id="section-cuenta">
+    <div class="niv-settings-card">
+      <div class="niv-card-title" data-i18n="accountInfo">Información de la cuenta</div>
+      <div class="niv-card-desc" data-i18n="accountInfoDesc">Datos de tu perfil en Nivelato.</div>
       <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
         <img id="profile-pic" alt="Foto de perfil" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:#e9ecef;display:none;" />
         <div id="profile-pic-fallback" style="width:64px;height:64px;border-radius:50%;background:#1971c2;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;"></div>
         <div>
           <input type="file" id="profile-pic-input" accept="image/*" style="display:none;" />
-          <button class="btn-secondary" id="btn-change-pic" style="padding:8px 16px;font-size:13px;">Cambiar foto</button>
+          <button class="niv-btn-secondary" id="btn-change-pic" style="padding:8px 16px;font-size:13px;width:auto;margin-top:0;" data-i18n="changePhoto">Cambiar foto</button>
           <div id="pic-upload-status" style="font-size:12px;color:#868e96;margin-top:6px;"></div>
         </div>
       </div>
-      <div class="info-row"><span class="info-label">Nombre</span><span class="info-value" id="info-name">—</span></div>
-      <div class="info-row"><span class="info-label">Correo</span><span class="info-value" id="info-email">—</span></div>
-      <div class="info-row"><span class="info-label">Rol</span><span class="info-value" id="info-role">—</span></div>
-      <div class="info-row"><span class="info-label">Taller</span><span class="info-value" id="info-org">—</span></div>
-      <div class="info-row"><span class="info-label">Código</span><span class="info-value" id="info-joincode">—</span></div>
-      <div id="delete-request-status" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:12px;font-size:13px;color:#e67700;display:none;">⏳ Tu solicitud de eliminación está pendiente.</div>
-      <button class="btn-delete-account" id="btn-delete-account" onclick="requestDeleteAccount()">🗑 Solicitar eliminación de cuenta</button>
-      <button class="btn-delete-account" id="btn-logout" onclick="doLogout()" style="border-color:#dee2e6;color:#495057;">⏻ Cerrar sesión</button>
-      <div id="company-link" style="margin-top:16px;text-align:center;display:none;"><a href="/company/settings" style="font-size:13px;color:#1971c2;">⚙ Ajustes de la compañía</a></div>
-    <div style="margin-top:16px;text-align:center;"><a href="https://legobele.github.io/nivelato/privacy.html" style="font-size:13px;color:#1971c2;">Política de privacidad</a></div>
+      <div class="niv-info-row"><span class="niv-info-label" data-i18n="lblName">Nombre</span><span class="niv-info-value" id="info-name">-</span></div>
+      <div class="niv-info-row"><span class="niv-info-label" data-i18n="lblEmail">Correo</span><span class="niv-info-value" id="info-email">-</span></div>
+      <div class="niv-info-row"><span class="niv-info-label" data-i18n="lblRole">Rol</span><span class="niv-info-value" id="info-role">-</span></div>
+      <div class="niv-info-row"><span class="niv-info-label" data-i18n="lblOrg">Taller</span><span class="niv-info-value" id="info-org">-</span></div>
+      <div class="niv-info-row"><span class="niv-info-label" data-i18n="lblCode">Código</span><span class="niv-info-value" id="info-joincode">-</span></div>
     </div>
+  </section>
 
-    <div class="niv-card">
-      <div class="niv-card-title">Notificaciones por correo</div>
-      <div class="niv-card-desc">Elige qué avisos quieres recibir en tu correo. Salen de noreply@nivelatolabs.com.</div>
-      <div class="notif-row">
-        <div><div class="notif-label">Correo de bienvenida</div><div class="notif-desc">Un saludo cuando creas tu cuenta.</div></div>
-        <label class="switch"><input type="checkbox" id="ntf-welcomeEmail" checked /><span class="track"></span></label>
+  <!-- NOTIFICACIONES -->
+  <section class="settings-section" data-section-panel="notificaciones" id="section-notificaciones">
+    <div class="niv-settings-card">
+      <div class="niv-card-title" data-i18n="notifTitle">Notificaciones por correo</div>
+      <div class="niv-card-desc" data-i18n="notifDesc">Elige qué avisos quieres recibir en tu correo. Salen de noreply@nivelatolabs.com.</div>
+      <div class="niv-setting-row">
+        <div><div class="niv-setting-label" data-i18n="ntf_loginAlert">Notificación de inicio de sesión</div><div class="niv-setting-desc" data-i18n="ntf_loginAlertDesc">Te avisa por correo y en la app cuando se inicia sesión en tu cuenta.</div></div>
+        <label class="niv-switch"><input type="checkbox" id="ntf-loginAlert" data-notif="loginAlert" checked /><span class="track"></span></label>
       </div>
-      <div class="notif-row">
-        <div><div class="notif-label">Nueva cotización</div><div class="notif-desc">Avisa cuando alguien del taller crea una cotización.</div></div>
-        <label class="switch"><input type="checkbox" id="ntf-newProject" checked /><span class="track"></span></label>
+      <div class="niv-setting-row">
+        <div><div class="niv-setting-label" data-i18n="ntf_newProject">Nueva cotización</div><div class="niv-setting-desc" data-i18n="ntf_newProjectDesc">Avisa cuando alguien del taller crea una cotización.</div></div>
+        <label class="niv-switch"><input type="checkbox" id="ntf-newProject" data-notif="newProject" checked /><span class="track"></span></label>
       </div>
-      <div class="notif-row">
-        <div><div class="notif-label">Cotización editada</div><div class="notif-desc">Avisa cuando editan una cotización existente.</div></div>
-        <label class="switch"><input type="checkbox" id="ntf-projectEdit" checked /><span class="track"></span></label>
+      <div class="niv-setting-row">
+        <div><div class="niv-setting-label" data-i18n="ntf_projectEdit">Cotización editada</div><div class="niv-setting-desc" data-i18n="ntf_projectEditDesc">Avisa cuando editan una cotización existente.</div></div>
+        <label class="niv-switch"><input type="checkbox" id="ntf-projectEdit" data-notif="projectEdit" checked /><span class="track"></span></label>
       </div>
-      <div class="notif-row">
-        <div><div class="notif-label">Cotización enviada</div><div class="notif-desc">Avisa cuando una cotización se marca como enviada al cliente.</div></div>
-        <label class="switch"><input type="checkbox" id="ntf-quoteReady" checked /><span class="track"></span></label>
+      <div class="niv-setting-row">
+        <div><div class="niv-setting-label" data-i18n="ntf_quoteReady">Cotización enviada</div><div class="niv-setting-desc" data-i18n="ntf_quoteReadyDesc">Avisa cuando una cotización se marca como enviada al cliente.</div></div>
+        <label class="niv-switch"><input type="checkbox" id="ntf-quoteReady" data-notif="quoteReady" checked /><span class="track"></span></label>
       </div>
-      <div class="saved-msg" id="ntf-saved">✓ Preferencias guardadas</div>
+      <div class="niv-saved-msg" id="ntf-saved" data-i18n="notifSaved">✓ Preferencias guardadas</div>
+      <div class="niv-status-line" id="ntf-status"></div>
     </div>
+  </section>
 
-    <div class="niv-card">
-      <div class="niv-card-title">Idioma</div>
-      <div class="niv-card-desc">Idioma de la pantalla de inicio de sesión. Se guarda en tu cuenta y aplica en tus dispositivos.</div>
+  <!-- INTERFAZ -->
+  <section class="settings-section" data-section-panel="interfaz" id="section-interfaz">
+    <div class="niv-settings-card">
+      <div class="niv-card-title" data-i18n="langTitle">Idioma</div>
+      <div class="niv-card-desc" data-i18n="langDesc">Idioma de la pantalla de inicio de sesión. Se guarda en tu cuenta y aplica en tus dispositivos.</div>
       <div style="display:flex;gap:10px;margin-top:4px;">
-        <button class="btn-secondary" id="lang-btn-es" style="margin-top:0">Español</button>
-        <button class="btn-secondary" id="lang-btn-en" style="margin-top:0">English</button>
+        <button class="niv-btn-secondary" id="lang-btn-es" style="margin-top:0">Español</button>
+        <button class="niv-btn-secondary" id="lang-btn-en" style="margin-top:0">English</button>
       </div>
-      <div class="saved-msg" id="lang-saved">✓ Idioma guardado</div>
+      <div class="niv-saved-msg" id="lang-saved" data-i18n="langSaved">✓ Idioma guardado</div>
+      <div class="niv-status-line" id="lang-status"></div>
     </div>
 
-    <div class="niv-card">
-      <div class="niv-card-title">Interfaz</div>
-      <div class="niv-card-desc">Preferencias de apariencia de tu cuenta. Se guardan en este dispositivo y el panel las aplica al cargar.</div>
-      <div class="notif-row">
-        <div><div class="notif-label">Barra lateral compacta</div><div class="notif-desc">Compacta la barra lateral del panel a un riel de iconos y muestra la barra superior.</div></div>
-        <label class="switch"><input type="checkbox" id="ui-compact-sidebar" /><span class="track"></span></label>
+    <div class="niv-settings-card">
+      <div class="niv-card-title" data-i18n="ifaceTitle">Interfaz</div>
+      <div class="niv-card-desc" data-i18n="ifaceDesc">Preferencias de apariencia de tu cuenta. Se guardan en este dispositivo y el panel las aplica al cargar.</div>
+      <div class="niv-setting-row">
+        <div><div class="niv-setting-label" data-i18n="compactLabel">Barra lateral compacta</div><div class="niv-setting-desc" data-i18n="compactDesc">Compacta la barra lateral del panel a un riel de iconos y muestra la barra superior.</div></div>
+        <label class="niv-switch"><input type="checkbox" id="ui-compact-sidebar" /><span class="track"></span></label>
       </div>
     </div>
+  </section>
 
-  </div>
+  <!-- SEGURIDAD -->
+  <section class="settings-section" data-section-panel="seguridad" id="section-seguridad">
+    <div class="niv-settings-card">
+      <div class="niv-card-title" data-i18n="pwdTitle">Cambiar contraseña</div>
+      <div class="niv-card-desc" data-i18n="pwdDesc">Confirma tu contraseña actual y elige una nueva.</div>
+      <div id="pwd-provider-note" class="niv-status-line warn" style="display:none;"></div>
+      <form id="pwd-form" novalidate>
+        <div class="niv-field"><label for="pwd-current" data-i18n="pwdCurrent">Contraseña actual</label><input type="password" id="pwd-current" autocomplete="current-password" /></div>
+        <div class="niv-field"><label for="pwd-new" data-i18n="pwdNew">Contraseña nueva</label><input type="password" id="pwd-new" autocomplete="new-password" /></div>
+        <div class="niv-field"><label for="pwd-confirm" data-i18n="pwdConfirm">Confirmar contraseña nueva</label><input type="password" id="pwd-confirm" autocomplete="new-password" /></div>
+        <button class="btn-primary" type="submit" id="btn-change-password" data-i18n="pwdSubmit">Cambiar contraseña</button>
+      </form>
+      <div class="niv-status-line" id="pwd-status"></div>
+    </div>
+
+    <div class="niv-settings-card">
+      <div class="niv-card-title" data-i18n="secNotifTitle">Alertas de inicio de sesión</div>
+      <div class="niv-card-desc" data-i18n="secNotifDesc">La misma preferencia que en Notificaciones. Cambiarla aquí la actualiza en ambos lugares.</div>
+      <div class="niv-setting-row">
+        <div><div class="niv-setting-label" data-i18n="ntf_loginAlert">Notificación de inicio de sesión</div><div class="niv-setting-desc" data-i18n="ntf_loginAlertDesc">Te avisa por correo y en la app cuando se inicia sesión en tu cuenta.</div></div>
+        <label class="niv-switch"><input type="checkbox" id="sec-loginAlert" data-notif="loginAlert" checked /><span class="track"></span></label>
+      </div>
+      <div class="niv-saved-msg" id="sec-login-saved" data-i18n="notifSaved">✓ Preferencias guardadas</div>
+      <div class="niv-status-line" id="sec-notif-status"></div>
+    </div>
+
+    <div class="niv-settings-card">
+      <div class="niv-card-title" data-i18n="devicesTitle">Dispositivos vinculados</div>
+      <div class="niv-card-desc" data-i18n="devicesDesc">Dispositivos vinculados a tu cuenta en este taller. La lista es informativa: no hay una opción para desvincular desde aquí.</div>
+      <div id="devices-list"><div class="devices-empty" data-i18n="devicesLoading">Cargando dispositivos…</div></div>
+      <button class="niv-btn-secondary" id="btn-refresh-devices" data-i18n="devicesRefresh">Actualizar lista</button>
+      <div class="niv-status-line" id="devices-status"></div>
+    </div>
+
+    <div class="niv-settings-card">
+      <div class="niv-card-title" data-i18n="sessionTitle">Sesión</div>
+      <div class="niv-card-desc" data-i18n="sessionDesc">Cierra la sesión de tu cuenta en este dispositivo.</div>
+      <button class="btn-delete-account" id="btn-logout" onclick="doLogout()" style="border-color:#dee2e6;color:#495057;margin-top:0;" data-i18n="logout">Cerrar sesión</button>
+    </div>
+  </section>
+
+  <!-- DATOS Y PRIVACIDAD -->
+  <section class="settings-section" data-section-panel="datos-privacidad" id="section-datos-privacidad">
+    <div class="niv-settings-card">
+      <div class="niv-card-title" data-i18n="dataTitle">Datos y privacidad</div>
+      <div class="niv-card-desc" data-i18n="dataDesc">Tus datos de cuenta y la política de privacidad de Nivelato.</div>
+      <div style="margin-bottom:8px;"><a href="https://legobele.github.io/nivelato/privacy.html" style="font-size:13px;color:#60a5fa;" data-i18n="privacyPolicy">Política de privacidad</a></div>
+      <div id="delete-request-status" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:12px;font-size:13px;color:#e67700;display:none;" data-i18n="deletePending">⏳ Tu solicitud de eliminación está pendiente.</div>
+      <button class="btn-delete-account" id="btn-delete-account" onclick="requestDeleteAccount()" data-i18n="deleteBtn">Solicitar eliminación de cuenta</button>
+    </div>
+  </section>
+
+  </div><!-- /settings-sections -->
+  </div><!-- /settings-layout -->
 
 </div><!-- /niv-main -->
 </div><!-- /niv-shell -->
 
+<script>
+/* Account settings host wiring (classic script, runs without Firebase):
+   - STR: complete ES/EN pairs for every string on this page. The module
+     script re-applies the language once the DB value wins on load.
+   - Section navigation: mounts the module sidebar with target=user and
+     drives the five panels from its contract (initial section through
+     niv:init via the mount option, clicks through niv:section /
+     onSection). The module marks the active button itself.
+   - Compact toggle: reads and writes through window.NivSettings
+     (cookie truth with localStorage mirror). */
+(function () {
+  var STR = {
+    es: {
+      docTitle: 'Nivelato - Ajustes', pageTitle: 'Ajustes', pageSub: 'Configuración de tu cuenta', back: '← Volver',
+      accountInfo: 'Información de la cuenta', accountInfoDesc: 'Datos de tu perfil en Nivelato.', changePhoto: 'Cambiar foto',
+      uploading: 'Subiendo...', photoUpdated: 'Foto actualizada.', photoFailed: 'No se pudo subir la foto. Intenta de nuevo.',
+      lblName: 'Nombre', lblEmail: 'Correo', lblRole: 'Rol', lblOrg: 'Taller', lblCode: 'Código',
+      role_owner: 'Dueño / Admin', role_cotizador: 'Cotizador', role_supervisor: 'Supervisor', role_medidor: 'Técnico medidor',
+      notifTitle: 'Notificaciones por correo', notifDesc: 'Elige qué avisos quieres recibir en tu correo. Salen de noreply@nivelatolabs.com.',
+      ntf_loginAlert: 'Notificación de inicio de sesión', ntf_loginAlertDesc: 'Te avisa por correo y en la app cuando se inicia sesión en tu cuenta.',
+      ntf_newProject: 'Nueva cotización', ntf_newProjectDesc: 'Avisa cuando alguien del taller crea una cotización.',
+      ntf_projectEdit: 'Cotización editada', ntf_projectEditDesc: 'Avisa cuando editan una cotización existente.',
+      ntf_quoteReady: 'Cotización enviada', ntf_quoteReadyDesc: 'Avisa cuando una cotización se marca como enviada al cliente.',
+      notifSaved: '✓ Preferencias guardadas', notifSaveFailed: 'No se pudieron guardar las preferencias. Revisa tu conexión e intenta de nuevo.',
+      langTitle: 'Idioma', langDesc: 'Idioma de la pantalla de inicio de sesión. Se guarda en tu cuenta y aplica en tus dispositivos.',
+      langSaved: '✓ Idioma guardado', langSaveFailed: 'No se pudo guardar el idioma. Intenta de nuevo.',
+      ifaceTitle: 'Interfaz', ifaceDesc: 'Preferencias de apariencia de tu cuenta. Se guardan en este dispositivo y el panel las aplica al cargar.',
+      compactLabel: 'Barra lateral compacta', compactDesc: 'Compacta la barra lateral del panel a un riel de iconos y muestra la barra superior.',
+      pwdTitle: 'Cambiar contraseña', pwdDesc: 'Confirma tu contraseña actual y elige una nueva.',
+      pwdCurrent: 'Contraseña actual', pwdNew: 'Contraseña nueva', pwdConfirm: 'Confirmar contraseña nueva', pwdSubmit: 'Cambiar contraseña',
+      pwdNeedAll: 'Completa todos los campos de contraseña.', pwdMismatch: 'La contraseña nueva y su confirmación no coinciden.',
+      pwdSuccess: 'Contraseña actualizada.', pwdWrong: 'La contraseña actual no es correcta.',
+      pwdWeak: 'La contraseña nueva es demasiado débil. Usa al menos 6 caracteres.',
+      pwdRecent: 'Por seguridad, vuelve a iniciar sesión y luego intenta cambiar la contraseña.',
+      pwdTooMany: 'Demasiados intentos. Espera un momento e intenta de nuevo.', pwdFailed: 'No se pudo cambiar la contraseña. Intenta de nuevo.',
+      pwdProviderNote: 'Tu cuenta inicia sesión con {providers}, así que no tienes una contraseña de Nivelato para cambiar. Gestiona tu contraseña en ese proveedor.',
+      pwdProvidersUnknown: 'un proveedor externo',
+      secNotifTitle: 'Alertas de inicio de sesión', secNotifDesc: 'La misma preferencia que en Notificaciones. Cambiarla aquí la actualiza en ambos lugares.',
+      devicesTitle: 'Dispositivos vinculados', devicesDesc: 'Dispositivos vinculados a tu cuenta en este taller. La lista es informativa: no hay una opción para desvincular desde aquí.',
+      devicesLoading: 'Cargando dispositivos…', devicesEmpty: 'Todavía no tienes dispositivos vinculados.',
+      devicesFailed: 'No se pudieron cargar los dispositivos. Intenta de nuevo.', devicesUnnamed: 'Dispositivo sin nombre',
+      devicesOutdated: 'Actualización disponible', devicesLinked: 'Vinculado: ',
+      devicesRename: 'Renombrar', devicesSave: 'Guardar', devicesCancel: 'Cancelar', devicesNamePh: 'Nombre del dispositivo',
+      devicesRenameFailed: 'No se pudo renombrar el dispositivo. Intenta de nuevo.', devicesRefresh: 'Actualizar lista',
+      sessionTitle: 'Sesión', sessionDesc: 'Cierra la sesión de tu cuenta en este dispositivo.', logout: 'Cerrar sesión',
+      dataTitle: 'Datos y privacidad', dataDesc: 'Tus datos de cuenta y la política de privacidad de Nivelato.', privacyPolicy: 'Política de privacidad',
+      deleteBtn: 'Solicitar eliminación de cuenta', deletePending: '⏳ Tu solicitud de eliminación está pendiente.',
+      deleteConfirm: '¿Solicitar la eliminación de tu cuenta y todos tus datos? Un administrador revisará tu solicitud.',
+      deleteFailed: 'Error al solicitar eliminación. Intenta de nuevo.',
+      profileMissing: 'No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.'
+    },
+    en: {
+      docTitle: 'Nivelato - Settings', pageTitle: 'Settings', pageSub: 'Your account settings', back: '← Back',
+      accountInfo: 'Account information', accountInfoDesc: 'Your Nivelato profile details.', changePhoto: 'Change photo',
+      uploading: 'Uploading...', photoUpdated: 'Photo updated.', photoFailed: 'The photo could not be uploaded. Try again.',
+      lblName: 'Name', lblEmail: 'Email', lblRole: 'Role', lblOrg: 'Workshop', lblCode: 'Code',
+      role_owner: 'Owner / Admin', role_cotizador: 'Estimator', role_supervisor: 'Supervisor', role_medidor: 'Measuring technician',
+      notifTitle: 'Email notifications', notifDesc: 'Choose which notices you want to receive by email. They are sent from noreply@nivelatolabs.com.',
+      ntf_loginAlert: 'Login notification', ntf_loginAlertDesc: 'Alerts you by email and in the app when your account is signed in.',
+      ntf_newProject: 'New quote', ntf_newProjectDesc: 'Alerts when someone at the workshop creates a quote.',
+      ntf_projectEdit: 'Quote edited', ntf_projectEditDesc: 'Alerts when an existing quote is edited.',
+      ntf_quoteReady: 'Quote sent', ntf_quoteReadyDesc: 'Alerts when a quote is marked as sent to the customer.',
+      notifSaved: '✓ Preferences saved', notifSaveFailed: 'Your preferences could not be saved. Check your connection and try again.',
+      langTitle: 'Language', langDesc: 'Language for the sign in screen. It is saved to your account and applies on your devices.',
+      langSaved: '✓ Language saved', langSaveFailed: 'The language could not be saved. Try again.',
+      ifaceTitle: 'Interface', ifaceDesc: 'Appearance preferences for your account. They are saved on this device and the dashboard applies them on load.',
+      compactLabel: 'Compact sidebar', compactDesc: 'Compacts the dashboard sidebar into an icon rail and shows the top bar.',
+      pwdTitle: 'Change password', pwdDesc: 'Confirm your current password and choose a new one.',
+      pwdCurrent: 'Current password', pwdNew: 'New password', pwdConfirm: 'Confirm new password', pwdSubmit: 'Change password',
+      pwdNeedAll: 'Fill in all the password fields.', pwdMismatch: 'The new password and its confirmation do not match.',
+      pwdSuccess: 'Password updated.', pwdWrong: 'The current password is not correct.',
+      pwdWeak: 'The new password is too weak. Use at least 6 characters.',
+      pwdRecent: 'For security, sign in again and then try changing your password.',
+      pwdTooMany: 'Too many attempts. Wait a moment and try again.', pwdFailed: 'The password could not be changed. Try again.',
+      pwdProviderNote: 'Your account signs in with {providers}, so you do not have a Nivelato password to change. Manage your password with that provider.',
+      pwdProvidersUnknown: 'an external provider',
+      secNotifTitle: 'Login alerts', secNotifDesc: 'The same preference as in Notifications. Changing it here updates it in both places.',
+      devicesTitle: 'Linked devices', devicesDesc: 'Devices linked to your account at this workshop. The list is informational: there is no unlink option from here.',
+      devicesLoading: 'Loading devices…', devicesEmpty: 'You have no linked devices yet.',
+      devicesFailed: 'Devices could not be loaded. Try again.', devicesUnnamed: 'Unnamed device',
+      devicesOutdated: 'Update available', devicesLinked: 'Linked: ',
+      devicesRename: 'Rename', devicesSave: 'Save', devicesCancel: 'Cancel', devicesNamePh: 'Device name',
+      devicesRenameFailed: 'The device could not be renamed. Try again.', devicesRefresh: 'Refresh list',
+      sessionTitle: 'Session', sessionDesc: 'Sign out of your account on this device.', logout: 'Sign out',
+      dataTitle: 'Data and privacy', dataDesc: 'Your account data and the Nivelato privacy policy.', privacyPolicy: 'Privacy policy',
+      deleteBtn: 'Request account deletion', deletePending: '⏳ Your deletion request is pending.',
+      deleteConfirm: 'Request deletion of your account and all your data? An administrator will review your request.',
+      deleteFailed: 'Error requesting deletion. Try again.',
+      profileMissing: 'We could not find your user profile. Sign in again to repair it.'
+    }
+  };
+  var SECTION_KEYS = ['cuenta', 'notificaciones', 'interfaz', 'seguridad', 'datos-privacidad'];
+  var currentLang = 'es';
+  try {
+    if (window.NivSettings && window.NivSettings.getLang) currentLang = window.NivSettings.getLang();
+  } catch (e) { /* default es */ }
+
+  function t(key) {
+    return (STR[currentLang] && STR[currentLang][key]) || STR.es[key] || key;
+  }
+  var langHook = null;
+  function applyPageLang(lang) {
+    if (lang === 'es' || lang === 'en') currentLang = lang;
+    try { document.documentElement.setAttribute('lang', currentLang); } catch (e) {}
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var k = el.getAttribute('data-i18n');
+      if (STR.es[k] !== undefined) el.textContent = t(k);
+    });
+    if (sidebarHandle && sidebarHandle.setLang) sidebarHandle.setLang(currentLang);
+    if (langHook) { try { langHook(currentLang); } catch (e) {} }
+  }
+
+  /* ---- section navigation ---- */
+  function initialSection() {
+    try {
+      var h = String(window.location.hash || '').replace(/^#/, '');
+      if (SECTION_KEYS.indexOf(h) !== -1) return h;
+    } catch (e) {}
+    return 'cuenta';
+  }
+  function showSection(key) {
+    if (SECTION_KEYS.indexOf(key) === -1) return;
+    document.querySelectorAll('[data-section-panel]').forEach(function (p) {
+      p.classList.toggle('active', p.getAttribute('data-section-panel') === key);
+    });
+  }
+  showSection(initialSection());
+
+  var sidebarHandle = null;
+  if (window.NivShell && window.NivShell.mountSidebar) {
+    try {
+      sidebarHandle = window.NivShell.mountSidebar('#user-settings-sidebar', {
+        target: 'user',
+        section: initialSection(),
+        lang: currentLang,
+        onSection: function (section) { showSection(section); }
+      });
+    } catch (e) { sidebarHandle = null; }
+  }
+  /* The bridge also dispatches a bubbling niv:section CustomEvent on the
+     mount element; the onSection callback above is the primary path and
+     this listener keeps navigation working if a future bridge changes
+     callback semantics. showSection is idempotent. */
+  var mountEl = document.getElementById('user-settings-sidebar');
+  if (mountEl) mountEl.addEventListener('niv:section', function (ev) {
+    if (ev && ev.detail && ev.detail.section) showSection(ev.detail.section);
+  });
+
+  applyPageLang(currentLang);
+
+  /* ---- compact toggle through NivSettings ---- */
+  var compactEl = document.getElementById('ui-compact-sidebar');
+  if (compactEl) {
+    try {
+      if (window.NivSettings && window.NivSettings.getCompact) compactEl.checked = window.NivSettings.getCompact();
+      else compactEl.checked = localStorage.getItem('niv-compact-sidebar') === '1';
+    } catch (e) {}
+    compactEl.addEventListener('change', function () {
+      try {
+        if (window.NivSettings && window.NivSettings.setCompact) window.NivSettings.setCompact(compactEl.checked);
+        else localStorage.setItem('niv-compact-sidebar', compactEl.checked ? '1' : '0');
+      } catch (e) {}
+    });
+  }
+
+  window.NivAccountSettings = {
+    STR: STR,
+    t: t,
+    getLang: function () { return currentLang; },
+    applyLang: applyPageLang,
+    showSection: showSection,
+    sectionKeys: SECTION_KEYS.slice(),
+    onLang: function (fn) { langHook = fn; }
+  };
+})();
+</script>
+
 <script type="module">
 import { auth, db } from './firebase-config.js';
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getDoc, doc, setDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { onAuthStateChanged, signOut, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { getDoc, doc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
 import { makePermChecker } from './permissions.js';
 import { ensureFlowClaims, routeAfterGate } from './geo.js';
 
-const NOTIF_KEYS = ['welcomeEmail', 'newProject', 'projectEdit', 'quoteReady'];
-const NOTIF_DEFAULTS = { welcomeEmail: true, newProject: true, projectEdit: true, quoteReady: true };
+/* Notification prefs: loginAlert replaces welcomeEmail in the UI list.
+   The stored welcomeEmail value is never deleted: saves merge only the
+   keys below plus updatedAt, so the old field stays in the doc, inert.
+   loginAlert defaults to true; only an explicit false opts out. */
+const NOTIF_KEYS = ['loginAlert', 'newProject', 'projectEdit', 'quoteReady'];
+const NOTIF_DEFAULTS = { loginAlert: true, newProject: true, projectEdit: true, quoteReady: true };
+
+const t = (k) => (window.NivAccountSettings ? window.NivAccountSettings.t(k) : k);
+const pageLang = () => (window.NivAccountSettings ? window.NivAccountSettings.getLang() : 'es');
 
 let currentUser = null;
 let currentUserData = null;
-let orgMembers = [];
 let _can = () => false;
+let lastDevices = null;
+let pwdWired = false;
+let devicesWired = false;
 
 // Escape ALL user-controlled strings before innerHTML interpolation (stored XSS).
 // Member names/emails/roles come from Firestore and any org member can set their own.
@@ -228,6 +435,29 @@ const escapeHtml = (s) => String(s ?? '')
   .replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;')
   .replace(/'/g, '&#39;');
+
+function setStatus(id, kind, text) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'niv-status-line' + (kind ? ' ' + kind : '');
+  el.textContent = text || '';
+}
+
+function renderRole() {
+  if (!currentUserData) return;
+  const key = 'role_' + String(currentUserData.role || '');
+  const known = window.NivAccountSettings && window.NivAccountSettings.STR.es[key] !== undefined;
+  document.getElementById('info-role').textContent = known ? t(key) : (currentUserData.role || '-');
+}
+
+/* Dynamic (non data-i18n) strings re-render when the language changes. */
+if (window.NivAccountSettings) {
+  window.NivAccountSettings.onLang(() => {
+    renderRole();
+    renderProviderNote();
+    if (lastDevices) renderDevices(lastDevices);
+  });
+}
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
@@ -248,7 +478,7 @@ onAuthStateChanged(auth, async (user) => {
   if (!userSnap.exists()) {
     // Signed in, but no profile doc (orphaned auth account, interrupted
     // signup, or deleted profile): don't leave a dead skeleton page.
-    alert('No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.');
+    alert(t('profileMissing'));
     window.location.href = 'https://login.nivelatolabs.com/?missingProfile=1';
     return;
   }
@@ -257,8 +487,8 @@ onAuthStateChanged(auth, async (user) => {
   const orgId = currentUserData.orgId;
 
   // fill info tab
-  document.getElementById('info-name').textContent = currentUserData.name || '—';
-  document.getElementById('info-email').textContent = user.email || '—';
+  document.getElementById('info-name').textContent = currentUserData.name || '-';
+  document.getElementById('info-email').textContent = user.email || '-';
   // profile picture
   const _picUrl = currentUserData.photoURL || user.photoURL || '';
   const _picImg = document.getElementById('profile-pic');
@@ -275,7 +505,7 @@ onAuthStateChanged(auth, async (user) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     const status = document.getElementById('pic-upload-status');
-    status.textContent = 'Subiendo...';
+    status.textContent = t('uploading');
     try {
       const { ref, uploadBytes, getDownloadURL } = await import('https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js');
       const { storage } = await import('./firebase-config.js');
@@ -285,15 +515,13 @@ onAuthStateChanged(auth, async (user) => {
       await updateDoc(doc(db, 'users', user.uid), { photoURL: url });
       currentUserData.photoURL = url;
       _picImg.src = url; _picImg.style.display = 'block'; _picFb.style.display = 'none';
-      status.textContent = 'Foto actualizada.';
+      status.textContent = t('photoUpdated');
     } catch (err) {
       console.error('[Nivelato] avatar upload failed:', err);
-      status.textContent = 'No se pudo subir la foto. Intenta de nuevo.';
+      status.textContent = t('photoFailed');
     }
   });
-  document.getElementById('info-role').textContent = {
-    owner: 'Dueño / Admin', cotizador: 'Cotizador', supervisor: 'Supervisor', medidor: 'Técnico medidor'
-  }[currentUserData.role] || currentUserData.role || '—';
+  renderRole();
   document.getElementById('info-org').textContent = orgId;
   // Invite code: always read the stable code stored on the org doc (set once
   // at org creation), never regenerate client-side.
@@ -314,9 +542,10 @@ onAuthStateChanged(auth, async (user) => {
     if (drStatus) drStatus.style.display = 'block';
   }
 
-  // company settings live at company/settings.html; link it for managers
+  // Company doors live in the company sidebar (shown for managers there).
+  // The old in-body company settings link was removed on purpose: the
+  // sidebar already carries that door.
   if (_can('userManagement')) {
-    document.getElementById('company-link').style.display = 'block';
     const _snu = document.getElementById('set-company-group');
     if (_snu) _snu.style.display = 'flex';
   }
@@ -329,10 +558,20 @@ onAuthStateChanged(auth, async (user) => {
       _on.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
   } catch (_) { /* keep placeholder */ }
 
-  // notification prefs + backend status (propio backend o default)
+  initPasswordSection();
+  initDevicesSection();
+  // notification prefs + language (propio backend o default)
   await loadNotifPrefs();
   await loadLangPref();
 });
+
+/* ---------------- notification prefs ----------------
+   One source of truth, two controls for loginAlert: #ntf-loginAlert in
+   Notificaciones and #sec-loginAlert in Seguridad share data-notif, so
+   load sets both and a change on either syncs the other before saving. */
+function notifEls(k) {
+  return Array.from(document.querySelectorAll('[data-notif="' + k + '"]'));
+}
 
 async function loadNotifPrefs() {
   let prefs = { ...NOTIF_DEFAULTS };
@@ -343,31 +582,61 @@ async function loadNotifPrefs() {
     console.warn('[Nivelato] no se pudieron leer las preferencias:', e.message);
   }
   for (const k of NOTIF_KEYS) {
-    const el = document.getElementById('ntf-' + k);
-    if (el) {
+    const els = notifEls(k);
+    for (const el of els) {
       el.checked = prefs[k] !== false;
-      el.addEventListener('change', () => saveNotifPrefs());
+      el.addEventListener('change', () => {
+        for (const other of notifEls(k)) other.checked = el.checked;
+        saveNotifPrefs();
+      });
     }
+  }
+}
+
+function showNotifSaved() {
+  for (const id of ['ntf-status', 'sec-notif-status']) setStatus(id, '', '');
+  for (const id of ['ntf-saved', 'sec-login-saved']) {
+    const msg = document.getElementById(id);
+    if (!msg) continue;
+    msg.style.display = 'block';
+    setTimeout(() => { msg.style.display = 'none'; }, 2500);
+  }
+}
+
+/* Failure is surfaced as an error state next to BOTH saved messages,
+   never as a success. In production this is where a firestore.rules
+   rejection lands until the notification_prefs allowlist gains
+   loginAlert; the toggle must not pretend it saved. */
+function showNotifError(e) {
+  for (const id of ['ntf-saved', 'sec-login-saved']) {
+    const msg = document.getElementById(id);
+    if (msg) msg.style.display = 'none';
+  }
+  const detail = e && e.code ? ' (' + e.code + ')' : '';
+  for (const id of ['ntf-status', 'sec-notif-status']) {
+    setStatus(id, 'err', t('notifSaveFailed') + detail);
   }
 }
 
 async function saveNotifPrefs() {
   const data = { updatedAt: serverTimestamp() };
   for (const k of NOTIF_KEYS) {
-    const el = document.getElementById('ntf-' + k);
-    data[k] = el ? el.checked : true;
+    const els = notifEls(k);
+    data[k] = els.length ? els[0].checked : true;
   }
   try {
     await setDoc(doc(db, 'notification_prefs', currentUser.uid), data, { merge: true });
-    const msg = document.getElementById('ntf-saved');
-    msg.style.display = 'block';
-    setTimeout(() => { msg.style.display = 'none'; }, 2500);
+    showNotifSaved();
   } catch (e) {
-    alert('No se pudieron guardar las preferencias: ' + (e.message || 'error desconocido'));
+    console.warn('[Nivelato] no se pudieron guardar las preferencias:', e && e.message);
+    showNotifError(e);
   }
 }
 
-// ---- Idioma (users/{uid}.language; también lo lee el login) ----
+/* ---- Idioma (users/{uid}.language; también lo lee el login) ----
+   Firestore write is preserved in saveLangPref and the DB still wins on
+   load; after load and after save the value is handed to NivSettings
+   (setLang), which owns the cross subdomain cookie and its mirror. */
 function markLangButtons(lang) {
   for (const l of ['es', 'en']) {
     const b = document.getElementById('lang-btn-' + l);
@@ -390,6 +659,8 @@ async function loadLangPref() {
     console.warn('[Nivelato] no se pudo leer el idioma:', e.message);
   }
   markLangButtons(lang);
+  try { if (window.NivSettings && window.NivSettings.setLang) window.NivSettings.setLang(lang); } catch (_) { /* ignore */ }
+  if (window.NivAccountSettings) window.NivAccountSettings.applyLang(lang);
   for (const l of ['es', 'en']) {
     const b = document.getElementById('lang-btn-' + l);
     if (b) b.addEventListener('click', () => saveLangPref(l));
@@ -400,20 +671,183 @@ async function saveLangPref(l) {
   markLangButtons(l);
   try {
     await setDoc(doc(db, 'users', currentUser.uid), { language: l }, { merge: true });
+    try { if (window.NivSettings && window.NivSettings.setLang) window.NivSettings.setLang(l); } catch (_) { /* ignore */ }
     try {
       localStorage.setItem('nivelato-login-lang', l);
       localStorage.setItem('nl_lang_db', '1');
     } catch (_) { /* ignore */ }
+    if (window.NivAccountSettings) window.NivAccountSettings.applyLang(l);
+    setStatus('lang-status', '', '');
     const msg = document.getElementById('lang-saved');
     msg.style.display = 'block';
     setTimeout(() => { msg.style.display = 'none'; }, 2500);
   } catch (e) {
-    alert('No se pudo guardar el idioma: ' + (e.message || 'error desconocido'));
+    console.warn('[Nivelato] no se pudo guardar el idioma:', e && e.message);
+    setStatus('lang-status', 'err', t('langSaveFailed') + (e && e.code ? ' (' + e.code + ')' : ''));
   }
 }
 
+/* ---------------- Seguridad: change password ----------------
+   Password provider accounts only: reauthenticate with the current
+   password (EmailAuthProvider.credential + reauthenticateWithCredential)
+   and then updatePassword. Other providers see what applies to them. */
+const PROVIDER_NAMES = {
+  'google.com': 'Google', 'apple.com': 'Apple', 'microsoft.com': 'Microsoft',
+  'facebook.com': 'Facebook', 'github.com': 'GitHub', 'twitter.com': 'X'
+};
+function providerListText() {
+  const ids = (currentUser && currentUser.providerData ? currentUser.providerData : [])
+    .map(p => p.providerId).filter(id => id && id !== 'password');
+  if (!ids.length) return t('pwdProvidersUnknown');
+  return ids.map(id => PROVIDER_NAMES[id] || id).join(', ');
+}
+function renderProviderNote() {
+  if (!currentUser) return;
+  const providers = (currentUser.providerData || []).map(p => p.providerId);
+  if (providers.includes('password')) return;
+  const note = document.getElementById('pwd-provider-note');
+  if (note) {
+    note.textContent = t('pwdProviderNote').replace('{providers}', providerListText());
+    note.style.display = 'block';
+  }
+}
+function initPasswordSection() {
+  if (!currentUser) return;
+  const providers = (currentUser.providerData || []).map(p => p.providerId);
+  const hasPassword = providers.includes('password');
+  const form = document.getElementById('pwd-form');
+  const note = document.getElementById('pwd-provider-note');
+  if (hasPassword) {
+    if (form) form.style.display = '';
+    if (note) note.style.display = 'none';
+  } else {
+    if (form) form.style.display = 'none';
+    renderProviderNote();
+  }
+  if (pwdWired) return;
+  pwdWired = true;
+  if (form) form.addEventListener('submit', (e) => { e.preventDefault(); changePassword(); });
+}
+async function changePassword() {
+  const cur = document.getElementById('pwd-current').value;
+  const next = document.getElementById('pwd-new').value;
+  const confirm = document.getElementById('pwd-confirm').value;
+  if (!cur || !next || !confirm) { setStatus('pwd-status', 'err', t('pwdNeedAll')); return; }
+  if (next !== confirm) { setStatus('pwd-status', 'err', t('pwdMismatch')); return; }
+  const btn = document.getElementById('btn-change-password');
+  if (btn) btn.disabled = true;
+  setStatus('pwd-status', '', '');
+  try {
+    const credential = EmailAuthProvider.credential(currentUser.email, cur);
+    await reauthenticateWithCredential(currentUser, credential);
+    await updatePassword(currentUser, next);
+    document.getElementById('pwd-current').value = '';
+    document.getElementById('pwd-new').value = '';
+    document.getElementById('pwd-confirm').value = '';
+    setStatus('pwd-status', 'ok', t('pwdSuccess'));
+  } catch (e) {
+    const code = (e && e.code) || '';
+    let msg = t('pwdFailed');
+    if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') msg = t('pwdWrong');
+    else if (code === 'auth/weak-password') msg = t('pwdWeak');
+    else if (code === 'auth/requires-recent-login') msg = t('pwdRecent');
+    else if (code === 'auth/too-many-requests') msg = t('pwdTooMany');
+    setStatus('pwd-status', 'err', msg + (code ? ' (' + code + ')' : ''));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+/* ---------------- Seguridad: linked devices ----------------
+   Real list through the existing listUserDevices callable (same shape
+   users.html consumes: { latestVersion, orgId, devices, total, limit },
+   each device { uuid, displayName, brand, model, email, via, linkedAt,
+   appVersionName, appVersionCode, outdated }). There is NO revoke or
+   remove callable in functions/index.js (checked: only renameDevice and
+   renameMemberDevice exist for devices), so removal is not offered:
+   the list is informational, plus rename for your own devices through
+   the real renameDevice callable, mirroring users.html. */
+function initDevicesSection() {
+  if (devicesWired) { loadDevices(); return; }
+  devicesWired = true;
+  const btn = document.getElementById('btn-refresh-devices');
+  if (btn) btn.addEventListener('click', () => loadDevices());
+  loadDevices();
+}
+async function loadDevices() {
+  const list = document.getElementById('devices-list');
+  if (list) list.innerHTML = '<div class="devices-empty">' + escapeHtml(t('devicesLoading')) + '</div>';
+  setStatus('devices-status', '', '');
+  try {
+    const fn = httpsCallable(getFunctions(auth.app, 'us-central1'), 'listUserDevices');
+    const { data } = await fn({ uid: currentUser.uid });
+    lastDevices = (data && data.devices) || [];
+    renderDevices(lastDevices);
+  } catch (e) {
+    console.warn('[Nivelato] no se pudieron cargar los dispositivos:', e && e.message);
+    lastDevices = null;
+    if (list) list.innerHTML = '<div class="devices-empty">' + escapeHtml(t('devicesFailed')) + '</div>';
+  }
+}
+function renderDevices(devices) {
+  const list = document.getElementById('devices-list');
+  if (!list) return;
+  if (!devices || !devices.length) {
+    list.innerHTML = '<div class="devices-empty">' + escapeHtml(t('devicesEmpty')) + '</div>';
+    return;
+  }
+  const locale = pageLang() === 'en' ? 'en-US' : 'es';
+  list.innerHTML = devices.map((d) => {
+    const name = d.displayName || t('devicesUnnamed');
+    const modelBits = [d.brand, d.model].filter(Boolean).join(' ');
+    const versionBit = d.appVersionName ? 'Nivelato v' + d.appVersionName : '';
+    const linked = d.linkedAt ? new Date(d.linkedAt).toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    const sub = [modelBits || versionBit, linked ? t('devicesLinked') + linked : ''].filter(Boolean).join(' · ');
+    return '<div class="device-row"><div class="device-meta">'
+      + '<div class="device-name"><span class="device-name-text">' + escapeHtml(name) + '</span>'
+      + (d.outdated ? '<span class="device-badge">' + escapeHtml(t('devicesOutdated')) + '</span>' : '')
+      + '<button class="niv-btn-sm" type="button" data-rename="' + escapeHtml(d.uuid) + '">' + escapeHtml(t('devicesRename')) + '</button></div>'
+      + (sub ? '<div class="device-sub">' + escapeHtml(sub) + '</div>' : '')
+      + '<div class="device-edit-slot"></div></div></div>';
+  }).join('');
+  list.querySelectorAll('[data-rename]').forEach((btn) => {
+    btn.addEventListener('click', () => openDeviceRename(btn));
+  });
+}
+function openDeviceRename(btn) {
+  const row = btn.closest('.device-row');
+  const slot = row && row.querySelector('.device-edit-slot');
+  if (!slot || slot.dataset.open === '1') return;
+  slot.dataset.open = '1';
+  const uuid = btn.getAttribute('data-rename');
+  const nameEl = row.querySelector('.device-name-text');
+  const current = nameEl ? nameEl.textContent.trim() : '';
+  const unnamed = t('devicesUnnamed');
+  slot.innerHTML = '<div class="device-edit">'
+    + '<input type="text" maxlength="60" value="' + escapeHtml(current === unnamed ? '' : current) + '" placeholder="' + escapeHtml(t('devicesNamePh')) + '" aria-label="' + escapeHtml(t('devicesNamePh')) + '" />'
+    + '<button class="niv-btn-sm" type="button" data-act="save">' + escapeHtml(t('devicesSave')) + '</button>'
+    + '<button class="niv-btn-sm" type="button" data-act="cancel">' + escapeHtml(t('devicesCancel')) + '</button></div>';
+  const input = slot.querySelector('input');
+  input.focus();
+  input.select();
+  slot.querySelector('[data-act="cancel"]').addEventListener('click', () => { if (lastDevices) renderDevices(lastDevices); });
+  slot.querySelector('[data-act="save"]').addEventListener('click', async () => {
+    const saveBtn = slot.querySelector('[data-act="save"]');
+    saveBtn.disabled = true;
+    try {
+      const fn = httpsCallable(getFunctions(auth.app, 'us-central1'), 'renameDevice');
+      await fn({ deviceUuid: uuid, displayName: input.value.trim() });
+      loadDevices();
+    } catch (e) {
+      console.warn('[Nivelato] no se pudo renombrar el dispositivo:', e && e.message);
+      setStatus('devices-status', 'err', t('devicesRenameFailed') + (e && e.code ? ' (' + e.code + ')' : ''));
+      saveBtn.disabled = false;
+    }
+  });
+}
+
 window.requestDeleteAccount = async () => {
-  if (!confirm('¿Solicitar la eliminación de tu cuenta y todos tus datos? Un administrador revisará tu solicitud.')) return;
+  if (!confirm(t('deleteConfirm'))) return;
   try {
     await updateDoc(doc(db, 'users', currentUser.uid), { deleteRequestedAt: new Date().toISOString() });
     const drBtn = document.getElementById('btn-delete-account');
@@ -421,7 +855,7 @@ window.requestDeleteAccount = async () => {
     if (drBtn) drBtn.disabled = true;
     if (drStatus) drStatus.style.display = 'block';
   } catch(e) {
-    alert('Error al solicitar eliminación: ' + e.message);
+    alert(t('deleteFailed') + ' ' + e.message);
   }
 };
 
@@ -444,25 +878,10 @@ window.doLogout = async () => {
       }
       doomed.forEach((k) => store.removeItem(k));
     }
-  } catch (_) { /* storage unavailable — nothing to purge */ }
+  } catch (_) { /* storage unavailable: nothing to purge */ }
   window.location.href = 'https://login.nivelatolabs.com/';
 };
 
-</script>
-<script>
-  /* Preferencia de interfaz "Barra lateral compacta": es una preferencia
-     de usuario y vive aqui, en Ajustes de cuenta. Misma clave que lee el
-     panel al cargar ('niv-compact-sidebar'), sin cambios de almacenamiento:
-     solo se movio el control desde la pagina de usuarios de la compañia. */
-  (function () {
-    var KEY = 'niv-compact-sidebar';
-    var el = document.getElementById('ui-compact-sidebar');
-    if (!el) return;
-    try { el.checked = localStorage.getItem(KEY) === '1'; } catch (e) {}
-    el.addEventListener('change', function () {
-      try { localStorage.setItem(KEY, el.checked ? '1' : '0'); } catch (e) {}
-    });
-  })();
 </script>
 <script src="./nav-referrer.js"></script>
 <script src="./press-yaoi.js"></script>
