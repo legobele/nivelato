@@ -11,7 +11,7 @@ module files are intentionally not added to sw.js by this change.
 
 | File | What it is |
 | --- | --- |
-| `modules/sidebar.html` | Standalone page rendering the settings tier sidebar as one floating card (niv-dark.css tokens, Inter, tier groups, sub labels and dots, dashboard style icon tiles). Two targets plus three panel list sections. |
+| `modules/sidebar.html` | Standalone page rendering the settings tier sidebar as one floating card (niv-dark.css tokens, Inter, tier groups, sub labels and dots, dashboard style icon tiles). Three targets plus three panel list sections. |
 | `modules/topbar.html` | Standalone page rendering the static `.niv-topbar` pill bar with the current project indicator. No Firebase, no data of its own. |
 | `modules/shell-bridge.js` | Classic (non module) host side helper. Exposes `window.NivShell = { mountSidebar(el, opts), mountTopbar(el, opts) }`. No Firebase. |
 | `modules/README.md` | This map. |
@@ -33,6 +33,14 @@ own copies from nested paths.
     (`/company/settings`), Updates (`/company/updates`), Billing (see
     gating below).
   - Account group: My account (`/account/settings`).
+- `?target=shell`: the dashboard facing sidebar nav (the app shell
+  context). Company head, then the app nav (Panel
+  `/dashboard.html?view=home`, Proyectos
+  `/dashboard.html?view=projects`, Notificaciones
+  `/dashboard.html?view=notifications`, Usuarios `/users`), then the
+  three panel list sections below. Active keys for init are `home`,
+  `projects`, `notifications`, `users`. Height behavior matches the
+  company target (fixed by default, internal scroll).
 - `?target=user`: the account settings subsettings nav only. Five in
   page navigation buttons carrying `data-section` attributes, in order:
   `cuenta`, `notificaciones`, `interfaz`, `seguridad`,
@@ -41,7 +49,22 @@ own copies from nested paths.
   sections. This target never loads Firebase; it is pure in page
   navigation.
 
-### Panel list sections (company target)
+### Users routing (IA rule): same label, target decides
+
+The users surfaces split by intent, and the module resolves the
+Usuarios label by target:
+
+| Module target | Usuarios href | Surface | Gate |
+| --- | --- | --- | --- |
+| `company` | `/company/users` | Company level administration: invites, roles, status, removal. Part of the company settings family. | Manager gate (`userManagement`), see below. |
+| `shell` | `/users` | Users overview: the people facing directory of the org's users. | No manager gate. Rendered for permitted viewers (signed in org members); the overview page enforces its own access. Managers reach administration through the company tier, not from here. |
+
+The `/users` overview page itself is a later wave's build; this
+module only implements the target rule. Page workers must not point
+the shell Usuarios entry at `/company/users`: administration and
+overview are different doors.
+
+### Panel list sections (company and shell targets)
 
 The scroll region opens with the three list sections of the dashboard
 floating panel, in the dashboard order, at every viewport width
@@ -135,6 +158,8 @@ screenshot the chrome without auth:
   flow), the Updates entry in its pending state (New version
   available, dot on), Users marked active, and one placeholder row in
   each list section.
+- Shell: demo org head, the app nav with Panel active and Usuarios
+  pointing at `/users`, and one placeholder row in each list section.
 - User: the five subsettings with `cuenta` active (or `?section=`).
 
 ### Signed out / error state
@@ -183,8 +208,8 @@ iframe it created, and only navigates to same origin hrefs.
 
 | Type | Direction | Payload | Meaning |
 | --- | --- | --- | --- |
-| `niv:ready` | module to host | `{ target }` | Module loaded. `target` is `company`, `user` or `topbar`. Host replies with `niv:init`; the bridge also sends init on iframe load, and init is idempotent. |
-| `niv:init` | host to module | `{ target, active, section, lang }` | Configure the module. `lang` is `es` or `en`. For the sidebar company target, `active` is a nav key (`users`, `settings`, `updates`, `billing`, `account`) or an href or path such as `/company/users`. For the user target, `section` (or `active`) is one of the five `data-section` keys. Topbar only extension: `project` sets the current project label. |
+| `niv:ready` | module to host | `{ target }` | Module loaded. `target` is `company`, `shell`, `user` or `topbar`. Host replies with `niv:init`; the bridge also sends init on iframe load, and init is idempotent. |
+| `niv:init` | host to module | `{ target, active, section, lang }` | Configure the module. `lang` is `es` or `en`. For the sidebar company target, `active` is a nav key (`users`, `settings`, `updates`, `billing`, `account`) or an href or path such as `/company/users`. For the shell target, `active` is `home`, `projects`, `notifications` or `users`. For the user target, `section` (or `active`) is one of the five `data-section` keys. Topbar only extension: `project` sets the current project label. |
 | `niv:nav` | module to host | `{ href }` | A nav anchor was clicked. The host performs the top frame navigation. Embedded modules suppress the anchor default after posting, so hosts MUST navigate on this message. Module anchors also carry `target="_top"` as the no JS fallback: standalone, or a host that never loads the module script, still navigates. |
 | `niv:resize` | module to host | `{ height }` | Content height in CSS pixels (uncapped measurement). Auto mode hosts set the iframe height from it. Fixed mode hosts (the company sidebar default) ignore it. |
 | `niv:section` | module to host | `{ section }` | User target only: a subsettings button was clicked. The module marks it active itself, then the host shows the matching section. |
@@ -197,7 +222,7 @@ iframe it created, and only navigates to same origin hrefs.
 <div id="chrome-topbar"></div>
 <script>
   const sidebar = window.NivShell.mountSidebar('#chrome-sidebar', {
-    target: 'company',           // or 'user'
+    target: 'company',           // 'company', 'shell' or 'user'
     // demo: true,               // QA only
     // active: 'settings',       // company nav key, or a user section via section:
     // section: 'cuenta',

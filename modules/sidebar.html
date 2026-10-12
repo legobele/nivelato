@@ -70,6 +70,7 @@
      dashboard.html inline CSS. Present at every viewport width: no
      media query hides or reorders them. */
   .niv-mod-lists { display: flex; flex-direction: column; gap: 2px; margin-bottom: 16px; }
+  #side-shell .niv-mod-lists { margin-top: 16px; margin-bottom: 0; }
   .niv-panel-sec-title { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
   .niv-sec-chev {
     margin-left: auto; width: 22px; height: 22px; border-radius: 50%;
@@ -82,8 +83,8 @@
   .niv-sec-chev:hover { color: var(--niv-text); }
   .niv-panel-sec.sec-collapsed .niv-sec-chev { transform: rotate(-90deg); }
   .niv-panel-sec.sec-collapsed .niv-sec-body { display: none; }
-  #niv-snav-projects-body { display: none; }
-  #niv-snav-projects-body.open { display: block; }
+  .niv-snav-projects-body { display: none; }
+  .niv-snav-projects-body.open { display: block; }
 
   /* Compact density (niv-compact-sidebar cookie or storage key = 1):
      same card, tighter rhythm. The dashboard shell keeps its own rail
@@ -101,10 +102,10 @@
   <!-- ======================= target=company ======================= -->
   <aside class="niv-side niv-mod-side" id="side-company" aria-label="Company navigation">
     <div class="niv-side-head">
-      <div class="niv-company-avatar" id="org-avatar">--</div>
+      <div class="niv-company-avatar js-org-avatar" id="org-avatar">--</div>
       <div>
-        <div class="niv-company-name" id="org-name">Loading...</div>
-        <div class="niv-company-ver" id="org-version">Nivelato</div>
+        <div class="niv-company-name js-org-name" id="org-name">Loading...</div>
+        <div class="niv-company-ver js-org-version" id="org-version">Nivelato</div>
       </div>
     </div>
     <div class="niv-mod-scroll" id="company-scroll">
@@ -113,15 +114,15 @@
       <div class="niv-mod-lists" id="mod-lists">
         <div class="niv-panel-sec" data-seckey="projects">
           <div class="niv-panel-sec-title"><span data-i18n="secProjects">Proyectos</span><button class="niv-sec-chev" type="button" data-chev aria-label="Colapsar sección">▾</button></div>
-          <div id="niv-snav-projects-body" class="open"><div id="niv-panel-projects"><div class="niv-panel-empty" data-i18n="emptyProjects">Sin proyectos</div></div></div>
+          <div id="niv-snav-projects-body" class="niv-snav-projects-body open"><div id="niv-panel-projects" class="js-list-projects"><div class="niv-panel-empty" data-i18n="emptyProjects">Sin proyectos</div></div></div>
         </div>
         <div class="niv-panel-sec" data-seckey="customers">
           <div class="niv-panel-sec-title"><span data-i18n="secCustomers">Clientes</span><button class="niv-sec-chev" type="button" data-chev aria-label="Colapsar sección">▾</button></div>
-          <div class="niv-sec-body" id="niv-panel-customers"><div class="niv-panel-empty" data-i18n="emptyCustomers">Sin clientes</div></div>
+          <div class="niv-sec-body js-list-customers" id="niv-panel-customers"><div class="niv-panel-empty" data-i18n="emptyCustomers">Sin clientes</div></div>
         </div>
         <div class="niv-panel-sec" data-seckey="measures">
           <div class="niv-panel-sec-title"><span data-i18n="secMeasures">Medidas</span><button class="niv-sec-chev" type="button" data-chev aria-label="Colapsar sección">▾</button></div>
-          <div class="niv-sec-body" id="niv-panel-measures"><div class="niv-panel-empty" data-i18n="emptyMeasures">Sin medidas</div></div>
+          <div class="niv-sec-body js-list-measures" id="niv-panel-measures"><div class="niv-panel-empty" data-i18n="emptyMeasures">Sin medidas</div></div>
         </div>
       </div>
       <nav class="niv-nav" aria-label="Settings">
@@ -140,6 +141,45 @@
           <a class="niv-nav-btn" href="/account/settings" target="_top" data-nav-key="account"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><path class="glyph" d="M12 6.2a3.4 3.4 0 1 1 0 6.8 3.4 3.4 0 0 1 0-6.8zM5 19.2c.8-3.4 3.6-5.2 7-5.2s6.2 1.8 7 5.2z"/></svg></span><span class="mod-nav-label" data-i18n="myAccount">Mi cuenta</span></a>
         </div>
       </nav>
+    </div>
+  </aside>
+
+  <!-- ======================= target=shell =======================
+       The dashboard facing sidebar nav. IA RULE: the Usuarios entry
+       here points at /users, the people facing users OVERVIEW, for
+       permitted viewers. It is not the company administration door:
+       that lives in target=company as /company/users, manager gated. -->
+  <aside class="niv-side niv-mod-side" id="side-shell" aria-label="Main navigation" hidden>
+    <div class="niv-side-head">
+      <div class="niv-company-avatar js-org-avatar">--</div>
+      <div>
+        <div class="niv-company-name js-org-name">Loading...</div>
+        <div class="niv-company-ver js-org-version">Nivelato</div>
+      </div>
+    </div>
+    <div class="niv-mod-scroll">
+      <nav class="niv-nav" aria-label="Main">
+        <div class="niv-nav-group">
+          <a class="niv-nav-btn" href="/dashboard.html?view=home" target="_top" data-nav-key="home"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><path class="glyph" d="M12 5l7 6.3h-1.9V18a1.2 1.2 0 0 1-1.2 1.2h-2.9v-4.7h-2v4.7H8.1A1.2 1.2 0 0 1 6.9 18v-6.7H5z"/></svg></span><span class="mod-nav-label" data-i18n="shellHome">Panel</span></a>
+          <a class="niv-nav-btn" href="/dashboard.html?view=projects" target="_top" data-nav-key="projects"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><path class="glyph" d="M3.5 7.5A1.6 1.6 0 0 1 5.1 5.9h3.6c.44 0 .86.18 1.16.5l1.54 1.65h7.5A1.6 1.6 0 0 1 20.5 9.65v6.9a1.6 1.6 0 0 1-1.6 1.6H5.1a1.6 1.6 0 0 1-1.6-1.6z"/></svg></span><span class="mod-nav-label" data-i18n="shellProjects">Proyectos</span></a>
+          <a class="niv-nav-btn" href="/dashboard.html?view=notifications" target="_top" data-nav-key="notifications"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><path class="glyph" d="M12 4.2a5.3 5.3 0 0 0-5.3 5.3v3L5.2 15.5a.75.75 0 0 0 .67 1.1h12.26a.75.75 0 0 0 .67-1.1l-1.5-3v-3A5.3 5.3 0 0 0 12 4.2zM10.1 18.6a1.9 1.9 0 0 0 3.8 0z"/></svg></span><span class="mod-nav-label" data-i18n="shellNotifications">Notificaciones</span></a>
+          <a class="niv-nav-btn" href="/users" target="_top" data-nav-key="users"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><path class="glyph" d="M9.2 6.1a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4zM3.9 18.7c.7-3.1 2.8-4.7 5.3-4.7s4.6 1.6 5.3 4.7zM16.6 7.6a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zM15.9 14.3c2.1.3 3.7 1.8 4.3 4.4h-4.5c.35-1.6.42-3.05.2-4.4z"/></svg></span><span class="mod-nav-label" data-i18n="users">Usuarios</span></a>
+        </div>
+      </nav>
+      <div class="niv-mod-lists">
+        <div class="niv-panel-sec" data-seckey="projects">
+          <div class="niv-panel-sec-title"><span data-i18n="secProjects">Proyectos</span><button class="niv-sec-chev" type="button" data-chev aria-label="Colapsar sección">▾</button></div>
+          <div class="niv-snav-projects-body open"><div class="js-list-projects"><div class="niv-panel-empty" data-i18n="emptyProjects">Sin proyectos</div></div></div>
+        </div>
+        <div class="niv-panel-sec" data-seckey="customers">
+          <div class="niv-panel-sec-title"><span data-i18n="secCustomers">Clientes</span><button class="niv-sec-chev" type="button" data-chev aria-label="Colapsar sección">▾</button></div>
+          <div class="niv-sec-body js-list-customers"><div class="niv-panel-empty" data-i18n="emptyCustomers">Sin clientes</div></div>
+        </div>
+        <div class="niv-panel-sec" data-seckey="measures">
+          <div class="niv-panel-sec-title"><span data-i18n="secMeasures">Medidas</span><button class="niv-sec-chev" type="button" data-chev aria-label="Colapsar sección">▾</button></div>
+          <div class="niv-sec-body js-list-measures"><div class="niv-panel-empty" data-i18n="emptyMeasures">Sin medidas</div></div>
+        </div>
+      </div>
     </div>
   </aside>
 
@@ -166,7 +206,10 @@
    Demo mode (?demo=1) never imports Firebase: it renders placeholder
    data only, so QA can screenshot the chrome without auth. */
 const params = new URLSearchParams(window.location.search);
-const TARGET = params.get('target') === 'user' ? 'user' : 'company';
+const TARGET = (() => {
+  const t = params.get('target');
+  return t === 'user' || t === 'shell' ? t : 'company';
+})();
 const DEMO = params.get('demo') === '1';
 
 const STRINGS = {
@@ -185,7 +228,9 @@ const STRINGS = {
     measureFallback: 'Medida', projectFallback: 'Proyecto',
     demoCompany: 'Compañía de ejemplo',
     demoProject: 'Proyecto de ejemplo', demoCustomer: 'Cliente de ejemplo', demoMeasure: 'Medida de ejemplo',
-    ariaCompany: 'Navegación de la compañía', ariaSettings: 'Ajustes', ariaAccountSettings: 'Ajustes de la cuenta'
+    shellHome: 'Panel', shellProjects: 'Proyectos', shellNotifications: 'Notificaciones',
+    ariaCompany: 'Navegación de la compañía', ariaSettings: 'Ajustes', ariaAccountSettings: 'Ajustes de la cuenta',
+    ariaShell: 'Navegación principal'
   },
   en: {
     title: 'Nivelato - Settings',
@@ -202,7 +247,9 @@ const STRINGS = {
     measureFallback: 'Measurement', projectFallback: 'Project',
     demoCompany: 'Example Company',
     demoProject: 'Example project', demoCustomer: 'Example customer', demoMeasure: 'Example measurement',
-    ariaCompany: 'Company navigation', ariaSettings: 'Settings', ariaAccountSettings: 'Account settings'
+    shellHome: 'Dashboard', shellProjects: 'Projects', shellNotifications: 'Notifications',
+    ariaCompany: 'Company navigation', ariaSettings: 'Settings', ariaAccountSettings: 'Account settings',
+    ariaShell: 'Main navigation'
   }
 };
 
@@ -226,6 +273,7 @@ const L = (key) => (STRINGS[lang] && STRINGS[lang][key]) || STRINGS.es[key] || k
 if (readKey('niv-compact-sidebar') === '1') document.body.classList.add('niv-mod-compact');
 document.body.setAttribute('data-target', TARGET);
 document.getElementById('side-company').hidden = TARGET !== 'company';
+document.getElementById('side-shell').hidden = TARGET !== 'shell';
 document.getElementById('side-user').hidden = TARGET !== 'user';
 
 function applyLang() {
@@ -243,6 +291,10 @@ function applyLang() {
   if (coNav) coNav.setAttribute('aria-label', L('ariaSettings'));
   const userNav = document.querySelector('#side-user .niv-nav');
   if (userNav) userNav.setAttribute('aria-label', L('ariaAccountSettings'));
+  const sideShell = document.getElementById('side-shell');
+  if (sideShell) sideShell.setAttribute('aria-label', L('ariaShell'));
+  const shellNav = document.querySelector('#side-shell .niv-nav');
+  if (shellNav) shellNav.setAttribute('aria-label', L('ariaShell'));
   document.querySelectorAll('[data-chev]').forEach((chev) => {
     const sec = chev.closest('.niv-panel-sec');
     const collapsed = !!(sec && sec.classList.contains('sec-collapsed'));
@@ -251,8 +303,9 @@ function applyLang() {
   });
   if (typeof lastLists !== 'undefined' && lastLists) renderLists(lastLists);
   if (typeof demoListsOn !== 'undefined' && demoListsOn) renderDemoLists();
-  const nameEl = document.getElementById('org-name');
-  if (nameEl && nameEl.getAttribute('data-state') === 'loading') nameEl.textContent = L('loading');
+  document.querySelectorAll('.js-org-name').forEach((nameEl) => {
+    if (nameEl.getAttribute('data-state') === 'loading') nameEl.textContent = L('loading');
+  });
   const sub = document.getElementById('updates-sub');
   if (sub && sub.getAttribute('data-state') === 'checking') sub.textContent = L('checking');
   if (sub && sub.getAttribute('data-state') === 'pending') sub.textContent = L('newVersion');
@@ -289,6 +342,7 @@ function reportHeight() {
 /* ---------------- active state ---------------- */
 const NAV_KEYS_BY_PATH = {
   '/company/users': 'users',
+  '/users': 'users',
   '/company/settings': 'settings',
   '/company/updates': 'updates',
   '/account/settings': 'account'
@@ -297,16 +351,19 @@ function keyFromValue(v) {
   if (!v) return null;
   const s = String(v);
   if (NAV_KEYS_BY_PATH[s]) return NAV_KEYS_BY_PATH[s];
-  if (['users', 'settings', 'updates', 'billing', 'account'].includes(s)) return s;
+  if (['users', 'settings', 'updates', 'billing', 'account', 'home', 'projects', 'notifications'].includes(s)) return s;
   try {
     const u = new URL(s, window.location.origin);
     return NAV_KEYS_BY_PATH[u.pathname] || null;
   } catch (_) { return null; }
 }
+/* One label, two destinations by target (IA rule): data-nav-key
+   "users" is /company/users in the company aside and /users in the
+   shell aside; the key marks the label, the aside owns the href. */
 function setActiveCompany(key) {
   if (!key) return;
   activeKey = key;
-  document.querySelectorAll('#side-company [data-nav-key]').forEach((el) => {
+  document.querySelectorAll('#side-company [data-nav-key], #side-shell [data-nav-key]').forEach((el) => {
     const on = el.getAttribute('data-nav-key') === key;
     el.classList.toggle('active', on);
     if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
@@ -322,7 +379,15 @@ function setActiveSection(section) {
 }
 function inferActiveFromParent() {
   try {
-    if (window.parent !== window) return keyFromValue(window.parent.location.pathname);
+    if (window.parent !== window) {
+      const purl = new URL(window.parent.location.href);
+      if (purl.pathname === '/dashboard.html' || purl.pathname === '/dashboard') {
+        const view = purl.searchParams.get('view');
+        if (['home', 'projects', 'notifications', 'users'].includes(view)) return view;
+        return 'home';
+      }
+      return keyFromValue(purl.pathname);
+    }
   } catch (_) { /* cross origin host: no inference */ }
   try {
     if (document.referrer) return keyFromValue(new URL(document.referrer).pathname);
@@ -335,8 +400,8 @@ function inferActiveFromParent() {
    permission gate clones them in, so per element binding would miss
    them. */
 let activeKey = null;
-document.getElementById('side-company').addEventListener('click', (ev) => {
-  const a = ev.target.closest('a[data-nav-key]');
+document.addEventListener('click', (ev) => {
+  const a = ev.target.closest('#side-company a[data-nav-key], #side-shell a[data-nav-key]');
   if (!a) return;
   post({ type: 'niv:nav', href: a.getAttribute('href') });
   /* Embedded: the host owns top frame navigation per the contract, so
@@ -358,7 +423,7 @@ window.addEventListener('message', (ev) => {
   const d = ev.data;
   if (!d || d.niv !== 1 || d.type !== 'niv:init') return;
   if (d.lang === 'es' || d.lang === 'en') { lang = d.lang; applyLang(); }
-  if (TARGET === 'company') {
+  if (TARGET === 'company' || TARGET === 'shell') {
     const key = keyFromValue(d.active);
     if (key) setActiveCompany(key);
   } else if (d.section) {
@@ -384,12 +449,12 @@ let orgData = null;
 const dataVersion = () => (orgData && orgData.dataVersion) ? String(orgData.dataVersion) : '0.9';
 function renderCompanyHead() {
   const name = orgData && orgData.name ? orgData.name : L('companyFallback');
-  const avatar = document.getElementById('org-avatar');
-  const nameEl = document.getElementById('org-name');
-  avatar.textContent = initialsOf(name);
-  nameEl.textContent = name;
-  nameEl.removeAttribute('data-state');
-  document.getElementById('org-version').textContent = 'Nivelato v' + dataVersion();
+  document.querySelectorAll('.js-org-avatar').forEach((el) => { el.textContent = initialsOf(name); });
+  document.querySelectorAll('.js-org-name').forEach((el) => {
+    el.textContent = name;
+    el.removeAttribute('data-state');
+  });
+  document.querySelectorAll('.js-org-version').forEach((el) => { el.textContent = 'Nivelato v' + dataVersion(); });
 }
 function setUpdatesState(state) {
   const sub = document.getElementById('updates-sub');
@@ -440,17 +505,17 @@ function renderManagerEntries() {
    projects body semantics: #niv-snav-projects-body is .open exactly
    when its section is not collapsed. */
 function initSections() {
-  if (TARGET !== 'company') return;
+  if (TARGET === 'user') return;
   let saved = {};
   try { saved = JSON.parse(window.localStorage.getItem('niv-panel-sections') || '{}'); } catch (_) {}
-  document.querySelectorAll('#mod-lists .niv-panel-sec').forEach((sec) => {
+  document.querySelectorAll('.niv-mod-lists .niv-panel-sec').forEach((sec) => {
     const key = sec.getAttribute('data-seckey');
     const title = sec.querySelector('.niv-panel-sec-title');
     const chev = sec.querySelector('[data-chev]');
     const sync = () => {
       const collapsed = sec.classList.contains('sec-collapsed');
       if (key === 'projects') {
-        const body = document.getElementById('niv-snav-projects-body');
+        const body = sec.querySelector('.niv-snav-projects-body');
         if (body) body.classList.toggle('open', !collapsed);
       }
       if (chev) {
@@ -485,12 +550,11 @@ function panelItems(names, emptyKey) {
 }
 function renderLists(data) {
   lastLists = data;
-  const p = document.getElementById('niv-panel-projects');
-  const c = document.getElementById('niv-panel-customers');
-  const m = document.getElementById('niv-panel-measures');
-  if (p) p.innerHTML = panelItems(data.projects || [], 'emptyProjects');
-  if (c) c.innerHTML = panelItems(data.customers || [], 'emptyCustomers');
-  if (m) m.innerHTML = panelItems((data.measures || []).map((j) => (j.label || L('measureFallback')) + (j.photo ? ' 📷' : '')), 'emptyMeasures');
+  /* Both the company and the shell aside carry the lists; render into
+     every container so the hidden twin stays consistent. */
+  document.querySelectorAll('.js-list-projects').forEach((el) => { el.innerHTML = panelItems(data.projects || [], 'emptyProjects'); });
+  document.querySelectorAll('.js-list-customers').forEach((el) => { el.innerHTML = panelItems(data.customers || [], 'emptyCustomers'); });
+  document.querySelectorAll('.js-list-measures').forEach((el) => { el.innerHTML = panelItems((data.measures || []).map((j) => (j.label || L('measureFallback')) + (j.photo ? ' 📷' : '')), 'emptyMeasures'); });
   reportHeight();
 }
 function renderDemoLists() {
@@ -527,17 +591,21 @@ async function loadLists(db, fs, orgId) {
 }
 
 function applyDemo() {
-  if (TARGET === 'company') {
+  if (TARGET === 'company' || TARGET === 'shell') {
     /* Placeholder org on the external flow, with a pending update, so a
        single screenshot exercises the head, the Billing entry, the live
        sub label and the dot. The demo persona is a manager, so the
        manager gate renders its doors in demo mode. */
-    renderManagerEntries();
+    if (TARGET === 'company') renderManagerEntries();
     orgData = { name: L('demoCompany'), dataVersion: '1.0', flow: 'external' };
     renderCompanyHead();
-    showBilling();
-    setUpdatesState('pending');
-    setActiveCompany('users');
+    if (TARGET === 'company') {
+      showBilling();
+      setUpdatesState('pending');
+      setActiveCompany(params.get('active') || 'users');
+    } else {
+      setActiveCompany(params.get('active') || 'home');
+    }
     demoListsOn = true;
     renderDemoLists();
   } else {
@@ -551,13 +619,11 @@ function applyDemo() {
    resolution re renders the head with real data. */
 let authResolved = false;
 function showSkeletonHead() {
-  const nameEl = document.getElementById('org-name');
-  if (nameEl) {
-    nameEl.textContent = 'Nivelato';
-    nameEl.removeAttribute('data-state');
-  }
-  const avatar = document.getElementById('org-avatar');
-  if (avatar) avatar.textContent = 'N';
+  document.querySelectorAll('.js-org-name').forEach((el) => {
+    el.textContent = 'Nivelato';
+    el.removeAttribute('data-state');
+  });
+  document.querySelectorAll('.js-org-avatar').forEach((el) => { el.textContent = 'N'; });
   reportHeight();
 }
 
@@ -607,8 +673,11 @@ async function initFirebase() {
         orgData = orgSnap.exists() ? orgSnap.data() : {};
       } catch (_) { orgData = orgData || {}; }
     }
-    if (TARGET === 'company') {
+    if (TARGET === 'company' || TARGET === 'shell') {
       renderCompanyHead();
+      loadLists(db, fsMod, orgId);
+    }
+    if (TARGET === 'company') {
       /* Permission gate (see renderManagerEntries): the user doc is the
          primary source, claims.role the fallback, unknown stays shut. */
       let canManage = false;
@@ -618,7 +687,6 @@ async function initFirebase() {
         if (src) canManage = permsMod.makePermChecker(src)('userManagement') === true;
       } catch (_) { canManage = false; }
       if (canManage) renderManagerEntries();
-      loadLists(db, fsMod, orgId);
       const qgiSignal = claimsFlow === 'qgi'
         || (orgData && orgData.flow === 'qgi')
         || (userData && (userData.isQGC === true || userData.company === 'qgc'))
@@ -644,12 +712,12 @@ async function initFirebase() {
 }
 
 /* ---------------- boot ---------------- */
-document.getElementById('org-name').setAttribute('data-state', 'loading');
+document.querySelectorAll('.js-org-name').forEach((el) => el.setAttribute('data-state', 'loading'));
 /* updates-sub lives inside the manager gate template until the gate
    passes; its checking state is stamped when it is cloned in. */
 applyLang();
 initSections();
-if (TARGET === 'company') {
+if (TARGET === 'company' || TARGET === 'shell') {
   setActiveCompany(keyFromValue(params.get('active')) || inferActiveFromParent());
 } else {
   setActiveSection(params.get('section') || 'cuenta');
@@ -663,7 +731,7 @@ if (card && window.ResizeObserver) new ResizeObserver(reportHeight).observe(card
 
 if (DEMO) {
   applyDemo();
-} else if (TARGET === 'company') {
+} else if (TARGET === 'company' || TARGET === 'shell') {
   initFirebase().catch(() => { showSkeletonHead(); });
   /* If the Firebase imports hang (offline, CDN blocked), the loading
      text must not stick forever: fall back to the neutral skeleton. */

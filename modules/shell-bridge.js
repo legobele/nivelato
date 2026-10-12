@@ -47,7 +47,9 @@
     if (!host) throw new Error('NivShell: mount target element not found');
     opts = opts || {};
     var isSidebar = kind === 'sidebar';
-    var target = isSidebar ? (opts.target === 'user' ? 'user' : 'company') : 'topbar';
+    var target = isSidebar
+      ? (opts.target === 'user' || opts.target === 'shell' ? opts.target : 'company')
+      : 'topbar';
 
     var qs = new URLSearchParams();
     if (isSidebar) {
@@ -73,11 +75,12 @@
     iframe.style.width = '100%';
     iframe.style.background = 'transparent';
 
-    /* Height modes. Sidebar company default: fixed (the iframe fills
-       the host box and the module scrolls internally). Sidebar user and
-       topbar default: auto (the iframe follows niv:resize). opts.height
-       (px number or CSS string) forces fixed mode at that height. */
-    var heightMode = opts.heightMode || (opts.height != null ? 'fixed' : (isSidebar && target === 'company' ? 'fixed' : 'auto'));
+    /* Height modes. Sidebar company and shell default: fixed (the
+       iframe fills the host box and the module scrolls internally).
+       Sidebar user and topbar default: auto (the iframe follows
+       niv:resize). opts.height (px number or CSS string) forces fixed
+       mode at that height. */
+    var heightMode = opts.heightMode || (opts.height != null ? 'fixed' : (isSidebar && target !== 'user' ? 'fixed' : 'auto'));
     function applyFixedHeight() {
       if (opts.height != null) {
         iframe.style.height = typeof opts.height === 'number' ? opts.height + 'px' : String(opts.height);
