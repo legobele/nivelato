@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0b0b0e" />
   <title>Nivelato - Iniciar sesión</title>
+  <link rel="icon" href="icon-192.png" />
   <link rel="manifest" href="manifest.json" />
+  <script src="./niv-settings.js"></script>
+  <link rel="stylesheet" href="niv-dark.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
     <style>
@@ -965,6 +968,15 @@
     // (which cannot read this origin's localStorage, e.g. geo-blocked)
     // can render in the same language.
     function writeLangCookie(l) {
+      // Persistence now goes through NivSettings (niv-settings.js, loaded
+      // in <head>): setLang writes the same nivelato-login-lang cookie
+      // with the same attributes (Domain=.nivelatolabs.com, Path=/,
+      // SameSite=Lax, Max-Age=31536000; the locked es/en values encode to
+      // themselves, so raw cookie readers like geo-blocked keep working
+      // byte for byte) and keeps the localStorage mirror this page reads.
+      try {
+        if (window.NivSettings && window.NivSettings.setLang && window.NivSettings.setLang(l)) return;
+      } catch (_) { /* fall through to the legacy write */ }
       try { document.cookie = STORE_KEY + '=' + l + '; Domain=.nivelatolabs.com; Path=/; SameSite=Lax; Max-Age=31536000'; } catch (_) { /* ignore */ }
     }
     function detectLang() {
