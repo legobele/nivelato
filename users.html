@@ -39,7 +39,7 @@
     overflow: hidden;
   }
   /* Tarjetas flotantes, igual que el dashboard: nada toca los bordes. */
-  .shell { display: flex; flex: 1; min-height: 0; padding: 20px; gap: 16px; box-sizing: border-box; }
+  .shell { display: flex; flex: 1; min-height: 0; padding: 30px; gap: 30px; box-sizing: border-box; }
 
   /* ---------- sidebar (shared component with updates.html) ---------- */
   .sidebar {
@@ -482,7 +482,7 @@
   }
   @media (max-width: 900px) {
     body { height: auto; overflow: visible; }
-    .shell { flex-direction: column; flex: none; padding: 12px; }
+    .shell { flex-direction: column; flex: none; padding: 12px; gap: 16px; }
     .sidebar {
       width: 100%;
       padding: 16px;

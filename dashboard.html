@@ -577,7 +577,12 @@ body.has-sidebar .niv-shell > main {
 
 /* ---- (3) sidebar drag-resize handle ---- */
 .niv-resize-handle {
-  flex: none; width: 8px; margin-left: -4px; margin-right: -4px;
+  /* El asa se centra en el hueco entre tarjetas: sus margenes reparten el
+     token de espaciado (--niv-inset) a ambos lados, asi la distancia
+     panel -> contenido es el mismo valor que el margen exterior. */
+  flex: none; width: 8px;
+  margin-left: calc((var(--niv-inset) - 8px) / 2);
+  margin-right: calc((var(--niv-inset) - 8px) / 2);
   cursor: col-resize; z-index: 510; position: relative; background: transparent;
   touch-action: none;
 }
@@ -654,7 +659,7 @@ body.niv-resizing { cursor: col-resize; user-select: none; }
    pantalla: es una tarjeta flotante con margenes y esquinas redondeadas, y el
    contenido principal flota igual. Nada toca los bordes del viewport salvo la
    barra superior, que se queda a todo lo ancho segun su anotacion original. */
-:root { --niv-inset: 20px; }
+:root { --niv-inset: 30px; }
 body.has-sidebar { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 body.has-sidebar .niv-topbar { flex: none; }
 body.has-sidebar .niv-shell {
@@ -673,6 +678,12 @@ body.has-sidebar .niv-shell > main {
   border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
   border-radius: 18px;
   box-shadow: 0 10px 34px rgba(0,0,0,0.38);
+}
+/* Con la barra colapsada el asa desaparece (display:none) y con ella el
+   hueco entre tarjetas: este margen lo conserva. Solo escritorio; en movil
+   la barra es un cajon superpuesto y el contenido va a todo lo ancho. */
+@media (min-width: 901px) {
+  body.has-sidebar.sidebar-collapsed .niv-shell > main { margin-left: var(--niv-inset); }
 }
 @media print {
   body.has-sidebar { height: auto; overflow: visible; display: block; }
@@ -3823,6 +3834,11 @@ let currentUser;
         // Ultimo ancho expandido valido de ESTE arrastre: es el que se
         // recuerda si hay snap (nunca el umbral ni el ancho del riel).
         let lastGoodW = Math.min(520, Math.max(220, panel.offsetWidth || 300));
+        // El panel flota con margen (--niv-inset): clientX se convierte a
+        // ancho del panel restando su borde izquierdo, que no se mueve
+        // durante el arrastre. Asi el snap y los limites dependen solo del
+        // ancho, no del margen exterior que tenga la carcasa.
+        const startLeft = panel.getBoundingClientRect().left;
         const endDrag = () => {
           handle.classList.remove('dragging');
           document.body.classList.remove('niv-resizing');
@@ -3831,7 +3847,8 @@ let currentUser;
         };
         const move = (ev) => {
           if (snapped) return; // el arrastre ya termino: cero parpadeo en el borde
-          if (ev.clientX < SNAP_W) {
+          const rawW = ev.clientX - startLeft;
+          if (rawW < SNAP_W) {
             snapped = true;
             try { localStorage.setItem(WKEY, String(lastGoodW)); } catch (_) {}
             autoCollapsed = false; // gesto manual: applyAuto no lo resucita al ensanchar
@@ -3839,7 +3856,7 @@ let currentUser;
             endDrag(); // se suelta aqui: el resto del gesto ya no se sigue
             return;
           }
-          const w = Math.min(520, Math.max(220, ev.clientX));
+          const w = Math.min(520, Math.max(220, rawW));
           lastGoodW = w;
           panel.style.width = w + 'px';
         };
