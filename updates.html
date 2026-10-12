@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
 <base href="/" />
 <meta charset="UTF-8" />
@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0d0d0f" />
 <link rel="manifest" href="manifest.json" />
-<title>Nivelato - Updates</title>
+<title>Nivelato - Actualizaciones</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   :root {
@@ -39,8 +39,12 @@
     gap: var(--niv-inset, 30px);
     box-sizing: border-box;
   }
-  /* ---------- sidebar: shared .niv-side component (niv-dark.css) ---------- */
-  .shell .niv-side { width: 300px; flex: none; }
+  /* ---------- sidebar: company module hosted in #chrome-sidebar ---------- */
+  #chrome-sidebar { width: 300px; flex: none; height: calc(100vh - (2 * var(--niv-inset, 30px))); position: sticky; top: var(--niv-inset, 30px); }
+  #chrome-sidebar .niv-shell-frame { height: 100%; }
+  /* ---------- top bar: desktop only (shell rule) ---------- */
+  #chrome-topbar { display: block; }
+  .updates-wrap { width: 100%; max-width: 720px; }
   /* ---------- main ---------- */
   .main {
     flex: 1;
@@ -51,7 +55,6 @@
   }
   .update-card {
     width: 100%;
-    max-width: 720px;
     background: var(--card);
     border: 1.5px solid var(--line);
     border-radius: var(--radius-lg);
@@ -213,9 +216,13 @@
     font-size: 14px;
     text-align: center;
   }
-  @media (max-width: 768px) {
-    .niv-side { display: none; }
-    .shell { padding: 12px; }
+  @media (max-width: 900px) {
+    /* Shell rule: the top bar does not exist on mobile. The bridge mount
+       is suppressed in JS and this hides the host box as a second layer;
+       mobile navigation is the sidebar module, stacked above the card. */
+    #chrome-topbar { display: none !important; }
+    .shell { flex-direction: column; padding: 12px; }
+    #chrome-sidebar { width: 100%; height: 480px; position: static; }
     .main { padding: 20px 16px; }
     .update-card { padding: 24px 20px; border-radius: var(--radius-lg); }
     .card-top { gap: 14px; margin-bottom: 18px; }
@@ -226,36 +233,19 @@
 <link rel="stylesheet" href="./qgc-theme.css" />
 </head>
 <body>
+<div id="chrome-topbar"></div>
 <div class="shell">
-  <aside class="niv-side" aria-label="Company navigation">
-    <div class="niv-side-head">
-      <div class="niv-company-avatar" id="org-avatar">--</div>
-      <div>
-        <div class="niv-company-name" id="org-name">Loading...</div>
-        <div class="niv-company-ver" id="org-version">Nivelato</div>
-      </div>
-    </div>
-    <nav class="niv-nav">
-      <div class="niv-nav-group">
-        <div class="niv-nav-group-title">Company</div>
-        <a class="niv-nav-btn" href="/company/users">Users</a>
-        <a class="niv-nav-btn" href="/company/settings">Company settings</a>
-        <button class="niv-nav-btn active" aria-current="page">Updates<span class="nav-sub" id="updates-sub">Checking...</span><span class="dot" id="updates-dot"></span></button>
-        <button class="niv-nav-btn soon" disabled>Billing<span class="soon-badge">soon</span></button>
-      </div>
-      <div class="niv-nav-group">
-        <div class="niv-nav-group-title">Account</div>
-        <a class="niv-nav-btn" href="/account/settings">My account</a>
-      </div>
-    </nav>
-  </aside>
+  <div id="chrome-sidebar" aria-label="Navegación de la compañía"></div>
   <main class="main">
-    <div class="update-card" id="update-card">
-      <div class="state-loading" id="loading-state">Loading update status...</div>
+    <div class="updates-wrap">
+      <a class="btn-back niv-btn-back" id="btn-back" href="/dashboard.html?view=home">&#8592; Volver</a>
+      <div class="update-card" id="update-card">
+        <div class="state-loading" id="loading-state">Cargando el estado de actualización...</div>
+      </div>
+      <div class="niv-status-line" id="update-status" role="status" aria-live="polite"></div>
     </div>
   </main>
 </div>
-
 <script type="module">
 import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
@@ -276,6 +266,120 @@ const escapeHtml = (s) => String(s ?? '')
   .replace(/'/g, '&#39;');
 
 const card = document.getElementById('update-card');
+
+/* User level localization (fix list item 5). Every page string ships in a
+   complete ES/EN pair here and renders in currentLang, which resolves at
+   USER level in the auth flow: NivUser.resolveLang(uid) (users/{uid}.language
+   wins; the NivSettings chain is its fallback). Company language is never
+   consulted for an existing user; it only seeds new users at signup.
+   Before auth resolves, the NivSettings chain language is the interim.
+   Language changes re-render without reload: NivSettings.setLang fires
+   the niv:lang document event (the established sibling pattern), and the
+   shell handles are re-pointed with setLang. */
+const STRINGS = {
+  es: {
+    docTitle: 'Nivelato - Actualizaciones',
+    back: 'Volver',
+    sidebarAria: 'Navegación de la compañía',
+    loading: 'Cargando el estado de actualización...',
+    ownerOnly: 'Solo los dueños de la organización pueden aplicar actualizaciones. Contacta a un dueño para actualizar.',
+    defaultNotes: 'Esta actualización incluye funciones nuevas y mejoras.',
+    securityText: 'Para información sobre la seguridad de las actualizaciones, consulta',
+    showMore: 'Mostrar más',
+    showLess: 'Mostrar menos',
+    updateNow: 'Actualizar ahora',
+    updateTonight: 'Actualizar esta noche',
+    tonightCaption: 'Al seleccionar "Actualizar esta noche", la actualización se aplicará cuando todos los usuarios hayan salido de la app.',
+    confirmNow: (v) => '¿Aplicar la actualización a la v' + v + ' ahora? El servidor se actualizará y puede tardar unos minutos.',
+    applyingPct: (pct) => 'Aplicando actualización (' + pct + '%)',
+    starting: 'Comenzando...',
+    applyingFallback: 'Aplicando actualización',
+    finishing: 'Terminando...',
+    cancelUpdate: 'Cancelar actualización',
+    busyNow: 'Aplicando actualización...',
+    busyTonight: 'Programando actualización...',
+    busyCancel: 'Cancelando actualización...',
+    unknownError: 'error desconocido',
+    updateFailed: (msg) => 'La actualización falló: ' + msg + '. Inténtalo de nuevo.',
+    scheduleFailed: (msg) => 'No se pudo programar la actualización: ' + msg,
+    cancelFailed: (msg) => 'No se pudo cancelar la actualización: ' + msg,
+    scheduledTitle: (v) => 'Actualización v' + v + ' programada',
+    checkingOnline: 'Comprobando quién sigue en línea...',
+    tonightNone: 'Se actualizará esta noche. No hay usuarios en línea, así que la actualización empezará pronto.',
+    tonightSome: (n) => 'Se actualizará esta noche. ' + n + (n === 1 ? ' usuario sigue' : ' usuarios siguen') + ' en línea, así que la actualización no empezará hasta que esos usuarios salgan:',
+    tonightLoadFail: 'Se actualizará esta noche. No se pudo cargar la lista de usuarios en línea.',
+    unknownUser: 'Usuario desconocido',
+    you: 'tú',
+    upToDateTitle: 'Estás en la versión más reciente.',
+    missingProfile: 'No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.',
+    orgLoadFailed: (msg) => 'No se pudieron cargar los datos de la compañía: ' + msg
+  },
+  en: {
+    docTitle: 'Nivelato - Updates',
+    back: 'Back',
+    sidebarAria: 'Company navigation',
+    loading: 'Loading update status...',
+    ownerOnly: 'Only org owners can apply updates. Contact an owner to update.',
+    defaultNotes: 'This update includes new features and improvements.',
+    securityText: 'For information about the security of updates see',
+    showMore: 'Show more',
+    showLess: 'Show less',
+    updateNow: 'Update Now',
+    updateTonight: 'Update Tonight',
+    tonightCaption: 'Selecting "Update Tonight" will update once all users have exited the app.',
+    confirmNow: (v) => 'Apply update to v' + v + ' now? The backend will be updated and this may take a few minutes.',
+    applyingPct: (pct) => 'Applying update (' + pct + '%)',
+    starting: 'Starting...',
+    applyingFallback: 'Applying update',
+    finishing: 'Finishing up...',
+    cancelUpdate: 'Cancel update',
+    busyNow: 'Applying update...',
+    busyTonight: 'Scheduling update...',
+    busyCancel: 'Cancelling update...',
+    unknownError: 'unknown error',
+    updateFailed: (msg) => 'The update failed: ' + msg + '. Please try again.',
+    scheduleFailed: (msg) => 'Could not schedule the update: ' + msg,
+    cancelFailed: (msg) => 'Could not cancel the update: ' + msg,
+    scheduledTitle: (v) => 'Update v' + v + ' scheduled',
+    checkingOnline: 'Checking who is still online...',
+    tonightNone: 'Updating tonight. No users are online, so the update will start soon.',
+    tonightSome: (n) => 'Updating tonight. ' + n + (n === 1 ? ' user is' : ' users are') + ' still online, so the update will not start until those users leave:',
+    tonightLoadFail: 'Updating tonight. Could not load the list of online users.',
+    unknownUser: 'Unknown user',
+    you: 'you',
+    upToDateTitle: "You're on the latest version.",
+    missingProfile: 'We could not find your user profile. Please sign in again to repair it.',
+    orgLoadFailed: (msg) => 'Could not load company data: ' + msg
+  }
+};
+let currentLang = 'es';
+try { if (window.NivSettings) currentLang = window.NivSettings.getLang(); } catch (_) { /* product default es */ }
+const t = (key, ...args) => {
+  const table = STRINGS[currentLang] || STRINGS.es;
+  const v = (key in table) ? table[key] : STRINGS.es[key];
+  return typeof v === 'function' ? v(...args) : v;
+};
+let dataReady = false;
+function applyLang(lang) {
+  if (lang === 'es' || lang === 'en') currentLang = lang;
+  try { document.documentElement.setAttribute('lang', currentLang); } catch (_) { /* ignore */ }
+  document.title = t('docTitle');
+  const back = document.getElementById('btn-back');
+  if (back) back.textContent = '\u2190 ' + t('back');
+  const side = document.getElementById('chrome-sidebar');
+  if (side) side.setAttribute('aria-label', t('sidebarAria'));
+  const loading = document.getElementById('loading-state');
+  if (loading) loading.textContent = t('loading');
+  try { if (window.__nivSidebar) window.__nivSidebar.setLang(currentLang); } catch (_) { /* ignore */ }
+  try { if (window.__nivTopbar) window.__nivTopbar.setLang(currentLang); } catch (_) { /* ignore */ }
+}
+document.addEventListener('niv:lang', (e) => {
+  const l = e && e.detail && e.detail.lang;
+  if (l !== 'es' && l !== 'en') return;
+  applyLang(l);
+  if (dataReady) render();
+});
+applyLang(currentLang);
 const SECURITY_URL = 'faq.nivelatolabs.com/company/updates#about-security';
 
 let currentUser = null;
@@ -285,18 +389,29 @@ let orgData = null;      // orgs/{orgId}
 let latestDoc = null;    // app_updates/latest
 let updateDocData = null; // app_updates/{latest version}
 let applying = false;
+/* Button mash guards (fix list item 6). actionInFlight covers the whole
+   Update Now run (confirm, callable, progress animation); writeInFlight
+   covers the Update Tonight / Cancel Firestore writes. While either is
+   set, every action handler returns immediately and the visible buttons
+   are disabled, so rapid presses can never start a second run, queue a
+   duplicate write, or interleave two renders of the card. */
+let actionInFlight = false;
+let writeInFlight = false;
+
+function setStatus(kind, text) {
+  const el = document.getElementById('update-status');
+  if (!el) return;
+  if (!text) { el.className = 'niv-status-line'; el.textContent = ''; return; }
+  el.className = 'niv-status-line ' + kind;
+  el.textContent = text;
+}
+function setCardButtonsDisabled(disabled) {
+  card.querySelectorAll('button').forEach((b) => { b.disabled = !!disabled; });
+}
 let unsubOrg = null;
 let onlineRefreshTimer = null;
 
 const isOwner = () => currentUserData && currentUserData.role === 'owner';
-
-function initialsOf(name) {
-  const words = String(name || '').trim().split(/\s+/).filter(Boolean);
-  if (!words.length) return 'QG';
-  const first = words[0][0] || '';
-  const second = words.length > 1 ? (words[1][0] || '') : (words[0][1] || '');
-  return (first + second).toUpperCase();
-}
 
 function dataVersion() {
   return (orgData && orgData.dataVersion) ? String(orgData.dataVersion) : '0.9';
@@ -311,18 +426,13 @@ function pendingScheduled() {
   return !!(orgData && orgData.pendingUpdate);
 }
 
-function renderSidebar() {
-  const name = orgData && orgData.name ? orgData.name : 'Company';
-  document.getElementById('org-avatar').textContent = initialsOf(name);
-  document.getElementById('org-name').textContent = name;
-  document.getElementById('org-version').textContent = 'Nivelato v' + dataVersion();
-  const pending = updateAvailable() || pendingScheduled();
-  document.getElementById('updates-sub').textContent = pending ? 'New version available' : 'Up to date';
-  document.getElementById('updates-dot').classList.toggle('on', pending);
-}
+/* The sidebar is the company module (modules/sidebar.html via
+   NivShell.mountSidebar): it renders the org head and owns the Updates
+   entry's status sub label and dot (ids updates-sub / updates-dot live
+   inside the module iframe, with the same app_updates/latest vs org
+   dataVersion comparison). This page no longer forks that markup. */
 
 function render() {
-  renderSidebar();
   if (applying) return; // (b) owns the card while applying
   if (pendingScheduled()) return renderScheduled();
   if (updateAvailable()) return renderAvailable();
@@ -330,7 +440,7 @@ function render() {
 }
 
 function ownerButtons(html) {
-  return isOwner() ? html : '<p class="note-owner">Only org owners can apply updates. Contact an owner to update.</p>';
+  return isOwner() ? html : '<p class="note-owner">' + escapeHtml(t('ownerOnly')) + '</p>';
 }
 
 // User-visible short description for an update descriptor: the reserved
@@ -349,7 +459,7 @@ function renderAvailable() {
   const u = updateDocData || {};
   const version = escapeHtml(u.version || (latestDoc && latestDoc.version) || '');
   const title = escapeHtml(u.title || ('Nivelato v' + version));
-  const notes = escapeHtml(visibleDescription(u) || 'This update includes new features and improvements.');
+  const notes = escapeHtml(visibleDescription(u) || t('defaultNotes'));
   const extended = escapeHtml(String(u.extendedDescription || '').trim());
   card.innerHTML = `
     <div class="card-top">
@@ -360,13 +470,13 @@ function renderAvailable() {
       <p>${notes}</p>
       ${extended ? `
       <div class="notes-more" id="notes-more" hidden><p>${extended}</p></div>
-      <p><button type="button" class="notes-more-btn" id="btn-show-more">Show more</button></p>` : ''}
-      <p>For information about the security of updates see <a href="https://${SECURITY_URL}" target="_blank" rel="noopener">${SECURITY_URL}</a>.</p>
+      <p><button type="button" class="notes-more-btn" id="btn-show-more">${escapeHtml(t('showMore'))}</button></p>` : ''}
+      <p>${escapeHtml(t('securityText'))} <a href="https://${SECURITY_URL}" target="_blank" rel="noopener">${SECURITY_URL}</a>.</p>
     </div>
     ${ownerButtons(`
-      <button class="btn btn-primary" id="btn-update-now">Update Now</button>
-      <button class="btn btn-outline" id="btn-update-tonight">Update Tonight</button>
-      <p class="caption">Selecting "Update Tonight" will update once all users have exited the app.</p>
+      <button class="btn btn-primary" id="btn-update-now">${escapeHtml(t('updateNow'))}</button>
+      <button class="btn btn-outline" id="btn-update-tonight">${escapeHtml(t('updateTonight'))}</button>
+      <p class="caption">${escapeHtml(t('tonightCaption'))}</p>
     `)}
   `;
   const btnNow = document.getElementById('btn-update-now');
@@ -379,7 +489,7 @@ function renderAvailable() {
     btnMore.addEventListener('click', () => {
       const opening = notesMore.hidden;
       notesMore.hidden = !opening;
-      btnMore.textContent = opening ? 'Show less' : 'Show more';
+      btnMore.textContent = opening ? t('showLess') : t('showMore');
     });
   }
 }
@@ -395,46 +505,50 @@ function renderApplying(stepLabel, pct) {
       <div class="mini-logo">N</div>
       <h1 class="card-title">${title}</h1>
     </div>
-    <div class="progress-label">Applying update (${pct}%)</div>
-    <div class="progress-step">${escapeHtml(stepLabel || 'Starting...')}</div>
+    <div class="progress-label">${escapeHtml(t('applyingPct', pct))}</div>
+    <div class="progress-step">${escapeHtml(stepLabel || t('starting'))}</div>
     <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
     ${notes ? `<div class="notes-box"><p>${notes}</p></div>` : ''}
-    ${isOwner() ? '<button class="btn btn-outline" id="btn-cancel">Cancel update</button>' : ''}
+    ${isOwner() ? '<button class="btn btn-outline" id="btn-cancel">' + escapeHtml(t('cancelUpdate')) + '</button>' : ''}
   `;
   const btn = document.getElementById('btn-cancel');
   if (btn) btn.addEventListener('click', onCancelUpdate);
 }
 
 async function onUpdateNow() {
+  if (actionInFlight || applying) return; // re-entry guard: one run only
   if (!isOwner()) return;
   const version = (latestDoc && latestDoc.version) || '';
-  if (!confirm('Apply update to v' + version + ' now? The backend will be updated and this may take a few minutes.')) return;
+  if (!confirm(t('confirmNow', version))) return;
+  actionInFlight = true;
   applying = true;
-  renderApplying('Starting...', 0);
-  const btnCancel = document.getElementById('btn-cancel');
-  if (btnCancel) btnCancel.addEventListener('click', onCancelUpdate);
+  setStatus('warn', t('busyNow'));
+  renderApplying(t('starting'), 0);
   try {
     const functions = getFunctions(undefined, 'us-central1');
     const applyCompanyUpdate = httpsCallable(functions, 'applyCompanyUpdate');
     const result = await applyCompanyUpdate({});
     const steps = (result && result.data && Array.isArray(result.data.steps))
       ? result.data.steps.map(String)
-      : ['Applying update'];
+      : [t('applyingFallback')];
     for (let i = 0; i < steps.length; i++) {
-      if (!applying) return; // cancelled
+      if (!applying) break; // cancelled locally; the callable may still finish server side
       const pct = Math.round(((i + 1) / steps.length) * 100);
       renderApplying(steps[i], pct);
-      const b = document.getElementById('btn-cancel');
-      if (b) b.addEventListener('click', onCancelUpdate);
       await new Promise((r) => setTimeout(r, 650));
     }
-    renderApplying('Finishing up...', 100);
-    await new Promise((r) => setTimeout(r, 600));
+    if (applying) {
+      renderApplying(t('finishing'), 100);
+      await new Promise((r) => setTimeout(r, 600));
+    }
   } catch (e) {
-    card.innerHTML = `<div class="state-error">The update failed: ${escapeHtml(e.message || 'unknown error')}. Please try again.</div>`;
-    await new Promise((r) => setTimeout(r, 2500));
+    // Non fatal: the failure lands in the status line under the card and
+    // the page re-renders its normal state below. Never a dead card.
+    setStatus('err', t('updateFailed', e.message || t('unknownError')));
+  } finally {
+    applying = false;
+    actionInFlight = false;
   }
-  applying = false;
   // refresh org data (dataVersion should now equal latest)
   try {
     const snap = await getDoc(doc(db, 'orgs', orgId));
@@ -456,13 +570,13 @@ function renderScheduled() {
       <div class="mini-logo">N</div>
       <h1 class="card-title">${title}</h1>
     </div>
-    <div class="progress-label">Update v${scheduledVer} scheduled</div>
+    <div class="progress-label">${escapeHtml(t('scheduledTitle', scheduledVer))}</div>
     ${notes ? `<div class="notes-box"><p>${notes}</p></div>` : ''}
     <div class="tonight-text">
-      <span id="tonight-line">Checking who is still online...</span>
+      <span id="tonight-line">${escapeHtml(t('checkingOnline'))}</span>
       <ul class="online-list" id="online-list"></ul>
     </div>
-    ${ownerButtons('<button class="btn btn-outline" id="btn-cancel">Cancel update</button>')}
+    ${ownerButtons('<button class="btn btn-outline" id="btn-cancel">' + escapeHtml(t('cancelUpdate')) + '</button>')}
   `;
   const btn = document.getElementById('btn-cancel');
   if (btn) btn.addEventListener('click', onCancelUpdate);
@@ -479,20 +593,19 @@ async function refreshOnlineList() {
     const users = await getOnlineUsers(orgId);
     const n = users.length;
     if (n === 0) {
-      line.textContent = 'Updating tonight. No users are online, so the update will start soon.';
+      line.textContent = t('tonightNone');
       list.innerHTML = '';
       return;
     }
-    line.textContent = 'Updating tonight. ' + n + (n === 1 ? ' user is' : ' users are') +
-      ' still online, so the update will not start until those users leave:';
+    line.textContent = t('tonightSome', n);
     list.innerHTML = users.map((u) => {
-      const name = escapeHtml(u.name || 'Unknown user');
+      const name = escapeHtml(u.name || t('unknownUser'));
       const role = escapeHtml(u.role || '');
-      const you = u.isSelf ? ' <span class="you">(you)</span>' : '';
+      const you = u.isSelf ? ' <span class="you">(' + escapeHtml(t('you')) + ')</span>' : '';
       return `<li>- ${name}${role ? ' (' + role + ')' : ''}${you}</li>`;
     }).join('');
   } catch (e) {
-    line.textContent = 'Updating tonight. Could not load the list of online users.';
+    line.textContent = t('tonightLoadFail');
   }
 }
 
@@ -501,36 +614,63 @@ function renderUpToDate() {
   card.innerHTML = `
     <div class="uptodate">
       <div class="check">&#10003;</div>
-      <h2>You&apos;re on the latest version.</h2>
+      <h2>${escapeHtml(t('upToDateTitle'))}</h2>
       <p>Nivelato v${escapeHtml(dataVersion())}</p>
     </div>
   `;
 }
 
 async function onUpdateTonight() {
+  if (actionInFlight || applying || writeInFlight) return; // re-entry guard
   if (!isOwner()) return;
   const version = String((latestDoc && latestDoc.version) || '');
+  writeInFlight = true;
+  setCardButtonsDisabled(true);
+  setStatus('warn', t('busyTonight'));
   try {
     await updateDoc(doc(db, 'orgs', orgId), {
       pendingUpdate: { version, scheduledBy: currentUser.uid, scheduledAt: serverTimestamp() }
     });
+    setStatus('', '');
   } catch (e) {
-    alert('Could not schedule the update: ' + (e.message || 'unknown error'));
+    // Non fatal: status line, and render() in finally restores live buttons.
+    setStatus('err', t('scheduleFailed', e.message || t('unknownError')));
+  } finally {
+    writeInFlight = false;
+    render(); // scheduled state if the write landed (snapshot echo also renders)
   }
 }
 
 async function onCancelUpdate() {
   if (!isOwner()) return;
-  try {
-    await updateDoc(doc(db, 'orgs', orgId), { pendingUpdate: deleteField() });
-  } catch (e) {
-    alert('Could not cancel the update: ' + (e.message || 'unknown error'));
-  }
   if (applying) {
-    // The callable may still be running server-side; stop animating and go back to (a).
+    // The callable may still be running server side; stop animating and
+    // go back to the normal states. The in-flight Update Now run sees
+    // applying === false and winds down without touching the card again.
     applying = false;
   }
+  if (writeInFlight) return; // re-entry guard for the delete write itself
+  writeInFlight = true;
+  setCardButtonsDisabled(true);
+  setStatus('warn', t('busyCancel'));
+  try {
+    await updateDoc(doc(db, 'orgs', orgId), { pendingUpdate: deleteField() });
+    setStatus('', '');
+  } catch (e) {
+    setStatus('err', t('cancelFailed', e.message || t('unknownError')));
+  } finally {
+    writeInFlight = false;
+    if (!actionInFlight) render();
+  }
 }
+
+// Programmatic hooks for the headless mash test: the same handlers the
+// buttons call, plus the busy flags, so a test can fire them repeatedly
+// and assert a single execution.
+window.__nivUpdates = {
+  onUpdateNow, onUpdateTonight, onCancelUpdate,
+  isBusy: () => actionInFlight || writeInFlight || applying
+};
 
 // ---- auth + data ----
 onAuthStateChanged(auth, async (user) => {
@@ -543,10 +683,19 @@ onAuthStateChanged(auth, async (user) => {
   } catch (_) { /* fails soft */ }
   currentUser = user;
   if (window.applyCompanyThemeFromAuth) { try { window.applyCompanyThemeFromAuth(auth); } catch (_) {} }
+  // User level language (item 5): resolveLang(uid) reads users/{uid}.language
+  // first, then the NivSettings chain; applyResolvedLang stamps the device
+  // surfaces. Company language is never consulted for an existing user.
+  try {
+    const nivUser = await import('./niv-user.js');
+    const lang = await nivUser.resolveLang(user.uid);
+    nivUser.applyResolvedLang(lang);
+    applyLang(lang);
+  } catch (_) { /* keep the interim NivSettings chain language */ }
 
   const userSnap = await getDoc(doc(db, 'users', user.uid));
   if (!userSnap.exists()) {
-    alert('We could not find your user profile. Please sign in again to repair it.');
+    alert(t('missingProfile'));
     window.location.href = 'login.html?missingProfile=1';
     return;
   }
@@ -574,16 +723,69 @@ onAuthStateChanged(auth, async (user) => {
   if (unsubOrg) unsubOrg();
   unsubOrg = onSnapshot(doc(db, 'orgs', orgId),
     (snap) => {
+      dataReady = true;
       orgData = snap.exists() ? snap.data() : {};
       if (!applying) render();
-      else renderSidebar();
     },
     (e) => {
-      card.innerHTML = `<div class="state-error">Could not load company data: ${escapeHtml(e.message || 'unknown error')}</div>`;
+      card.innerHTML = `<div class="state-error">${escapeHtml(t('orgLoadFailed', e.message || t('unknownError')))}</div>`;
     });
 });
 </script>
+<script src="./niv-settings.js"></script>
+<script src="./modules/shell-bridge.js"></script>
 <script src="./nav-referrer.js"></script>
+<script>
+  /* Shell mounts (module platform, see modules/README.md).
+     Sidebar: the company module replaces this page's old forked sidebar
+     markup; active entry is Updates. Top bar: SHELL RULE, desktop only:
+     at <=900px the bridge mount is suppressed here and the host box is
+     hidden in CSS, and the topbar module self-suppresses too; mobile
+     navigation is the sidebar. Language starts from the NivSettings
+     chain; the page module re-points both handles when the user level
+     language resolves and on later niv:lang changes. */
+  (function () {
+    var lang = 'es';
+    try { if (window.NivSettings) lang = window.NivSettings.getLang(); } catch (e) { /* default es */ }
+    var onNav = function (href) {
+      /* Referrer capture for JS driven navigation into Account settings,
+         the nivSaveSettingsReferrer hook nav-referrer.js exposes. */
+      try {
+        var path = new URL(href, window.location.origin).pathname;
+        if (path === '/account/settings' && window.nivSaveSettingsReferrer) window.nivSaveSettingsReferrer();
+      } catch (e) { /* ignore */ }
+    };
+    try {
+      window.__nivSidebar = window.NivShell.mountSidebar('#chrome-sidebar', {
+        target: 'company', active: 'updates', lang: lang, onNav: onNav
+      });
+    } catch (e) { /* shell bridge unavailable: the card still works */ }
+    try {
+      if (window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
+        window.__nivTopbar = window.NivShell.mountTopbar('#chrome-topbar', { active: 'home', lang: lang });
+      }
+    } catch (e) { /* ignore */ }
+
+    /* Referrer-aware Back, same semantics nav-referrer.js applies on the
+       account settings page: an allowlisted same origin referrer wins,
+       the /dashboard.html?view=home fallback in the markup otherwise.
+       (nav-referrer.js itself only consumes its saved referrer on
+       /account/settings, so this page mirrors its allowlist against
+       document.referrer without touching the one-shot saved key, which
+       belongs to the account settings visit.) */
+    var ALLOWED = ['/', '/dashboard.html', '/company/users', '/company/settings', '/company/updates', '/photo.html'];
+    try {
+      if (document.referrer) {
+        var u = new URL(document.referrer, window.location.origin);
+        if (u.origin === window.location.origin && ALLOWED.indexOf(u.pathname) !== -1 &&
+            u.pathname + u.search !== window.location.pathname + window.location.search) {
+          var btn = document.getElementById('btn-back');
+          if (btn) btn.setAttribute('href', u.pathname + u.search);
+        }
+      }
+    } catch (e) { /* keep the fallback href */ }
+  })();
+</script>
 <script src="./press-yaoi.js"></script>
 </body>
 </html>
