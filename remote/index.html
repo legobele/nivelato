@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nivelato · Soporte remoto</title>
+<meta name="description" content="Acceso de soporte de Nivelato Labs con código de un solo uso: con tiempo límite, revocable y con registro visible para tu empresa.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --niv-bg:#0e0e10; --niv-surface:#17171a; --niv-surface-2:#1e1e22;
+    --niv-border-soft:rgba(255,255,255,0.14); --niv-text:#f5f5f7; --niv-text-dim:#a7a7ad;
+    --niv-accent:#1971c2; --niv-green:#22c55e; --niv-red:#e5484d; --niv-amber:#f5a524;
+    --niv-radius:18px; --niv-pill:999px; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Inter,system-ui,sans-serif;background:var(--niv-bg);color:var(--niv-text);min-height:100dvh;padding:28px 18px 60px}
+  .wrap{max-width:720px;margin:0 auto}
+  header.top{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+  .logo{font-size:22px;font-weight:700}.logo span{color:var(--niv-amber)}
+  .tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--niv-surface-2);color:var(--niv-text);border:1px solid var(--niv-border-soft);border-radius:var(--niv-pill);padding:3px 10px}
+  .lang{margin-left:auto;background:var(--niv-surface-2);color:var(--niv-text);border:1px solid var(--niv-border-soft);border-radius:var(--niv-pill);padding:6px 14px;font:600 13px Inter;cursor:pointer}
+  h1{font-size:25px;margin-bottom:8px}
+  .sub{color:var(--niv-text-dim);font-size:15px;line-height:1.6;margin-bottom:22px}
+  .card{background:var(--niv-surface);border:1px solid var(--niv-border-soft);border-radius:var(--niv-radius);padding:22px;margin-bottom:16px}
+  .card h2{font-size:17px;margin-bottom:10px}
+  .card p, li{color:var(--niv-text-dim);font-size:14.5px;line-height:1.65}
+  ul{margin:8px 0 4px 18px}
+  .banner{background:rgba(245,165,36,.12);border:1px solid var(--niv-amber);border-radius:var(--niv-radius);padding:18px 22px;margin-bottom:16px}
+  .banner strong{color:var(--niv-amber)}
+  .banner p{color:var(--niv-text);font-size:14.5px;line-height:1.6}
+  .btn{display:inline-block;background:var(--niv-accent);color:#fff;border:none;border-radius:var(--niv-pill);padding:11px 22px;font:600 14px Inter;cursor:pointer;text-decoration:none}
+  .btn.ghost{background:var(--niv-surface-2);color:var(--niv-text);border:1px solid var(--niv-border-soft)}
+  .btn.danger{background:transparent;color:var(--niv-red);border:1px solid var(--niv-red)}
+  .btn:disabled{opacity:.45}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  input[type=email],input[type=password],input[type=text]{width:100%;background:var(--niv-surface-2);border:1px solid var(--niv-border-soft);border-radius:12px;color:var(--niv-text);padding:11px 14px;font:400 14px Inter;margin-bottom:10px}
+  input.code{font-family:'JetBrains Mono',monospace;font-size:22px;letter-spacing:.18em;text-transform:uppercase;text-align:center}
+  .msg{font-size:14px;margin-top:12px;min-height:20px}.msg.err{color:var(--niv-red)}.msg.ok{color:var(--niv-green)}
+  .audit{border-top:1px solid var(--niv-border-soft);padding:10px 0;font-size:13.5px}
+  .audit:first-of-type{border-top:none}
+  .audit .meta{color:var(--niv-text-dim);font-size:12.5px;margin-top:3px;line-height:1.55}
+  .mono{font-family:'JetBrains Mono',monospace;font-size:12px}
+  .hidden{display:none!important}
+  a{color:var(--niv-amber)}
+  footer{color:var(--niv-text-dim);font-size:12.5px;text-align:center;margin-top:30px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><div class="logo">Nivelato<span>.</span></div><div class="tag" data-t="tag">Soporte</div>
+    <button class="lang" id="langBtn">EN</button></header>
+
+  <h1 data-t="title">Soporte remoto de Nivelato Labs</h1>
+  <p class="sub" data-t="sub">Cuando el equipo de Nivelato Labs necesite ver el problema con sus propios ojos, te dará un código de un solo uso. Al escribirlo aquí abres una sesión de soporte con tiempo límite para tu empresa. Tú la controlas: puedes cerrarla en cualquier momento.</p>
+
+  <div id="activeBanner" class="banner hidden">
+    <p><strong data-t="activeTitle">Sesión de soporte activa.</strong> <span id="activeText"></span></p>
+  </div>
+
+  <div class="card" id="signedOut">
+    <h2 data-t="signinTitle">Inicia sesión</h2>
+    <p data-t="signinText">Solo el dueño de la empresa puede abrir o cerrar una sesión de soporte.</p>
+    <div style="margin-top:14px">
+      <input type="email" id="email" autocomplete="email" placeholder="correo@ejemplo.com">
+      <input type="password" id="pass" autocomplete="current-password" placeholder="••••••••">
+      <div class="row"><button class="btn" id="btnEmail" data-t="signin">Entrar</button>
+      <button class="btn ghost" id="btnGoogle">Google</button></div>
+      <div class="msg" id="authMsg"></div>
+    </div>
+  </div>
+
+  <div id="main" class="hidden">
+    <div class="card" id="acceptCard">
+      <h2 data-t="acceptTitle">Abrir una sesión</h2>
+      <p data-t="acceptText">Escribe el código que te dio la persona de soporte. El código vence en 30 minutos y solo sirve una vez. La sesión dura 2 horas.</p>
+      <div style="margin-top:14px">
+        <input type="text" class="code" id="code" maxlength="11" autocomplete="off" placeholder="XXXXX-XXXXX">
+        <div class="row"><button class="btn" id="btnAccept" data-t="acceptBtn">Abrir sesión de soporte</button>
+        <button class="btn ghost" id="btnSignOut" data-t="signout">Cerrar sesión</button></div>
+        <div class="msg" id="acceptMsg"></div>
+      </div>
+    </div>
+
+    <div class="card" id="sessionCard">
+      <h2 data-t="sessionTitle">Estado de la sesión</h2>
+      <div id="sessionBox"><p data-t="loading">Cargando...</p></div>
+    </div>
+
+    <div class="card">
+      <h2 data-t="rulesTitle">Qué puede y qué no puede hacer el soporte</h2>
+      <ul>
+        <li data-t="rule1">Puede: ver y corregir los datos de tu empresa para diagnosticar el problema.</li>
+        <li data-t="rule2">No puede: borrar tu empresa, borrar usuarios, cambiar pagos o licencias, ni transferir la propiedad. Esas acciones están bloqueadas por el sistema, no por promesa.</li>
+        <li data-t="rule3">Cada acción queda escrita en el registro de abajo, visible para tu empresa.</li>
+        <li data-t="rule4">La sesión se cierra sola a las 2 horas, aunque nadie la cierre a mano.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2 data-t="auditTitle">Registro de la sesión</h2>
+      <div id="auditBox"><p data-t="auditEmpty">Todavía no hay actividad registrada.</p></div>
+    </div>
+  </div>
+
+  <footer>Nivelato Labs · <span data-t="footNote">Nunca compartas tu contraseña: el soporte real solo te pedirá este código, nada más.</span></footer>
+</div>
+
+<script type="module">
+import { auth, db, centralFunctions } from '/firebase-config.js';
+import { onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut }
+  from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+import { doc, getDoc, collection, query, orderBy, limit, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js';
+
+const T = {
+  es: { tag:'Soporte', title:'Soporte remoto de Nivelato Labs', sub:'Cuando el equipo de Nivelato Labs necesite ver el problema con sus propios ojos, te dará un código de un solo uso. Al escribirlo aquí abres una sesión de soporte con tiempo límite para tu empresa. Tú la controlas: puedes cerrarla en cualquier momento.',
+    activeTitle:'Sesión de soporte activa.', signinTitle:'Inicia sesión', signinText:'Solo el dueño de la empresa puede abrir o cerrar una sesión de soporte.', signin:'Entrar',
+    acceptTitle:'Abrir una sesión', acceptText:'Escribe el código que te dio la persona de soporte. El código vence en 30 minutos y solo sirve una vez. La sesión dura 2 horas.',
+    acceptBtn:'Abrir sesión de soporte', signout:'Cerrar sesión', sessionTitle:'Estado de la sesión', loading:'Cargando...',
+    rulesTitle:'Qué puede y qué no puede hacer el soporte',
+    rule1:'Puede: ver y corregir los datos de tu empresa para diagnosticar el problema.',
+    rule2:'No puede: borrar tu empresa, borrar usuarios, cambiar pagos o licencias, ni transferir la propiedad. Esas acciones están bloqueadas por el sistema, no por promesa.',
+    rule3:'Cada acción queda escrita en el registro de abajo, visible para tu empresa.',
+    rule4:'La sesión se cierra sola a las 2 horas, aunque nadie la cierre a mano.',
+    auditTitle:'Registro de la sesión', auditEmpty:'Todavía no hay actividad registrada.',
+    footNote:'Nunca compartas tu contraseña: el soporte real solo te pedirá este código, nada más.',
+    noSession:'No hay ninguna sesión de soporte activa para tu empresa.',
+    with:'Sesión con', until:'hasta las', acceptedBy:'Aceptada por', revokeBtn:'Cerrar la sesión ahora',
+    pending:'El sistema de sesiones se activa con la próxima actualización del servidor. Todavía no se abrió ninguna sesión.',
+    opened:'Sesión abierta.', notOwner:'Tu cuenta no es la dueña de la empresa; solo el dueño puede abrir o cerrar sesiones.',
+    badCode:'Código inválido o vencido.' },
+  en: { tag:'Support', title:'Nivelato Labs remote support', sub:'When the Nivelato Labs team needs to see the problem with their own eyes, they will give you a one-time code. Entering it here opens a time-limited support session for your company. You control it: you can end it at any moment.',
+    activeTitle:'Support session active.', signinTitle:'Sign in', signinText:'Only the company owner can open or close a support session.', signin:'Sign in',
+    acceptTitle:'Open a session', acceptText:'Enter the code the support person gave you. The code expires in 30 minutes and works once. The session lasts 2 hours.',
+    acceptBtn:'Open support session', signout:'Sign out', sessionTitle:'Session state', loading:'Loading...',
+    rulesTitle:'What support can and cannot do',
+    rule1:'Can: view and fix your company data to diagnose the problem.',
+    rule2:'Cannot: delete your company, delete users, change billing or licenses, or transfer ownership. Those actions are blocked by the system, not by a promise.',
+    rule3:'Every action is written to the log below, visible to your company.',
+    rule4:'The session closes on its own after 2 hours, even if nobody closes it by hand.',
+    auditTitle:'Session log', auditEmpty:'No activity recorded yet.',
+    footNote:'Never share your password: real support will only ever ask for this code, nothing else.',
+    noSession:'There is no active support session for your company.',
+    with:'Session with', until:'until', acceptedBy:'Accepted by', revokeBtn:'End the session now',
+    pending:'The session system activates with the next server update. No session was opened yet.',
+    opened:'Session opened.', notOwner:'Your account is not the company owner; only the owner can open or close sessions.',
+    badCode:'Invalid or expired code.' }
+};
+let lang = localStorage.getItem('niv-lang') || 'es';
+function applyLang(){ document.documentElement.lang = lang;
+  document.querySelectorAll('[data-t]').forEach(el => { const k = el.dataset.t; if (T[lang][k]) el.textContent = T[lang][k]; });
+  document.getElementById('langBtn').textContent = lang === 'es' ? 'EN' : 'ES'; }
+document.getElementById('langBtn').addEventListener('click', () => { lang = lang === 'es' ? 'en' : 'es'; localStorage.setItem('niv-lang', lang); applyLang(); refresh(); });
+applyLang();
+
+const $ = id => document.getElementById(id);
+const fns = centralFunctions;
+function esc(s){ const d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML; }
+let me = null, orgId = null, isOwner = false, unsubOrg = null;
+
+async function refresh(){
+  if (!me) return;
+  const box = $('sessionBox');
+  try {
+    const res = await httpsCallable(fns, 'getSupportStatus')({});
+    const st = res.data || {};
+    if (!st.orgId){ box.innerHTML = '<p>' + esc(T[lang].noSession) + '</p>'; $('activeBanner').classList.add('hidden'); return; }
+    orgId = st.orgId; isOwner = !!st.isOwner;
+    if (!st.active){
+      box.innerHTML = '<p>' + esc(T[lang].noSession) + '</p>';
+      $('activeBanner').classList.add('hidden');
+    } else {
+      const s = st.session;
+      const until = s.expiresAt ? new Date(s.expiresAt).toLocaleTimeString() : '';
+      $('activeText').textContent = T[lang].with + ' ' + (s.supportEmail || '') + ', ' + T[lang].until + ' ' + until + '.';
+      $('activeBanner').classList.remove('hidden');
+      let html = '<p>' + esc(T[lang].with) + ' <strong style="color:var(--niv-text)">' + esc(s.supportEmail || '') + '</strong>, '
+        + esc(T[lang].until) + ' ' + esc(until) + '.<br>' + esc(T[lang].acceptedBy) + ': ' + esc(s.acceptedByEmail || '') + '</p>';
+      if (isOwner) html += '<div class="row"><button class="btn danger" id="btnRevoke">' + esc(T[lang].revokeBtn) + '</button></div><div class="msg" id="revokeMsg"></div>';
+      box.innerHTML = html;
+      const rb = $('btnRevoke');
+      if (rb) rb.addEventListener('click', revoke);
+    }
+    watchAudit();
+  } catch (e) {
+    // Callables ship with the next functions deploy (design doc 6.8).
+    box.innerHTML = '<p>' + esc(T[lang].pending) + '</p>';
+  }
+}
+
+function watchAudit(){
+  if (!orgId || unsubOrg) return;
+  try {
+    const q = query(collection(db, 'orgs', orgId, 'supportAudit'), orderBy('at', 'desc'), limit(50));
+    unsubOrg = onSnapshot(q, (snap) => {
+      const box = $('auditBox');
+      if (snap.empty){ box.innerHTML = '<p>' + esc(T[lang].auditEmpty) + '</p>'; return; }
+      box.innerHTML = snap.docs.map(d => {
+        const a = d.data();
+        const when = a.at && a.at.toDate ? a.at.toDate().toLocaleString() : '';
+        return '<div class="audit"><strong style="color:var(--niv-text)">' + esc(a.action || '') + '</strong> '
+          + esc(a.summary || '') + '<div class="meta">' + esc(a.actorEmail || a.actor || '') + ' · ' + esc(when)
+          + (a.collection ? ' · <span class="mono">' + esc(a.collection + '/' + (a.docId || '')) + '</span>' : '') + '</div></div>';
+      }).join('');
+    }, () => { /* audit reads need the drafted rules patch; stay silent until then */ });
+  } catch (_) { /* same as above */ }
+}
+
+async function revoke(){
+  const m = $('revokeMsg'); if (m){ m.className = 'msg'; }
+  try { await httpsCallable(fns, 'revokeSupportSession')({}); refresh(); }
+  catch (e) { if (m){ m.className = 'msg err'; m.textContent = T[lang].pending; } }
+}
+
+onAuthStateChanged(auth, async (user) => {
+  me = user;
+  $('signedOut').classList.toggle('hidden', !!user);
+  $('main').classList.toggle('hidden', !user);
+  if (!user) return;
+  const s = await getDoc(doc(db, 'users', user.uid));
+  const ud = s.exists() ? s.data() : null;
+  orgId = ud ? ud.orgId : null;
+  refresh();
+});
+$('btnEmail').addEventListener('click', async () => {
+  const m = $('authMsg'); m.className = 'msg';
+  try { await signInWithEmailAndPassword(auth, $('email').value.trim(), $('pass').value); }
+  catch (e) { m.className = 'msg err'; m.textContent = e.message; }
+});
+$('btnGoogle').addEventListener('click', async () => {
+  const m = $('authMsg'); m.className = 'msg';
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { m.className = 'msg err'; m.textContent = e.message; }
+});
+$('btnSignOut').addEventListener('click', () => signOut(auth));
+$('btnAccept').addEventListener('click', async () => {
+  const m = $('acceptMsg'); m.className = 'msg';
+  const code = $('code').value.trim().toUpperCase();
+  if (!code){ m.className = 'msg err'; m.textContent = T[lang].badCode; return; }
+  $('btnAccept').disabled = true;
+  try {
+    await httpsCallable(fns, 'acceptSupportCode')({ code });
+    m.className = 'msg ok'; m.textContent = T[lang].opened;
+    refresh();
+  } catch (e) {
+    m.className = 'msg err';
+    m.textContent = (e.code === 'functions/permission-denied') ? T[lang].notOwner
+      : (e.code === 'functions/not-found' || e.code === 'functions/internal') ? T[lang].pending
+      : T[lang].badCode;
+  }
+  $('btnAccept').disabled = false;
+});
+</script>
+<script src="/press-yaoi.js" defer></script>
+</body>
+</html>

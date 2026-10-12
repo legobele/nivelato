@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nivelato · Equipo (comentarios)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{ --niv-bg:#0e0e10; --niv-surface:#17171a; --niv-surface-2:#1e1e22;
+    --niv-border-soft:rgba(255,255,255,0.14); --niv-text:#f5f5f7; --niv-text-dim:#a7a7ad;
+    --niv-accent:#1971c2; --niv-green:#22c55e; --niv-red:#e5484d; --niv-amber:#f5a524;
+    --niv-radius:18px; --niv-pill:999px; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Inter,system-ui,sans-serif;background:var(--niv-bg);color:var(--niv-text);min-height:100dvh;padding:28px 18px 60px}
+  .wrap{max-width:820px;margin:0 auto}
+  header.top{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+  .logo{font-size:22px;font-weight:700}.logo span{color:var(--niv-amber)}
+  .tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--niv-surface-2);border:1px solid var(--niv-border-soft);color:var(--niv-text);border-radius:var(--niv-pill);padding:3px 10px}
+  .lang{margin-left:auto;background:var(--niv-surface-2);color:var(--niv-text);border:1px solid var(--niv-border-soft);border-radius:var(--niv-pill);padding:6px 14px;font:600 13px Inter;cursor:pointer}
+  h1{font-size:24px;margin-bottom:6px}
+  .sub{color:var(--niv-text-dim);font-size:14.5px;line-height:1.55;margin-bottom:20px}
+  .card{background:var(--niv-surface);border:1px solid var(--niv-border-soft);border-radius:var(--niv-radius);padding:20px;margin-bottom:14px}
+  .card p{color:var(--niv-text-dim);font-size:14.5px;line-height:1.6}
+  .btn{display:inline-block;background:var(--niv-accent);color:#fff;border:none;border-radius:var(--niv-pill);padding:10px 20px;font:600 14px Inter;cursor:pointer;text-decoration:none}
+  .btn.ghost{background:var(--niv-surface-2);color:var(--niv-text);border:1px solid var(--niv-border-soft)}
+  .btn:disabled{opacity:.45}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+  input[type=email],input[type=password]{width:100%;background:var(--niv-surface-2);border:1px solid var(--niv-border-soft);border-radius:12px;color:var(--niv-text);padding:11px 14px;font:400 14px Inter;margin-bottom:10px}
+  .msg{font-size:14px;margin-top:12px;min-height:20px}.msg.err{color:var(--niv-red)}.msg.ok{color:var(--niv-green)}
+  .pill{display:inline-block;border-radius:var(--niv-pill);padding:2px 10px;font-size:11.5px;font-weight:700}
+  .pill.prio{background:rgba(245,165,36,.18);color:var(--niv-amber)}
+  .pill.std{background:var(--niv-surface-2);color:var(--niv-text-dim)}
+  .fb{border-top:1px solid var(--niv-border-soft);padding:14px 0}
+  .fb:first-of-type{border-top:none}
+  .fb .meta{font-size:12.5px;color:var(--niv-text-dim);margin:6px 0;line-height:1.6}
+  .fb .text{font-size:14.5px;line-height:1.6;white-space:pre-wrap}
+  .mono{font-family:'JetBrains Mono',monospace;font-size:12px}
+  .hidden{display:none!important}
+  a{color:var(--niv-amber)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><div class="logo">Nivelato<span>.</span></div><div class="tag">Staff</div>
+    <button class="lang" id="langBtn">EN</button></header>
+
+  <h1 data-t="title">Comentarios recibidos</h1>
+  <p class="sub" data-t="sub">Bandeja del equipo de Nivelato Labs. Los comentarios prioritarios (empresas y usuarios en la beta) van primero y llevan su sello de versión.</p>
+
+  <div class="card" id="signedOut">
+    <p data-t="needSignin">Inicia sesión con una cuenta del equipo de Nivelato Labs.</p>
+    <div style="margin-top:14px">
+      <input type="email" id="email" autocomplete="email" placeholder="correo@ejemplo.com">
+      <input type="password" id="pass" autocomplete="current-password" placeholder="••••••••">
+      <div class="row"><button class="btn" id="btnEmail" data-t="signin">Entrar</button>
+      <button class="btn ghost" id="btnGoogle">Google</button></div>
+      <div class="msg" id="authMsg"></div>
+    </div>
+  </div>
+
+  <div class="hidden" id="main">
+    <div class="row" style="margin:0 0 14px">
+      <label style="font-size:14px"><input type="checkbox" id="onlyPrio" checked> <span data-t="onlyPrio">Solo prioritarios</span></label>
+      <button class="btn ghost" id="btnReload" data-t="reload">Recargar</button>
+      <button class="btn ghost" id="btnSignOut" data-t="signout">Cerrar sesión</button>
+    </div>
+    <div class="card" id="listCard"><p data-t="loading">Cargando...</p></div>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<script type="module">
+import { auth, centralFunctions } from '/firebase-config.js';
+import { onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut }
+  from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js';
+
+const T = {
+  es: { title:'Comentarios recibidos', sub:'Bandeja del equipo de Nivelato Labs. Los comentarios prioritarios (empresas y usuarios en la beta) van primero y llevan su sello de versión.',
+    needSignin:'Inicia sesión con una cuenta del equipo de Nivelato Labs.', signin:'Entrar',
+    onlyPrio:'Solo prioritarios', reload:'Recargar', signout:'Cerrar sesión', loading:'Cargando...',
+    prio:'PRIORITARIO', std:'estándar', empty:'No hay comentarios en esta vista.',
+    pending:'La bandeja se activa cuando el sistema de comentarios esté desplegado (el servidor verifica que seas del equipo en cada lectura).',
+    cat:'Categoría', org:'Empresa', user:'Usuario', when:'Fecha', version:'Versión' },
+  en: { title:'Feedback inbox', sub:'Nivelato Labs staff inbox. Priority feedback (beta companies and users) comes first and carries its version stamp.',
+    needSignin:'Sign in with a Nivelato Labs staff account.', signin:'Sign in',
+    onlyPrio:'Priority only', reload:'Reload', signout:'Sign out', loading:'Loading...',
+    prio:'PRIORITY', std:'standard', empty:'No feedback in this view.',
+    pending:'The inbox activates when the feedback system is deployed (the server verifies staff on every read).',
+    cat:'Category', org:'Company', user:'User', when:'Date', version:'Version' }
+};
+let lang = localStorage.getItem('niv-lang') || 'es';
+function applyLang(){ document.documentElement.lang = lang;
+  document.querySelectorAll('[data-t]').forEach(el => { const k = el.dataset.t; if (T[lang][k]) el.textContent = T[lang][k]; });
+  document.getElementById('langBtn').textContent = lang === 'es' ? 'EN' : 'ES'; }
+document.getElementById('langBtn').addEventListener('click', () => { lang = lang === 'es' ? 'en' : 'es'; localStorage.setItem('niv-lang', lang); applyLang(); if (!document.getElementById('main').classList.contains('hidden')) loadList(); });
+applyLang();
+
+const $ = id => document.getElementById(id);
+function esc(s){ const d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML; }
+
+async function loadList(){
+  const card = $('listCard'); const m = $('msg'); m.className = 'msg'; m.textContent = '';
+  card.innerHTML = '<p>' + esc(T[lang].loading) + '</p>';
+  try {
+    const res = await httpsCallable(centralFunctions, 'listPriorityFeedback')({ onlyPriority: $('onlyPrio').checked, limit: 50 });
+    const items = (res.data && res.data.items) || [];
+    if (!items.length){ card.innerHTML = '<p>' + esc(T[lang].empty) + '</p>'; return; }
+    card.innerHTML = items.map(it => {
+      const vs = it.versionStamp || {};
+      const when = it.createdAt ? new Date(it.createdAt).toLocaleString() : '';
+      return '<div class="fb">'
+        + '<span class="pill ' + (it.priority ? 'prio' : 'std') + '">' + esc(it.priority ? T[lang].prio : T[lang].std) + '</span>'
+        + ' <span class="pill std">' + esc(it.category || 'other') + '</span>'
+        + '<div class="meta">' + esc(T[lang].org) + ': <span class="mono">' + esc(it.orgId || '-') + '</span> · '
+        + esc(T[lang].user) + ': ' + esc(it.email || it.uid || '-') + ' · ' + esc(T[lang].when) + ': ' + esc(when)
+        + (vs.friendlyVersion ? ' · ' + esc(T[lang].version) + ': ' + esc(vs.friendlyVersion) + (vs.orgVersion ? ' (' + esc(vs.orgVersion) + ')' : '') : '')
+        + '</div><div class="text">' + esc(it.text || '') + '</div></div>';
+    }).join('');
+  } catch (e) {
+    card.innerHTML = '<p>' + esc(T[lang].pending) + '</p>';
+  }
+}
+
+onAuthStateChanged(auth, (user) => {
+  $('signedOut').classList.toggle('hidden', !!user);
+  $('main').classList.toggle('hidden', !user);
+  if (user) loadList();
+});
+$('btnEmail').addEventListener('click', async () => {
+  const m = $('authMsg'); m.className = 'msg';
+  try { await signInWithEmailAndPassword(auth, $('email').value.trim(), $('pass').value); }
+  catch (e) { m.className = 'msg err'; m.textContent = e.message; }
+});
+$('btnGoogle').addEventListener('click', async () => {
+  const m = $('authMsg'); m.className = 'msg';
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { m.className = 'msg err'; m.textContent = e.message; }
+});
+$('btnReload').addEventListener('click', loadList);
+$('onlyPrio').addEventListener('change', loadList);
+$('btnSignOut').addEventListener('click', () => signOut(auth));
+</script>
+<script src="/press-yaoi.js" defer></script>
+</body>
+</html>

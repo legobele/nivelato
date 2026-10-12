@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nivelato · Depuración y versiones</title>
+<meta name="description" content="La verdad sobre versiones de Nivelato: qué está desplegado, qué corre tu empresa y cómo volver a una versión anterior.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{ --niv-bg:#0e0e10; --niv-surface:#17171a; --niv-surface-2:#1e1e22;
+    --niv-border-soft:rgba(255,255,255,0.14); --niv-text:#f5f5f7; --niv-text-dim:#a7a7ad;
+    --niv-accent:#1971c2; --niv-green:#22c55e; --niv-red:#e5484d; --niv-amber:#f5a524;
+    --niv-radius:18px; --niv-pill:999px; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Inter,system-ui,sans-serif;background:var(--niv-bg);color:var(--niv-text);min-height:100dvh;padding:28px 18px 60px}
+  .wrap{max-width:760px;margin:0 auto}
+  header.top{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+  .logo{font-size:22px;font-weight:700}.logo span{color:var(--niv-amber)}
+  .tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--niv-surface-2);color:var(--niv-text);border:1px solid var(--niv-border-soft);border-radius:var(--niv-pill);padding:3px 10px}
+  .lang{margin-left:auto;background:var(--niv-surface-2);color:var(--niv-text);border:1px solid var(--niv-border-soft);border-radius:var(--niv-pill);padding:6px 14px;font:600 13px Inter;cursor:pointer}
+  h1{font-size:26px;margin-bottom:6px}
+  .sub{color:var(--niv-text-dim);font-size:15px;line-height:1.55;margin-bottom:22px}
+  .card{background:var(--niv-surface);border:1px solid var(--niv-border-soft);border-radius:var(--niv-radius);padding:22px;margin-bottom:16px}
+  .card h2{font-size:17px;margin-bottom:10px}
+  .card p, li{color:var(--niv-text-dim);font-size:14.5px;line-height:1.65}
+  ul, ol{margin:8px 0 4px 18px}
+  .mono{font-family:'JetBrains Mono',monospace;font-size:12.5px;word-break:break-all}
+  .kv{display:flex;justify-content:space-between;gap:14px;padding:7px 0;border-bottom:1px solid var(--niv-border-soft)}
+  .kv:last-child{border-bottom:none}
+  .kv .k{color:var(--niv-text-dim);font-size:13.5px}
+  .kv .v{font-size:13.5px;text-align:right}
+  .pill{display:inline-block;border-radius:var(--niv-pill);padding:3px 11px;font-size:12px;font-weight:600}
+  .pill.ok{background:rgba(34,197,94,.15);color:var(--niv-green)}
+  .pill.warn{background:rgba(245,165,36,.15);color:var(--niv-amber)}
+  .pill.off{background:var(--niv-surface-2);color:var(--niv-text-dim)}
+  .btn{display:inline-block;background:var(--niv-accent);color:#fff;border:none;border-radius:var(--niv-pill);padding:10px 20px;font:600 14px Inter;cursor:pointer;text-decoration:none}
+  .btn.ghost{background:var(--niv-surface-2);color:var(--niv-text);border:1px solid var(--niv-border-soft)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  input[type=email],input[type=password]{width:100%;background:var(--niv-surface-2);border:1px solid var(--niv-border-soft);border-radius:12px;color:var(--niv-text);padding:11px 14px;font:400 14px Inter;margin-bottom:10px}
+  .msg{font-size:14px;margin-top:12px;min-height:20px}.msg.err{color:var(--niv-red)}
+  .hidden{display:none!important}
+  a{color:var(--niv-amber)}
+  footer{color:var(--niv-text-dim);font-size:12.5px;text-align:center;margin-top:30px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><div class="logo">Nivelato<span>.</span></div><div class="tag" data-t="tag">Depuración</div>
+    <button class="lang" id="langBtn">EN</button></header>
+
+  <h1 data-t="title">Versiones, sin humo</h1>
+  <p class="sub" data-t="sub">Qué está desplegado ahora mismo según el registro de versiones, qué corre tu empresa y qué se puede (y qué no se puede) hacer para volver atrás.</p>
+
+  <div class="card">
+    <h2 data-t="stampTitle">Sello del backend</h2>
+    <div id="stampBox"><p data-t="loading">Cargando...</p></div>
+  </div>
+
+  <div class="card">
+    <h2 data-t="orgTitle">Tu empresa</h2>
+    <div id="orgSignedOut">
+      <p data-t="orgSigninText">Inicia sesión para ver la versión de datos, el canal y las actualizaciones de tu empresa.</p>
+      <div style="margin-top:14px">
+        <input type="email" id="email" autocomplete="email" placeholder="correo@ejemplo.com">
+        <input type="password" id="pass" autocomplete="current-password" placeholder="••••••••">
+        <div class="row"><button class="btn" id="btnEmail" data-t="signin">Entrar</button>
+        <button class="btn ghost" id="btnGoogle">Google</button></div>
+        <div class="msg" id="authMsg"></div>
+      </div>
+    </div>
+    <div id="orgBox" class="hidden"></div>
+  </div>
+
+  <div class="card">
+    <h2 data-t="downTitle">Volver a una versión anterior</h2>
+    <p data-t="downIntro">Lo que existe hoy, sin adornos:</p>
+    <ol>
+      <li data-t="down1">Posponer una actualización: el dueño puede posponerla desde la página de actualizaciones de la app; el sistema la aplica después, cuando nadie de la empresa esté conectado.</li>
+      <li data-t="down2">Etiqueta de versión de interfaz: el dueño puede pedir a Nivelato Labs que la empresa vuelva a una etiqueta de interfaz anterior (la acción la ejecuta el dueño con la función del sistema setUiVersion; mueve la etiqueta, no los datos).</li>
+      <li data-t="down3">Canal beta a estable: si tu empresa adoptó el canal beta, el dueño puede volver al canal estable desde los ajustes beta; el cambio queda registrado con fecha y autor.</li>
+    </ol>
+    <p style="margin-top:12px" data-t="downNoTitle">Lo que NO existe:</p>
+    <ul>
+      <li data-t="downNo1">No hay reversa de datos automática: la migración de datos de la empresa es de una sola vía por diseño. Si una empresa necesita volver sus datos a la versión anterior, es una intervención manual del equipo de Nivelato Labs (puedes pedirla con una sesión de soporte en remote.nivelatolabs.com), nunca un botón.</li>
+      <li data-t="downNo2">Google Play no permite bajar la versión de la app instalada en un teléfono. Una versión anterior solo puede distribuirse por una pista de prueba.</li>
+    </ul>
+    <p style="margin-top:12px" data-t="downHelp">La guía completa está en la ayuda: legobele.github.io/nivelato/ayuda.html (sección de versiones).</p>
+  </div>
+
+  <footer>Nivelato Labs · <a href="https://testing.nivelatolabs.com">testing.nivelatolabs.com</a> · <a href="https://remote.nivelatolabs.com">remote.nivelatolabs.com</a></footer>
+</div>
+
+<script type="module">
+import { auth, db } from '/firebase-config.js';
+import { onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider }
+  from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+
+const T = {
+  es: { tag:'Depuración', title:'Versiones, sin humo', sub:'Qué está desplegado ahora mismo según el registro de versiones, qué corre tu empresa y qué se puede (y qué no se puede) hacer para volver atrás.',
+    stampTitle:'Sello del backend', orgTitle:'Tu empresa', loading:'Cargando...', signin:'Entrar',
+    orgSigninText:'Inicia sesión para ver la versión de datos, el canal y las actualizaciones de tu empresa.',
+    downTitle:'Volver a una versión anterior', downIntro:'Lo que existe hoy, sin adornos:',
+    down1:'Posponer una actualización: el dueño puede posponerla desde la página de actualizaciones de la app; el sistema la aplica después, cuando nadie de la empresa esté conectado.',
+    down2:'Etiqueta de versión de interfaz: el dueño puede pedir a Nivelato Labs que la empresa vuelva a una etiqueta de interfaz anterior (la acción la ejecuta el dueño con la función del sistema setUiVersion; mueve la etiqueta, no los datos).',
+    down3:'Canal beta a estable: si tu empresa adoptó el canal beta, el dueño puede volver al canal estable desde los ajustes beta; el cambio queda registrado con fecha y autor.',
+    downNoTitle:'Lo que NO existe:',
+    downNo1:'No hay reversa de datos automática: la migración de datos de la empresa es de una sola vía por diseño. Si una empresa necesita volver sus datos a la versión anterior, es una intervención manual del equipo de Nivelato Labs (puedes pedirla con una sesión de soporte en remote.nivelatolabs.com), nunca un botón.',
+    downNo2:'Google Play no permite bajar la versión de la app instalada en un teléfono. Una versión anterior solo puede distribuirse por una pista de prueba.',
+    downHelp:'La guía completa está en la ayuda: legobele.github.io/nivelato/ayuda.html (sección de versiones).',
+    friendly:'Versión visible', commit:'Commit desplegado', mainHead:'Commit en main (GitHub)', stampedAt:'Sellado el', stampedBy:'Sellado por',
+    state:'Estado', stateOk:'Sellado: el registro coincide con main', stateBehind:'main avanzó desde el último sello (despliegue sin sellar o en curso)',
+    backfilled:'sello retroactivo', unavailable:'El registro no está disponible ahora mismo.',
+    dataVersion:'Versión de datos', channel:'Canal de actualizaciones', pending:'Actualización pospuesta', yes:'Sí', no:'No',
+    offered:'Versión ofrecida a tu empresa', orgName:'Empresa', stable:'estable', betaL:'beta', noOrg:'No perteneces a una empresa.' },
+  en: { tag:'Debug', title:'Versions, no smoke', sub:'What is deployed right now according to the version registry, what your company is running, and what can (and cannot) be done to go back.',
+    stampTitle:'Backend stamp', orgTitle:'Your company', loading:'Loading...', signin:'Sign in',
+    orgSigninText:'Sign in to see your company data version, channel, and update state.',
+    downTitle:'Going back to an earlier version', downIntro:'What exists today, plainly:',
+    down1:'Defer an update: the owner can defer it from the app updates page; the system applies it later, when nobody from the company is online.',
+    down2:'UI version tag: the owner can ask Nivelato Labs to move the company back to an earlier UI tag (the owner runs it with the system function setUiVersion; it moves the tag, not the data).',
+    down3:'Beta channel to stable: if your company adopted the beta channel, the owner can return to the stable channel from the beta settings; the change is recorded with date and author.',
+    downNoTitle:'What does NOT exist:',
+    downNo1:'There is no automatic data rollback: company data migration is one-way by design. If a company needs its data moved back, it is a manual Nivelato Labs intervention (you can request it with a support session at remote.nivelatolabs.com), never a button.',
+    downNo2:'Google Play cannot downgrade the app installed on a phone. An older build can only be distributed through a test track.',
+    downHelp:'The full guide is in the help docs: legobele.github.io/nivelato/ayuda.html (versions section).',
+    friendly:'Friendly version', commit:'Deployed commit', mainHead:'Commit on main (GitHub)', stampedAt:'Stamped at', stampedBy:'Stamped by',
+    state:'State', stateOk:'Stamped: the registry matches main', stateBehind:'main has moved since the last stamp (unstamped deploy or one in progress)',
+    backfilled:'backfilled stamp', unavailable:'The registry is not available right now.',
+    dataVersion:'Data version', channel:'Update channel', pending:'Update deferred', yes:'Yes', no:'No',
+    offered:'Version offered to your company', orgName:'Company', stable:'stable', betaL:'beta', noOrg:'You do not belong to a company.' }
+};
+let lang = localStorage.getItem('niv-lang') || 'es';
+function applyLang(){ document.documentElement.lang = lang;
+  document.querySelectorAll('[data-t]').forEach(el => { const k = el.dataset.t; if (T[lang][k]) el.textContent = T[lang][k]; });
+  document.getElementById('langBtn').textContent = lang === 'es' ? 'EN' : 'ES'; }
+document.getElementById('langBtn').addEventListener('click', () => { lang = lang === 'es' ? 'en' : 'es'; localStorage.setItem('niv-lang', lang); applyLang(); loadStamp(); loadOrg(); });
+applyLang();
+
+const $ = id => document.getElementById(id);
+function esc(s){ const d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML; }
+function kv(k, v){ return '<div class="kv"><span class="k">' + esc(k) + '</span><span class="v">' + v + '</span></div>'; }
+function fmtTs(ts){ try { return ts && ts.toDate ? ts.toDate().toLocaleString() : ''; } catch (_) { return ''; } }
+async function get(id){ const s = await getDoc(doc(db, 'app_updates', id)); return s.exists() ? s.data() : null; }
+
+let backend = null;
+async function loadStamp(){
+  const box = $('stampBox');
+  try {
+    backend = await get('backend');
+    if (!backend){ box.innerHTML = '<p>' + esc(T[lang].unavailable) + '</p>'; return; }
+    let head = null;
+    try {
+      const r = await fetch('https://api.github.com/repos/legobele/nivelato/commits/main');
+      if (r.ok){ const j = await r.json(); head = j && j.sha; }
+    } catch (_) { /* GitHub unreachable: show the stamp alone */ }
+    let html = kv(T[lang].friendly, '<strong>' + esc(backend.friendlyVersion || '?') + '</strong>');
+    html += kv(T[lang].commit, '<span class="mono">' + esc(backend.commit || '') + '</span>');
+    if (head) html += kv(T[lang].mainHead, '<span class="mono">' + esc(head) + '</span>');
+    if (backend.stampedAt) html += kv(T[lang].stampedAt, esc(fmtTs(backend.stampedAt)) + (backend.backfilled ? ' · ' + esc(T[lang].backfilled) : ''));
+    if (head){
+      const ok = head === backend.commit;
+      html += kv(T[lang].state, '<span class="pill ' + (ok ? 'ok' : 'warn') + '">' + esc(ok ? T[lang].stateOk : T[lang].stateBehind) + '</span>');
+    }
+    box.innerHTML = html;
+  } catch (e) { box.innerHTML = '<p>' + esc(T[lang].unavailable) + '</p>'; }
+}
+
+let me = null, myData = null;
+async function loadOrg(){
+  if (!me) return;
+  const box = $('orgBox');
+  try {
+    if (!myData || !myData.orgId){ box.innerHTML = '<p>' + esc(T[lang].noOrg) + '</p>'; box.classList.remove('hidden'); $('orgSignedOut').classList.add('hidden'); return; }
+    const o = await getDoc(doc(db, 'orgs', myData.orgId));
+    const org = o.exists() ? o.data() : {};
+    const chan = org.updateChannel || 'stable';
+    const ptr = await get(chan === 'beta' ? 'beta-latest' : 'latest');
+    let html = kv(T[lang].orgName, esc(org.name || myData.orgId));
+    html += kv(T[lang].dataVersion, '<span class="mono">' + esc(org.dataVersion || '0.9') + '</span>');
+    html += kv(T[lang].channel, esc(chan === 'beta' ? T[lang].betaL : T[lang].stable));
+    html += kv(T[lang].pending, esc(org.pendingUpdate ? T[lang].yes : T[lang].no));
+    if (ptr && ptr.version) html += kv(T[lang].offered, '<span class="mono">' + esc(ptr.version) + '</span>');
+    box.innerHTML = html;
+    box.classList.remove('hidden'); $('orgSignedOut').classList.add('hidden');
+  } catch (e) { /* org read denied: leave the sign-in panel in place */ }
+}
+
+onAuthStateChanged(auth, async (user) => {
+  me = user;
+  if (!user){ $('orgBox').classList.add('hidden'); $('orgSignedOut').classList.remove('hidden'); return; }
+  const s = await getDoc(doc(db, 'users', user.uid));
+  myData = s.exists() ? s.data() : null;
+  loadOrg();
+});
+$('btnEmail').addEventListener('click', async () => {
+  const m = $('authMsg'); m.className = 'msg';
+  try { await signInWithEmailAndPassword(auth, $('email').value.trim(), $('pass').value); }
+  catch (e) { m.className = 'msg err'; m.textContent = e.message; }
+});
+$('btnGoogle').addEventListener('click', async () => {
+  const m = $('authMsg'); m.className = 'msg';
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { m.className = 'msg err'; m.textContent = e.message; }
+});
+loadStamp();
+</script>
+<script src="/press-yaoi.js" defer></script>
+</body>
+</html>

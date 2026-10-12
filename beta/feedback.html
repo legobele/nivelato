@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nivelato Beta · Comentarios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --niv-bg:#0e0e10; --niv-surface:#17171a; --niv-surface-2:#1e1e22;
+    --niv-border-soft:rgba(255,255,255,0.14); --niv-text:#f5f5f7; --niv-text-dim:#a7a7ad;
+    --niv-accent:#1971c2; --niv-green:#22c55e; --niv-red:#e5484d; --niv-amber:#f5a524;
+    --niv-radius:18px; --niv-pill:999px; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Inter,system-ui,sans-serif;background:var(--niv-bg);color:var(--niv-text);min-height:100dvh;padding:28px 18px 60px}
+  .wrap{max-width:680px;margin:0 auto}
+  header.top{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+  .logo{font-size:22px;font-weight:700}.logo span{color:var(--niv-amber)}
+  .tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--niv-amber);color:#141414;border-radius:var(--niv-pill);padding:3px 10px}
+  .lang{margin-left:auto;background:var(--niv-surface-2);color:var(--niv-text);border:1px solid var(--niv-border-soft);border-radius:var(--niv-pill);padding:6px 14px;font:600 13px Inter;cursor:pointer}
+  h1{font-size:25px;margin-bottom:8px}
+  .card{background:var(--niv-surface);border:1px solid var(--niv-border-soft);border-radius:var(--niv-radius);padding:22px;margin-bottom:16px}
+  .card p{color:var(--niv-text-dim);font-size:14.5px;line-height:1.65}
+  .btn{display:inline-block;background:var(--niv-accent);color:#fff;border:none;border-radius:var(--niv-pill);padding:11px 22px;font:600 14px Inter;cursor:pointer;text-decoration:none}
+  .btn.ghost{background:var(--niv-surface-2);color:var(--niv-text);border:1px solid var(--niv-border-soft)}
+  .btn:disabled{opacity:.45}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  input[type=email],input[type=password],select,textarea{width:100%;background:var(--niv-surface-2);border:1px solid var(--niv-border-soft);border-radius:12px;color:var(--niv-text);padding:11px 14px;font:400 14px Inter;margin-bottom:10px}
+  textarea{min-height:130px;resize:vertical}
+  label{font-size:13px;font-weight:600;color:var(--niv-text-dim);display:block;margin:12px 0 6px}
+  .pill{display:inline-block;border-radius:var(--niv-pill);padding:3px 11px;font-size:12px;font-weight:600;background:rgba(245,165,36,.15);color:var(--niv-amber)}
+  .msg{font-size:14px;margin-top:12px;min-height:20px}.msg.err{color:var(--niv-red)}.msg.ok{color:var(--niv-green)}
+  .hidden{display:none!important}
+  a{color:var(--niv-amber)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><div class="logo">Nivelato<span>.</span></div><div class="tag">Beta</div>
+    <button class="lang" id="langBtn">EN</button></header>
+
+  <h1 data-t="title">Enviar un comentario</h1>
+
+  <div class="card" id="signedOut">
+    <p data-t="needSignin">Primero inicia sesión con tu cuenta de Nivelato.</p>
+    <div style="margin-top:14px">
+      <input type="email" id="email" autocomplete="email" placeholder="correo@ejemplo.com">
+      <input type="password" id="pass" autocomplete="current-password" placeholder="••••••••">
+      <div class="row"><button class="btn" id="btnEmail" data-t="signin">Entrar</button>
+      <button class="btn ghost" id="btnGoogle">Google</button></div>
+      <div class="msg" id="authMsg"></div>
+    </div>
+  </div>
+
+  <div class="card hidden" id="main">
+    <p data-t="intro">Cuéntanos qué pasó o qué te gustaría ver. Si tú o tu empresa están en la beta, el comentario entra como prioritario y lleva la versión exacta que estás probando.</p>
+    <p style="margin-top:10px" id="prioLine"></p>
+    <label for="cat" data-t="catLabel">Tipo</label>
+    <select id="cat">
+      <option value="bug" data-t="catBug">Un error</option>
+      <option value="idea" data-t="catIdea">Una idea</option>
+      <option value="help" data-t="catHelp">Necesito ayuda</option>
+      <option value="other" data-t="catOther">Otro</option>
+    </select>
+    <label for="text" data-t="textLabel">Tu comentario</label>
+    <textarea id="text" maxlength="4000"></textarea>
+    <div class="row">
+      <button class="btn" id="btnSend" data-t="sendBtn">Enviar</button>
+      <a class="btn ghost" href="/" data-t="backBtn">Volver</a>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card hidden" id="done">
+    <p data-t="doneText">Comentario enviado. Gracias: los comentarios de la beta se leen primero.</p>
+    <div class="row"><a class="btn" href="/" data-t="homeBtn">Ir a mis ajustes beta</a></div>
+  </div>
+</div>
+
+<script type="module">
+import { auth, db, centralFunctions } from '/firebase-config.js';
+import { onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider }
+  from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js';
+
+const T = {
+  es: { title:'Enviar un comentario', needSignin:'Primero inicia sesión con tu cuenta de Nivelato.', signin:'Entrar',
+    intro:'Cuéntanos qué pasó o qué te gustaría ver. Si tú o tu empresa están en la beta, el comentario entra como prioritario y lleva la versión exacta que estás probando.',
+    catLabel:'Tipo', catBug:'Un error', catIdea:'Una idea', catHelp:'Necesito ayuda', catOther:'Otro', textLabel:'Tu comentario',
+    sendBtn:'Enviar', backBtn:'Volver', doneText:'Comentario enviado. Gracias: los comentarios de la beta se leen primero.', homeBtn:'Ir a mis ajustes beta',
+    prioYes:'Tu envío será PRIORITARIO (inscripción beta detectada).', prioNo:'Tu envío será estándar. Inscríbete en la beta para prioridad.',
+    empty:'Escribe un comentario primero.', pending:'El envío de comentarios se activa con la próxima actualización del sistema. Tu texto no se envió.' },
+  en: { title:'Send feedback', needSignin:'Sign in with your Nivelato account first.', signin:'Sign in',
+    intro:'Tell us what happened or what you would like to see. If you or your company are in the beta, the feedback arrives as priority, stamped with the exact version you are testing.',
+    catLabel:'Type', catBug:'A bug', catIdea:'An idea', catHelp:'I need help', catOther:'Other', textLabel:'Your feedback',
+    sendBtn:'Send', backBtn:'Back', doneText:'Feedback sent. Thanks: beta feedback is read first.', homeBtn:'Go to my beta settings',
+    prioYes:'Your submission will be PRIORITY (beta enrollment detected).', prioNo:'Your submission will be standard. Join the beta for priority.',
+    empty:'Write some feedback first.', pending:'Feedback submission activates with the next system update. Your text was not sent.' }
+};
+let lang = localStorage.getItem('niv-lang') || 'es';
+function applyLang(){ document.documentElement.lang = lang;
+  document.querySelectorAll('[data-t]').forEach(el => { const k = el.dataset.t; if (T[lang][k]) el.textContent = T[lang][k]; });
+  document.getElementById('langBtn').textContent = lang === 'es' ? 'EN' : 'ES'; }
+document.getElementById('langBtn').addEventListener('click', () => { lang = lang === 'es' ? 'en' : 'es'; localStorage.setItem('niv-lang', lang); applyLang(); renderPrio(); });
+applyLang();
+
+const $ = id => document.getElementById(id);
+let priority = false;
+function renderPrio(){ const el = $('prioLine'); if (el) el.innerHTML = priority ? '<span class="pill">' + T[lang].prioYes + '</span>' : T[lang].prioNo; }
+
+onAuthStateChanged(auth, async (user) => {
+  $('signedOut').classList.toggle('hidden', !!user);
+  if (!user) return;
+  $('main').classList.remove('hidden');
+  try {
+    const u = await getDoc(doc(db, 'users', user.uid));
+    const ud = u.exists() ? u.data() : null;
+    priority = !!(ud && ud.betaEnrolled);
+    if (!priority && ud && ud.orgId){
+      const o = await getDoc(doc(db, 'orgs', ud.orgId));
+      priority = !!(o.exists() && o.data().betaEnrolled);
+    }
+  } catch (_) { /* priority hint is best-effort UX; the server derives the real flag */ }
+  renderPrio();
+});
+$('btnEmail').addEventListener('click', async () => {
+  const m = $('authMsg'); m.className = 'msg';
+  try { await signInWithEmailAndPassword(auth, $('email').value.trim(), $('pass').value); }
+  catch (e) { m.className = 'msg err'; m.textContent = e.message; }
+});
+$('btnGoogle').addEventListener('click', async () => {
+  const m = $('authMsg'); m.className = 'msg';
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { m.className = 'msg err'; m.textContent = e.message; }
+});
+$('btnSend').addEventListener('click', async () => {
+  const m = $('msg'); m.className = 'msg';
+  const text = $('text').value.trim();
+  if (!text){ m.className = 'msg err'; m.textContent = T[lang].empty; return; }
+  $('btnSend').disabled = true;
+  try {
+    await httpsCallable(centralFunctions, 'submitFeedback')({ category: $('cat').value, text });
+    $('main').classList.add('hidden'); $('done').classList.remove('hidden');
+  } catch (e) {
+    // Callable ships with the next functions deploy (design doc 4.5).
+    m.className = 'msg err'; m.textContent = T[lang].pending;
+    $('btnSend').disabled = false;
+  }
+});
+</script>
+<script src="/press-yaoi.js" defer></script>
+</body>
+</html>

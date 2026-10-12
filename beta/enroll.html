@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nivelato Beta · Inscripción</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --niv-bg:#0e0e10; --niv-surface:#17171a; --niv-surface-2:#1e1e22;
+    --niv-border-soft:rgba(255,255,255,0.14); --niv-text:#f5f5f7; --niv-text-dim:#a7a7ad;
+    --niv-accent:#1971c2; --niv-green:#22c55e; --niv-red:#e5484d; --niv-amber:#f5a524;
+    --niv-radius:18px; --niv-pill:999px; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Inter,system-ui,sans-serif;background:var(--niv-bg);color:var(--niv-text);min-height:100dvh;padding:28px 18px 60px}
+  .wrap{max-width:680px;margin:0 auto}
+  header.top{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+  .logo{font-size:22px;font-weight:700}.logo span{color:var(--niv-amber)}
+  .tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--niv-amber);color:#141414;border-radius:var(--niv-pill);padding:3px 10px}
+  .lang{margin-left:auto;background:var(--niv-surface-2);color:var(--niv-text);border:1px solid var(--niv-border-soft);border-radius:var(--niv-pill);padding:6px 14px;font:600 13px Inter;cursor:pointer}
+  h1{font-size:25px;margin-bottom:8px}
+  .card{background:var(--niv-surface);border:1px solid var(--niv-border-soft);border-radius:var(--niv-radius);padding:22px;margin-bottom:16px}
+  .card p, li{color:var(--niv-text-dim);font-size:14.5px;line-height:1.65}
+  ul{margin:10px 0 4px 18px}
+  .btn{display:inline-block;background:var(--niv-accent);color:#fff;border:none;border-radius:var(--niv-pill);padding:11px 22px;font:600 14px Inter;cursor:pointer;text-decoration:none}
+  .btn.ghost{background:var(--niv-surface-2);color:var(--niv-text);border:1px solid var(--niv-border-soft)}
+  .btn:disabled{opacity:.45}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  input[type=email],input[type=password]{width:100%;background:var(--niv-surface-2);border:1px solid var(--niv-border-soft);border-radius:12px;color:var(--niv-text);padding:11px 14px;font:400 14px Inter;margin-bottom:10px}
+  .msg{font-size:14px;margin-top:12px;min-height:20px}.msg.err{color:var(--niv-red)}.msg.ok{color:var(--niv-green)}
+  .hidden{display:none!important}
+  a{color:var(--niv-amber)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><div class="logo">Nivelato<span>.</span></div><div class="tag">Beta</div>
+    <button class="lang" id="langBtn">EN</button></header>
+
+  <h1 data-t="title">Inscribirme en la beta</h1>
+
+  <div class="card" id="signedOut">
+    <p data-t="needSignin">Primero inicia sesión con tu cuenta de Nivelato.</p>
+    <div style="margin-top:14px">
+      <input type="email" id="email" autocomplete="email" placeholder="correo@ejemplo.com">
+      <input type="password" id="pass" autocomplete="current-password" placeholder="••••••••">
+      <div class="row"><button class="btn" id="btnEmail" data-t="signin">Entrar</button>
+      <button class="btn ghost" id="btnGoogle">Google</button></div>
+      <div class="msg" id="authMsg"></div>
+    </div>
+  </div>
+
+  <div class="card hidden" id="main">
+    <p data-t="intro">Al inscribirte aceptas probar versiones en desarrollo de Nivelato:</p>
+    <ul>
+      <li data-t="b1">Puedes recibir funciones sin terminar y errores ocasionales.</li>
+      <li data-t="b2">Tus comentarios se marcan como prioritarios para el equipo de Nivelato Labs.</li>
+      <li data-t="b3">Puedes salir cuando quieras desde esta misma página; salir no borra ninguno de tus datos.</li>
+      <li data-t="b4">La inscripción de tu empresa es separada y la controla el dueño.</li>
+    </ul>
+    <div class="row">
+      <button class="btn" id="btnDo" data-t="doBtn">Sí, inscribirme</button>
+      <a class="btn ghost" href="/" data-t="backBtn">Volver</a>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card hidden" id="done">
+    <p data-t="doneText">Listo: ya estás en la beta. Tu inscripción quedó guardada en tu perfil.</p>
+    <div class="row"><a class="btn" href="/" data-t="homeBtn">Ir a mis ajustes beta</a>
+    <a class="btn ghost" href="/feedback" data-t="fbBtn">Enviar un comentario</a></div>
+  </div>
+</div>
+
+<script type="module">
+import { auth, db } from '/firebase-config.js';
+import { onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider }
+  from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+import { doc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+
+const T = {
+  es: { title:'Inscribirme en la beta', needSignin:'Primero inicia sesión con tu cuenta de Nivelato.', signin:'Entrar',
+    intro:'Al inscribirte aceptas probar versiones en desarrollo de Nivelato:',
+    b1:'Puedes recibir funciones sin terminar y errores ocasionales.',
+    b2:'Tus comentarios se marcan como prioritarios para el equipo de Nivelato Labs.',
+    b3:'Puedes salir cuando quieras desde esta misma página; salir no borra ninguno de tus datos.',
+    b4:'La inscripción de tu empresa es separada y la controla el dueño.',
+    doBtn:'Sí, inscribirme', backBtn:'Volver', doneText:'Listo: ya estás en la beta. Tu inscripción quedó guardada en tu perfil.',
+    homeBtn:'Ir a mis ajustes beta', fbBtn:'Enviar un comentario', errNoProfile:'Tu cuenta aún no tiene perfil de Nivelato. Entra primero a la app para completar tu registro.' },
+  en: { title:'Join the beta', needSignin:'Sign in with your Nivelato account first.', signin:'Sign in',
+    intro:'By joining you agree to test in-development versions of Nivelato:',
+    b1:'You may get unfinished features and occasional bugs.',
+    b2:'Your feedback is flagged as priority for the Nivelato Labs team.',
+    b3:'You can leave at any time from this page; leaving never deletes your data.',
+    b4:'Company enrollment is separate and controlled by the owner.',
+    doBtn:'Yes, join the beta', backBtn:'Back', doneText:'Done: you are in the beta. Your enrollment is saved on your profile.',
+    homeBtn:'Go to my beta settings', fbBtn:'Send feedback', errNoProfile:'Your account has no Nivelato profile yet. Open the app first to finish signing up.' }
+};
+let lang = localStorage.getItem('niv-lang') || 'es';
+function applyLang(){ document.documentElement.lang = lang;
+  document.querySelectorAll('[data-t]').forEach(el => { const k = el.dataset.t; if (T[lang][k]) el.textContent = T[lang][k]; });
+  document.getElementById('langBtn').textContent = lang === 'es' ? 'EN' : 'ES'; }
+document.getElementById('langBtn').addEventListener('click', () => { lang = lang === 'es' ? 'en' : 'es'; localStorage.setItem('niv-lang', lang); applyLang(); });
+applyLang();
+
+const $ = id => document.getElementById(id);
+let me = null;
+onAuthStateChanged(auth, (user) => {
+  me = user;
+  $('signedOut').classList.toggle('hidden', !!user);
+  if (user) $('main').classList.remove('hidden');
+});
+$('btnEmail').addEventListener('click', async () => {
+  const m = $('authMsg'); m.className = 'msg';
+  try { await signInWithEmailAndPassword(auth, $('email').value.trim(), $('pass').value); }
+  catch (e) { m.className = 'msg err'; m.textContent = e.message; }
+});
+$('btnGoogle').addEventListener('click', async () => {
+  const m = $('authMsg'); m.className = 'msg';
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { m.className = 'msg err'; m.textContent = e.message; }
+});
+$('btnDo').addEventListener('click', async () => {
+  const m = $('msg'); m.className = 'msg'; $('btnDo').disabled = true;
+  try {
+    await updateDoc(doc(db, 'users', me.uid), {
+      betaEnrolled: true, betaEnrolledAt: serverTimestamp(), betaChannel: 'beta'
+    });
+    $('main').classList.add('hidden'); $('done').classList.remove('hidden');
+  } catch (e) {
+    m.className = 'msg err';
+    m.textContent = (e.code === 'not-found' || /No document/.test(e.message)) ? T[lang].errNoProfile : e.message;
+    $('btnDo').disabled = false;
+  }
+});
+</script>
+<script src="/press-yaoi.js" defer></script>
+</body>
+</html>

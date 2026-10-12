@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nivelato · Soporte (equipo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --niv-bg:#0e0e10; --niv-surface:#17171a; --niv-surface-2:#1e1e22;
+    --niv-border-soft:rgba(255,255,255,0.14); --niv-text:#f5f5f7; --niv-text-dim:#a7a7ad;
+    --niv-accent:#1971c2; --niv-green:#22c55e; --niv-red:#e5484d; --niv-amber:#f5a524;
+    --niv-radius:18px; --niv-pill:999px; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Inter,system-ui,sans-serif;background:var(--niv-bg);color:var(--niv-text);min-height:100dvh;padding:28px 18px 60px}
+  .wrap{max-width:720px;margin:0 auto}
+  header.top{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+  .logo{font-size:22px;font-weight:700}.logo span{color:var(--niv-amber)}
+  .tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--niv-surface-2);color:var(--niv-text);border:1px solid var(--niv-border-soft);border-radius:var(--niv-pill);padding:3px 10px}
+  .lang{margin-left:auto;background:var(--niv-surface-2);color:var(--niv-text);border:1px solid var(--niv-border-soft);border-radius:var(--niv-pill);padding:6px 14px;font:600 13px Inter;cursor:pointer}
+  h1{font-size:24px;margin-bottom:6px}
+  .sub{color:var(--niv-text-dim);font-size:14.5px;line-height:1.6;margin-bottom:20px}
+  .card{background:var(--niv-surface);border:1px solid var(--niv-border-soft);border-radius:var(--niv-radius);padding:22px;margin-bottom:16px}
+  .card h2{font-size:17px;margin-bottom:10px}
+  .card p{color:var(--niv-text-dim);font-size:14.5px;line-height:1.65}
+  .btn{display:inline-block;background:var(--niv-accent);color:#fff;border:none;border-radius:var(--niv-pill);padding:11px 22px;font:600 14px Inter;cursor:pointer;text-decoration:none}
+  .btn.ghost{background:var(--niv-surface-2);color:var(--niv-text);border:1px solid var(--niv-border-soft)}
+  .btn.danger{background:transparent;color:var(--niv-red);border:1px solid var(--niv-red)}
+  .btn:disabled{opacity:.45}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  input[type=email],input[type=password],input[type=text]{width:100%;background:var(--niv-surface-2);border:1px solid var(--niv-border-soft);border-radius:12px;color:var(--niv-text);padding:11px 14px;font:400 14px Inter;margin-bottom:10px}
+  input.code{font-family:'JetBrains Mono',monospace;font-size:26px;letter-spacing:.16em;text-align:center;text-transform:uppercase}
+  label{font-size:13px;font-weight:600;color:var(--niv-text-dim);display:block;margin:10px 0 6px}
+  .msg{font-size:14px;margin-top:12px;min-height:20px}.msg.err{color:var(--niv-red)}.msg.ok{color:var(--niv-green)}
+  .codeOut{font-family:'JetBrains Mono',monospace;font-size:30px;letter-spacing:.14em;text-align:center;padding:18px 6px;color:var(--niv-amber)}
+  .hidden{display:none!important}
+  a{color:var(--niv-amber)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><div class="logo">Nivelato<span>.</span></div><div class="tag">Staff</div>
+    <button class="lang" id="langBtn">EN</button></header>
+
+  <h1 data-t="title">Generar un código de soporte</h1>
+  <p class="sub" data-t="sub">Solo para el equipo de Nivelato Labs. El código se muestra una sola vez, vence en 30 minutos y abre una sesión de 2 horas cuando el dueño de la empresa lo escribe. El servidor verifica que seas del equipo en cada llamada.</p>
+
+  <div class="card" id="signedOut">
+    <p data-t="needSignin">Inicia sesión con tu cuenta del equipo.</p>
+    <div style="margin-top:14px">
+      <input type="email" id="email" autocomplete="email" placeholder="correo@ejemplo.com">
+      <input type="password" id="pass" autocomplete="current-password" placeholder="••••••••">
+      <div class="row"><button class="btn" id="btnEmail" data-t="signin">Entrar</button>
+      <button class="btn ghost" id="btnGoogle">Google</button></div>
+      <div class="msg" id="authMsg"></div>
+    </div>
+  </div>
+
+  <div id="main" class="hidden">
+    <div class="card">
+      <h2 data-t="genTitle">Nuevo código</h2>
+      <label for="orgId" data-t="orgLabel">Empresa (ID de la organización, opcional: amarra el código a esa empresa)</label>
+      <input type="text" id="orgId" autocomplete="off" placeholder="orgId">
+      <label for="reason" data-t="reasonLabel">Motivo (queda en el registro interno)</label>
+      <input type="text" id="reason" autocomplete="off" maxlength="200">
+      <div class="row"><button class="btn" id="btnGen" data-t="genBtn">Generar código</button>
+      <button class="btn ghost" id="btnSignOut" data-t="signout">Cerrar sesión</button></div>
+      <div class="msg" id="genMsg"></div>
+      <div id="codeBox" class="hidden">
+        <div class="codeOut" id="codeOut"></div>
+        <p data-t="codeNote">Léeselo al dueño de la empresa tal cual. No se guarda en texto plano y no se puede volver a ver.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-t="sessionsTitle">Tus sesiones</h2>
+      <div id="sessionsBox"><p data-t="loading">Cargando...</p></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { auth, centralFunctions } from '/firebase-config.js';
+import { onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut }
+  from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js';
+
+const T = {
+  es: { title:'Generar un código de soporte', sub:'Solo para el equipo de Nivelato Labs. El código se muestra una sola vez, vence en 30 minutos y abre una sesión de 2 horas cuando el dueño de la empresa lo escribe. El servidor verifica que seas del equipo en cada llamada.',
+    needSignin:'Inicia sesión con tu cuenta del equipo.', signin:'Entrar', genTitle:'Nuevo código',
+    orgLabel:'Empresa (ID de la organización, opcional: amarra el código a esa empresa)', reasonLabel:'Motivo (queda en el registro interno)',
+    genBtn:'Generar código', signout:'Cerrar sesión', codeNote:'Léeselo al dueño de la empresa tal cual. No se guarda en texto plano y no se puede volver a ver.',
+    sessionsTitle:'Tus sesiones', loading:'Cargando...', none:'No tienes sesiones recientes.',
+    pending:'El sistema de sesiones se activa con la próxima actualización del servidor.',
+    notStaff:'Esta cuenta no es del equipo de Nivelato Labs.', endBtn:'Terminar', until:'hasta las' },
+  en: { title:'Generate a support code', sub:'Nivelato Labs staff only. The code is shown once, expires in 30 minutes, and opens a 2-hour session when the company owner enters it. The server verifies staff on every call.',
+    needSignin:'Sign in with your staff account.', signin:'Sign in', genTitle:'New code',
+    orgLabel:'Company (organization ID, optional: binds the code to that company)', reasonLabel:'Reason (kept in the internal record)',
+    genBtn:'Generate code', signout:'Sign out', codeNote:'Read it to the company owner exactly as shown. It is never stored in plain text and cannot be shown again.',
+    sessionsTitle:'Your sessions', loading:'Loading...', none:'You have no recent sessions.',
+    pending:'The session system activates with the next server update.',
+    notStaff:'This account is not Nivelato Labs staff.', endBtn:'End', until:'until' }
+};
+let lang = localStorage.getItem('niv-lang') || 'es';
+function applyLang(){ document.documentElement.lang = lang;
+  document.querySelectorAll('[data-t]').forEach(el => { const k = el.dataset.t; if (T[lang][k]) el.textContent = T[lang][k]; });
+  document.getElementById('langBtn').textContent = lang === 'es' ? 'EN' : 'ES'; }
+document.getElementById('langBtn').addEventListener('click', () => { lang = lang === 'es' ? 'en' : 'es'; localStorage.setItem('niv-lang', lang); applyLang(); });
+applyLang();
+
+const $ = id => document.getElementById(id);
+const fns = centralFunctions;
+function esc(s){ const d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML; }
+
+async function loadSessions(){
+  const box = $('sessionsBox');
+  try {
+    const res = await httpsCallable(fns, 'getSupportStatus')({ staffList: true });
+    const list = (res.data && res.data.sessions) || [];
+    if (!list.length){ box.innerHTML = '<p>' + esc(T[lang].none) + '</p>'; return; }
+    box.innerHTML = list.map(s => {
+      const until = s.expiresAt ? new Date(s.expiresAt).toLocaleTimeString() : '';
+      const active = s.status === 'active';
+      return '<p style="padding:8px 0;border-top:1px solid var(--niv-border-soft)">'
+        + '<strong style="color:var(--niv-text)">' + esc(s.orgId) + '</strong> · ' + esc(s.status)
+        + (active ? ' · ' + esc(T[lang].until) + ' ' + esc(until) : '')
+        + (active ? ' <button class="btn danger" data-end="' + esc(s.orgId) + '" style="padding:5px 14px;margin-left:8px">' + esc(T[lang].endBtn) + '</button>' : '')
+        + '</p>';
+    }).join('');
+    box.querySelectorAll('[data-end]').forEach(b => b.addEventListener('click', async () => {
+      b.disabled = true;
+      try { await httpsCallable(fns, 'endSupportSession')({ orgId: b.dataset.end }); loadSessions(); }
+      catch (e) { b.disabled = false; }
+    }));
+  } catch (e) {
+    box.innerHTML = '<p>' + esc(T[lang].pending) + '</p>';
+  }
+}
+
+onAuthStateChanged(auth, (user) => {
+  $('signedOut').classList.toggle('hidden', !!user);
+  $('main').classList.toggle('hidden', !user);
+  if (user) loadSessions();
+});
+$('btnEmail').addEventListener('click', async () => {
+  const m = $('authMsg'); m.className = 'msg';
+  try { await signInWithEmailAndPassword(auth, $('email').value.trim(), $('pass').value); }
+  catch (e) { m.className = 'msg err'; m.textContent = e.message; }
+});
+$('btnGoogle').addEventListener('click', async () => {
+  const m = $('authMsg'); m.className = 'msg';
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { m.className = 'msg err'; m.textContent = e.message; }
+});
+$('btnSignOut').addEventListener('click', () => signOut(auth));
+$('btnGen').addEventListener('click', async () => {
+  const m = $('genMsg'); m.className = 'msg';
+  $('codeBox').classList.add('hidden');
+  $('btnGen').disabled = true;
+  try {
+    const payload = {};
+    const org = $('orgId').value.trim(); if (org) payload.orgId = org;
+    const reason = $('reason').value.trim(); if (reason) payload.reason = reason;
+    const res = await httpsCallable(fns, 'createSupportCode')(payload);
+    $('codeOut').textContent = (res.data && res.data.code) || '';
+    $('codeBox').classList.remove('hidden');
+  } catch (e) {
+    m.className = 'msg err';
+    m.textContent = (e.code === 'functions/permission-denied') ? T[lang].notStaff : T[lang].pending;
+  }
+  $('btnGen').disabled = false;
+});
+</script>
+<script src="/press-yaoi.js" defer></script>
+</body>
+</html>
