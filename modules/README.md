@@ -298,6 +298,15 @@ own those files):
   (Projects, Customers, Measurements, No projects, No customers,
   No measurements).
 
+## Shell rule (mobile)
+
+Mobile: sidebar always, top bar never. At widths up to 900px no page
+renders a top bar, regardless of the compact-mode setting (that setting
+governs desktop only). Navigation is the sidebar drawer; account
+actions live inside the sidebar. Hosts must not mount the topbar
+module at mobile widths; if mounted anyway, the module renders
+nothing (it self-suppresses in CSS).
+
 ## Embedding checklist for page workers
 
 1. Include `/modules/shell-bridge.js` once, mount with `NivShell`.
