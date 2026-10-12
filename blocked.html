@@ -4,16 +4,18 @@
 <meta charset="UTF-8" />
 <script src="./company-theme.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="theme-color" content="#121212">
+<meta name="theme-color" content="#0e0e10">
 <title>Nivelato — Sin acceso</title>
+<link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="niv-dark.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Inter', system-ui, sans-serif;
-    background: #f8f9fa;
-    color: #212529;
+    background: var(--niv-bg);
+    color: var(--niv-text);
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
@@ -24,15 +26,15 @@
     gap: 16px;
   }
   .icon { font-size: 56px; }
-  h2 { font-size: 20px; font-weight: 700; color: #212529; }
-  p { font-size: 14px; color: #868e96; max-width: 340px; line-height: 1.6; }
+  h2 { font-size: 20px; font-weight: 700; color: var(--niv-text); }
+  p { font-size: 14px; color: var(--niv-text-dim); max-width: 340px; line-height: 1.6; }
   .btn {
     display: inline-block;
     padding: 12px 28px;
-    background: #1971c2;
+    background: var(--niv-accent);
     color: #fff;
-    border: none;
-    border-radius: 8px;
+    border: 1px solid transparent;
+    border-radius: var(--niv-pill);
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;

@@ -4,15 +4,17 @@
 <meta charset="UTF-8" />
 <script src="./company-theme.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="theme-color" content="#121212">
+<meta name="theme-color" content="#0e0e10">
 <title>Nivelato — Sin conexión</title>
+<link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="niv-dark.css">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: system-ui, sans-serif;
-    background: #f8f9fa;
-    color: #212529;
+    background: var(--niv-bg);
+    color: var(--niv-text);
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
@@ -24,21 +26,21 @@
   }
   .icon { font-size: 56px; }
   h2 { font-size: 20px; font-weight: 700; }
-  p { font-size: 14px; color: #495057; max-width: 360px; line-height: 1.6; }
+  p { font-size: 14px; color: var(--niv-text-dim); max-width: 360px; line-height: 1.6; }
   .btn {
     display: inline-block;
     padding: 12px 28px;
-    background: #0c6b3c;
+    background: var(--niv-accent);
     color: #fff;
-    border: none;
-    border-radius: 8px;
+    border: 1px solid transparent;
+    border-radius: var(--niv-pill);
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
     font-family: inherit;
     margin-top: 8px;
   }
-  .btn:active { background: #095c33; }
+  .btn:active { background: #1864ab; }
 </style>
 <link rel="stylesheet" href="./qgc-theme.css">
 </head>
