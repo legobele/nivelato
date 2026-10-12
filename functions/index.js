@@ -1953,3 +1953,397 @@ exports.sendCompanyInviteEmail = onCall({ region: 'us-central1', memory: '256MiB
   });
   return { ok: true };
 });
+
+// ---------------------------------------------------------------------------
+// Support surfaces (SUPPORT_SURFACES.md): version registry reads, beta
+// channel adoption, priority feedback, and remote support sessions.
+// Deployed as one batch with the rest of this file; the remote ELEVATION
+// itself lives in firestore.rules (drafted patch, NOT yet deployed):
+// until those rules ship, sessions can be created, seen, audited and
+// revoked, but the support identity has no direct org data access.
+// ---------------------------------------------------------------------------
+
+function tsIso(v) {
+  return v && typeof v.toDate === 'function' ? v.toDate().toISOString() : null;
+}
+
+// Staff gate (design 6.2): custom claim nivelatoStaff == true, OR an
+// entry in the console-managed staffAllowlist/{email} collection.
+async function isStaff(auth) {
+  if (!auth) return false;
+  if (auth.token && auth.token.nivelatoStaff === true) return true;
+  const email = auth.token && auth.token.email;
+  if (!email) return false;
+  const snap = await db.doc(`staffAllowlist/${String(email).toLowerCase()}`).get();
+  return snap.exists;
+}
+
+async function callerOrg(request) {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');
+  const uid = request.auth.uid;
+  const userSnap = await db.doc(`users/${uid}`).get();
+  if (!userSnap.exists) throw new HttpsError('failed-precondition', 'No tienes perfil de usuario.');
+  return { uid, user: userSnap.data(), orgId: userSnap.data().orgId || null };
+}
+
+async function requireOrgOwner(request) {
+  const ctx = await callerOrg(request);
+  if (!ctx.orgId) throw new HttpsError('failed-precondition', 'No tienes taller asignado.');
+  const orgSnap = await db.doc(`orgs/${ctx.orgId}`).get();
+  if (!orgSnap.exists) throw new HttpsError('failed-precondition', 'Taller no encontrado.');
+  const org = orgSnap.data();
+  if (ctx.user.role !== 'owner' || org.ownerId !== ctx.uid) {
+    throw new HttpsError('permission-denied', 'Solo el dueño del taller puede hacer esto.');
+  }
+  return { ...ctx, org };
+}
+
+// getBackendVersion: the version registry (design 3.4). Any signed-in
+// user; returns the global stamp, the latest ledger entries, and the
+// public projections.
+exports.getBackendVersion = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');
+  const globalSnap = await db.doc('config/ui_versions').get();
+  const g = globalSnap.exists ? globalSnap.data() : {};
+  const relSnap = await db.collection('config/ui_versions/releases')
+    .orderBy('stampedAt', 'desc').limit(20).get();
+  const releases = relSnap.docs.map((d) => ({
+    id: d.id, ...d.data(), stampedAt: tsIso(d.data().stampedAt),
+  }));
+  const backendSnap = await db.doc('app_updates/backend').get();
+  const androidSnap = await db.doc('app_updates/android').get();
+  return {
+    backendCommit: g.backendCommit || null,
+    backendFriendlyVersion: g.backendFriendlyVersion || null,
+    backendStampedAt: tsIso(g.backendStampedAt),
+    backendStampedBy: g.backendStampedBy || null,
+    latestSemver: g.latestSemver || null,
+    releases,
+    projections: {
+      backend: backendSnap.exists ? { ...backendSnap.data(), stampedAt: tsIso(backendSnap.data().stampedAt) } : null,
+      android: androidSnap.exists ? { ...androidSnap.data(), stampedAt: tsIso(androidSnap.data().stampedAt) } : null,
+    },
+  };
+});
+
+// setOrgUpdateChannel: owner-only beta adoption / rollback (design 4.4).
+// From/to versions are read from the pointers server-side and the
+// change is appended to orgs/{orgId}/channelHistory.
+exports.setOrgUpdateChannel = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  const { uid, orgId, org } = await requireOrgOwner(request);
+  const channel = String((request.data || {}).channel || '');
+  if (!['stable', 'beta'].includes(channel)) {
+    throw new HttpsError('invalid-argument', 'channel debe ser stable o beta.');
+  }
+  const fromChannel = org.updateChannel || 'stable';
+  if (channel === 'beta' && !org.betaEnrolled) {
+    throw new HttpsError('failed-precondition',
+      'La empresa debe inscribirse en la beta antes de adoptar el canal beta.');
+  }
+  const pointerFor = async (ch) => {
+    const s = await db.doc(ch === 'beta' ? 'app_updates/beta-latest' : 'app_updates/latest').get();
+    return s.exists ? (s.data().version || null) : null;
+  };
+  const fromVersion = await pointerFor(fromChannel);
+  const toVersion = await pointerFor(channel);
+  if (channel === 'beta' && !toVersion) {
+    throw new HttpsError('failed-precondition', 'Todavía no hay una versión beta publicada.');
+  }
+  if (fromChannel !== channel) {
+    await db.doc(`orgs/${orgId}`).update({ updateChannel: channel });
+    await db.collection(`orgs/${orgId}/channelHistory`).add({
+      fromChannel, toChannel: channel, fromVersion, toVersion,
+      by: uid, byEmail: request.auth.token.email || null,
+      at: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+  return { ok: true, channel, fromVersion, toVersion };
+});
+
+// submitFeedback: priority feedback (design 4.5). The client sends
+// only { category, text }; priority, channel and the version stamp are
+// derived here, server-side, from enrollment + the registry.
+const FEEDBACK_CATEGORIES = ['bug', 'idea', 'help', 'other'];
+exports.submitFeedback = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  const { uid, user, orgId } = await callerOrg(request);
+  const data = request.data || {};
+  const category = FEEDBACK_CATEGORIES.includes(data.category) ? data.category : 'other';
+  const text = String(data.text || '').trim().slice(0, 4000);
+  if (!text) throw new HttpsError('invalid-argument', 'El comentario no puede estar vacío.');
+  const today = new Date().toISOString().slice(0, 10);
+  await checkRateLimit(`feedback:${uid}:${today}`, 20);
+  let org = null;
+  if (orgId) {
+    const o = await db.doc(`orgs/${orgId}`).get();
+    org = o.exists ? o.data() : null;
+  }
+  const priority = !!(user.betaEnrolled || (org && org.betaEnrolled));
+  const channel = (org && org.updateChannel) || 'stable';
+  const ptrSnap = await db.doc(channel === 'beta' ? 'app_updates/beta-latest' : 'app_updates/latest').get();
+  const backendSnap = await db.doc('app_updates/backend').get();
+  const androidSnap = await db.doc('app_updates/android').get();
+  const versionStamp = {
+    friendlyVersion: (androidSnap.exists && androidSnap.data().friendlyVersion)
+      || (backendSnap.exists && backendSnap.data().friendlyVersion) || null,
+    backendCommit: backendSnap.exists ? (backendSnap.data().commit || null) : null,
+    orgVersion: ptrSnap.exists ? (ptrSnap.data().version || null) : null,
+  };
+  const ref = await db.collection('feedback').add({
+    orgId: orgId || null, uid, email: request.auth.token.email || null,
+    category, text, priority, channel, versionStamp,
+    status: 'new', createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  return { ok: true, id: ref.id, priority };
+});
+
+// listPriorityFeedback: staff inbox (design 4.5). Fetches the newest
+// feedback and filters in memory (avoids a composite index in v1).
+exports.listPriorityFeedback = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!(await isStaff(request.auth))) {
+    throw new HttpsError('permission-denied', 'Solo el equipo de Nivelato Labs.');
+  }
+  const onlyPriority = !!(request.data && request.data.onlyPriority);
+  const limit = Math.min(Math.max(Number((request.data || {}).limit) || 50, 1), 100);
+  const snap = await db.collection('feedback').orderBy('createdAt', 'desc').limit(200).get();
+  let items = snap.docs.map((d) => {
+    const x = d.data();
+    return {
+      id: d.id, orgId: x.orgId || null, uid: x.uid, email: x.email || null,
+      category: x.category, text: x.text, priority: !!x.priority,
+      channel: x.channel || 'stable', versionStamp: x.versionStamp || {},
+      status: x.status || 'new',
+      createdAt: x.createdAt && typeof x.createdAt.toMillis === 'function' ? x.createdAt.toMillis() : null,
+    };
+  });
+  if (onlyPriority) items = items.filter((i) => i.priority);
+  return { items: items.slice(0, limit) };
+});
+
+// ---------------------------------------------------------------------
+// Remote support sessions (design section 6).
+// ---------------------------------------------------------------------
+
+const SUPPORT_CODE_TTL_MS = 30 * 60 * 1000;        // to be entered
+const SUPPORT_SESSION_TTL_MS = 2 * 60 * 60 * 1000; // session length
+const CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'; // Crockford
+
+function generateSupportCode() {
+  let raw = '';
+  const bytes = crypto.randomBytes(10);
+  for (let i = 0; i < 10; i++) raw += CODE_ALPHABET[bytes[i] % 32];
+  return { raw, display: `${raw.slice(0, 5)}-${raw.slice(5)}` };
+}
+
+function normalizeSupportCode(input) {
+  return String(input || '').toUpperCase().replace(/[^0-9A-Z]/g, '')
+    .replace(/O/g, '0').replace(/[IL]/g, '1').slice(0, 10);
+}
+
+function hashSupportCode(normalized) {
+  return crypto.createHash('sha256').update(normalized).digest('hex');
+}
+
+function supportAccessId(orgId, supportUid) {
+  return `${orgId}__${supportUid}`;
+}
+
+async function writeSupportAudit(orgId, entry) {
+  await db.collection(`orgs/${orgId}/supportAudit`).add({
+    at: admin.firestore.FieldValue.serverTimestamp(), ...entry,
+  });
+}
+
+async function closeSupportSession(orgId, accessDoc, endStatus, actorUid, actorEmail) {
+  const data = accessDoc.data();
+  await accessDoc.ref.update({
+    status: endStatus, endedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  await db.doc(`orgs/${orgId}`).update({
+    supportSession: admin.firestore.FieldValue.delete(),
+  });
+  const histSnap = await db.collection(`orgs/${orgId}/supportSessions`)
+    .where('status', '==', 'active').get();
+  const batch = db.batch();
+  for (const h of histSnap.docs) {
+    if (h.data().supportUid === data.supportUid) {
+      batch.update(h.ref, { status: endStatus });
+    }
+  }
+  await batch.commit();
+  await writeSupportAudit(orgId, {
+    sessionId: accessDoc.id, actor: actorUid, actorEmail: actorEmail || null,
+    action: endStatus, summary: `Sesión de soporte ${endStatus}: ${data.supportEmail || data.supportUid}`,
+  });
+}
+
+// createSupportCode: staff only. The plaintext code is returned ONCE;
+// only its SHA-256 hash is stored (design 6.3).
+exports.createSupportCode = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!(await isStaff(request.auth))) {
+    throw new HttpsError('permission-denied', 'Solo el equipo de Nivelato Labs.');
+  }
+  const data = request.data || {};
+  const orgId = typeof data.orgId === 'string' && data.orgId.trim() ? data.orgId.trim() : null;
+  const reason = typeof data.reason === 'string' ? data.reason.trim().slice(0, 200) : null;
+  const { raw, display } = generateSupportCode();
+  const now = Date.now();
+  const ref = await db.collection('supportCodes').add({
+    codeHash: hashSupportCode(raw),
+    supportUid: request.auth.uid,
+    supportEmail: request.auth.token.email || null,
+    orgId, reason, status: 'pending',
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    expiresAt: admin.firestore.Timestamp.fromMillis(now + SUPPORT_CODE_TTL_MS),
+    usedAt: null, usedByOrg: null, usedByUid: null,
+  });
+  return { code: display, codeId: ref.id, expiresAt: new Date(now + SUPPORT_CODE_TTL_MS).toISOString() };
+});
+
+// acceptSupportCode: the org OWNER enters the code; entering it is the
+// consent (design 6.1). Transaction-burns the code, opens the session.
+exports.acceptSupportCode = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  const { uid, orgId, org } = await requireOrgOwner(request);
+  const code = normalizeSupportCode((request.data || {}).code);
+  if (code.length !== 10) throw new HttpsError('invalid-argument', 'Código inválido o vencido.');
+  const today = new Date().toISOString().slice(0, 10);
+  await checkRateLimit(`support-accept:${orgId}:${today}`, 10);
+  const hash = hashSupportCode(code);
+  const q = await db.collection('supportCodes').where('codeHash', '==', hash).limit(1).get();
+  if (q.empty) throw new HttpsError('invalid-argument', 'Código inválido o vencido.');
+  const codeRef = q.docs[0].ref;
+  const now = Date.now();
+  let codeData = null;
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(codeRef);
+    if (!snap.exists) throw new HttpsError('invalid-argument', 'Código inválido o vencido.');
+    const c = snap.data();
+    if (c.status !== 'pending') throw new HttpsError('invalid-argument', 'Código inválido o vencido.');
+    if (!c.expiresAt || c.expiresAt.toMillis() <= now) {
+      throw new HttpsError('invalid-argument', 'Código inválido o vencido.');
+    }
+    if (c.orgId && c.orgId !== orgId) {
+      throw new HttpsError('invalid-argument', 'Código inválido o vencido.');
+    }
+    codeData = c;
+    tx.update(codeRef, {
+      status: 'used',
+      usedAt: admin.firestore.FieldValue.serverTimestamp(),
+      usedByOrg: orgId, usedByUid: uid,
+    });
+  });
+  const expiresAt = admin.firestore.Timestamp.fromMillis(now + SUPPORT_SESSION_TTL_MS);
+  const accessId = supportAccessId(orgId, codeData.supportUid);
+  await db.doc(`supportAccess/${accessId}`).set({
+    orgId, supportUid: codeData.supportUid, supportEmail: codeData.supportEmail,
+    status: 'active',
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    expiresAt, codeId: codeRef.id,
+    acceptedBy: uid, acceptedByEmail: request.auth.token.email || null,
+  });
+  await db.collection(`orgs/${orgId}/supportSessions`).add({
+    supportUid: codeData.supportUid, supportEmail: codeData.supportEmail,
+    status: 'active',
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    expiresAt, codeId: codeRef.id,
+    acceptedBy: uid, acceptedByEmail: request.auth.token.email || null,
+  });
+  await db.doc(`orgs/${orgId}`).update({
+    supportSession: {
+      active: true, supportEmail: codeData.supportEmail,
+      until: expiresAt, accessId,
+    },
+  });
+  await writeSupportAudit(orgId, {
+    sessionId: accessId, actor: uid, actorEmail: request.auth.token.email || null,
+    action: 'accepted',
+    summary: `Sesión de soporte aceptada: ${codeData.supportEmail || codeData.supportUid} (la abrió el dueño)`,
+  });
+  return { ok: true, expiresAt: expiresAt.toDate().toISOString(), supportEmail: codeData.supportEmail };
+});
+
+// revokeSupportSession: the owner kills the org's active session now.
+exports.revokeSupportSession = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  const { uid, orgId } = await requireOrgOwner(request);
+  const snap = await db.collection('supportAccess')
+    .where('orgId', '==', orgId).where('status', '==', 'active').get();
+  for (const d of snap.docs) {
+    await closeSupportSession(orgId, d, 'revoked', uid, request.auth.token.email || null);
+  }
+  return { ok: true, closed: snap.size };
+});
+
+// endSupportSession: the staff member ends their own session.
+exports.endSupportSession = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!(await isStaff(request.auth))) {
+    throw new HttpsError('permission-denied', 'Solo el equipo de Nivelato Labs.');
+  }
+  const orgId = String((request.data || {}).orgId || '');
+  if (!orgId) throw new HttpsError('invalid-argument', 'orgId es requerido.');
+  const ref = db.doc(`supportAccess/${supportAccessId(orgId, request.auth.uid)}`);
+  const snap = await ref.get();
+  if (!snap.exists || snap.data().status !== 'active') {
+    return { ok: true, closed: 0 };
+  }
+  await closeSupportSession(orgId, snap, 'ended', request.auth.uid, request.auth.token.email || null);
+  return { ok: true, closed: 1 };
+});
+
+// getSupportStatus: company view (own org) and staff list view.
+exports.getSupportStatus = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Debes iniciar sesión.');
+  if (request.data && request.data.staffList) {
+    if (!(await isStaff(request.auth))) {
+      throw new HttpsError('permission-denied', 'Solo el equipo de Nivelato Labs.');
+    }
+    const snap = await db.collection('supportAccess')
+      .where('supportUid', '==', request.auth.uid)
+      .orderBy('createdAt', 'desc').limit(20).get();
+    return {
+      sessions: snap.docs.map((d) => {
+        const x = d.data();
+        return {
+          id: d.id, orgId: x.orgId, status: x.status,
+          createdAt: tsIso(x.createdAt), expiresAt: tsIso(x.expiresAt),
+        };
+      }),
+    };
+  }
+  const { uid, orgId } = await callerOrg(request);
+  if (!orgId) return { orgId: null, active: false };
+  const orgSnap = await db.doc(`orgs/${orgId}`).get();
+  const isOwner = orgSnap.exists && orgSnap.data().ownerId === uid;
+  const snap = await db.collection('supportAccess')
+    .where('orgId', '==', orgId).where('status', '==', 'active').limit(1).get();
+  if (snap.empty) return { orgId, isOwner, active: false };
+  const x = snap.docs[0].data();
+  // Rules enforce expiry per request; surface it honestly here too.
+  const expired = !x.expiresAt || x.expiresAt.toMillis() <= Date.now();
+  return {
+    orgId, isOwner, active: !expired,
+    session: expired ? null : {
+      supportUid: x.supportUid, supportEmail: x.supportEmail,
+      acceptedBy: x.acceptedBy, acceptedByEmail: x.acceptedByEmail,
+      createdAt: tsIso(x.createdAt), expiresAt: tsIso(x.expiresAt),
+    },
+  };
+});
+
+// supportSessionSweeper: closes expired sessions, clears indicators,
+// writes the closing audit entry. Rules already deny expired sessions
+// per-request; this is bookkeeping + the company's visible record.
+exports.supportSessionSweeper = onSchedule(
+  { region: 'us-central1', schedule: 'every 5 minutes', memory: '256MiB' },
+  async () => {
+    const snap = await db.collection('supportAccess').where('status', '==', 'active').get();
+    const now = Date.now();
+    let closed = 0;
+    for (const d of snap.docs) {
+      const x = d.data();
+      if (x.expiresAt && x.expiresAt.toMillis() > now) continue;
+      await closeSupportSession(x.orgId, d, 'expired', 'system', null);
+      closed++;
+    }
+    if (closed > 0) console.log('[support] sweeper closed', closed, 'expired session(s)');
+    return { closed };
+  }
+);

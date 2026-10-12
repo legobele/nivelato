@@ -1,0 +1,587 @@
+rules_version = '2';
+// =====================================================================
+// DRAFT: firestore.rules.proposed-support (SUPPORT_SURFACES.md section 7)
+// NOT DEPLOYED. This is the live firestore.rules plus the support
+// surfaces patch, kept as one diffable file for review when the rules
+// freeze lifts. Deltas vs live:
+//   - support session helpers + support branches on orgs/jobs/projects/
+//     invites/users (the remote ELEVATION SWITCH, design 6.4/6.5)
+//   - org subcollections: supportSessions, supportAudit, channelHistory
+//   - function-only collections: supportCodes, supportAccess, feedback
+//   - staffAllowlist (get-own, mirroring devAllowlist)
+//   - config/ui_versions public read (registry, design 3.1)
+//   - beta field pins on the users owner-management branch
+// =====================================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function myUid() {
+      return request.auth.uid;
+    }
+    function hasUserDoc() {
+      return exists(/databases/$(database)/documents/users/$(myUid()));
+    }
+    function myUser() {
+      return get(/databases/$(database)/documents/users/$(myUid())).data;
+    }
+    // Active member: has a user doc and is not disabled (pending/rejected).
+    // Disabled users keep self-read (so the app can show the pending screen)
+    // but lose all org data access — enforced here, not just in the UI.
+    function isActive() {
+      return hasUserDoc()
+          && (!('disabled' in myUser()) || myUser().disabled == false);
+    }
+    function myOrgId() {
+      return myUser().orgId;
+    }
+    // True when a field is identical before/after the write, treating
+    // "absent on both sides" as unchanged. Real user docs often lack
+    // optional fields (e.g. permissions), so a naive == comparison would
+    // wrongly deny legitimate self-edits.
+    function unchanged(field) {
+      return (!(field in resource.data) && !(field in request.resource.data))
+          || (field in resource.data && field in request.resource.data
+              && request.resource.data[field] == resource.data[field]);
+    }
+
+    // ---- Geo-flow claim layer (nivelato-geo-flows-spec §4.4) ----
+    // Minted server-side by the flowGate callable; the client can lie, the
+    // token can't. Tokens minted before flowGate existed carry none of these
+    // fields — org data access requires them (fail closed); users keep
+    // self-read so the app can show pending/blocked screens.
+    function hasFlowClaims() {
+      return request.auth.token.keys().hasAll(['flow', 'geoOk', 'licenseStatus']);
+    }
+    function orgFlow(orgId) {
+      return get(/databases/$(database)/documents/orgs/$(orgId)).data.get('flow', '');
+    }
+    // The caller's minted flow must match the org's actual flow, and be a
+    // known flow. Prevents a stale/foreign claim from opening another org.
+    function flowMatches(orgId) {
+      return hasFlowClaims()
+          && request.auth.token.flow in ['qgi', 'external']
+          && request.auth.token.flow == orgFlow(orgId);
+    }
+    // QGI: geoOk minted only on flowGate `allow` (hard VPN/proxy/relay block
+    // otherwise — no exceptions).
+    function qgiOk() {
+      return request.auth.token.flow == 'qgi'
+          && request.auth.token.geoOk == true;
+    }
+    // External: active or trialing (30d / 200-save trial) may read+write;
+    // past_due gets read-only (30-day grace, owner banner handled in UI).
+    function externalReadable() {
+      return request.auth.token.flow == 'external'
+          && request.auth.token.licenseStatus in ['active', 'trialing', 'past_due'];
+    }
+    function externalWritable() {
+      return request.auth.token.flow == 'external'
+          && request.auth.token.licenseStatus in ['active', 'trialing'];
+    }
+    function canReadOrgData(orgId) {
+      return isActive() && flowMatches(orgId)
+          && (qgiOk() || externalReadable());
+    }
+    function canWriteOrgData(orgId) {
+      return isActive() && flowMatches(orgId)
+          && (qgiOk() || externalWritable());
+    }
+
+    // ---- Remote support sessions (SUPPORT_SURFACES.md 6.4) ----
+    // Elevation switch: a session doc at a deterministic path, written
+    // only by callables (Admin SDK). Rules can get() it because the id
+    // is orgId + '__' + supportUid. Expiry is checked against
+    // request.time on every evaluation, so revocation and expiry take
+    // effect on the very next request (custom claims cannot do this).
+    function supportAccessPath(orgId) {
+      return /databases/$(database)/documents/supportAccess/$(orgId + '__' + myUid());
+    }
+    function hasActiveSupport(orgId) {
+      return isSignedIn()
+        && exists(supportAccessPath(orgId))
+        && get(supportAccessPath(orgId)).data.status == 'active'
+        && get(supportAccessPath(orgId)).data.expiresAt > request.time;
+    }
+
+    // Users.
+    // - get: own doc, or same-org (single reads need no per-doc get()).
+    // - list: same-org only, via resource.data (NOT get(users/{id}) — a
+    //   per-document get() makes every list query fail).
+    // - create (signup): pinned so a new account can NEVER self-grant
+    //   privilege. role must be 'medidor' or 'owner'; 'owner' is allowed ONLY
+    //   when the referenced org's ownerId is the signer (org creators); a
+    //   'medidor' joiner must reference an existing org AND land disabled
+    //   (pending owner approval). permissions/geo/deletion fields are
+    //   server- or owner-managed — never client-set at birth.
+    // - update: self may edit profile fields only (role/orgId/permissions/
+    //   disabled/deleteApprovedAt/geo fields immutable — no self-promotion,
+    //   no self-approval, no geo-spoofing, no self-approved deletion);
+    //   deleteRequestedAt is the one self-service field (B2 deletion flow).
+    //   Owners may manage same-org members (approve/reject/roles/
+    //   permissions, deletion approvals).
+    // - delete: NO client deletes — delete+recreate was a full
+    //   privilege-escalation bypass. Doc removal happens via the
+    //   processAccountDeletion Cloud Function (B2).
+    //
+    // The org a new user doc points at (create-time only). orgId must be a
+    // string; a missing/non-string orgId fails closed via exists() == false.
+    function createOrgPath() {
+      return /databases/$(database)/documents/orgs/$(request.resource.data.orgId);
+    }
+    function createOrgExists() {
+      return exists(createOrgPath());
+    }
+    function createOrg() {
+      return get(createOrgPath()).data;
+    }
+    match /users/{userId} {
+      allow create: if isSignedIn()
+        && myUid() == userId
+        && request.resource.data.orgId is string
+        && createOrgExists()
+        && request.resource.data.role in ['medidor', 'owner']
+        && (request.resource.data.role == 'owner'
+            ? createOrg().ownerId == myUid()
+            : createOrg().flow in ['qgi', 'external']
+              && request.resource.data.disabled == true)
+        && !('permissions' in request.resource.data)
+        && (!('geoStatus' in request.resource.data)
+            || request.resource.data.geoStatus == 'pending')
+        && !('lastGeoCheck' in request.resource.data)
+        && !('lastSeenRegion' in request.resource.data)
+        && !('deleteRequestedAt' in request.resource.data)
+        && !('deleteApprovedAt' in request.resource.data);
+      allow get: if isSignedIn() && (
+        myUid() == userId ||
+        (isActive() && myOrgId() == resource.data.orgId) ||
+        hasActiveSupport(resource.data.orgId)
+      );
+      allow list: if isSignedIn() && (
+        (isActive() && myOrgId() == resource.data.orgId)
+        || hasActiveSupport(resource.data.orgId)
+      );
+      allow update: if isSignedIn() && (
+        (myUid() == userId
+          && unchanged('role')
+          && unchanged('orgId')
+          && unchanged('permissions')
+          && unchanged('disabled')
+          && unchanged('deleteApprovedAt')
+          && unchanged('geoStatus')
+          && unchanged('lastGeoCheck')
+          && unchanged('lastSeenRegion'))
+        // B2: self-service deletion REQUEST — may only touch
+        // deleteRequestedAt, nothing else.
+        || (myUid() == userId
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['deleteRequestedAt']))
+        || (isActive()
+          && myUser().role == 'owner'
+          && myOrgId() == resource.data.orgId
+          && request.resource.data.orgId == resource.data.orgId
+          // Beta enrollment is self-service only (design 7): an owner
+          // managing a member cannot flip the member's beta fields.
+          && unchanged('betaEnrolled')
+          && unchanged('betaChannel'))
+        // Remote support (design 6.5): operational edits only. Role can
+        // never become owner, the org owner's own doc is excluded, and
+        // orgId/permissions/disabled/geo/deletion/beta fields are pinned.
+        || (hasActiveSupport(resource.data.orgId)
+          && resource.data.role != 'owner'
+          && request.resource.data.role != 'owner'
+          && unchanged('orgId')
+          && unchanged('permissions')
+          && unchanged('disabled')
+          && unchanged('deleteApprovedAt')
+          && unchanged('geoStatus')
+          && unchanged('lastGeoCheck')
+          && unchanged('lastSeenRegion')
+          && unchanged('betaEnrolled')
+          && unchanged('betaChannel'))
+      );
+      allow delete: if false;
+
+      // Presence beacon — users/{userId}/presence/{beaconId}.
+      // A user may ONLY write their own beacon, and only the two beacon
+      // fields (no stuffing arbitrary data into presence). Anyone signed in
+      // may read their own beacon or a same-org member's (drives the online
+      // list + the pendingUpdateWatcher's nobody-online check).
+      match /presence/{beaconId} {
+        allow read: if isSignedIn() && (
+          myUid() == userId ||
+          (isActive() && myOrgId() ==
+            get(/databases/$(database)/documents/users/$(userId)).data.orgId)
+        );
+        allow write: if isSignedIn() && myUid() == userId
+          && request.resource.data.keys().hasOnly(['lastSeen', 'route']);
+      }
+    }
+
+    // Orgs.
+    // - create: signed-in users may ONLY create external-flow trial orgs
+    //   (Phase 3 Stripe checkout replaces this with server provisioning).
+    //   QGI orgs are never client-created — console/Giulia only. Trial
+    //   fields are pinned so a client can't mint itself a paid org.
+    // - read: active members with valid flow claims. Mid-signup users with no
+    //   user doc yet get SINGLE-ORG reads only (they are validating a join
+    //   code — the user doc is created after): get is allowed, list is NOT,
+    //   so a fresh account can never enumerate org names/joinCodes/ownerIds.
+    // - update/delete: owner of the org, with flow claims valid. `flow`,
+    //   `versionPolicy`, `licenseStatus`, `dataVersion` are
+    //   console/function-only - clients can never change them (same
+    //   discipline as NextInv's versionPolicy). `dataVersion` is stamped
+    //   only by the update engine (applyCompanyUpdate / pendingUpdateWatcher
+    //   via the Admin SDK); implicit current version is '0.9' until stamped.
+    //   `pendingUpdate` changes by owners remain allowed through this same
+    //   owner path (it is how the app defers an update).
+    match /orgs/{orgId} {
+      allow create: if isSignedIn()
+        && request.resource.data.flow == 'external'
+        && request.resource.data.licenseStatus == 'trialing'
+        && request.resource.data.versionPolicy == 'external-hybrid'
+        && request.resource.data.ownerId == myUid()
+        && request.resource.data.trialSavesUsed == 0
+        && request.resource.data.keys().hasAll(
+             ['name', 'ownerId', 'joinCode', 'flow', 'versionPolicy',
+              'licenseStatus', 'trialSavesUsed', 'createdAt']);
+      allow get: if isSignedIn() && (
+        !hasUserDoc() ||
+        hasActiveSupport(orgId) ||
+        (canReadOrgData(orgId) && myOrgId() == orgId) ||
+        // Escape hatch: members always see their own company's basic
+        // details (name, settings) even when flow claims lag or perms
+        // are otherwise restricted. Subcollections keep strict rules.
+        (isActive() && hasUserDoc() && myOrgId() == orgId)
+      );
+      allow list: if isSignedIn() && isActive()
+        && myOrgId() == resource.data.orgId;
+      allow update: if (canWriteOrgData(orgId)
+        && myUser().role == 'owner' && myOrgId() == orgId
+        && request.resource.data.flow == resource.data.flow
+        && request.resource.data.versionPolicy == resource.data.versionPolicy
+        && request.resource.data.licenseStatus == resource.data.licenseStatus
+        && request.resource.data.get('dataVersion', '0.9')
+           == resource.data.get('dataVersion', '0.9'))
+        // Remote support (design 6.5): same pins as the owner path,
+        // plus ownerId and the beta/channel/support fields pinned.
+        // Support NEVER deletes the org (delete stays owner-only).
+        || (hasActiveSupport(orgId)
+          && request.resource.data.flow == resource.data.flow
+          && request.resource.data.versionPolicy == resource.data.versionPolicy
+          && request.resource.data.licenseStatus == resource.data.licenseStatus
+          && request.resource.data.get('dataVersion', '0.9')
+             == resource.data.get('dataVersion', '0.9')
+          && request.resource.data.ownerId == resource.data.ownerId
+          && unchanged('betaEnrolled')
+          && unchanged('beta')
+          && unchanged('updateChannel')
+          && unchanged('supportSession'));
+      allow delete: if canWriteOrgData(orgId)
+        && myUser().role == 'owner' && myOrgId() == orgId
+        && request.resource.data.flow == resource.data.flow
+        && request.resource.data.versionPolicy == resource.data.versionPolicy
+        && request.resource.data.licenseStatus == resource.data.licenseStatus
+        && request.resource.data.get('dataVersion', '0.9')
+           == resource.data.get('dataVersion', '0.9');
+
+      // Jobs.
+      // - create/read: active org members with valid flow claims; read also
+      //   for shared users.
+      // - create pins authorship: installerUid MUST be the signer, and the
+      //   job's orgId field MUST match the path org (which the signer
+      //   belongs to) — no writing jobs into someone else's org, no
+      //   impersonating another installer.
+      // - update/delete: owner/supervisor any org job; anyone own jobs
+      //   they created (matches canEditJob() in permissions.js).
+      // - orgId comes from the path wildcard: no per-doc get(), so lists
+      //   scale.
+      match /jobs/{jobId} {
+        allow create: if (canWriteOrgData(orgId) && myOrgId() == orgId
+          && request.resource.data.get('installerUid', '') == myUid()
+          && request.resource.data.get('orgId', '') == orgId)
+          // Support-created jobs are authored by the support identity:
+          // visible attribution beats silent impersonation (design 6.5).
+          || (hasActiveSupport(orgId)
+            && request.resource.data.get('installerUid', '') == myUid()
+            && request.resource.data.get('orgId', '') == orgId);
+        allow read: if (canReadOrgData(orgId) && (
+          myOrgId() == orgId ||
+          resource.data.get('sharedWith', []).hasAny([myUid()])
+        )) || hasActiveSupport(orgId);
+        allow update: if (canWriteOrgData(orgId) && myOrgId() == orgId && (
+          myUser().role in ['owner', 'supervisor'] ||
+          myUid() == resource.data.installerUid
+        )) || hasActiveSupport(orgId);
+        // Support gets NO delete (design 6.5 deny list).
+        allow delete: if canWriteOrgData(orgId) && myOrgId() == orgId && (
+          myUser().role in ['owner', 'supervisor'] ||
+          myUid() == resource.data.installerUid
+        );
+      }
+
+      // Projects — orgs/{orgId}/projects/{projectId}.
+      // - read: active org members (a project groups that org's jobs).
+      // - create/update: owner/supervisor, or any member with project
+      //   management (userManagement perm holders).
+      // - delete: owner only.
+      match /projects/{projectId} {
+        allow read: if canReadOrgData(orgId) && myOrgId() == orgId;
+        allow create, update: if (canWriteOrgData(orgId) && myOrgId() == orgId && (
+          myUser().role in ['owner', 'supervisor'] ||
+          myUser().get('permissions', {}).get('userManagement', false)
+        )) || hasActiveSupport(orgId);
+        allow delete: if canWriteOrgData(orgId) && myOrgId() == orgId
+          && myUser().role == 'owner';
+      }
+
+      // Invites — orgs/{orgId}/invites/{email}. Written by the owner from
+      // the Add User flow (users.html + add-user.js): an email-bound
+      // pre-approval carrying the role + permission overrides the new
+      // member receives when they join. The joiner still signs up and
+      // creates their user doc the normal way (role 'medidor', disabled,
+      // no permissions — the create rule above still pins that); the
+      // invite is applied server-side by flowGate on first sign-in, with
+      // the owner approval path (company/settings) as a fallback. The
+      // invitee never reads the invite directly.
+      // - read/list: org owner only (the pending-invites list in the
+      //   Users view).
+      // - create: org owner; doc id IS the invitee email; role can never
+      //   be 'owner'; permissions keys pinned to the known set
+      //   (permissions.js PERM_DEFS); status starts 'pending'.
+      // - update: org owner; only the status field may change (revoke /
+      //   mark accepted) — email and payload are immutable.
+      // - delete: org owner.
+      match /invites/{inviteId} {
+        allow get, list: if (isSignedIn() && isActive()
+          && myUser().role == 'owner' && myOrgId() == orgId)
+          || hasActiveSupport(orgId);
+        allow create: if isSignedIn() && isActive()
+          && myUser().role == 'owner' && myOrgId() == orgId
+          && request.resource.data.keys().hasOnly(
+               ['email', 'role', 'permissions', 'status', 'createdBy', 'createdAt'])
+          && request.resource.data.keys().hasAll(
+               ['email', 'role', 'permissions', 'status', 'createdBy', 'createdAt'])
+          && request.resource.data.email == inviteId
+          && request.resource.data.email is string
+          && request.resource.data.role in ['medidor', 'supervisor', 'cotizador']
+          && request.resource.data.status == 'pending'
+          && request.resource.data.createdBy == myUid()
+          && request.resource.data.permissions is map
+          && request.resource.data.permissions.keys().hasOnly(
+               ['viewDashboard', 'createMeasurements', 'viewOwnMeasurements',
+                'editOwnMeasurements', 'viewOthersMeasurements',
+                'editOthersMeasurements', 'managePriceList', 'createQuotes',
+                'approveQuotes', 'userManagement']);
+        allow update: if isSignedIn() && isActive()
+          && myUser().role == 'owner' && myOrgId() == orgId
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['status']);
+        allow delete: if isSignedIn() && isActive()
+          && myUser().role == 'owner' && myOrgId() == orgId;
+      }
+
+      // Support session history — written by callables (Admin SDK).
+      // Read: org owner, userManagement holders, or the support user
+      // the session belongs to. (Design 6.1.)
+      match /supportSessions/{sessionId} {
+        allow get, list: if isSignedIn() && (
+          (isActive() && myOrgId() == orgId && (myUser().role == 'owner'
+            || myUser().get('permissions', {}).get('userManagement', false)))
+          || resource.data.supportUid == myUid()
+        );
+        allow write: if false;
+      }
+
+      // Support audit log — append-only (design 6.6). Lifecycle entries
+      // are written server-side; the support console appends its own
+      // mutation entries in the same batch as each mutation, pinned to
+      // the session's support uid. Nobody updates or deletes entries.
+      match /supportAudit/{entryId} {
+        allow create: if hasActiveSupport(orgId)
+          && request.resource.data.actor == myUid()
+          && request.resource.data.keys().hasOnly(
+               ['sessionId', 'actor', 'actorEmail', 'action', 'summary',
+                'collection', 'docId', 'at']);
+        allow get, list: if isSignedIn() && isActive() && myOrgId() == orgId
+          && (myUser().role == 'owner'
+            || myUser().get('permissions', {}).get('userManagement', false));
+        allow update, delete: if false;
+      }
+
+      // Beta/stable channel change history (design 4.4): written by the
+      // setOrgUpdateChannel callable; the owner reads it.
+      match /channelHistory/{entryId} {
+        allow get, list: if isSignedIn() && isActive() && myOrgId() == orgId
+          && myUser().role == 'owner';
+        allow write: if false;
+      }
+    }
+
+    // Support codes — function-only. The doc id is random, the code is
+    // stored as a SHA-256 hash, and only callables touch this (design 6.3).
+    match /supportCodes/{codeId} {
+      allow read, write: if false;
+    }
+
+    // Support session docs (the elevation switch) — function-only.
+    // Rules read them via get() from hasActiveSupport(); clients never
+    // access the collection directly (design 6.4).
+    match /supportAccess/{accessId} {
+      allow read, write: if false;
+    }
+
+    // Staff allowlist — console-managed, mirrors devAllowlist. A
+    // signed-in user may check their own entry; the server-side staff
+    // gate (functions isStaff) is the authority (design 6.2).
+    match /staffAllowlist/{email} {
+      allow get: if isSignedIn();
+      allow list, create, update, delete: if false;
+    }
+
+    // Feedback — function-mediated only (design 4.5). Priority flags
+    // are server-derived; clients never read or write directly.
+    match /feedback/{feedbackId} {
+      allow read, write: if false;
+    }
+
+    // Version registry (design 3.1): public read so clients can read
+    // the canonical registry directly; writes stay function/console.
+    match /config/ui_versions {
+      allow read: if true;
+      allow write: if false;
+      match /orgs/{orgId} {
+        allow read: if true;
+        allow write: if false;
+      }
+      match /releases/{releaseId} {
+        allow read: if true;
+        allow write: if false;
+      }
+    }
+
+    // Geo review queue — console/function-only. Clients never read or write
+    // (dashboard triage UI is future work; Giulia triages in console).
+    match /geoReviews/{reviewId} {
+      allow read, write: if false;
+    }
+
+    // Upgrade pairing links (QR flow) — function-only. Minted by
+    // createUpgradeLink and redeemed by redeemUpgradeLink via the Admin
+    // SDK; the doc id is a single-use secret token, so clients never get
+    // direct access.
+    match /upgradeLinks/{token} {
+      allow read, write: if false;
+    }
+
+    // Device link records written by redeemUpgradeLink — function-only.
+    match /devices/{deviceId} {
+      allow read, write: if false;
+    }
+
+    // Notification prefs — notification_prefs/{uid}.
+    // Cada usuario lee y escribe SOLO su propio doc. Las claves están
+    // fijadas para que un cliente no pueda inyectar campos arbitrarios.
+    // En modo BYOB el taller debe pegar este mismo bloque en las reglas
+    // de SU proyecto (ver EMAIL_PIPELINE.md).
+    match /notification_prefs/{userId} {
+      allow read: if isSignedIn() && myUid() == userId;
+      allow write: if isSignedIn() && myUid() == userId
+        && request.resource.data.keys().hasOnly(
+             ['welcomeEmail', 'newProject', 'projectEdit', 'quoteReady', 'updatedAt']);
+    }
+
+    // Easter-egg odometer — public read (the gay-button press count lives
+    // here); signed-in users may only increment the counter by exactly 1.
+    match /stats/easter-eggs {
+      allow read: if true;
+      // Odometer for the easter eggs. Any signed-in user may bump exactly one
+      // known counter by exactly 1. (The whimsy must be accounted for.)
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly(['gay', 'crab', 'oldManYellsAtCloud', 'ao3', 'irs'])
+        && request.resource.data.keys().size() == 1
+        && (request.resource.data.get('gay', 0) == 1
+          || request.resource.data.get('crab', 0) == 1
+          || request.resource.data.get('oldManYellsAtCloud', 0) == 1
+          || request.resource.data.get('ao3', 0) == 1
+          || request.resource.data.get('irs', 0) == 1);
+      allow update: if isSignedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gay', 'crab', 'oldManYellsAtCloud', 'ao3', 'irs'])
+        && request.resource.data.diff(resource.data).affectedKeys().size() == 1
+        && (
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gay'])
+            && request.resource.data.gay == resource.data.get('gay', 0) + 1)
+          ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['crab'])
+            && request.resource.data.crab == resource.data.get('crab', 0) + 1)
+          ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['oldManYellsAtCloud'])
+            && request.resource.data.oldManYellsAtCloud == resource.data.get('oldManYellsAtCloud', 0) + 1)
+          ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ao3'])
+            && request.resource.data.ao3 == resource.data.get('ao3', 0) + 1)
+          ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['irs'])
+            && request.resource.data.irs == resource.data.get('irs', 0) + 1)
+        );
+    }
+
+    // App updates feed — public read (lets the app show update banners
+    // without auth, like nivelato_config/version); console/function-only
+    // write. Seeded by tools/seed-app-updates.js.
+    match /app_updates/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Version config — public read (lets the app check force-update floors
+    // without auth); console/function-only write.
+    match /nivelato_config/version {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Dev allowlist — emails enrolled in closed testing, allowed past the
+    // dev-options Google gate. Any signed-in user may check their own entry;
+    // writes are console-only (Giulia keeps it in sync with Play Console).
+    match /devAllowlist/{email} {
+      allow get: if isSignedIn();
+      allow list, create, update, delete: if false;
+    }
+
+// Company applications — apply.nivelatolabs.com/pr/company.
+    // - create: anyone (unauthenticated form submissions). Field allowlist
+    //   + type/size checks so the collection can't be used as a junk drawer.
+    // - read/update/delete: console-only (admins review in Firebase Console;
+    //   a review UI can add an owner-gated read later).
+    match /companyApplications/{appId} {
+      allow create: if request.resource.data.keys().hasOnly([
+          'legalName', 'dba', 'bizType', 'bizTypeOther',
+          'addrStreet', 'addrCity', 'addrZip',
+          'contactName', 'contactRole', 'contactPhone', 'contactEmail',
+          'employees', 'technicians', 'currentProcess', 'volume',
+          'tier', 'timeline', 'hearAbout', 'notes',
+          'status', 'locale', 'submittedAt', 'userAgent'
+        ])
+        && request.resource.data.legalName is string
+        && request.resource.data.legalName.size() >= 2
+        && request.resource.data.legalName.size() <= 160
+        && request.resource.data.contactEmail is string
+        && request.resource.data.contactEmail.size() <= 160
+        && request.resource.data.contactPhone is string
+        && request.resource.data.contactPhone.size() <= 20
+        && request.resource.data.status == 'pending'
+        && request.resource.data.submittedAt is timestamp
+        && (!('notes' in request.resource.data)
+            || request.resource.data.notes is string
+            && request.resource.data.notes.size() <= 2000)
+        && (!('currentProcess' in request.resource.data)
+            || request.resource.data.currentProcess is string
+            && request.resource.data.currentProcess.size() <= 2000);
+      allow read, update, delete: if false;
+    }
+  }
+}
