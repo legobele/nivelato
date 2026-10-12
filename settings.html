@@ -671,20 +671,183 @@ async function saveLangPref(l) {
   markLangButtons(l);
   try {
     await setDoc(doc(db, 'users', currentUser.uid), { language: l }, { merge: true });
+    try { if (window.NivSettings && window.NivSettings.setLang) window.NivSettings.setLang(l); } catch (_) { /* ignore */ }
     try {
       localStorage.setItem('nivelato-login-lang', l);
       localStorage.setItem('nl_lang_db', '1');
     } catch (_) { /* ignore */ }
+    if (window.NivAccountSettings) window.NivAccountSettings.applyLang(l);
+    setStatus('lang-status', '', '');
     const msg = document.getElementById('lang-saved');
     msg.style.display = 'block';
     setTimeout(() => { msg.style.display = 'none'; }, 2500);
   } catch (e) {
-    alert('No se pudo guardar el idioma: ' + (e.message || 'error desconocido'));
+    console.warn('[Nivelato] no se pudo guardar el idioma:', e && e.message);
+    setStatus('lang-status', 'err', t('langSaveFailed') + (e && e.code ? ' (' + e.code + ')' : ''));
   }
 }
 
+/* ---------------- Seguridad: change password ----------------
+   Password provider accounts only: reauthenticate with the current
+   password (EmailAuthProvider.credential + reauthenticateWithCredential)
+   and then updatePassword. Other providers see what applies to them. */
+const PROVIDER_NAMES = {
+  'google.com': 'Google', 'apple.com': 'Apple', 'microsoft.com': 'Microsoft',
+  'facebook.com': 'Facebook', 'github.com': 'GitHub', 'twitter.com': 'X'
+};
+function providerListText() {
+  const ids = (currentUser && currentUser.providerData ? currentUser.providerData : [])
+    .map(p => p.providerId).filter(id => id && id !== 'password');
+  if (!ids.length) return t('pwdProvidersUnknown');
+  return ids.map(id => PROVIDER_NAMES[id] || id).join(', ');
+}
+function renderProviderNote() {
+  if (!currentUser) return;
+  const providers = (currentUser.providerData || []).map(p => p.providerId);
+  if (providers.includes('password')) return;
+  const note = document.getElementById('pwd-provider-note');
+  if (note) {
+    note.textContent = t('pwdProviderNote').replace('{providers}', providerListText());
+    note.style.display = 'block';
+  }
+}
+function initPasswordSection() {
+  if (!currentUser) return;
+  const providers = (currentUser.providerData || []).map(p => p.providerId);
+  const hasPassword = providers.includes('password');
+  const form = document.getElementById('pwd-form');
+  const note = document.getElementById('pwd-provider-note');
+  if (hasPassword) {
+    if (form) form.style.display = '';
+    if (note) note.style.display = 'none';
+  } else {
+    if (form) form.style.display = 'none';
+    renderProviderNote();
+  }
+  if (pwdWired) return;
+  pwdWired = true;
+  if (form) form.addEventListener('submit', (e) => { e.preventDefault(); changePassword(); });
+}
+async function changePassword() {
+  const cur = document.getElementById('pwd-current').value;
+  const next = document.getElementById('pwd-new').value;
+  const confirm = document.getElementById('pwd-confirm').value;
+  if (!cur || !next || !confirm) { setStatus('pwd-status', 'err', t('pwdNeedAll')); return; }
+  if (next !== confirm) { setStatus('pwd-status', 'err', t('pwdMismatch')); return; }
+  const btn = document.getElementById('btn-change-password');
+  if (btn) btn.disabled = true;
+  setStatus('pwd-status', '', '');
+  try {
+    const credential = EmailAuthProvider.credential(currentUser.email, cur);
+    await reauthenticateWithCredential(currentUser, credential);
+    await updatePassword(currentUser, next);
+    document.getElementById('pwd-current').value = '';
+    document.getElementById('pwd-new').value = '';
+    document.getElementById('pwd-confirm').value = '';
+    setStatus('pwd-status', 'ok', t('pwdSuccess'));
+  } catch (e) {
+    const code = (e && e.code) || '';
+    let msg = t('pwdFailed');
+    if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') msg = t('pwdWrong');
+    else if (code === 'auth/weak-password') msg = t('pwdWeak');
+    else if (code === 'auth/requires-recent-login') msg = t('pwdRecent');
+    else if (code === 'auth/too-many-requests') msg = t('pwdTooMany');
+    setStatus('pwd-status', 'err', msg + (code ? ' (' + code + ')' : ''));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+/* ---------------- Seguridad: linked devices ----------------
+   Real list through the existing listUserDevices callable (same shape
+   users.html consumes: { latestVersion, orgId, devices, total, limit },
+   each device { uuid, displayName, brand, model, email, via, linkedAt,
+   appVersionName, appVersionCode, outdated }). There is NO revoke or
+   remove callable in functions/index.js (checked: only renameDevice and
+   renameMemberDevice exist for devices), so removal is not offered:
+   the list is informational, plus rename for your own devices through
+   the real renameDevice callable, mirroring users.html. */
+function initDevicesSection() {
+  if (devicesWired) { loadDevices(); return; }
+  devicesWired = true;
+  const btn = document.getElementById('btn-refresh-devices');
+  if (btn) btn.addEventListener('click', () => loadDevices());
+  loadDevices();
+}
+async function loadDevices() {
+  const list = document.getElementById('devices-list');
+  if (list) list.innerHTML = '<div class="devices-empty">' + escapeHtml(t('devicesLoading')) + '</div>';
+  setStatus('devices-status', '', '');
+  try {
+    const fn = httpsCallable(getFunctions(auth.app, 'us-central1'), 'listUserDevices');
+    const { data } = await fn({ uid: currentUser.uid });
+    lastDevices = (data && data.devices) || [];
+    renderDevices(lastDevices);
+  } catch (e) {
+    console.warn('[Nivelato] no se pudieron cargar los dispositivos:', e && e.message);
+    lastDevices = null;
+    if (list) list.innerHTML = '<div class="devices-empty">' + escapeHtml(t('devicesFailed')) + '</div>';
+  }
+}
+function renderDevices(devices) {
+  const list = document.getElementById('devices-list');
+  if (!list) return;
+  if (!devices || !devices.length) {
+    list.innerHTML = '<div class="devices-empty">' + escapeHtml(t('devicesEmpty')) + '</div>';
+    return;
+  }
+  const locale = pageLang() === 'en' ? 'en-US' : 'es';
+  list.innerHTML = devices.map((d) => {
+    const name = d.displayName || t('devicesUnnamed');
+    const modelBits = [d.brand, d.model].filter(Boolean).join(' ');
+    const versionBit = d.appVersionName ? 'Nivelato v' + d.appVersionName : '';
+    const linked = d.linkedAt ? new Date(d.linkedAt).toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    const sub = [modelBits || versionBit, linked ? t('devicesLinked') + linked : ''].filter(Boolean).join(' · ');
+    return '<div class="device-row"><div class="device-meta">'
+      + '<div class="device-name"><span class="device-name-text">' + escapeHtml(name) + '</span>'
+      + (d.outdated ? '<span class="device-badge">' + escapeHtml(t('devicesOutdated')) + '</span>' : '')
+      + '<button class="niv-btn-sm" type="button" data-rename="' + escapeHtml(d.uuid) + '">' + escapeHtml(t('devicesRename')) + '</button></div>'
+      + (sub ? '<div class="device-sub">' + escapeHtml(sub) + '</div>' : '')
+      + '<div class="device-edit-slot"></div></div></div>';
+  }).join('');
+  list.querySelectorAll('[data-rename]').forEach((btn) => {
+    btn.addEventListener('click', () => openDeviceRename(btn));
+  });
+}
+function openDeviceRename(btn) {
+  const row = btn.closest('.device-row');
+  const slot = row && row.querySelector('.device-edit-slot');
+  if (!slot || slot.dataset.open === '1') return;
+  slot.dataset.open = '1';
+  const uuid = btn.getAttribute('data-rename');
+  const nameEl = row.querySelector('.device-name-text');
+  const current = nameEl ? nameEl.textContent.trim() : '';
+  const unnamed = t('devicesUnnamed');
+  slot.innerHTML = '<div class="device-edit">'
+    + '<input type="text" maxlength="60" value="' + escapeHtml(current === unnamed ? '' : current) + '" placeholder="' + escapeHtml(t('devicesNamePh')) + '" aria-label="' + escapeHtml(t('devicesNamePh')) + '" />'
+    + '<button class="niv-btn-sm" type="button" data-act="save">' + escapeHtml(t('devicesSave')) + '</button>'
+    + '<button class="niv-btn-sm" type="button" data-act="cancel">' + escapeHtml(t('devicesCancel')) + '</button></div>';
+  const input = slot.querySelector('input');
+  input.focus();
+  input.select();
+  slot.querySelector('[data-act="cancel"]').addEventListener('click', () => { if (lastDevices) renderDevices(lastDevices); });
+  slot.querySelector('[data-act="save"]').addEventListener('click', async () => {
+    const saveBtn = slot.querySelector('[data-act="save"]');
+    saveBtn.disabled = true;
+    try {
+      const fn = httpsCallable(getFunctions(auth.app, 'us-central1'), 'renameDevice');
+      await fn({ deviceUuid: uuid, displayName: input.value.trim() });
+      loadDevices();
+    } catch (e) {
+      console.warn('[Nivelato] no se pudo renombrar el dispositivo:', e && e.message);
+      setStatus('devices-status', 'err', t('devicesRenameFailed') + (e && e.code ? ' (' + e.code + ')' : ''));
+      saveBtn.disabled = false;
+    }
+  });
+}
+
 window.requestDeleteAccount = async () => {
-  if (!confirm('¿Solicitar la eliminación de tu cuenta y todos tus datos? Un administrador revisará tu solicitud.')) return;
+  if (!confirm(t('deleteConfirm'))) return;
   try {
     await updateDoc(doc(db, 'users', currentUser.uid), { deleteRequestedAt: new Date().toISOString() });
     const drBtn = document.getElementById('btn-delete-account');
@@ -692,7 +855,7 @@ window.requestDeleteAccount = async () => {
     if (drBtn) drBtn.disabled = true;
     if (drStatus) drStatus.style.display = 'block';
   } catch(e) {
-    alert('Error al solicitar eliminación: ' + e.message);
+    alert(t('deleteFailed') + ' ' + e.message);
   }
 };
 
@@ -715,25 +878,10 @@ window.doLogout = async () => {
       }
       doomed.forEach((k) => store.removeItem(k));
     }
-  } catch (_) { /* storage unavailable — nothing to purge */ }
+  } catch (_) { /* storage unavailable: nothing to purge */ }
   window.location.href = 'https://login.nivelatolabs.com/';
 };
 
-</script>
-<script>
-  /* Preferencia de interfaz "Barra lateral compacta": es una preferencia
-     de usuario y vive aqui, en Ajustes de cuenta. Misma clave que lee el
-     panel al cargar ('niv-compact-sidebar'), sin cambios de almacenamiento:
-     solo se movio el control desde la pagina de usuarios de la compañia. */
-  (function () {
-    var KEY = 'niv-compact-sidebar';
-    var el = document.getElementById('ui-compact-sidebar');
-    if (!el) return;
-    try { el.checked = localStorage.getItem(KEY) === '1'; } catch (e) {}
-    el.addEventListener('change', function () {
-      try { localStorage.setItem(KEY, el.checked ? '1' : '0'); } catch (e) {}
-    });
-  })();
 </script>
 <script src="./nav-referrer.js"></script>
 <script src="./press-yaoi.js"></script>
