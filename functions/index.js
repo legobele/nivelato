@@ -401,6 +401,7 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
   let verdict = 'review';
   let reason = 'default-review';
   let geoOk = false;
+  let tzMismatchLogged = false;
 
   if (flow !== 'qgi' && flow !== 'external') {
     verdict = 'block'; reason = 'unknown-flow'; // fail closed on unclassified orgs
@@ -414,7 +415,18 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
     } else if (!intel.ok) {
       verdict = 'review'; reason = `no-intel:${intel.reason}`;
     } else if (inPR) {
-      if (tzMismatch) { verdict = 'review'; reason = 'tz-mismatch'; }
+      if (tzMismatch) {
+        // Log-only (policy 2026-10-12): reaching this branch means the IP
+        // intel exists and is trusted (untrusted IPs hard-block above,
+        // missing intel reviews above), so a disagreeing client timezone
+        // on a clean PR IP is corroboration noise, not a lockout signal.
+        // Record it in geoReviews at step 6, but allow — mirrors the
+        // external flow's log-only philosophy (section 8.7). tzMismatch
+        // still counts toward review/block whenever the IP is untrusted
+        // or intel is missing; those paths never reach this branch.
+        verdict = 'allow'; reason = 'pr-clean-tz-logged'; geoOk = true;
+        tzMismatchLogged = true;
+      }
       else { verdict = 'allow'; reason = 'pr-clean'; geoOk = true; }
     } else {
       // Non-PR geo on a QGI user: traveling employee — logged, NOT blocked (§8.6).
@@ -448,16 +460,19 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
     await db.doc(`orgs/${orgId}`).set({ homeRegion: country }, { merge: true });
   }
 
-  // 6. Review verdicts land in Giulia's triage queue.
-  if (verdict === 'review') {
+  // 6. Review verdicts land in Giulia's triage queue. Log-only tz
+  //    mismatches are written to the same collection with the same
+  //    signals (the mismatch stays on record), but with status 'logged'
+  //    so they never enter the triage queue.
+  if (verdict === 'review' || tzMismatchLogged) {
     await db.collection('geoReviews').add({
-      uid, orgId, reason,
+      uid, orgId, reason: tzMismatchLogged ? 'tz-mismatch' : reason,
       signals: {
         country, untrustedIp, flags: intel.flags || null,
         clientTimezone, tzMismatch: Boolean(tzMismatch), callerIpTruncated: callerIp ? 'present' : 'absent',
       },
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      status: 'open',
+      status: verdict === 'review' ? 'open' : 'logged',
     });
   }
 
