@@ -651,8 +651,12 @@ async function loadLangPref() {
     if (v === 'es' || v === 'en') lang = v;
     else {
       try {
-        const ls = localStorage.getItem('nivelato-login-lang');
-        if (ls === 'es' || ls === 'en') lang = ls;
+        if (window.NivSettings && window.NivSettings.getLang) lang = window.NivSettings.getLang();
+        else {
+          const ck = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1];
+          if (ck === 'es' || ck === 'en') lang = ck;
+          else { const ls = localStorage.getItem('nivelato-login-lang'); if (ls === 'es' || ls === 'en') lang = ls; }
+        }
       } catch (_) { /* ignore */ }
     }
   } catch (e) {

@@ -64,8 +64,8 @@
   };
   function lang() {
     try { if (window.NivSettings && typeof window.NivSettings.getLang === 'function') return window.NivSettings.getLang() === 'en' ? 'en' : 'es'; } catch (e) {}
+    try { var m = document.cookie.match(/(?:^|; )nivelato-login-lang=([^;]*)/); if (m && decodeURIComponent(m[1]) === 'en') return 'en'; if (m && decodeURIComponent(m[1]) === 'es') return 'es'; } catch (e) {}
     try { var v = window.localStorage.getItem('nivelato-login-lang'); if (v === 'en') return 'en'; } catch (e) {}
-    try { var m = document.cookie.match(/(?:^|; )nivelato-login-lang=([^;]*)/); if (m && decodeURIComponent(m[1]) === 'en') return 'en'; } catch (e) {}
     return 'es';
   }
   function L(key) { var t = STRINGS[lang()]; return (t && t[key]) || STRINGS.es[key] || key; }

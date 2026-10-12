@@ -624,7 +624,7 @@ onAuthStateChanged(auth, async (user) => {
       userData,
       orgId: userData.orgId,
       orgData,
-      lang: userData.language === 'es' ? 'es' : 'en'
+      lang: (userData.language === 'es' || userData.language === 'en') ? userData.language : (() => { try { const ck = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1]; if (ck) return ck; const ls = window.localStorage.getItem('nivelato-login-lang'); if (ls === 'es' || ls === 'en') return ls; } catch (e) {} return 'es'; })()
     };
     window.NivelatoAddUser = { open: openAddUserModal, refreshInvites };
     mount();

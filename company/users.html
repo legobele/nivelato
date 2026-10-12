@@ -412,11 +412,11 @@ const escapeHtml = (s) => String(s ?? '')
    The module script resolves the language after the user doc loads
    (doc language wins, 'es' selects Spanish, anything else English,
    the same rule add-user.js uses on this page). */
-let LANG = 'en';
+let LANG = 'es';
 try {
-  const _ls = window.localStorage.getItem('nivelato-login-lang');
   const _ck = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1];
-  LANG = (_ls === 'es' || _ck === 'es') ? 'es' : 'en';
+  const _ls = window.localStorage.getItem('nivelato-login-lang');
+  LANG = (_ck === 'es' || _ck === 'en') ? _ck : ((_ls === 'es' || _ls === 'en') ? _ls : 'es');
 } catch (e) {}
 const STR = {
   en: {
@@ -919,7 +919,11 @@ onAuthStateChanged(auth, async (user) => {
   if (window.applyCompanyTheme) { try { window.applyCompanyTheme(userSnap.data()); } catch (_) {} }
   currentUserData = userSnap.data();
   // The saved language wins for this page's strings from here on.
-  LANG = currentUserData.language === 'es' ? 'es' : 'en';
+  if (currentUserData.language === 'es' || currentUserData.language === 'en') {
+    LANG = currentUserData.language;
+    try { if (window.NivSettings && window.NivSettings.setLang) window.NivSettings.setLang(LANG); } catch (_) {}
+    try { if (window.__nivSidebarHandle && window.__nivSidebarHandle.setLang) window.__nivSidebarHandle.setLang(LANG); } catch (_) {}
+  }
   applyStaticLang();
   orgId = currentUserData.orgId;
   if (!orgId) {
@@ -966,6 +970,7 @@ onAuthStateChanged(auth, async (user) => {
   setInterval(refreshOnline, 60000);
 });
 </script>
+<script src="/niv-settings.js"></script>
 <script src="/modules/shell-bridge.js"></script>
 <script>
   /* Chrome modules: sidebar (target=company, this page is the Users door)
@@ -975,13 +980,13 @@ onAuthStateChanged(auth, async (user) => {
     var embed = false;
     try { embed = new URLSearchParams(window.location.search).get('embed') === 'users'; } catch (e) {}
     if (embed || !window.NivShell) return;
-    var lang = 'en';
+    var lang = 'es';
     try {
-      var ls = window.localStorage.getItem('nivelato-login-lang');
       var ck = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1];
-      lang = (ls === 'es' || ls === 'en') ? ls : (ck || 'en');
+      var ls = window.localStorage.getItem('nivelato-login-lang');
+      lang = (ck === 'es' || ck === 'en') ? ck : ((ls === 'es' || ls === 'en') ? ls : 'es');
     } catch (e) {}
-    window.NivShell.mountSidebar('#chrome-sidebar', { target: 'company', active: 'users', lang: lang });
+    window.__nivSidebarHandle = window.NivShell.mountSidebar('#chrome-sidebar', { target: 'company', active: 'users', lang: lang });
     if (window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
       window.NivShell.mountTopbar('#chrome-topbar', { active: 'users' });
     }
@@ -996,10 +1001,11 @@ onAuthStateChanged(auth, async (user) => {
      as the first render lands (or a handled error state is shown). */
   setTimeout(function () {
     if (window.__nivUsersBooted) return;
-    var es = false;
+    var es = true;
     try {
-      es = window.localStorage.getItem('nivelato-login-lang') === 'es'
-        || /(?:^|; )nivelato-login-lang=es(?:;|$)/.test(document.cookie);
+      var ck2 = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1];
+      var ls2 = window.localStorage.getItem('nivelato-login-lang');
+      es = ((ck2 === 'es' || ck2 === 'en') ? ck2 : ((ls2 === 'es' || ls2 === 'en') ? ls2 : 'es')) === 'es';
     } catch (e) {}
     var msg = es ? 'No se pudieron cargar los usuarios. Revisa tu conexión e inténtalo de nuevo.'
                  : 'Could not load users. Check your connection and try again.';

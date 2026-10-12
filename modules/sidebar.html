@@ -129,7 +129,7 @@
     <div class="niv-side-head">
       <div class="niv-company-avatar js-org-avatar" id="org-avatar">--</div>
       <div>
-        <div class="niv-company-name js-org-name" id="org-name">Loading...</div>
+        <div class="niv-company-name js-org-name" id="org-name">Cargando...</div>
         <div class="niv-company-ver js-org-version" id="org-version">Nivelato</div>
       </div>
     </div>
@@ -178,7 +178,7 @@
     <div class="niv-side-head">
       <div class="niv-company-avatar js-org-avatar">--</div>
       <div>
-        <div class="niv-company-name js-org-name">Loading...</div>
+        <div class="niv-company-name js-org-name">Cargando...</div>
         <div class="niv-company-ver js-org-version">Nivelato</div>
       </div>
     </div>
@@ -309,6 +309,11 @@ function applyLang() {
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const k = el.getAttribute('data-i18n');
     if (STRINGS.es[k] !== undefined) el.textContent = L(k);
+  });
+  /* The org name placeholder is a chrome string too: it must follow the
+     language from first paint, not only once company data lands. */
+  document.querySelectorAll('.js-org-name').forEach((el) => {
+    if (el.getAttribute('data-state') === 'loading') el.textContent = L('loading');
   });
   const sideCo = document.getElementById('side-company');
   if (sideCo) sideCo.setAttribute('aria-label', L('ariaCompany'));

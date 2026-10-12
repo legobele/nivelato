@@ -188,9 +188,9 @@ const escapeHtml = (s) => String(s ?? '')
    nivelato-login-lang local chain, then Spanish, the product default. */
 let LANG = 'es';
 try {
-  const _ls = window.localStorage.getItem('nivelato-login-lang');
   const _ck = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1];
-  LANG = (_ls === 'es' || _ls === 'en') ? _ls : (_ck || 'es');
+    const _ls = window.localStorage.getItem('nivelato-login-lang');
+    LANG = (_ck === 'es' || _ck === 'en') ? _ck : ((_ls === 'es' || _ls === 'en') ? _ls : 'es');
 } catch (e) {}
 const STR = {
   es: {
@@ -605,6 +605,8 @@ onAuthStateChanged(auth, async (user) => {
   currentUserData = userSnap.data();
   if (currentUserData.language === 'es' || currentUserData.language === 'en') {
     LANG = currentUserData.language;
+    try { if (window.NivSettings && window.NivSettings.setLang) window.NivSettings.setLang(LANG); } catch (_) {}
+    try { if (window.__nivSidebarHandle && window.__nivSidebarHandle.setLang) window.__nivSidebarHandle.setLang(LANG); } catch (_) {}
   }
   orgId = currentUserData.orgId;
   if (!orgId) { showLoadError(t('noOrg')); return; }
@@ -656,6 +658,7 @@ onAuthStateChanged(auth, async (user) => {
 });
 applyStaticLang();
 </script>
+<script src="/niv-settings.js"></script>
 <script src="/modules/shell-bridge.js"></script>
 <script>
   /* Chrome modules: sidebar (target=shell, this page is its Usuarios
@@ -673,11 +676,11 @@ applyStaticLang();
     if (embed || !window.NivShell) return;
     var lang = 'es';
     try {
-      var ls = window.localStorage.getItem('nivelato-login-lang');
       var ck = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1];
-      lang = (ls === 'es' || ls === 'en') ? ls : (ck || 'es');
+      var ls = window.localStorage.getItem('nivelato-login-lang');
+      lang = (ck === 'es' || ck === 'en') ? ck : ((ls === 'es' || ls === 'en') ? ls : 'es');
     } catch (err2) {}
-    window.NivShell.mountSidebar('#chrome-sidebar', { target: 'shell', active: 'users', lang: lang });
+    window.__nivSidebarHandle = window.NivShell.mountSidebar('#chrome-sidebar', { target: 'shell', active: 'users', lang: lang });
     if (window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
       window.NivShell.mountTopbar('#chrome-topbar', { active: 'users' });
     }
@@ -694,7 +697,7 @@ applyStaticLang();
     try {
       var ls = window.localStorage.getItem('nivelato-login-lang');
       var ck = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1];
-      es = (ls || ck || 'es') !== 'en';
+      es = (ck || ls || 'es') !== 'en';
     } catch (e) {}
     var msg = es ? 'No se pudieron cargar los usuarios. Revisa tu conexión e inténtalo de nuevo.'
                  : 'Could not load users. Check your connection and try again.';
