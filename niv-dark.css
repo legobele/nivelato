@@ -482,6 +482,11 @@ body:not(.has-sidebar) .niv-shell {
 .niv-hamburger { display: none; }
 .niv-scrim { display: none; }
 @media (max-width: 900px) {
+  /* Insurance so no stray wide element can side-scroll the whole app on
+     phones: clip horizontal overflow at the app root, mobile only.
+     overflow-x: clip (not hidden) keeps position: sticky working on the
+     top bar; desktop is untouched because this block is max-width 900px. */
+  body.has-sidebar { overflow-x: clip; }
   .niv-shell { flex-direction: column; }
   .niv-float-panel {
     position: fixed; top: 0; left: 0; bottom: 0;
