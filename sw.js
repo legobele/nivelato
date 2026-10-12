@@ -2,7 +2,7 @@
 // precached file changes. A version bump is required for the update to take
 // effect — activate() deletes every cache whose name !== CACHE, so without a
 // new name the old precache survives and the changed list never installs.
-const CACHE = 'nivelato-v44';
+const CACHE = 'nivelato-v45';
 // App shell: every file that must exist for the app to work offline.
 // (Keep this list in sync with the repo — a missing file used to make
 // addAll() reject and silently skip the ENTIRE precache.)
@@ -63,6 +63,14 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (url.origin !== self.location.origin) return; // cross-origin: let the browser handle it
 
+  // Chrome modules are never SW-mediated: a module frame must show
+  // exactly what the server returns for /modules/* — never a cached
+  // copy, never a substituted document. (Incident 2026-10-12: on a
+  // host whose routes do not serve the module paths, navigation
+  // handling surfaced whole wrong pages in the sidebar frame,
+  // varying across loads.)
+  if (url.pathname.startsWith('/modules/')) return;
+
   const accept = e.request.headers.get('accept') || '';
   const isNav = e.request.mode === 'navigate' || accept.includes('text/html');
 
@@ -77,16 +85,23 @@ self.addEventListener('fetch', e => {
           caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
         }
         return res;
-      }).catch(() =>
+      }).catch(() => {
+        // Subframes never receive a substituted document: an iframe
+        // whose page cannot load gets its own exact cached copy or an
+        // honest 503, never another screen of the app.
+        if (e.request.destination === 'iframe') {
+          return caches.match(e.request).then(cached =>
+            cached || new Response('offline', { status: 503 }));
+        }
         // Offline: cached copy, else the offline notice page (never a white
         // page, and never the wrong screen — e.g. don't land a settings
         // navigation on the index shell while offline).
-        caches.match(e.request).then(cached =>
+        return caches.match(e.request).then(cached =>
           cached || caches.match('./offline.html').then(page =>
             page || new Response('offline', { status: 503 })
           )
-        )
-      )
+        );
+      })
     );
     return;
   }
