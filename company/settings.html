@@ -126,58 +126,7 @@ try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|
   } catch (e) { window.__coSidebar = null; }
 })();
 </script>
-<script>
-/* Referrer-aware back button, the nav-referrer.js pattern applied to this
-   page (that file's consume side only runs on /account/settings, so the
-   same pattern lives here until the platform file is generalized):
-   capture the page a click into Company settings came from, consume it
-   one-shot on load, honor only allowlisted same-origin paths and never
-   this page itself, and fall back to document.referrer, then to the
-   dashboard panel. No history.back(). */
-(function () {
-  var KEY = 'niv:company-settings-referrer';
-  var SETTINGS_PATH = '/company/settings';
-  var FALLBACK = '/dashboard.html?view=home';
-  var ALLOWED = ['/', '/dashboard.html', '/company/users', '/company/updates', '/account/settings', '/users', '/photo.html'];
-  function cleanTarget(raw) {
-    if (!raw) return null;
-    try {
-      var u = new URL(raw, window.location.origin);
-      if (u.origin !== window.location.origin) return null;
-      if (u.pathname === SETTINGS_PATH) return null;
-      if (ALLOWED.indexOf(u.pathname) === -1) return null;
-      return u.pathname + u.search;
-    } catch (e) { return null; }
-  }
-  function save() {
-    try { sessionStorage.setItem(KEY, window.location.pathname + window.location.search); } catch (e) { /* fallback chain still works */ }
-  }
-  window.nivSaveCompanySettingsReferrer = save;
-  document.addEventListener('click', function (e) {
-    var t = e.target;
-    if (!t || !t.closest) return;
-    var a = t.closest('a[href]');
-    if (!a) return;
-    var dest = null;
-    try { dest = new URL(a.getAttribute('href'), window.location.origin).pathname; } catch (err) { dest = null; }
-    if (dest === SETTINGS_PATH) save();
-  }, true);
-  if (window.location.pathname !== SETTINGS_PATH) return;
-  var target = null;
-  try {
-    var saved = sessionStorage.getItem(KEY);
-    if (saved) { sessionStorage.removeItem(KEY); target = cleanTarget(saved); }
-  } catch (e) { /* ignore */ }
-  if (!target) target = cleanTarget(document.referrer);
-  if (!target) target = FALLBACK;
-  var apply = function () {
-    var btn = document.querySelector('.niv-btn-back');
-    if (btn) btn.setAttribute('href', target);
-  };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
-  else apply();
-})();
-</script>
+<!-- Referrer-aware Back: owned by nav-referrer.js (loaded below), which consumes for this page under its /company/settings entry: its own one-shot key, its allowlist, .niv-btn-back. -->
 <script type="module">
 import { auth, db } from '../firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
