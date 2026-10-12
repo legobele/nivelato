@@ -41,11 +41,13 @@ service firebase.storage {
       allow write: if canWrite(orgId);
     }
 
-    // Profile pictures — users/{uid} avatar. Anyone signed in can read
-    // (avatars show across the system); only the owner can write.
-    match /avatars/{uid} {
+    // Profile pictures — avatar file at avatars/{uid}.jpg. Anyone signed
+    // in can read (avatars show across the system); only the owner can
+    // write. The match binds the full filename (extension included), so
+    // the write check compares against uid + '.jpg'.
+    match /avatars/{file} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid
+      allow write: if request.auth != null && request.auth.uid + '.jpg' == file
         && request.resource.size < 2 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
     }
