@@ -275,6 +275,25 @@ let orgData = null;      // orgs/{orgId}
 let latestDoc = null;    // app_updates/latest
 let updateDocData = null; // app_updates/{latest version}
 let applying = false;
+/* Button mash guards (fix list item 6). actionInFlight covers the whole
+   Update Now run (confirm, callable, progress animation); writeInFlight
+   covers the Update Tonight / Cancel Firestore writes. While either is
+   set, every action handler returns immediately and the visible buttons
+   are disabled, so rapid presses can never start a second run, queue a
+   duplicate write, or interleave two renders of the card. */
+let actionInFlight = false;
+let writeInFlight = false;
+
+function setStatus(kind, text) {
+  const el = document.getElementById('update-status');
+  if (!el) return;
+  if (!text) { el.className = 'niv-status-line'; el.textContent = ''; return; }
+  el.className = 'niv-status-line ' + kind;
+  el.textContent = text;
+}
+function setCardButtonsDisabled(disabled) {
+  card.querySelectorAll('button').forEach((b) => { b.disabled = !!disabled; });
+}
 let unsubOrg = null;
 let onlineRefreshTimer = null;
 
@@ -383,13 +402,14 @@ function renderApplying(stepLabel, pct) {
 }
 
 async function onUpdateNow() {
+  if (actionInFlight || applying) return; // re-entry guard: one run only
   if (!isOwner()) return;
   const version = (latestDoc && latestDoc.version) || '';
   if (!confirm('Apply update to v' + version + ' now? The backend will be updated and this may take a few minutes.')) return;
+  actionInFlight = true;
   applying = true;
+  setStatus('warn', 'Applying update...');
   renderApplying('Starting...', 0);
-  const btnCancel = document.getElementById('btn-cancel');
-  if (btnCancel) btnCancel.addEventListener('click', onCancelUpdate);
   try {
     const functions = getFunctions(undefined, 'us-central1');
     const applyCompanyUpdate = httpsCallable(functions, 'applyCompanyUpdate');
@@ -398,20 +418,23 @@ async function onUpdateNow() {
       ? result.data.steps.map(String)
       : ['Applying update'];
     for (let i = 0; i < steps.length; i++) {
-      if (!applying) return; // cancelled
+      if (!applying) break; // cancelled locally; the callable may still finish server side
       const pct = Math.round(((i + 1) / steps.length) * 100);
       renderApplying(steps[i], pct);
-      const b = document.getElementById('btn-cancel');
-      if (b) b.addEventListener('click', onCancelUpdate);
       await new Promise((r) => setTimeout(r, 650));
     }
-    renderApplying('Finishing up...', 100);
-    await new Promise((r) => setTimeout(r, 600));
+    if (applying) {
+      renderApplying('Finishing up...', 100);
+      await new Promise((r) => setTimeout(r, 600));
+    }
   } catch (e) {
-    card.innerHTML = `<div class="state-error">The update failed: ${escapeHtml(e.message || 'unknown error')}. Please try again.</div>`;
-    await new Promise((r) => setTimeout(r, 2500));
+    // Non fatal: the failure lands in the status line under the card and
+    // the page re-renders its normal state below. Never a dead card.
+    setStatus('err', 'The update failed: ' + (e.message || 'unknown error') + '. Please try again.');
+  } finally {
+    applying = false;
+    actionInFlight = false;
   }
-  applying = false;
   // refresh org data (dataVersion should now equal latest)
   try {
     const snap = await getDoc(doc(db, 'orgs', orgId));
@@ -485,29 +508,56 @@ function renderUpToDate() {
 }
 
 async function onUpdateTonight() {
+  if (actionInFlight || applying || writeInFlight) return; // re-entry guard
   if (!isOwner()) return;
   const version = String((latestDoc && latestDoc.version) || '');
+  writeInFlight = true;
+  setCardButtonsDisabled(true);
+  setStatus('warn', 'Scheduling update...');
   try {
     await updateDoc(doc(db, 'orgs', orgId), {
       pendingUpdate: { version, scheduledBy: currentUser.uid, scheduledAt: serverTimestamp() }
     });
+    setStatus('', '');
   } catch (e) {
-    alert('Could not schedule the update: ' + (e.message || 'unknown error'));
+    // Non fatal: status line, and render() in finally restores live buttons.
+    setStatus('err', 'Could not schedule the update: ' + (e.message || 'unknown error'));
+  } finally {
+    writeInFlight = false;
+    render(); // scheduled state if the write landed (snapshot echo also renders)
   }
 }
 
 async function onCancelUpdate() {
   if (!isOwner()) return;
-  try {
-    await updateDoc(doc(db, 'orgs', orgId), { pendingUpdate: deleteField() });
-  } catch (e) {
-    alert('Could not cancel the update: ' + (e.message || 'unknown error'));
-  }
   if (applying) {
-    // The callable may still be running server-side; stop animating and go back to (a).
+    // The callable may still be running server side; stop animating and
+    // go back to the normal states. The in-flight Update Now run sees
+    // applying === false and winds down without touching the card again.
     applying = false;
   }
+  if (writeInFlight) return; // re-entry guard for the delete write itself
+  writeInFlight = true;
+  setCardButtonsDisabled(true);
+  setStatus('warn', 'Cancelling update...');
+  try {
+    await updateDoc(doc(db, 'orgs', orgId), { pendingUpdate: deleteField() });
+    setStatus('', '');
+  } catch (e) {
+    setStatus('err', 'Could not cancel the update: ' + (e.message || 'unknown error'));
+  } finally {
+    writeInFlight = false;
+    if (!actionInFlight) render();
+  }
 }
+
+// Programmatic hooks for the headless mash test: the same handlers the
+// buttons call, plus the busy flags, so a test can fire them repeatedly
+// and assert a single execution.
+window.__nivUpdates = {
+  onUpdateNow, onUpdateTonight, onCancelUpdate,
+  isBusy: () => actionInFlight || writeInFlight || applying
+};
 
 // ---- auth + data ----
 onAuthStateChanged(auth, async (user) => {
