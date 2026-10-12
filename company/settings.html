@@ -68,6 +68,25 @@ try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|
     <button class="niv-btn-pill niv-btn-primary" style="width:100%" id="btn-tfa-save" onclick="saveTfaApi()" data-i18n="save">Guardar</button>
     <div class="niv-status-line" id="tfa-status"></div>
   </div>
+  <div class="niv-settings-card" id="card-security-requirements">
+    <div class="niv-card-title" data-i18n="securityTitle">Requisitos de seguridad</div>
+    <div class="niv-card-desc" data-i18n="securityDesc">Requisitos de la compañía para sus miembros. Cada ajuste dice exactamente qué hace hoy.</div>
+    <div class="niv-setting-row">
+      <div>
+        <div class="niv-setting-label" data-i18n="req2faLabel">Exigir 2FA</div>
+        <div class="niv-setting-desc" data-i18n="req2faDesc">Exige un segundo factor a los miembros. Hoy solo queda registrado junto a la configuración del API de 2FA de arriba: ningún flujo de inicio de sesión lo verifica todavía y ningún inicio de sesión llama a esa URL.</div>
+      </div>
+      <label class="niv-switch"><input type="checkbox" id="sec-require-2fa" onchange="toggleSecurityRequirement('requireTwoFactor', this)" /><span class="track"></span></label>
+    </div>
+    <div class="niv-setting-row">
+      <div>
+        <div class="niv-setting-label" data-i18n="reqLoginLabel">Exigir notificaciones de inicio de sesión</div>
+        <div class="niv-setting-desc" data-i18n="reqLoginDesc">Registra que la compañía exige avisos de inicio de sesión. Los avisos reales siguen la preferencia personal de cada miembro (loginAlert, activada por defecto): este ajuste no anula la decisión de un miembro que la desactivó.</div>
+      </div>
+      <label class="niv-switch"><input type="checkbox" id="sec-require-login" onchange="toggleSecurityRequirement('requireLoginNotifications', this)" /><span class="track"></span></label>
+    </div>
+    <div class="niv-status-line" id="sec-status"></div>
+  </div>
   <div class="niv-settings-card">
     <div class="niv-card-title" data-i18n="permTitle">Permisos de miembros</div>
     <div class="niv-card-desc" data-i18n="permDesc">Gestiona las capacidades de cada miembro del taller.</div>
@@ -189,6 +208,12 @@ const STR = {
     tfaTitle: 'API de 2FA',
     tfaDesc: 'Dominio o URL del API que el taller usa para el segundo factor de autenticación. Nivel de compañía, no por usuario.',
     tfaUrlLabel: 'URL del API de 2FA', save: 'Guardar',
+    securityTitle: 'Requisitos de seguridad',
+    securityDesc: 'Requisitos de la compañía para sus miembros. Cada ajuste dice exactamente qué hace hoy.',
+    req2faLabel: 'Exigir 2FA',
+    req2faDesc: 'Exige un segundo factor a los miembros. Hoy solo queda registrado junto a la configuración del API de 2FA de arriba: ningún flujo de inicio de sesión lo verifica todavía y ningún inicio de sesión llama a esa URL.',
+    reqLoginLabel: 'Exigir notificaciones de inicio de sesión',
+    reqLoginDesc: 'Registra que la compañía exige avisos de inicio de sesión. Los avisos reales siguen la preferencia personal de cada miembro (loginAlert, activada por defecto): este ajuste no anula la decisión de un miembro que la desactivó.',
     permTitle: 'Permisos de miembros', permDesc: 'Gestiona las capacidades de cada miembro del taller.',
     loadingMembers: 'Cargando miembros…', permSaved: '✓ Cambios guardados',
     requestsTitle: 'Solicitudes de acceso', requestsDesc: 'Cuentas pendientes de aprobación para unirse al taller.',
@@ -204,6 +229,7 @@ const STR = {
     quoteSaved: 'Ajustes guardados.', quoteReadErr: 'No se pudieron leer los ajustes: ', quoteSaveErr: 'No se pudo guardar: ',
     ivuErr: 'La tasa de IVU debe ser 0 o más (0.115 = 11.5%).', validityErr: 'La validez debe ser al menos 1 día.',
     tfaSaved: 'API de 2FA guardada.', tfaSaveErr: 'No se pudo guardar. Intenta de nuevo.', tfaUrlErr: 'La URL debe empezar con https://',
+    secSaved: 'Requisito guardado.', secSaveErr: 'No se pudo guardar el requisito. Intenta de nuevo.',
     permSaveErr: 'Error al guardar permiso: ', approveErr: 'Error al aprobar: ', rejectErr: 'Error al rechazar: ',
     processErr: 'Error: ',
     rejectConfirm: '¿Rechazar a este usuario? Su cuenta será eliminada.',
@@ -225,6 +251,12 @@ const STR = {
     tfaTitle: '2FA API',
     tfaDesc: 'Domain or URL of the API the shop uses for the authentication second factor. Company level, not per user.',
     tfaUrlLabel: '2FA API URL', save: 'Save',
+    securityTitle: 'Security requirements',
+    securityDesc: 'Company requirements for its members. Each setting says exactly what it does today.',
+    req2faLabel: 'Require 2FA',
+    req2faDesc: 'Require a second factor for members. Today this is only recorded alongside the 2FA API configuration above: no sign-in flow checks it yet and no sign-in calls that URL.',
+    reqLoginLabel: 'Require sign-in notifications',
+    reqLoginDesc: 'Records that the company requires sign-in alerts. Actual alerts still follow each member personal preference (loginAlert, on by default): this setting does not override a member who turned it off.',
     permTitle: 'Member permissions', permDesc: 'Manage the capabilities of each shop member.',
     loadingMembers: 'Loading members…', permSaved: '✓ Changes saved',
     requestsTitle: 'Access requests', requestsDesc: 'Accounts pending approval to join the shop.',
@@ -240,6 +272,7 @@ const STR = {
     quoteSaved: 'Settings saved.', quoteReadErr: 'Could not read the settings: ', quoteSaveErr: 'Could not save: ',
     ivuErr: 'The IVU rate must be 0 or more (0.115 = 11.5%).', validityErr: 'Validity must be at least 1 day.',
     tfaSaved: '2FA API saved.', tfaSaveErr: 'Could not save. Try again.', tfaUrlErr: 'The URL must start with https://',
+    secSaved: 'Requirement saved.', secSaveErr: 'Could not save the requirement. Try again.',
     permSaveErr: 'Error saving permission: ', approveErr: 'Error approving: ', rejectErr: 'Error rejecting: ',
     processErr: 'Error: ',
     rejectConfirm: 'Reject this user? Their account will be deleted.',
@@ -391,6 +424,8 @@ async function loadTfaApi(orgId) {
     const snap = await getDoc(doc(db, 'orgs', orgId));
     const data = snap.data() || {};
     document.getElementById('tfa-url').value = data.twoFactorApiUrl || '';
+    document.getElementById('sec-require-2fa').checked = data.requireTwoFactor === true;
+    document.getElementById('sec-require-login').checked = data.requireLoginNotifications === true;
   } catch (_) { /* best effort */ }
 }
 
@@ -415,6 +450,26 @@ window.saveTfaApi = async () => {
   }
 };
 
+/* Requisitos de seguridad: each toggle writes its flag on orgs/{orgId},
+   next to the config it extends. Neither flag has an enforcement point
+   in the codebase today (see the honest copy on each row): the write is
+   the whole behavior, failures revert the toggle and surface here. */
+window.toggleSecurityRequirement = async (field, el) => {
+  const key = 'sec:' + field;
+  if (!beginAction(key, null)) { el.checked = !el.checked; return; }
+  el.disabled = true;
+  try {
+    await updateDoc(doc(db, 'orgs', _companyOrgId), { [field]: el.checked });
+    coStatus('sec-status', 'ok', t('secSaved'));
+  } catch (e) {
+    console.error('[Nivelato] save security requirement failed:', e);
+    el.checked = !el.checked;
+    coStatus('sec-status', 'err', t('secSaveErr'));
+  } finally {
+    el.disabled = false;
+    endAction(key, null);
+  }
+};
 
 async function loadOrgMembers(orgId) {
   const q = query(collection(db, 'users'), where('orgId', '==', orgId));
