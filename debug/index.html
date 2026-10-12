@@ -88,6 +88,13 @@
     <p style="margin-top:12px" data-t="downHelp">La guía completa está en la ayuda: legobele.github.io/nivelato/ayuda.html (sección de versiones).</p>
   </div>
 
+
+  <div class="card">
+    <h2 data-t="flowTitle">Flujo nuevo de medidas</h2>
+    <p data-t="flowText">El flujo rediseñado para crear medidas (paso 1 y dimensiones base) está en el canal beta.</p>
+    <div class="row"><a class="btn ghost" href="https://app.nivelatolabs.com/flow.html" data-t="flowBtn">Abrir el flujo nuevo</a></div>
+  </div>
+
   <footer>Nivelato Labs · <a href="https://testing.nivelatolabs.com">testing.nivelatolabs.com</a> · <a href="https://remote.nivelatolabs.com">remote.nivelatolabs.com</a></footer>
 </div>
 
@@ -99,6 +106,7 @@ import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase
 
 const T = {
   es: { tag:'Depuración', title:'Versiones, sin humo', sub:'Qué está desplegado ahora mismo según el registro de versiones, qué corre tu empresa y qué se puede (y qué no se puede) hacer para volver atrás.',
+    flowTitle:'Flujo nuevo de medidas', flowText:'El flujo rediseñado para crear medidas (paso 1 y dimensiones base) está en el canal beta.', flowBtn:'Abrir el flujo nuevo',
     stampTitle:'Sello del backend', orgTitle:'Tu empresa', loading:'Cargando...', signin:'Entrar',
     orgSigninText:'Inicia sesión para ver la versión de datos, el canal y las actualizaciones de tu empresa.',
     downTitle:'Volver a una versión anterior', downIntro:'Lo que existe hoy, sin adornos:',
@@ -115,6 +123,7 @@ const T = {
     dataVersion:'Versión de datos', channel:'Canal de actualizaciones', pending:'Actualización pospuesta', yes:'Sí', no:'No',
     offered:'Versión ofrecida a tu empresa', orgName:'Empresa', stable:'estable', betaL:'beta', noOrg:'No perteneces a una empresa.' },
   en: { tag:'Debug', title:'Versions, no smoke', sub:'What is deployed right now according to the version registry, what your company is running, and what can (and cannot) be done to go back.',
+    flowTitle:'New measurement flow', flowText:'The redesigned flow for creating measurements (step 1 and base dimensions) is on the beta channel.', flowBtn:'Open the new flow',
     stampTitle:'Backend stamp', orgTitle:'Your company', loading:'Loading...', signin:'Sign in',
     orgSigninText:'Sign in to see your company data version, channel, and update state.',
     downTitle:'Going back to an earlier version', downIntro:'What exists today, plainly:',
