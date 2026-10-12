@@ -764,7 +764,14 @@ body:not(.has-sidebar) .niv-shell {
 .niv-snav-body,
 .niv-sidebar,
 .niv-side,
-.niv-select-list {
+.niv-select-list,
+.niv-shell > main,
+.niv-main,
+.ov-list-col,
+.ov-detail,
+.users-col,
+.detail,
+html {
   scrollbar-width: thin;
   scrollbar-color: var(--niv-border) transparent;
 }
@@ -774,7 +781,14 @@ body:not(.has-sidebar) .niv-shell {
 .niv-snav-body::-webkit-scrollbar,
 .niv-sidebar::-webkit-scrollbar,
 .niv-side::-webkit-scrollbar,
-.niv-select-list::-webkit-scrollbar {
+.niv-select-list::-webkit-scrollbar,
+.niv-shell > main::-webkit-scrollbar,
+.niv-main::-webkit-scrollbar,
+.ov-list-col::-webkit-scrollbar,
+.ov-detail::-webkit-scrollbar,
+.users-col::-webkit-scrollbar,
+.detail::-webkit-scrollbar,
+html::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
@@ -784,7 +798,14 @@ body:not(.has-sidebar) .niv-shell {
 .niv-snav-body::-webkit-scrollbar-track,
 .niv-sidebar::-webkit-scrollbar-track,
 .niv-side::-webkit-scrollbar-track,
-.niv-select-list::-webkit-scrollbar-track {
+.niv-select-list::-webkit-scrollbar-track,
+.niv-shell > main::-webkit-scrollbar-track,
+.niv-main::-webkit-scrollbar-track,
+.ov-list-col::-webkit-scrollbar-track,
+.ov-detail::-webkit-scrollbar-track,
+.users-col::-webkit-scrollbar-track,
+.detail::-webkit-scrollbar-track,
+html::-webkit-scrollbar-track {
   background: transparent;
 }
 .niv-scroll::-webkit-scrollbar-thumb,
@@ -793,7 +814,14 @@ body:not(.has-sidebar) .niv-shell {
 .niv-snav-body::-webkit-scrollbar-thumb,
 .niv-sidebar::-webkit-scrollbar-thumb,
 .niv-side::-webkit-scrollbar-thumb,
-.niv-select-list::-webkit-scrollbar-thumb {
+.niv-select-list::-webkit-scrollbar-thumb,
+.niv-shell > main::-webkit-scrollbar-thumb,
+.niv-main::-webkit-scrollbar-thumb,
+.ov-list-col::-webkit-scrollbar-thumb,
+.ov-detail::-webkit-scrollbar-thumb,
+.users-col::-webkit-scrollbar-thumb,
+.detail::-webkit-scrollbar-thumb,
+html::-webkit-scrollbar-thumb {
   background: var(--niv-border);
   border-radius: var(--niv-pill);
 }
@@ -803,7 +831,14 @@ body:not(.has-sidebar) .niv-shell {
 .niv-snav-body::-webkit-scrollbar-thumb:hover,
 .niv-sidebar::-webkit-scrollbar-thumb:hover,
 .niv-side::-webkit-scrollbar-thumb:hover,
-.niv-select-list::-webkit-scrollbar-thumb:hover {
+.niv-select-list::-webkit-scrollbar-thumb:hover,
+.niv-shell > main::-webkit-scrollbar-thumb:hover,
+.niv-main::-webkit-scrollbar-thumb:hover,
+.ov-list-col::-webkit-scrollbar-thumb:hover,
+.ov-detail::-webkit-scrollbar-thumb:hover,
+.users-col::-webkit-scrollbar-thumb:hover,
+.detail::-webkit-scrollbar-thumb:hover,
+html::-webkit-scrollbar-thumb:hover {
   background: var(--niv-text-dim);
 }
 
