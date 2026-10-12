@@ -2,7 +2,8 @@
 
 Status: PLAN ONLY. No graph code has moved. The extraction runs as its
 own wave after this plan is reported, under the sensitivity protocol
-below.
+below. The plan's two open questions were answered by Giulia on
+2026-10-12; see Decisions at the end of this doc.
 
 Founding order (Giulia): the measurement graph becomes its own module,
 sealed. Rendering, scripting and all attached elements move into a
@@ -114,8 +115,12 @@ touches this system:
    nothing outside adhd.js reads `window.results` or
    `window._embedData` today; dashboard.html only calls
    `embedGraph`. In the module era the module frame has its own
-   window, so the clobber disappears by construction. The extraction
-   wave must re-run this audit before relying on it.
+   window, so the clobber disappears by construction. Whether
+   anything OUTSIDE this repo depends on the clobber is unknown
+   (Decision 1: Giulia does not know what reads them), so the
+   in-repo audit above is only half the picture. Step 0 includes a
+   consumer audit covering the Android app as well, and extraction
+   may not start until that audit is recorded (see Sequencing).
 2. **The hidden dummy canvas** in dashboard.html exists only to
    satisfy adhd.js's top-level `document.getElementById('drawing-canvas')`
    (null-safe via `?.`). After extraction it should be removable;
@@ -216,6 +221,26 @@ Fixtures and harness BEFORE any code moves:
 
 1. **Step 0 (solo, no code moves)**: parity harness + fixtures +
    the coupling re-audit (items 1, 2 and the bread load path).
+   Step 0 checklist:
+   - Parity harness + fixtures (see Parity gate).
+   - Coupling re-audit (items 1, 2, bread load path).
+   - **Consumer audit (BLOCKING, per Decision 1)**: search the
+     entire web codebase AND the Android app
+     (`~/workspace/nivelato-android`: WebView JS bridges,
+     `evaluateJavascript` injections, any script that reaches into
+     page globals) for any read of `window.results` or
+     `window._embedData`. Two outcomes:
+     - A consumer exists: the interface contract gains a
+       compatibility clause. The shell keeps publishing exactly the
+       values that consumer reads on the host `window`, and this
+       plan is amended to record what is published, in what shape,
+       and when it updates. The extraction must not remove those
+       publications.
+     - No consumer exists: the clobber ends with the move, and the
+       audit itself (repos covered, searches run, zero hits) is
+       recorded in this doc as the evidence.
+   - Extraction may not start until the whole checklist, including
+     the consumer audit result, is written into this doc.
 2. **Step 1: embed path extraction.** Lower risk: data-in only,
    self-contained listeners, one payload shape, three call sites in
    one file. dashboard.html stops loading adhd.js's graph code;
@@ -240,13 +265,53 @@ Scheduling constraints:
 - SSO cookie migration is design-only and out of scope; it does not
   block this wave.
 
-## Open questions for Giulia
+## Decisions (Giulia, 2026-10-12)
 
-1. EmbedGraph's `window.results` / `window._embedData` writes
-   disappear inside the module frame. Audit says nothing consumes
-   them; the extraction proceeds on that basis unless she knows a
-   consumer outside the repo (for example the Android WebView shell
-   injecting scripts).
-2. The graph canvas keeps its light background by design today, in
-   both hosts. The module keeps it. Confirming this stays deliberate,
-   not a dark-theme migration candidate.
+### Decision 1: consumers of `window.results` / `window._embedData`
+
+Giulia does not know what reads these globals. That converts the old
+open question into a directive: the consumer audit in Step 0
+(covering the whole web codebase and the Android app) is a blocking
+entry requirement for the extraction. If the audit finds an external
+consumer, the module contract keeps the shell publishing those
+values on the host `window` for compatibility, with exactly what is
+published documented in this plan. If it finds none, the clobber
+ends with the move and the audit result stands as the evidence.
+
+### Decision 2: graph canvas background
+
+The background CAN be changed, with contrast preserved. Concretely:
+
+- The relocation lands with the CURRENT background (the light
+  drawing canvas), so the parity gate compares like with like. Note
+  the light part is the drawing canvas specifically; the
+  surrounding page chrome is already on the dark theme.
+- Darkening the canvas to join the UI is a SEPARATE step after the
+  extraction, never bundled into the move.
+- That step has an explicit contrast gate: every drawn element
+  (grid, lines, labels, dimension lines, desnivel arrows, level
+  reference, step highlight) is verified readable against the new
+  background, with before/after screenshots required. Any element
+  that fails contrast stops that step.
+
+## Design-system element for the new flow (NOT graph inventory)
+
+Giulia is designing a new flow for the main app. One of its design
+elements is a "States of progress" legend: four ring-style state
+markers rendered on the dark grid:
+
+| Ring color | Label (EN) |
+| --- | --- |
+| Orange | Not done yet |
+| Yellow | Ongoing |
+| Green | Done |
+| Red | Error |
+
+This is to be captured in the design system as state tokens plus
+ring styling plus localized labels (the labels are chrome text, so
+the EN/ES localization rules apply to them).
+
+It is NOT part of the current graph module inventory: the legend
+does not exist in the graph system today, the extraction does not
+move or consume it, and nothing in this plan depends on it. The new
+flow will consume the design-system element when it is built.
