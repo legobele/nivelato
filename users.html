@@ -115,10 +115,19 @@
 
   /* Embed mode (?embed=1, used by the dashboard users view): no chrome of
      its own at all, the page is only the directory area. The class goes on
-     <html> before first paint (script below) so it is born chrome-less. */
+     <html> before first paint (script below) so it is born chrome-less.
+     The header is chrome too: the host shell owns the page title and the
+     Manage users action (its toggle swaps this frame between overview and
+     administration in place), so the view's own title and Manage door
+     stay hidden here — two headers and two Manage buttons stacked was
+     the bug. Only the subline (org name, member count, online count)
+     remains, as the subline under the shell's header. Standalone /users
+     keeps the full header, title and door included. */
   html.embed-users #chrome-topbar, html.embed-users #chrome-sidebar { display: none !important; }
+  html.embed-users #ov-title, html.embed-users #ov-manage { display: none !important; }
   html.embed-users body { height: 100vh; overflow: hidden; }
   html.embed-users .ov-shell { padding: 18px; gap: 18px; }
+  html.embed-users .ov-head { margin-bottom: 10px; }
 
   /* Admin context (served at /company/users): never offer the Manage
      users door — it points at /company/users, this very page. */
