@@ -436,6 +436,29 @@ const escapeHtml = (s) => String(s ?? '')
   .replace(/"/g, '&quot;')
   .replace(/'/g, '&#39;');
 
+function setStatus(id, kind, text) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'niv-status-line' + (kind ? ' ' + kind : '');
+  el.textContent = text || '';
+}
+
+function renderRole() {
+  if (!currentUserData) return;
+  const key = 'role_' + String(currentUserData.role || '');
+  const known = window.NivAccountSettings && window.NivAccountSettings.STR.es[key] !== undefined;
+  document.getElementById('info-role').textContent = known ? t(key) : (currentUserData.role || '-');
+}
+
+/* Dynamic (non data-i18n) strings re-render when the language changes. */
+if (window.NivAccountSettings) {
+  window.NivAccountSettings.onLang(() => {
+    renderRole();
+    renderProviderNote();
+    if (lastDevices) renderDevices(lastDevices);
+  });
+}
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
   // Mint flow claims: rules require them for org data reads.
@@ -455,7 +478,7 @@ onAuthStateChanged(auth, async (user) => {
   if (!userSnap.exists()) {
     // Signed in, but no profile doc (orphaned auth account, interrupted
     // signup, or deleted profile): don't leave a dead skeleton page.
-    alert('No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.');
+    alert(t('profileMissing'));
     window.location.href = 'https://login.nivelatolabs.com/?missingProfile=1';
     return;
   }
@@ -464,8 +487,8 @@ onAuthStateChanged(auth, async (user) => {
   const orgId = currentUserData.orgId;
 
   // fill info tab
-  document.getElementById('info-name').textContent = currentUserData.name || '—';
-  document.getElementById('info-email').textContent = user.email || '—';
+  document.getElementById('info-name').textContent = currentUserData.name || '-';
+  document.getElementById('info-email').textContent = user.email || '-';
   // profile picture
   const _picUrl = currentUserData.photoURL || user.photoURL || '';
   const _picImg = document.getElementById('profile-pic');
@@ -482,7 +505,7 @@ onAuthStateChanged(auth, async (user) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     const status = document.getElementById('pic-upload-status');
-    status.textContent = 'Subiendo...';
+    status.textContent = t('uploading');
     try {
       const { ref, uploadBytes, getDownloadURL } = await import('https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js');
       const { storage } = await import('./firebase-config.js');
@@ -492,15 +515,13 @@ onAuthStateChanged(auth, async (user) => {
       await updateDoc(doc(db, 'users', user.uid), { photoURL: url });
       currentUserData.photoURL = url;
       _picImg.src = url; _picImg.style.display = 'block'; _picFb.style.display = 'none';
-      status.textContent = 'Foto actualizada.';
+      status.textContent = t('photoUpdated');
     } catch (err) {
       console.error('[Nivelato] avatar upload failed:', err);
-      status.textContent = 'No se pudo subir la foto. Intenta de nuevo.';
+      status.textContent = t('photoFailed');
     }
   });
-  document.getElementById('info-role').textContent = {
-    owner: 'Dueño / Admin', cotizador: 'Cotizador', supervisor: 'Supervisor', medidor: 'Técnico medidor'
-  }[currentUserData.role] || currentUserData.role || '—';
+  renderRole();
   document.getElementById('info-org').textContent = orgId;
   // Invite code: always read the stable code stored on the org doc (set once
   // at org creation), never regenerate client-side.
@@ -521,9 +542,10 @@ onAuthStateChanged(auth, async (user) => {
     if (drStatus) drStatus.style.display = 'block';
   }
 
-  // company settings live at company/settings.html; link it for managers
+  // Company doors live in the company sidebar (shown for managers there).
+  // The old in-body company settings link was removed on purpose: the
+  // sidebar already carries that door.
   if (_can('userManagement')) {
-    document.getElementById('company-link').style.display = 'block';
     const _snu = document.getElementById('set-company-group');
     if (_snu) _snu.style.display = 'flex';
   }
@@ -536,10 +558,20 @@ onAuthStateChanged(auth, async (user) => {
       _on.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
   } catch (_) { /* keep placeholder */ }
 
-  // notification prefs + backend status (propio backend o default)
+  initPasswordSection();
+  initDevicesSection();
+  // notification prefs + language (propio backend o default)
   await loadNotifPrefs();
   await loadLangPref();
 });
+
+/* ---------------- notification prefs ----------------
+   One source of truth, two controls for loginAlert: #ntf-loginAlert in
+   Notificaciones and #sec-loginAlert in Seguridad share data-notif, so
+   load sets both and a change on either syncs the other before saving. */
+function notifEls(k) {
+  return Array.from(document.querySelectorAll('[data-notif="' + k + '"]'));
+}
 
 async function loadNotifPrefs() {
   let prefs = { ...NOTIF_DEFAULTS };
@@ -550,31 +582,61 @@ async function loadNotifPrefs() {
     console.warn('[Nivelato] no se pudieron leer las preferencias:', e.message);
   }
   for (const k of NOTIF_KEYS) {
-    const el = document.getElementById('ntf-' + k);
-    if (el) {
+    const els = notifEls(k);
+    for (const el of els) {
       el.checked = prefs[k] !== false;
-      el.addEventListener('change', () => saveNotifPrefs());
+      el.addEventListener('change', () => {
+        for (const other of notifEls(k)) other.checked = el.checked;
+        saveNotifPrefs();
+      });
     }
+  }
+}
+
+function showNotifSaved() {
+  for (const id of ['ntf-status', 'sec-notif-status']) setStatus(id, '', '');
+  for (const id of ['ntf-saved', 'sec-login-saved']) {
+    const msg = document.getElementById(id);
+    if (!msg) continue;
+    msg.style.display = 'block';
+    setTimeout(() => { msg.style.display = 'none'; }, 2500);
+  }
+}
+
+/* Failure is surfaced as an error state next to BOTH saved messages,
+   never as a success. In production this is where a firestore.rules
+   rejection lands until the notification_prefs allowlist gains
+   loginAlert; the toggle must not pretend it saved. */
+function showNotifError(e) {
+  for (const id of ['ntf-saved', 'sec-login-saved']) {
+    const msg = document.getElementById(id);
+    if (msg) msg.style.display = 'none';
+  }
+  const detail = e && e.code ? ' (' + e.code + ')' : '';
+  for (const id of ['ntf-status', 'sec-notif-status']) {
+    setStatus(id, 'err', t('notifSaveFailed') + detail);
   }
 }
 
 async function saveNotifPrefs() {
   const data = { updatedAt: serverTimestamp() };
   for (const k of NOTIF_KEYS) {
-    const el = document.getElementById('ntf-' + k);
-    data[k] = el ? el.checked : true;
+    const els = notifEls(k);
+    data[k] = els.length ? els[0].checked : true;
   }
   try {
     await setDoc(doc(db, 'notification_prefs', currentUser.uid), data, { merge: true });
-    const msg = document.getElementById('ntf-saved');
-    msg.style.display = 'block';
-    setTimeout(() => { msg.style.display = 'none'; }, 2500);
+    showNotifSaved();
   } catch (e) {
-    alert('No se pudieron guardar las preferencias: ' + (e.message || 'error desconocido'));
+    console.warn('[Nivelato] no se pudieron guardar las preferencias:', e && e.message);
+    showNotifError(e);
   }
 }
 
-// ---- Idioma (users/{uid}.language; también lo lee el login) ----
+/* ---- Idioma (users/{uid}.language; también lo lee el login) ----
+   Firestore write is preserved in saveLangPref and the DB still wins on
+   load; after load and after save the value is handed to NivSettings
+   (setLang), which owns the cross subdomain cookie and its mirror. */
 function markLangButtons(lang) {
   for (const l of ['es', 'en']) {
     const b = document.getElementById('lang-btn-' + l);
@@ -597,6 +659,8 @@ async function loadLangPref() {
     console.warn('[Nivelato] no se pudo leer el idioma:', e.message);
   }
   markLangButtons(lang);
+  try { if (window.NivSettings && window.NivSettings.setLang) window.NivSettings.setLang(lang); } catch (_) { /* ignore */ }
+  if (window.NivAccountSettings) window.NivAccountSettings.applyLang(lang);
   for (const l of ['es', 'en']) {
     const b = document.getElementById('lang-btn-' + l);
     if (b) b.addEventListener('click', () => saveLangPref(l));
