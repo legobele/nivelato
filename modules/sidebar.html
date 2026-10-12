@@ -94,6 +94,31 @@
   body.niv-mod-compact .niv-nav { gap: 8px; }
   body.niv-mod-compact .niv-nav-group { gap: 8px; }
 
+
+  /* Drag and drop (niv-drag.js host layer): measure rows are drag
+     sources, project rows and the drag only new project box are drop
+     zones. Highlight state is painted here on host command
+     (niv:draghover); geometry is reported to the host, which owns the
+     pointer, the ghost and the write. */
+  .niv-panel-item[data-measure-id] { cursor: grab; touch-action: none; }
+  .niv-panel-item.niv-drag-src { opacity: 0.45; }
+  .niv-panel-item.niv-drag-hover, .niv-drag-new.niv-drag-hover {
+    background: var(--niv-surface-2);
+    outline: 2px solid var(--niv-accent);
+    outline-offset: -2px;
+  }
+  .niv-drag-new {
+    display: none;
+    align-items: center; justify-content: center; gap: 6px;
+    margin-top: 6px; padding: 10px 12px;
+    border: 1.5px dashed var(--niv-border);
+    border-radius: 10px;
+    color: var(--niv-text-dim);
+    font-size: 13px; font-weight: 600;
+    text-align: center;
+  }
+  body.niv-drag-active .niv-drag-new { display: flex; }
+
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -114,7 +139,7 @@
       <div class="niv-mod-lists" id="mod-lists">
         <div class="niv-panel-sec" data-seckey="projects">
           <div class="niv-panel-sec-title"><span data-i18n="secProjects">Proyectos</span><button class="niv-sec-chev" type="button" data-chev aria-label="Colapsar sección">▾</button></div>
-          <div id="niv-snav-projects-body" class="niv-snav-projects-body open"><div id="niv-panel-projects" class="js-list-projects"><div class="niv-panel-empty" data-i18n="emptyProjects">Sin proyectos</div></div></div>
+          <div id="niv-snav-projects-body" class="niv-snav-projects-body open"><div id="niv-panel-projects" class="js-list-projects"><div class="niv-panel-empty" data-i18n="emptyProjects">Sin proyectos</div></div></div><div class="niv-drag-new" data-new-zone><span data-i18n="newProject">Nuevo proyecto</span></div>
         </div>
         <div class="niv-panel-sec" data-seckey="customers">
           <div class="niv-panel-sec-title"><span data-i18n="secCustomers">Clientes</span><button class="niv-sec-chev" type="button" data-chev aria-label="Colapsar sección">▾</button></div>
@@ -169,7 +194,7 @@
       <div class="niv-mod-lists">
         <div class="niv-panel-sec" data-seckey="projects">
           <div class="niv-panel-sec-title"><span data-i18n="secProjects">Proyectos</span><button class="niv-sec-chev" type="button" data-chev aria-label="Colapsar sección">▾</button></div>
-          <div class="niv-snav-projects-body open"><div class="js-list-projects"><div class="niv-panel-empty" data-i18n="emptyProjects">Sin proyectos</div></div></div>
+          <div class="niv-snav-projects-body open"><div class="js-list-projects"><div class="niv-panel-empty" data-i18n="emptyProjects">Sin proyectos</div></div></div><div class="niv-drag-new" data-new-zone><span data-i18n="newProject">Nuevo proyecto</span></div>
         </div>
         <div class="niv-panel-sec" data-seckey="customers">
           <div class="niv-panel-sec-title"><span data-i18n="secCustomers">Clientes</span><button class="niv-sec-chev" type="button" data-chev aria-label="Colapsar sección">▾</button></div>
@@ -229,6 +254,7 @@ const STRINGS = {
     demoCompany: 'Compañía de ejemplo',
     demoProject: 'Proyecto de ejemplo', demoCustomer: 'Cliente de ejemplo', demoMeasure: 'Medida de ejemplo',
     shellHome: 'Panel', shellProjects: 'Proyectos', shellNotifications: 'Notificaciones',
+    newProject: 'Nuevo proyecto',
     ariaCompany: 'Navegación de la compañía', ariaSettings: 'Ajustes', ariaAccountSettings: 'Ajustes de la cuenta',
     ariaShell: 'Navegación principal'
   },
@@ -248,6 +274,7 @@ const STRINGS = {
     demoCompany: 'Example Company',
     demoProject: 'Example project', demoCustomer: 'Example customer', demoMeasure: 'Example measurement',
     shellHome: 'Dashboard', shellProjects: 'Projects', shellNotifications: 'Notifications',
+    newProject: 'New project',
     ariaCompany: 'Company navigation', ariaSettings: 'Settings', ariaAccountSettings: 'Account settings',
     ariaShell: 'Main navigation'
   }
@@ -548,20 +575,32 @@ function panelItems(names, emptyKey) {
     '<div class="niv-panel-item' + (i === 0 ? ' first' : '') + '"><span>' + escapeHtml(n) + '</span><span class="dots">...</span></div>'
   ).join('');
 }
+function projectItems(projects) {
+  if (!projects.length) return '<div class="niv-panel-empty">' + escapeHtml(L('emptyProjects')) + '</div>';
+  return projects.map((pr, i) =>
+    '<div class="niv-panel-item' + (i === 0 ? ' first' : '') + '" data-project-id="' + escapeHtml(pr.id) + '"><span>' + escapeHtml(pr.name) + '</span><span class="dots">...</span></div>'
+  ).join('');
+}
+function measureItems(measures) {
+  if (!measures.length) return '<div class="niv-panel-empty">' + escapeHtml(L('emptyMeasures')) + '</div>';
+  return measures.map((m, i) =>
+    '<div class="niv-panel-item' + (i === 0 ? ' first' : '') + '" data-measure-id="' + escapeHtml(m.id) + '" data-measure-label="' + escapeHtml(m.label) + '"><span>' + escapeHtml(m.label) + (m.photo ? ' \u{1F4F7}' : '') + '</span><span class="dots">...</span></div>'
+  ).join('');
+}
 function renderLists(data) {
   lastLists = data;
   /* Both the company and the shell aside carry the lists; render into
      every container so the hidden twin stays consistent. */
-  document.querySelectorAll('.js-list-projects').forEach((el) => { el.innerHTML = panelItems(data.projects || [], 'emptyProjects'); });
+  document.querySelectorAll('.js-list-projects').forEach((el) => { el.innerHTML = projectItems(data.projects || []); });
   document.querySelectorAll('.js-list-customers').forEach((el) => { el.innerHTML = panelItems(data.customers || [], 'emptyCustomers'); });
-  document.querySelectorAll('.js-list-measures').forEach((el) => { el.innerHTML = panelItems((data.measures || []).map((j) => (j.label || L('measureFallback')) + (j.photo ? ' 📷' : '')), 'emptyMeasures'); });
+  document.querySelectorAll('.js-list-measures').forEach((el) => { el.innerHTML = measureItems((data.measures || []).map((j) => ({ id: j.id, label: j.label || L('measureFallback'), photo: !!j.photo }))); });
   reportHeight();
 }
 function renderDemoLists() {
   renderLists({
-    projects: [L('demoProject')],
+    projects: [{ id: 'demo-project-1', name: L('demoProject') }],
     customers: [L('demoCustomer')],
-    measures: [{ label: L('demoMeasure'), photo: false }]
+    measures: [{ id: 'demo-measure-1', label: L('demoMeasure'), photo: false }]
   });
 }
 /* Same data sources as the dashboard panel: orgs/{orgId}/projects for
@@ -575,7 +614,7 @@ async function loadLists(db, fs, orgId) {
   let jobs = [];
   try {
     const snap = await fs.getDocs(fs.collection(db, 'orgs', orgId, 'projects'));
-    projects = snap.docs.map((d) => (d.data() && d.data().name) || L('projectFallback'));
+    projects = snap.docs.map((d) => ({ id: d.id, name: (d.data() && d.data().name) || L('projectFallback') }));
   } catch (_) { /* empty state stays */ }
   try {
     const q = fs.query(fs.collection(db, 'orgs', orgId, 'jobs'), fs.orderBy('createdAt', 'desc'));
@@ -584,6 +623,7 @@ async function loadLists(db, fs, orgId) {
   } catch (_) { /* empty states stay */ }
   const customers = [...new Set(jobs.map((j) => j.customer).filter(Boolean))].slice(0, 5);
   const measures = jobs.slice(0, 5).map((j) => ({
+    id: j.id,
     label: j.customer || j.project || L('measureFallback'),
     photo: !!j.annotatedPhoto
   }));
@@ -710,6 +750,126 @@ async function initFirebase() {
     reportHeight();
   });
 }
+
+
+/* ---------------- drag and drop (host layer: niv-drag.js) ----------------
+   This module never tracks the pointer itself: HTML5 drag does not cross
+   iframes and Pointer Events inside the module would die at the iframe
+   edge. Instead the module is the geometry and paint side of the locked
+   contract (see modules/README.md, Drag and drop messages):
+   - pointerdown on a Medidas row posts niv:dragstart {measureId, label};
+     the host raises a shield over this iframe and owns the gesture.
+   - niv:dragactive {on} reveals the drag only "Nuevo proyecto" zone.
+   - niv:dropzones-request gets a niv:dropzones reply with project zone
+     rects (module coordinates) and the scroll region rect; the module
+     re-reports on scroll and on a 150ms cadence while a drag is active.
+   - niv:draghover {zoneId|null} paints the highlight (a project id or
+     'new'); niv:dragscroll {dy} scrolls the region by dy pixels.
+   - Escape inside the module while a drag is active posts
+     niv:dragcancel, because the keydown never reaches the host. */
+let dragActiveMod = false;
+let dzTimer = null;
+let dzScrollQueued = false;
+function visibleAside() { return document.querySelector('.niv-mod-side:not([hidden])'); }
+function rectOf(el) {
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  return { x: r.x, y: r.y, width: r.width, height: r.height };
+}
+function reportDropZones() {
+  if (!dragActiveMod) return;
+  const aside = visibleAside();
+  if (!aside) return;
+  const zones = [];
+  aside.querySelectorAll('[data-project-id]').forEach((el) => {
+    const span = el.querySelector('span');
+    zones.push({ id: el.getAttribute('data-project-id'), name: span ? span.textContent.trim() : '', rect: rectOf(el) });
+  });
+  const nz = aside.querySelector('[data-new-zone]');
+  if (nz && !nz.hidden && nz.offsetParent !== null) zones.push({ id: 'new', name: L('newProject'), rect: rectOf(nz) });
+  const scroller = aside.querySelector('.niv-mod-scroll');
+  post({ type: 'niv:dropzones', zones: zones, scrollRegion: rectOf(scroller) });
+}
+function reportDropZonesSoon() {
+  if (dzScrollQueued) return;
+  dzScrollQueued = true;
+  setTimeout(() => { dzScrollQueued = false; reportDropZones(); }, 100);
+}
+function paintDragHover(zoneId) {
+  const aside = visibleAside();
+  if (!aside) return;
+  aside.querySelectorAll('.niv-drag-hover').forEach((el) => el.classList.remove('niv-drag-hover'));
+  if (!zoneId) return;
+  const el = zoneId === 'new'
+    ? aside.querySelector('[data-new-zone]')
+    : aside.querySelector('[data-project-id="' + CSS.escape(zoneId) + '"]');
+  if (el) el.classList.add('niv-drag-hover');
+}
+function setDragActive(on) {
+  dragActiveMod = !!on;
+  document.body.classList.toggle('niv-drag-active', dragActiveMod);
+  document.querySelectorAll('[data-new-zone]').forEach((z) => { z.hidden = !dragActiveMod; });
+  if (dragActiveMod) {
+    reportDropZones();
+    if (dzTimer) clearInterval(dzTimer);
+    dzTimer = setInterval(reportDropZones, 150);
+  } else {
+    if (dzTimer) { clearInterval(dzTimer); dzTimer = null; }
+    paintDragHover(null);
+    document.querySelectorAll('.niv-drag-src').forEach((el) => el.classList.remove('niv-drag-src'));
+  }
+  /* No reportHeight here: its uncapped measurement would reset the
+     scroll region's scrollTop mid flow. Zone geometry is reported
+     through niv:dropzones while a drag is active. */
+}
+/* A gesture that starts inside this iframe keeps its pointer events
+   in this document (the iframe holds the pointer for the gesture), so
+   the host shield never sees the moves. While a measure press is in
+   flight the module therefore forwards its own pointermove and
+   pointerup to the host in module coordinates; the host converts with
+   the iframe rect and drives the drag from there. */
+let srcPressed = false;
+document.addEventListener('pointerdown', (ev) => {
+  if (TARGET === 'user') return;
+  const row = ev.target.closest ? ev.target.closest('[data-measure-id]') : null;
+  if (!row) return;
+  srcPressed = true;
+  row.classList.add('niv-drag-src');
+  post({ type: 'niv:dragstart', measureId: row.getAttribute('data-measure-id'), label: row.getAttribute('data-measure-label') || row.textContent.trim() });
+});
+document.addEventListener('pointermove', (ev) => {
+  if (!srcPressed) return;
+  post({ type: 'niv:dragmove', x: ev.clientX, y: ev.clientY });
+});
+document.addEventListener('pointerup', (ev) => {
+  if (srcPressed) {
+    srcPressed = false;
+    post({ type: 'niv:dragup', x: ev.clientX, y: ev.clientY });
+  }
+  if (!dragActiveMod) document.querySelectorAll('.niv-drag-src').forEach((el) => el.classList.remove('niv-drag-src'));
+});
+document.addEventListener('pointercancel', () => {
+  if (srcPressed) { srcPressed = false; post({ type: 'niv:dragcancel' }); }
+});
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape' && dragActiveMod) post({ type: 'niv:dragcancel' });
+});
+document.querySelectorAll('.niv-mod-scroll').forEach((sc) => {
+  sc.addEventListener('scroll', () => { if (dragActiveMod) reportDropZonesSoon(); }, { passive: true });
+});
+window.addEventListener('message', (ev) => {
+  if (ev.origin !== window.location.origin) return;
+  const d = ev.data;
+  if (!d || d.niv !== 1) return;
+  if (d.type === 'niv:dragactive') setDragActive(d.on === true);
+  else if (d.type === 'niv:dropzones-request') reportDropZones();
+  else if (d.type === 'niv:draghover') paintDragHover(d.zoneId || null);
+  else if (d.type === 'niv:dragscroll') {
+    const aside = visibleAside();
+    const sc = aside && aside.querySelector('.niv-mod-scroll');
+    if (sc && typeof d.dy === 'number' && isFinite(d.dy)) { sc.scrollTop += d.dy; reportDropZonesSoon(); }
+  }
+});
 
 /* ---------------- boot ---------------- */
 document.querySelectorAll('.js-org-name').forEach((el) => el.setAttribute('data-state', 'loading'));

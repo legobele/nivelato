@@ -214,6 +214,40 @@ iframe it created, and only navigates to same origin hrefs.
 | `niv:resize` | module to host | `{ height }` | Content height in CSS pixels (uncapped measurement). Auto mode hosts set the iframe height from it. Fixed mode hosts (the company sidebar default) ignore it. |
 | `niv:section` | module to host | `{ section }` | User target only: a subsettings button was clicked. The module marks it active itself, then the host shows the matching section. |
 
+## Drag and drop messages (wave 3, niv-drag.js)
+
+Drag and drop measurement to project assignment is owned by a shell
+side layer, `niv-drag.js`, loaded by the host page (dashboard.html).
+Native HTML5 drag does not cross iframes and does not work on touch,
+so the gesture is Pointer Events based and lives entirely in the host:
+the module is the geometry and paint side of the contract. The sidebar
+module participates only when embedded; the host paints the native
+dashboard panel's zones itself from that panel's DOM.
+
+| Type | Direction | Payload | Meaning |
+| --- | --- | --- | --- |
+| `niv:dragstart` | module to host | `{ measureId, label }` | A Medidas row in the module was pressed (pointerdown). The host starts the drag, raises a transparent shield over the sidebar iframe so every later pointer event stays in the host document, and broadcasts `niv:dragactive`. |
+| `niv:dragmove` | module to host | `{ x, y }` | Pointer move forwarded from inside the module while a module sourced press is in flight, in module coordinates. A gesture that starts inside the iframe keeps its pointer events in the module document, so the host shield cannot see them; the module forwards them and the host converts with the iframe rect. Only sent between a measure row pointerdown and its pointerup. |
+| `niv:dragup` | module to host | `{ x, y }` | The forwarded pointerup that ends a module sourced gesture, in module coordinates. The host hit tests and drops or cancels. |
+| `niv:dragactive` | host to module | `{ on }` | A drag is active (`on: true`) or over (`false`). While on, the module reveals the drag only "Nuevo proyecto" / "New project" drop box below all projects in its Proyectos section and re-reports drop zones on a 150ms cadence and on scroll. |
+| `niv:dropzones-request` | host to module | `{}` | Sent at dragstart. The module replies with `niv:dropzones`. |
+| `niv:dropzones` | module to host | `{ zones: [{ id, name, rect }], scrollRegion }` | Zone rects in module coordinates; `id` is a project id or `'new'`. `scrollRegion` is the rect of the module scroll region (`.niv-mod-scroll`). The host converts to viewport coordinates with the iframe's bounding rect and hit tests. |
+| `niv:draghover` | host to module | `{ zoneId }` | Paint the highlight on the zone with this id (a project id or `'new'`); `zoneId: null` clears it. |
+| `niv:dragscroll` | host to module | `{ dy }` | Hot zone auto scroll tick: scroll the projects scroll region by `dy` pixels. Sent only while dragging, when the pointer sits within the 48px edge band of the region; the host ramps speed with edge proximity up to 420 px/s. |
+| `niv:dragcancel` | module to host | `{}` | Escape was pressed inside the module while a drag is active (the keydown cannot reach the host document). The host cancels the drag with no write. |
+
+The host performs the assignment write itself (it owns the data path):
+`updateDoc` on `orgs/{orgId}/jobs/{measureId}`, the same write the job
+edit performs in dashboard.html (`saveEdit`), carrying `project` (the
+project name) and `projectId` (the project doc id the project views
+filter on). Dropping on `'new'` first runs the existing project
+creation pattern (`saveNewProject` in dashboard.html: name plus
+optional customer, `addDoc` on `orgs/{orgId}/projects` with
+`{name, customer, memberUids: [], createdAt: serverTimestamp(),
+createdBy}`), then assigns; cancelling the name step cancels the
+whole drop with no write. The new project box exists only while a
+drag is active, in the module and in the native panel alike.
+
 ## shell-bridge.js
 
 ```html
