@@ -64,6 +64,7 @@
     color: var(--niv-text-dim); background: var(--niv-surface-2); white-space: nowrap;
   }
   .ov-chip.pending { color: #fbbf24; border-color: rgba(230, 119, 0, 0.6); background: rgba(230, 119, 0, 0.15); }
+  .ov-chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 5px; }
   .niv-user-row.selected .ov-chip { color: #06281f; border-color: transparent; background: rgba(255, 255, 255, 0.25); }
 
   /* ---------- detail panel ---------- */
@@ -385,10 +386,10 @@ function renderList() {
     return '<button class="niv-user-row' + sel + '" data-uid="' + escapeHtml(m.uid) + '">'
       + '<span class="ov-avatar-wrap">' + avatarHtml(m) + online + '</span>'
       + '<span class="ov-row-meta">'
-      + '<span class="ov-row-name"><span class="niv-user-name">' + escapeHtml(displayName(m)) + '</span>' + pending + '</span>'
+      + '<span class="ov-row-name"><span class="niv-user-name">' + escapeHtml(displayName(m)) + '</span></span>'
       + '<span class="niv-user-email ov-row-email">' + escapeHtml(m.email || '') + '</span>'
+      + '<span class="ov-chip-row"><span class="ov-chip">' + escapeHtml(roleLabel(m)) + '</span>' + pending + '</span>'
       + '</span>'
-      + '<span class="ov-chip">' + escapeHtml(roleLabel(m)) + '</span>'
       + '</button>';
   }).join('');
   list.querySelectorAll('.niv-user-row').forEach((el) => {
