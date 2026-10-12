@@ -612,6 +612,28 @@ body.niv-resizing { cursor: col-resize; user-select: none; }
 .niv-panel-sec.sec-collapsed .niv-sec-chev { transform: rotate(-90deg); }
 .niv-panel-sec.sec-collapsed .niv-sec-body { display: none; }
 
+/* ---- customer overview (wave 3) ---- */
+.cust-link { cursor: pointer; }
+.cust-link:hover { text-decoration: underline; }
+.cust-back { width: auto; padding: 8px 16px; margin: 0 0 12px; }
+.cust-contact-card { margin-bottom: 20px; }
+.cust-contact-card .niv-detail-row:last-child { border-bottom: none; }
+.cust-stats .stat-num.cust-recent { font-size: 16px; line-height: 34px; }
+.cust-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+@media (max-width: 1100px) { .cust-grid { grid-template-columns: 1fr; } }
+.cust-proj-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 4px; border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+  cursor: pointer; font-size: 14px; min-width: 0;
+}
+.cust-proj-row:last-child { border-bottom: none; }
+.cust-proj-row:hover { background: var(--niv-surface-2, #1e1e22); }
+.cust-proj-row .cust-proj-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cust-proj-row.static { cursor: default; }
+.cust-proj-row.static:hover { background: transparent; }
+#view-customer .job-card, #view-customer .niv-card, #view-customer .stat-card { min-width: 0; }
+#view-customer h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* ---- home overview ---- */
 .niv-home-row {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -1217,6 +1239,37 @@ try {
     </div>
   </div>
  </div>
+ <div id="view-customer" style="display:none">
+  <button class="btn-cancel cust-back" id="cust-back-btn" onclick="window.customerBack()">← Volver</button>
+  <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+    <h1 style="margin:0; flex:1; min-width:0;" id="cust-name">Cliente</h1>
+  </div>
+  <div class="subtitle" id="cust-subtitle"></div>
+  <div class="niv-card cust-contact-card">
+    <div class="niv-card-title" style="font-size:16px;margin-bottom:8px;color:var(--niv-text-dim);" id="cust-contact-title">Contacto</div>
+    <div id="cust-contact"><div class="niv-panel-empty">Cargando…</div></div>
+  </div>
+  <div class="stats-row cust-stats">
+    <div class="stat-card"><div class="stat-num" id="cust-stat-projects">-</div><div class="stat-label" id="cust-stat-projects-label">Proyectos</div></div>
+    <div class="stat-card"><div class="stat-num" id="cust-stat-measures">-</div><div class="stat-label" id="cust-stat-measures-label">Medidas</div></div>
+    <div class="stat-card" id="cust-stat-quotes-card"><div class="stat-num" id="cust-stat-quotes">-</div><div class="stat-label" id="cust-stat-quotes-label">Cotizaciones</div></div>
+    <div class="stat-card"><div class="stat-num cust-recent" id="cust-stat-recent">-</div><div class="stat-label" id="cust-stat-recent-label">Actividad más reciente</div></div>
+  </div>
+  <div class="cust-grid">
+    <div class="niv-card">
+      <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="cust-projects-title">Proyectos</div>
+      <div id="cust-projects"><div class="niv-panel-empty">Cargando…</div></div>
+    </div>
+    <div class="niv-card" id="cust-quotes-card">
+      <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="cust-quotes-title">Cotizaciones</div>
+      <div id="cust-quotes"><div class="niv-panel-empty">Cargando…</div></div>
+    </div>
+  </div>
+  <div class="niv-card">
+    <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="cust-measures-title">Medidas</div>
+    <div class="job-list" id="cust-measures"><div class="niv-panel-empty">Cargando…</div></div>
+  </div>
+ </div><!-- /view-customer -->
  <div id="view-measure" style="display:none">
   <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
     <button class="niv-back-btn" id="measure-back-btn" onclick="measureBack()">◁</button>
@@ -1382,6 +1435,11 @@ const escapeHtml = (s) => String(s ?? '')
   .replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;')
   .replace(/'/g, '&#39;');
+
+// Encode a customer name for safe use inside a single-quoted inline
+// onclick argument: encodeURIComponent leaves apostrophes alone, and a
+// name like O'Brien would break the attribute, so escape those too.
+const custEnc = (s) => encodeURIComponent(String(s ?? '')).replace(/'/g, '%27');
 
 // PR-local calendar day as YYYY-MM-DD (en-CA) for the "Hoy" stat and date filter.
 const prDay = (d) => new Intl.DateTimeFormat('en-CA', {
@@ -1871,6 +1929,7 @@ let currentUser;
     applyFilters();
       refreshFloatPanel(allJobs);
       if (window._dashView === 'home' && window.renderHomeOverview) window.renderHomeOverview();
+      if (window._dashView === 'customer' && window.renderCustomerOverview) window.renderCustomerOverview();
     };
 
   // floating panel: customers + measurements lists
@@ -2688,7 +2747,7 @@ let currentUser;
     document.body.classList.remove('nav-open');
     // orgs sin quoting (QGC): las vistas de precios/cotizaciones no existen
     if (!userCanQuote(window._currentUserData) && ['pricelist', 'quotes', 'builder'].includes(name)) name = 'measures';
-    const views = { home: 'view-home', notifications: 'view-notifications', users: 'view-users', measures: 'view-measures', pricelist: 'view-pricelist', quotes: 'view-quotes', builder: 'view-builder', project: 'view-project', measure: 'view-measure' };
+    const views = { home: 'view-home', notifications: 'view-notifications', users: 'view-users', measures: 'view-measures', pricelist: 'view-pricelist', quotes: 'view-quotes', builder: 'view-builder', project: 'view-project', measure: 'view-measure', customer: 'view-customer' };
     Object.keys(views).forEach(k => {
       const el = document.getElementById(views[k]);
       if (el) el.style.display = (k === name) ? '' : 'none';
@@ -2736,6 +2795,7 @@ let currentUser;
       (snap) => {
         window._qItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderQuotes();
+        if (window._dashView === 'customer' && window.renderCustomerOverview) window.renderCustomerOverview();
       },
       (err) => {
         console.error('[Nivelato] quotes listener error:', err);
@@ -3582,6 +3642,7 @@ let currentUser;
         ? _projects.map((p, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="openProject('${p.id}')"><span>${escapeHtml(p.name || 'Proyecto')}</span><span class="dots">...</span></div>`).join('')
         : '<div class="niv-panel-empty">Sin proyectos</div>';
     }
+    if (window._dashView === 'customer' && window.renderCustomerOverview) window.renderCustomerOverview();
   };
 
   window.openProject = async (projectId) => {
@@ -3804,6 +3865,16 @@ let currentUser;
     setText('company-menu-users', L('Usuarios', 'Users'));
     setText('company-menu-close', L('Cerrar', 'Close'));
     setText('users-title', L('Usuarios', 'Users'));
+    setText('cust-back-btn', L('← Volver', '← Back'));
+    setText('cust-contact-title', L('Contacto', 'Contact'));
+    setText('cust-stat-projects-label', L('Proyectos', 'Projects'));
+    setText('cust-stat-measures-label', L('Medidas', 'Measurements'));
+    setText('cust-stat-quotes-label', L('Cotizaciones', 'Quotes'));
+    setText('cust-stat-recent-label', L('Actividad más reciente', 'Most recent activity'));
+    setText('cust-projects-title', L('Proyectos', 'Projects'));
+    setText('cust-quotes-title', L('Cotizaciones', 'Quotes'));
+    setText('cust-measures-title', L('Medidas', 'Measurements'));
+    if (window._dashView === 'customer' && window.renderCustomerOverview) window.renderCustomerOverview();
     setText('users-fallback-text', L('No se pudo cargar la vista de usuarios.', 'Could not load the users view.'));
     setText('users-fallback-link', L('Abrir la página completa', 'Open the full page'));
     const _ph = document.getElementById('niv-panel-head');
@@ -3818,6 +3889,202 @@ let currentUser;
     if (lang === NIV_LANG) { _applyDashChromeTexts(); return; }
     NIV_LANG = lang;
     _applyDashChromeTexts();
+  };
+
+  // ---- vista Cliente (wave 3): resumen por cliente ----
+  // RECON: no hay coleccion de clientes ni ids de cliente en el modelo.
+  // Un cliente es el string exacto `customer` de los jobs
+  // (orgs/{orgId}/jobs) y de los proyectos (orgs/{orgId}/projects), que es
+  // el mismo string por el que la barra lateral agrupa su lista Clientes
+  // y por el que filtra el selector de clientes. Esa es la identidad
+  // estable y por eso la direccion es ?view=customer&customer=<nombre
+  // exacto, URL-encoded>. Los unicos datos de contacto de un cliente en
+  // todo el modelo viven en las cotizaciones: companies/{orgId}/quotes
+  // guarda cliente { nombre, telefono, email, direccion }, asi que el
+  // bloque de contacto y el de cotizaciones salen de ahi, enlazados por
+  // cliente.nombre === nombre exacto, y solo existen cuando el espectador
+  // ya puede ver cotizaciones (userCanQuote, el mismo gate de la vista
+  // Cotizaciones). Las medidas salen de allJobs, que ya viene filtrada
+  // por permisos (viewOwn/viewOthers/shared) en el listener de jobs.
+  let _customerKey = null;
+  let _customerReturnView = 'measures';
+  let _custQuotesRequested = false;
+  const _custDate = (v) => {
+    if (!v) return null;
+    if (v.toDate) { try { return v.toDate(); } catch (_) { return null; } }
+    const d = v instanceof Date ? v : new Date(v);
+    return isNaN(d) ? null : d;
+  };
+  const _custFmtDate = (d) => d ? d.toLocaleDateString(NIV_LANG === 'en' ? 'en-US' : 'es-PR', { timeZone: 'America/Puerto_Rico', day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+  const _custQuotesFor = (key) => (window._qItems || []).filter((q) => q && q.cliente && q.cliente.nombre === key);
+  // Carga perezosa de cotizaciones por la misma puerta que la vista
+  // Cotizaciones (ensureQuotes suscribe el listener y llena _qItems;
+  // renderQuotes se reengancha abajo para repintar esta vista).
+  const _custEnsureQuotes = () => {
+    if (_custQuotesRequested) return;
+    if (!userCanQuote(window._currentUserData)) return;
+    _custQuotesRequested = true;
+    try { ensureQuotes(); } catch (_) {}
+  };
+  window.openCustomer = (name) => {
+    const key = String(name || '').trim();
+    if (!key) return;
+    if (window._dashView !== 'customer') _customerReturnView = window._dashView || 'measures';
+    if (_customerReturnView === 'customer') _customerReturnView = 'measures';
+    _customerKey = key;
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.set('view', 'customer');
+      u.searchParams.set('customer', key);
+      window.history.replaceState(null, '', u.toString());
+    } catch (_) {}
+    window.renderCustomerOverview();
+    window.showDashView('customer');
+    document.body.classList.remove('nav-open');
+  };
+  window.customerBack = () => {
+    const back = _customerReturnView || 'measures';
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.set('view', back === 'measures' ? 'measures' : back);
+      u.searchParams.delete('customer');
+      window.history.replaceState(null, '', u.toString());
+    } catch (_) {}
+    if (back === 'project' && typeof window.openProjectTab === 'function') { window.openProjectTab(); return; }
+    window.showDashView(back);
+  };
+  // Las tarjetas de medida de esta vista son las mismas del Historial:
+  // mismo markup que renderJobs y mismo openJob (modal con ver, editar,
+  // eliminar y compartir segun permisos). openJob indexa window._jobs,
+  // asi que esta puerta lo apunta primero a la lista del cliente.
+  window.openCustomerJob = (i) => {
+    const list = window._custJobs || [];
+    if (!list[i]) return;
+    window._jobs = list;
+    window.openJob(i);
+  };
+  window.openCustomerQuote = (id) => {
+    const items = window._qItems || [];
+    let idx = items.findIndex((q) => q.id === id);
+    if (idx < 0) return;
+    window._qView = items;
+    window.openQuote(idx);
+  };
+  window.renderCustomerOverview = () => {
+    const key = _customerKey;
+    if (!key) return;
+    const canQuote = userCanQuote(window._currentUserData);
+    if (canQuote) _custEnsureQuotes();
+    const jobs = (allJobs || []).filter((j) => j.customer === key);
+    const docProjects = (_projects || []).filter((p) => (p.customer || '') === key);
+    const docIds = new Set(docProjects.map((p) => p.id));
+    const docNames = new Set(docProjects.map((p) => p.name || ''));
+    // Proyectos sin doc propio: nombres que solo viven en jobs.project.
+    const looseNames = [];
+    jobs.forEach((j) => {
+      const nm = j.project || '';
+      if (!nm || docNames.has(nm)) return;
+      if (j.projectId && docIds.has(j.projectId)) return;
+      if (!looseNames.includes(nm)) looseNames.push(nm);
+    });
+    const quotes = canQuote ? _custQuotesFor(key) : [];
+    const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    setText('cust-name', key);
+    setText('cust-subtitle', L('Resumen del cliente', 'Customer overview'));
+    // contacto: solo de la cotizacion mas reciente con ese cliente.nombre
+    const contactEl = document.getElementById('cust-contact');
+    if (contactEl) {
+      if (!canQuote) {
+        contactEl.innerHTML = '<div class="niv-panel-empty">' + L('Sin datos de contacto registrados.', 'No contact details on record.') + '</div>';
+      } else {
+        let latest = null, latestD = null;
+        quotes.forEach((q) => { const d = _custDate(q.creadoEl) || _custDate(q.actualizadoEl); if (!latest || (d && (!latestD || d > latestD))) { latest = q; latestD = d; } });
+        const c = (latest && latest.cliente) || {};
+        const rows = [];
+        if (c.telefono) rows.push(['Teléfono', 'Phone', c.telefono]);
+        if (c.email) rows.push(['Email', 'Email', c.email]);
+        if (c.direccion) rows.push(['Dirección', 'Address', c.direccion]);
+        contactEl.innerHTML = rows.length
+          ? rows.map(([es, en, v]) => `<div class="niv-detail-row"><span class="k">${escapeHtml(L(es, en))}</span><span class="v">${escapeHtml(v)}</span></div>`).join('')
+          : '<div class="niv-panel-empty">' + L('Sin datos de contacto registrados.', 'No contact details on record.') + '</div>';
+      }
+    }
+    // stats honestas: conteos reales y actividad mas reciente real
+    const projCount = docProjects.length + looseNames.length;
+    let recent = null;
+    const bump = (v) => { const d = _custDate(v); if (d && (!recent || d > recent)) recent = d; };
+    jobs.forEach((j) => bump(j.createdAt));
+    docProjects.forEach((p) => bump(p.createdAt));
+    quotes.forEach((q) => { bump(q.creadoEl); bump(q.actualizadoEl); });
+    setText('cust-stat-projects', String(projCount));
+    setText('cust-stat-measures', String(jobs.length));
+    setText('cust-stat-recent', recent ? _custFmtDate(recent) : '-');
+    const qCard = document.getElementById('cust-quotes-card');
+    const qStatCard = document.getElementById('cust-stat-quotes-card');
+    if (qCard) qCard.style.display = canQuote ? '' : 'none';
+    if (qStatCard) qStatCard.style.display = canQuote ? '' : 'none';
+    if (canQuote) setText('cust-stat-quotes', String(quotes.length));
+    // proyectos: docs clicables a openProject + nombres sueltos de jobs
+    const projEl = document.getElementById('cust-projects');
+    if (projEl) {
+      const docHtml = docProjects.map((p) => {
+        const n = jobs.filter((j) => j.projectId === p.id).length;
+        return `<div class="cust-proj-row" onclick="openProject('${p.id}')"><span class="cust-proj-name">${escapeHtml(p.name || L('Proyecto', 'Project'))}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span></div>`;
+      }).join('');
+      const looseHtml = looseNames.map((nm) => {
+        const n = jobs.filter((j) => (j.project || '') === nm && !(j.projectId && docIds.has(j.projectId))).length;
+        return `<div class="cust-proj-row static"><span class="cust-proj-name">${escapeHtml(nm)}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span></div>`;
+      }).join('');
+      projEl.innerHTML = (docHtml + looseHtml) || '<div class="niv-panel-empty">' + L('Sin proyectos', 'No projects') + '</div>';
+    }
+    // cotizaciones: mismas tarjetas que la lista de cotizaciones
+    const quotesEl = document.getElementById('cust-quotes');
+    if (quotesEl && canQuote) {
+      quotesEl.innerHTML = quotes.length
+        ? quotes.map((q) => {
+            const total = q.totales ? q.totales.total : 0;
+            return '<div class="job-card" tabindex="0" role="button" onclick="window.openCustomerQuote(\'' + escapeHtml(q.id) + '\')">' +
+              '<div class="job-card-top"><div class="job-title">' + escapeHtml(q.numero || L('Sin número', 'No number')) +
+              ' <span class="qt-badge qt-est-' + escapeHtml(q.estado || 'borrador') + '">' + escapeHtml(QT_ESTADOS[q.estado] || q.estado || '') + '</span></div>' +
+              '<div class="job-date">' + escapeHtml(qDateStr(q.creadoEl)) + '</div></div>' +
+              '<div class="job-meta"><span class="qt-total">' + plMoney(total) + '</span></div></div>';
+          }).join('')
+        : '<div class="niv-panel-empty">' + L('Sin cotizaciones para este cliente.', 'No quotes for this customer.') + '</div>';
+    }
+    // medidas: markup identico a renderJobs (tarjeta, tags, meta)
+    const measEl = document.getElementById('cust-measures');
+    if (measEl) {
+      window._custJobs = jobs;
+      if (!jobs.length) {
+        measEl.innerHTML = '<div class="empty-state">' + L('Sin medidas para este cliente.', 'No measurements for this customer.') + '</div>';
+      } else {
+        measEl.innerHTML = jobs.map((job, i) => {
+          const date = _custDate(job.createdAt) || new Date();
+          const dateStr = date.toLocaleDateString('es-PR', { timeZone: 'America/Puerto_Rico', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+          const hasWarn = job.warnings && job.warnings.length > 0;
+          const tag = hasWarn
+            ? `<span class="job-tag tag-warn">⚠ Advertencias</span>`
+            : `<span class="job-tag tag-ok">✓ OK</span>`;
+          const hueco = job.hueco ? `${(job.hueco.anchoBot || job.hueco.anchoBottom || job.hueco.ancho || '?')}" × ${(job.hueco.altoIzq || job.hueco.altoLeft || job.hueco.alto || '?')}"` : '-';
+          const notasPreview = job.notas ? (job.notas.length > 30 ? job.notas.slice(0, 30) + '…' : job.notas) : '';
+          const titleText = job.project ? `${key} - ${job.project}` : key;
+          return `
+        <div class="job-card" tabindex="0" role="button" aria-label="${escapeHtml(L('Abrir detalle de la medida de ', 'Open measurement details for ') + key)}"
+             onclick="window.openCustomerJob(${i})"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openCustomerJob(${i});}">
+          <div class="job-card-top">
+            <div class="job-title">${escapeHtml(titleText)} ${tag}</div>
+            <div class="job-date">${escapeHtml(dateStr)}</div>
+          </div>
+          <div class="job-meta">
+            <span>📐 ${escapeHtml(hueco)}</span>
+            <span>👤 ${escapeHtml(job.installerName) || '-'}</span>
+            ${notasPreview ? `<span>📝 ${escapeHtml(notasPreview)}</span>` : ''}
+          </div>
+        </div>`;
+        }).join('');
+      }
+    }
   };
 
   // ---- barra superior: pestaña activa según la vista ----
@@ -4300,6 +4567,12 @@ let currentUser;
       else if (v === 'users') window.showDashView('users');
       else if (v === 'home' || v === 'dashboard') window.showDashView('home');
       else if (v === 'projects') window.openProjectTab();
+      else if (v === 'customer') {
+        let cust = null;
+        try { cust = new URLSearchParams(window.location.search).get('customer'); } catch (_) {}
+        if (cust && window.openCustomer) { _customerReturnView = 'measures'; window.openCustomer(cust); }
+        else window.showDashView('measures');
+      }
     };
     if (auth.currentUser) { apply(); return; }
     const un = onAuthStateChanged(auth, (u) => { if (u) { try { un(); } catch (_) {} setTimeout(apply, 400); } });
