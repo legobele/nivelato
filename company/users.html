@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<base href="/" />
+<script src="/company-theme.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0d0d0f" />
+<link rel="manifest" href="/manifest.json" />
+<title>Nivelato - Users</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/niv-dark.css" />
+<link rel="stylesheet" href="/qgc-theme.css" />
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --card: #101013;
+    --line: #2a2a2e;
+    --line-soft: #1f1f23;
+    --text: #f1f1f2;
+    --muted: #9a9aa0;
+    --faint: #6d6d74;
+    --blue: #1e9df0;
+    --teal1: #2dd4bf;
+    --teal2: #1e9df0;
+    --red: #e03131;
+    --red-dark: #b3271e;
+    --green: #51cf66;
+    --radius-lg: 28px;
+    --radius-md: 18px;
+    --radius-sm: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  /* Tarjetas flotantes, igual que el dashboard: nada toca los bordes. */
+  .shell { display: flex; flex: 1; min-height: 0; padding: 30px; gap: 30px; box-sizing: border-box; }
+
+  /* ---------- sidebar: chrome module host (modules/sidebar.html) ----------
+     The sidebar is the shared module mounted through shell-bridge.js into
+     #chrome-sidebar; the module document loads /niv-dark.css absolutely
+     itself, so the sidebar can never render unstyled because of this
+     page's own stylesheet paths. */
+  #chrome-sidebar { width: 300px; flex: none; align-self: stretch; min-height: 0; }
+  #chrome-sidebar .niv-shell-frame { height: 100%; }
+
+  /* ---------- user list column ---------- */
+  .users-col {
+    width: 340px;
+    flex: none;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: #0b0b0d;
+    padding: 24px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    max-height: none;
+  }
+  .users-title { font-size: 13px; font-weight: 600; color: var(--faint); text-transform: uppercase; letter-spacing: .12em; padding: 4px 6px 0; }
+  .user-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-md);
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    color: var(--text);
+    font-family: inherit;
+    width: 100%;
+  }
+  .user-card:hover { border-color: var(--faint); }
+  .user-card.selected {
+    background: linear-gradient(135deg, var(--teal1), var(--teal2));
+    border-color: transparent;
+  }
+  .user-card.selected .u-name, .user-card.selected .u-email { color: #06281f; }
+  .u-avatar {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    position: relative;
+  }
+  .u-online {
+    position: absolute;
+    right: -1px;
+    bottom: -1px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--green);
+    border: 2px solid var(--bg);
+  }
+  .user-card.selected .u-online { border-color: transparent; }
+  .u-meta { min-width: 0; flex: 1; }
+  .u-name {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .u-email {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+  }
+
+  /* ---------- detail panel ---------- */
+  .detail {
+    flex: 1;
+    padding: 40px 36px;
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: #0b0b0d;
+    overflow-y: auto;
+  }
+  .detail-head { text-align: center; margin-bottom: 28px; }
+  .detail-name { font-size: 20px; font-weight: 700; }
+  .detail-email { font-size: 14px; color: var(--muted); margin-top: 4px; word-break: break-all; }
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  .panel {
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--card);
+    padding: 20px 22px;
+  }
+  .panel h3 { font-size: 15px; font-weight: 700; margin: 0 0 14px; text-align: center; }
+  .proj-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .proj-thumb {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: 10px;
+    background: var(--line-soft);
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: var(--faint);
+    font-weight: 600;
+  }
+  .proj-name { font-size: 14px; font-weight: 600; }
+  .proj-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .empty { text-align: center; color: var(--faint); font-size: 13px; padding: 18px 0; }
+
+  /* toggle switches */
+  .perm-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: 14px;
+  }
+  .perm-row:last-of-type { border-bottom: 0; }
+  .toggle {
+    position: relative;
+    width: 52px;
+    height: 30px;
+    flex: none;
+    border-radius: 9999px;
+    border: 0;
+    background: #3a3a40;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .toggle .knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left .15s;
+  }
+  .toggle.on { background: var(--green); }
+  .toggle.on .knob { left: 25px; }
+  .toggle:disabled { opacity: .55; cursor: default; }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 13px 16px;
+    border-radius: 9999px;
+    border: 1.5px solid var(--line);
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 12px;
+  }
+  .btn:hover { border-color: var(--faint); }
+  .btn-danger {
+    background: var(--red);
+    border-color: var(--red);
+    color: #fff;
+    max-width: 880px;
+    margin: 24px auto 0;
+    padding: 15px 16px;
+    font-size: 15px;
+  }
+  .btn-danger:hover { background: var(--red-dark); border-color: var(--red-dark); }
+  .btn-danger:disabled { opacity: .5; cursor: default; }
+  .delete-note { text-align: center; color: var(--faint); font-size: 12px; margin-top: 10px; }
+  .state-loading { text-align: center; color: var(--faint); font-size: 14px; padding: 60px 0; }
+  .state-error {
+    border: 1.5px solid #5c2121;
+    background: #1c0f0f;
+    color: #f0a3a3;
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    font-size: 14px;
+    text-align: center;
+    max-width: 560px;
+    margin: 60px auto;
+  }
+  .perm-note { font-size: 12px; color: var(--faint); text-align: center; margin-top: 10px; }
+  .btn-retry { display: inline-block; margin-top: 12px; padding: 9px 22px; border-radius: 9999px; border: 1.5px solid var(--line); background: transparent; color: var(--text); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .btn-retry:hover { border-color: var(--faint); }
+
+  /* detail header: name with the email in parens on the same line */
+  .detail-name .detail-email-inline {
+    font-size: 15px;
+    color: var(--muted);
+    font-weight: 500;
+    word-break: break-all;
+  }
+
+  /* ---------- registered devices panel ---------- */
+  .devices-panel { max-width: 880px; margin: 20px auto 0; }
+  .dev-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .dev-row.outdated { border-color: #8a6d1f; }
+  .dev-icon {
+    width: 26px;
+    height: 44px;
+    flex: none;
+    border: 1.5px solid var(--faint);
+    border-radius: 6px;
+    position: relative;
+  }
+  .dev-icon::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 3px;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 2px;
+    background: var(--faint);
+    border-radius: 2px;
+  }
+  .dev-meta { min-width: 0; flex: 1; }
+  .dev-name { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .dev-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .dev-warn {
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffd43b;
+    border: 1px solid #8a6d1f;
+    border-radius: 9999px;
+    padding: 1px 8px;
+  }
+  .dev-rename {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    border-radius: 9999px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .dev-rename:hover { color: var(--text); border-color: var(--faint); }
+  .dev-edit { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .dev-edit input {
+    flex: 1;
+    min-width: 140px;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .dev-edit button {
+    padding: 8px 14px;
+    border-radius: 9999px;
+    border: 1.5px solid var(--line);
+    background: transparent;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .dev-edit button:disabled { opacity: .55; cursor: default; }
+
+  @media (max-width: 1100px) {
+    .detail-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 900px) {
+    body { height: auto; overflow: visible; }
+    .shell { flex-direction: column; flex: none; padding: 12px; gap: 16px; }
+    #chrome-sidebar { width: 100%; height: 380px; flex: none; }
+    .users-col {
+      width: 100%;
+      max-height: none;
+    }
+    .detail { padding: 24px 16px; }
+  }
+
+  /* modo incrustado (?embed=users): solo el area de gestion de usuarios.
+     Desaparecen la barra superior propia y la barra lateral de ajustes;
+     la pagina desplaza por dentro de sus columnas, sin barra doble. */
+  html.embed-users #chrome-topbar, html.embed-users #chrome-sidebar { display: none !important; }
+  html.embed-users body { height: 100vh; overflow: hidden; }
+  html.embed-users .shell { padding: 18px; gap: 18px; flex: 1; min-height: 0; }
+</style>
+<script>
+  /* Modo incrustado: la clase va en <html> antes del primer pintado para
+     que la pagina nazca ya recortada al area de gestion. */
+  try { if (new URLSearchParams(window.location.search).get('embed') === 'users') document.documentElement.classList.add('embed-users'); } catch (e) {}
+</script>
+</head>
+<body>
+<div id="chrome-topbar"></div>
+<div class="shell">
+  <div id="chrome-sidebar" aria-label="Company navigation"></div>
+
+  <section class="users-col" aria-label="Company users">
+    <div class="users-title" id="team-title">Team</div>
+    <div id="user-list"><div class="state-loading" id="list-loading">Loading users...</div></div>
+  </section>
+
+  <main class="detail" id="detail"><div class="state-loading" id="detail-loading">Select a user to see details.</div></main>
+</div>
+
+<script type="module">
+import { auth, db } from '/firebase-config.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import {
+  getDoc, doc, getDocs, collection, query, where, updateDoc
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
+import { startPresence, getOnlineUsers } from '/presence.js';
+import { PERM_DEFS, makePermChecker, orgHasQuotes } from '/permissions.js';
+import { ensureFlowClaims, routeAfterGate } from '/geo.js';
+
+const escapeHtml = (s) => String(s ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
+/* Language: complete EN/ES pairs for every string this page renders.
+   The module script resolves the language after the user doc loads
+   (doc language wins, 'es' selects Spanish, anything else English,
+   the same rule add-user.js uses on this page). */
+let LANG = 'en';
+try {
+  const _ls = window.localStorage.getItem('nivelato-login-lang');
+  const _ck = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1];
+  LANG = (_ls === 'es' || _ck === 'es') ? 'es' : 'en';
+} catch (e) {}
+const STR = {
+  en: {
+    team: 'Team', loadingUsers: 'Loading users...', selectUser: 'Select a user to see details.',
+    noMembers: 'No team members yet.', unknownUser: 'Unknown user', owner: 'Owner', you: ' (you)',
+    projectsBy: 'Projects by {name}', loadingProjects: 'Loading projects...', couldNotProjects: 'Could not load projects.',
+    noProjects: 'No projects yet.', measuredSpace: 'measured space', measuredSpaces: 'measured spaces',
+    showLess: 'Show less', viewMore: 'View more', viewAll: 'View all',
+    permissions: 'Permissions', onlyOwnersPerms: 'Only owners can change permissions.',
+    devices: 'Registered devices', loadingDevices: 'Loading devices...', noDevices: 'No linked devices yet.',
+    couldNotDevices: 'Could not load devices.', unnamedDevice: 'Unnamed device', updateAvailable: 'Update available',
+    rename: 'Rename', deviceName: 'Device name', save: 'Save', cancel: 'Cancel', saving: 'Saving...',
+    linked: 'Linked', renameFailed: 'Could not rename device: {msg}', permFailed: 'Could not update permission: {msg}',
+    deleteUser: 'Delete user', removing: 'Removing...', deleteNote: 'This deactivates the account immediately. One click to confirm, no maze.',
+    cannotRemoveSelf: 'You cannot remove your own account here.', cannotRemoveOwner: 'The organization owner cannot be removed.',
+    confirmRemove: 'Remove {label} from the company? They will lose access immediately.',
+    removeFailed: 'Could not remove user: {msg}', unknownError: 'unknown error',
+    couldNotCompany: 'Could not load company data: {msg}', couldNotUsers: 'Could not load users: {msg}',
+    couldNotProfile: 'Could not load your user profile: {msg}', missingProfile: 'We could not find your user profile. Please sign in again to repair it.',
+    noOrg: 'Your user profile has no company assigned.',
+    retry: 'Retry'
+  },
+  es: {
+    team: 'Equipo', loadingUsers: 'Cargando usuarios...', selectUser: 'Selecciona un usuario para ver los detalles.',
+    noMembers: 'Todavía no hay miembros en el equipo.', unknownUser: 'Usuario desconocido', owner: 'Dueño', you: ' (tú)',
+    projectsBy: 'Proyectos de {name}', loadingProjects: 'Cargando proyectos...', couldNotProjects: 'No se pudieron cargar los proyectos.',
+    noProjects: 'Todavía no hay proyectos.', measuredSpace: 'espacio medido', measuredSpaces: 'espacios medidos',
+    showLess: 'Ver menos', viewMore: 'Ver más', viewAll: 'Ver todo',
+    permissions: 'Permisos', onlyOwnersPerms: 'Solo los dueños pueden cambiar los permisos.',
+    devices: 'Dispositivos registrados', loadingDevices: 'Cargando dispositivos...', noDevices: 'Todavía no hay dispositivos vinculados.',
+    couldNotDevices: 'No se pudieron cargar los dispositivos.', unnamedDevice: 'Dispositivo sin nombre', updateAvailable: 'Actualización disponible',
+    rename: 'Renombrar', deviceName: 'Nombre del dispositivo', save: 'Guardar', cancel: 'Cancelar', saving: 'Guardando...',
+    linked: 'Vinculado', renameFailed: 'No se pudo renombrar el dispositivo: {msg}', permFailed: 'No se pudo actualizar el permiso: {msg}',
+    deleteUser: 'Eliminar usuario', removing: 'Eliminando...', deleteNote: 'Esto desactiva la cuenta de inmediato. Un clic para confirmar, sin laberintos.',
+    cannotRemoveSelf: 'No puedes eliminar tu propia cuenta aquí.', cannotRemoveOwner: 'El dueño de la compañía no se puede eliminar.',
+    confirmRemove: '¿Eliminar a {label} de la compañía? Perderá el acceso de inmediato.',
+    removeFailed: 'No se pudo eliminar al usuario: {msg}', unknownError: 'error desconocido',
+    couldNotCompany: 'No se pudieron cargar los datos de la compañía: {msg}', couldNotUsers: 'No se pudieron cargar los usuarios: {msg}',
+    couldNotProfile: 'No se pudo cargar tu perfil de usuario: {msg}', missingProfile: 'No pudimos encontrar tu perfil de usuario. Inicia sesión de nuevo para repararlo.',
+    noOrg: 'Tu perfil de usuario no tiene una compañía asignada.',
+    retry: 'Reintentar'
+  }
+};
+const t = (key, vars) => {
+  let out = (STR[LANG] && STR[LANG][key]) || STR.en[key] || key;
+  if (vars) for (const k of Object.keys(vars)) out = out.replace('{' + k + '}', String(vars[k]));
+  return out;
+};
+function applyStaticLang() {
+  const tt = document.getElementById('team-title');
+  if (tt) tt.textContent = t('team');
+  const ll = document.getElementById('list-loading');
+  if (ll) ll.textContent = t('loadingUsers');
+  const dl = document.getElementById('detail-loading');
+  if (dl) dl.textContent = t('selectUser');
+  try { document.documentElement.setAttribute('lang', LANG); } catch (e) {}
+}
+applyStaticLang();
+
+/* One honest error surface for every load failure: the message plus a
+   retry that reloads the page. Used by every gate in the boot path so no
+   failure can leave the pane sitting on the loading text forever. */
+function showLoadError(msg) {
+  window.__nivUsersBooted = true;
+  const list = document.getElementById('user-list');
+  if (list) {
+    list.innerHTML = '';
+    const box = document.createElement('div');
+    box.className = 'state-error';
+    box.textContent = msg;
+    const br = document.createElement('br');
+    const btn = document.createElement('button');
+    btn.className = 'btn-retry';
+    btn.textContent = t('retry');
+    btn.addEventListener('click', () => window.location.reload());
+    box.appendChild(br);
+    box.appendChild(btn);
+    list.appendChild(box);
+  }
+  const detail = document.getElementById('detail');
+  if (detail) detail.innerHTML = '<div class="state-loading">' + escapeHtml(msg) + '</div>';
+}
+
+// Permission labels for the 10 permission keys (PERM_DEFS order), EN + ES.
+const PERM_LABELS = { en: {
+  viewDashboard: 'View dashboard',
+  createMeasurements: 'Create measurements',
+  viewOwnMeasurements: 'View own measurements',
+  editOwnMeasurements: 'Edit own measurements',
+  viewOthersMeasurements: "View others' measurements",
+  editOthersMeasurements: "Edit others' measurements",
+  managePriceList: 'Manage price list',
+  createQuotes: 'Create quotes',
+  approveQuotes: 'Approve quotes',
+  userManagement: 'Manage users'
+}, es: Object.fromEntries(PERM_DEFS.map(d => [d.key, d.label])) };
+const permLabel = (k) => (PERM_LABELS[LANG] && PERM_LABELS[LANG][k]) || PERM_LABELS.en[k] || k;
+const PERM_KEYS = PERM_DEFS.map(d => d.key);
+const QUOTE_KEYS = ['managePriceList', 'createQuotes', 'approveQuotes'];
+const PERMS_PREVIEW = 3;
+
+const AVATAR_COLORS = ['#e64980', '#1e9df0', '#51cf66', '#9775fa', '#f06595', '#ffa94d', '#3bc9db', '#748ffc'];
+function avatarColor(uid) {
+  let h = 0;
+  for (const c of String(uid)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+function initialsOf(name, email) {
+  const src = String(name || '').trim() || String(email || '').split('@')[0] || '?';
+  const words = src.split(/[\s._-]+/).filter(Boolean);
+  const first = (words[0] && words[0][0]) || '?';
+  const second = words.length > 1 ? (words[1][0] || '') : ((words[0] && words[0][1]) || '');
+  return (first + second).toUpperCase();
+}
+function roleLabel(role) {
+  const r = String(role || 'medidor');
+  return r.charAt(0).toUpperCase() + r.slice(1);
+}
+/* In-flight guards for the async action buttons (mash guard): a second
+   activation while a write is pending is ignored, and every handler
+   re-enables its control when it settles, success or failure. */
+const _inFlight = new Set();
+function guardEnter(key) { if (_inFlight.has(key)) return false; _inFlight.add(key); return true; }
+function guardExit(key) { _inFlight.delete(key); }
+
+let currentUser = null;
+let currentUserData = null;
+let orgId = null;
+let orgData = null;
+let members = [];
+let selectedUid = null;
+let onlineUids = new Set();
+let expandedProjects = false;
+let expandedPerms = false;
+let expandedDevices = false;
+
+const isOwner = () => currentUserData && currentUserData.role === 'owner';
+// Mirrors the server owner rule (org doc ownerId, or the owner role).
+const viewerIsOrgOwner = () => isOwner() || !!(orgData && currentUser && orgData.ownerId === currentUser.uid);
+const dataVersion = () => (orgData && orgData.dataVersion) ? String(orgData.dataVersion) : '0.9';
+const memberById = (uid) => members.find(m => m.uid === uid);
+
+function sortedMembers() {
+  return [...members].sort((a, b) => {
+    const ao = a.role === 'owner' ? 0 : 1;
+    const bo = b.role === 'owner' ? 0 : 1;
+    if (ao !== bo) return ao - bo;
+    return String(a.name || a.email || '').localeCompare(String(b.name || b.email || ''));
+  });
+}
+
+function displayName(m) {
+  const self = m.uid === (currentUser && currentUser.uid);
+  if (m.role === 'owner') return t('owner') + (self ? t('you') : '');
+  const base = m.name || m.email || t('unknownUser');
+  return self ? base + t('you') : base;
+}
+
+function renderList() {
+  const list = document.getElementById('user-list');
+  if (!members.length) {
+    list.innerHTML = '<div class="empty">' + escapeHtml(t('noMembers')) + '</div>';
+    return;
+  }
+  list.innerHTML = sortedMembers().map((m) => {
+    const sel = m.uid === selectedUid ? ' selected' : '';
+    const online = onlineUids.has(m.uid) ? '<span class="u-online"></span>' : '';
+    return `<button class="user-card${sel}" data-uid="${escapeHtml(m.uid)}">
+      <span class="u-avatar" style="background:${avatarColor(m.uid)}">${escapeHtml(initialsOf(m.name, m.email))}${online}</span>
+      <span class="u-meta">
+        <span class="u-name">${escapeHtml(displayName(m))}</span>
+        <span class="u-email">${escapeHtml(m.email || '')}</span>
+      </span>
+    </button>`;
+  }).join('');
+  list.querySelectorAll('.user-card').forEach((el) => {
+    el.addEventListener('click', () => {
+      selectedUid = el.getAttribute('data-uid');
+      expandedProjects = false;
+      expandedPerms = false;
+      renderList();
+      renderDetail();
+    });
+  });
+}
+
+async function loadProjects(uid) {
+  // "Projects by {name}": group the user's jobs by project (fallback: customer).
+  // Each job is one measured opening, so the count is honest "measured spaces".
+  try {
+    const qs = await getDocs(query(collection(db, 'orgs', orgId, 'jobs'), where('installerUid', '==', uid)));
+    const groups = new Map();
+    qs.forEach((d) => {
+      const j = d.data();
+      if (j.status === 'draft') return;
+      const key = j.project || j.customer || 'Untitled';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(j);
+    });
+    return [...groups.entries()]
+      .map(([name, jobs]) => ({ name, count: jobs.length }))
+      .sort((a, b) => b.count - a.count);
+  } catch (e) {
+    console.warn('[Nivelato] could not load jobs:', e.message);
+    return null; // null = load failed (vs [] = none)
+  }
+}
+
+function renderDetail() {
+  expandedDevices = false;
+  const detail = document.getElementById('detail');
+  const m = memberById(selectedUid);
+  if (!m) {
+    detail.innerHTML = '<div class="state-loading">' + escapeHtml(t('selectUser')) + '</div>';
+    return;
+  }
+  const name = m.name || m.email || t('unknownUser');
+  detail.innerHTML = `
+    <div class="detail-head">
+      <div class="detail-name">${escapeHtml(name)} <span class="detail-email-inline">(${escapeHtml(m.email || '')})</span></div>
+    </div>
+    <div class="detail-grid">
+      <div class="panel" id="projects-panel">
+        <h3>${escapeHtml(t('projectsBy', { name: String(name).split(' ')[0] }))}</h3>
+        <div id="projects-body"><div class="empty">${escapeHtml(t('loadingProjects'))}</div></div>
+      </div>
+      <div class="panel" id="perms-panel">
+        <h3>${escapeHtml(t('permissions'))}</h3>
+        <div id="perms-body"></div>
+        ${isOwner() ? '' : '<div class="perm-note">' + escapeHtml(t('onlyOwnersPerms')) + '</div>'}
+      </div>
+    </div>
+    <div class="panel devices-panel" id="devices-panel">
+      <h3 id="devices-title">${escapeHtml(t('devices'))}</h3>
+      <div id="devices-body"><div class="empty">${escapeHtml(t('loadingDevices'))}</div></div>
+    </div>
+    <div id="delete-zone"></div>
+  `;
+  renderProjects(m);
+  renderPerms(m);
+  renderDevices(m);
+  renderDelete(m);
+}
+
+// Registered devices for the selected user. The read goes through the
+// owner-scoped listUserDevices callable (devices/{id} is not
+// client-readable by rules). Renaming your own devices uses
+// renameDevice (device-owner-only on the server); the org owner also
+// gets the Rename action on member devices, saved through
+// renameMemberDevice, which applies the same org-owner rule server-side.
+async function renderDevices(m) {
+  const body = document.getElementById('devices-body');
+  const title = document.getElementById('devices-title');
+  if (!body) return;
+  if (!guardEnter('devices:' + m.uid)) return;
+  body.innerHTML = '<div class="empty">' + escapeHtml(t('loadingDevices')) + '</div>';
+  try {
+    const fn = httpsCallable(getFunctions(auth.app, 'us-central1'), 'listUserDevices');
+    const { data } = await fn({ uid: m.uid });
+    if (!body.isConnected) { guardExit('devices:' + m.uid); return; }
+    const devices = (data && data.devices) || [];
+    const limit = (data && data.limit) || 5;
+    if (title) title.textContent = t('devices') + ` (${devices.length}/${limit})`;
+    if (!devices.length) {
+      body.innerHTML = '<div class="empty">' + escapeHtml(t('noDevices')) + '</div>';
+      guardExit('devices:' + m.uid);
+      return;
+    }
+    guardExit('devices:' + m.uid);
+    const visible = expandedDevices ? devices : devices.slice(0, limit);
+    const isSelfView = m.uid === (currentUser && currentUser.uid);
+    const canRename = isSelfView || viewerIsOrgOwner();
+    body.innerHTML = visible.map((d) => {
+      const name = d.displayName || t('unnamedDevice');
+      const modelBits = [d.brand, d.model].filter(Boolean).join(' ');
+      const sub = modelBits || (d.appVersionName ? 'Nivelato v' + d.appVersionName : 'Nivelato');
+      const linked = d.linkedAt
+        ? new Date(d.linkedAt).toLocaleDateString(LANG === 'es' ? 'es' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : '';
+      return `<div class="dev-row${d.outdated ? ' outdated' : ''}">
+        <div class="dev-icon" aria-hidden="true"></div>
+        <div class="dev-meta">
+          <div class="dev-name"><span class="dev-name-text">${escapeHtml(name)}</span>${d.outdated ? '<span class="dev-warn">' + escapeHtml(t('updateAvailable')) + '</span>' : ''}${canRename ? `<button class="dev-rename" data-rename="${escapeHtml(d.uuid)}">${escapeHtml(t('rename'))}</button>` : ''}</div>
+          <div class="dev-sub">${escapeHtml(sub)}${linked ? ' · ' + escapeHtml(t('linked')) + ' ' + escapeHtml(linked) : ''}</div>
+          <div class="dev-edit-slot"></div>
+        </div>
+      </div>`;
+    }).join('') +
+    (devices.length > limit ? `<button class="btn" id="btn-more-devices">${expandedDevices ? escapeHtml(t('showLess')) : escapeHtml(t('viewMore'))}</button>` : '');
+    const more = document.getElementById('btn-more-devices');
+    if (more) more.addEventListener('click', () => { expandedDevices = !expandedDevices; renderDevices(m); });
+    body.querySelectorAll('[data-rename]').forEach((btn) => {
+      btn.addEventListener('click', () => openDeviceRename(btn, m));
+    });
+  } catch (e) {
+    guardExit('devices:' + m.uid);
+    if (body.isConnected) body.innerHTML = '<div class="empty">' + escapeHtml(t('couldNotDevices')) + '</div>';
+  }
+}
+
+function openDeviceRename(btn, m) {
+  const row = btn.closest('.dev-row');
+  const slot = row && row.querySelector('.dev-edit-slot');
+  if (!slot || slot.dataset.open === '1') return;
+  slot.dataset.open = '1';
+  const uuid = btn.getAttribute('data-rename');
+  const nameEl = row.querySelector('.dev-name-text');
+  const current = nameEl ? nameEl.textContent.trim() : '';
+  slot.innerHTML = `<div class="dev-edit">
+    <input type="text" maxlength="60" value="${escapeHtml(current === t('unnamedDevice') ? '' : current)}" placeholder="${escapeHtml(t('deviceName'))}" aria-label="${escapeHtml(t('deviceName'))}" />
+    <button class="dev-save">${escapeHtml(t('save'))}</button>
+    <button class="dev-cancel">${escapeHtml(t('cancel'))}</button>
+  </div>`;
+  const input = slot.querySelector('input');
+  input.focus();
+  input.select();
+  slot.querySelector('.dev-cancel').addEventListener('click', () => renderDevices(m));
+  slot.querySelector('.dev-save').addEventListener('click', async () => {
+    const saveBtn = slot.querySelector('.dev-save');
+    if (saveBtn.disabled || !guardEnter('rename:' + uuid)) return;
+    saveBtn.disabled = true;
+    saveBtn.textContent = t('saving');
+    try {
+      // Own devices go through renameDevice (device-owner-only);
+      // a member's devices go through the org-scoped renameMemberDevice.
+      const isSelfView = m.uid === (currentUser && currentUser.uid);
+      const fn = httpsCallable(getFunctions(auth.app, 'us-central1'),
+        isSelfView ? 'renameDevice' : 'renameMemberDevice');
+      const payload = isSelfView
+        ? { deviceUuid: uuid, displayName: input.value.trim() }
+        : { uid: m.uid, deviceUuid: uuid, displayName: input.value.trim() };
+      await fn(payload);
+      guardExit('rename:' + uuid);
+      renderDevices(m);
+    } catch (e) {
+      guardExit('rename:' + uuid);
+      alert(t('renameFailed', { msg: e.message || t('unknownError') }));
+      saveBtn.disabled = false;
+      saveBtn.textContent = t('save');
+    }
+  });
+}
+
+async function renderProjects(m) {
+  const body = document.getElementById('projects-body');
+  if (!body) return;
+  if (!guardEnter('projects:' + m.uid)) return;
+  const groups = await loadProjects(m.uid);
+  guardExit('projects:' + m.uid);
+  if (!body.isConnected) return;
+  if (groups === null) {
+    body.innerHTML = '<div class="empty">' + escapeHtml(t('couldNotProjects')) + '</div>';
+    return;
+  }
+  if (!groups.length) {
+    body.innerHTML = '<div class="empty">' + escapeHtml(t('noProjects')) + '</div>';
+    return;
+  }
+  const visible = expandedProjects ? groups : groups.slice(0, 3);
+  body.innerHTML = visible.map((g) => `
+    <div class="proj-row">
+      <div class="proj-thumb">IMG</div>
+      <div>
+        <div class="proj-name">${escapeHtml(g.name)}</div>
+        <div class="proj-sub">${g.count} ${escapeHtml(g.count === 1 ? t('measuredSpace') : t('measuredSpaces'))}</div>
+      </div>
+    </div>`).join('') +
+    (groups.length > 3 ? `<button class="btn" id="btn-more-projects">${expandedProjects ? escapeHtml(t('showLess')) : escapeHtml(t('viewMore'))}</button>` : '');
+  const btn = document.getElementById('btn-more-projects');
+  if (btn) btn.addEventListener('click', () => { expandedProjects = !expandedProjects; renderProjects(m); });
+}
+
+function renderPerms(m) {
+  const body = document.getElementById('perms-body');
+  if (!body) return;
+  const checker = makePermChecker(m);
+  // orgs sin quoting (QGC): no se muestran los permisos de precios/cotizaciones
+  const allKeys = orgHasQuotes(m) ? PERM_KEYS : PERM_KEYS.filter(k => !QUOTE_KEYS.includes(k));
+  const keys = expandedPerms ? allKeys : allKeys.slice(0, PERMS_PREVIEW);
+  const canEdit = isOwner();
+  body.innerHTML = keys.map((k) => {
+    const on = !!checker(k);
+    return `<div class="perm-row">
+      <span>${escapeHtml(permLabel(k))}</span>
+      <button class="toggle${on ? ' on' : ''}" data-key="${escapeHtml(k)}" ${canEdit ? '' : 'disabled'}
+        aria-pressed="${on}" aria-label="${escapeHtml(permLabel(k))}">
+        <span class="knob"></span>
+      </button>
+    </div>`;
+  }).join('') +
+  (allKeys.length > PERMS_PREVIEW
+    ? `<button class="btn" id="btn-all-perms">${expandedPerms ? escapeHtml(t('showLess')) : escapeHtml(t('viewAll'))}</button>`
+    : '');
+  const btnAll = document.getElementById('btn-all-perms');
+  if (btnAll) btnAll.addEventListener('click', () => { expandedPerms = !expandedPerms; renderPerms(m); });
+  if (canEdit) {
+    body.querySelectorAll('.toggle').forEach((t) => {
+      t.addEventListener('click', async () => {
+        const key = t.getAttribute('data-key');
+        if (t.disabled || !guardEnter('perm:' + m.uid + ':' + key)) return;
+        const cur = memberById(m.uid);
+        const nowOn = !!makePermChecker(cur)(key);
+        t.disabled = true;
+        try {
+          await updateDoc(doc(db, 'users', m.uid), { ['permissions.' + key]: !nowOn });
+          cur.permissions = { ...(cur.permissions || {}), [key]: !nowOn };
+        } catch (e) {
+          alert(t('permFailed', { msg: e.message || t('unknownError') }));
+        } finally {
+          guardExit('perm:' + m.uid + ':' + key);
+        }
+        renderPerms(memberById(m.uid));
+      });
+    });
+  }
+}
+
+function renderDelete(m) {
+  const zone = document.getElementById('delete-zone');
+  if (!zone || !isOwner()) return;
+  const isSelf = m.uid === (currentUser && currentUser.uid);
+  const isOrgOwner = orgData && orgData.ownerId === m.uid;
+  if (isSelf || isOrgOwner) {
+    zone.innerHTML = `<div class="delete-note">${isSelf ? escapeHtml(t('cannotRemoveSelf')) : escapeHtml(t('cannotRemoveOwner'))}</div>`;
+    return;
+  }
+  zone.innerHTML = `
+    <button class="btn btn-danger" id="btn-delete-user">${escapeHtml(t('deleteUser'))}</button>
+    <div class="delete-note">${escapeHtml(t('deleteNote'))}</div>`;
+  document.getElementById('btn-delete-user').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-delete-user');
+    if (!btn || btn.disabled || !guardEnter('delete:' + m.uid)) return;
+    const label = m.name || m.email || t('unknownUser');
+    if (!confirm(t('confirmRemove', { label }))) { guardExit('delete:' + m.uid); return; }
+    btn.disabled = true;
+    btn.textContent = t('removing');
+    try {
+      await updateDoc(doc(db, 'users', m.uid), { disabled: true });
+      members = members.filter((x) => x.uid !== m.uid);
+      selectedUid = members.length ? sortedMembers()[0].uid : null;
+      expandedProjects = false;
+      expandedPerms = false;
+      guardExit('delete:' + m.uid);
+      renderList();
+      renderDetail();
+    } catch (e) {
+      guardExit('delete:' + m.uid);
+      alert(t('removeFailed', { msg: e.message || t('unknownError') }));
+      btn.disabled = false;
+      btn.textContent = t('deleteUser');
+    }
+  });
+}
+
+async function refreshOnline() {
+  try {
+    const online = await getOnlineUsers(orgId);
+    onlineUids = new Set(online.map((u) => u.uid));
+    renderList();
+  } catch (_) { /* online dots are a nice-to-have */ }
+}
+
+// ---- auth + data ----
+/* First render gate, traced: onAuthStateChanged fires, flow claims are
+   minted (soft fail), then the viewer's own users/{uid} doc is read.
+   That read is the gate for everything below it: the manager check, the
+   org read and the members query all need its orgId. In the previous
+   version the read sat OUTSIDE any try/catch, so a single rejection
+   (permission-denied before claims landed, a dropped connection) became
+   an unhandled rejection in this async callback and the pane stayed on
+   the static "Loading users..." text forever: the org and members reads
+   each had error surfaces, but they were never reached. Every gate now
+   routes failures to showLoadError (message plus retry), and the boot
+   watchdog in the page covers the module failing to load at all. */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
+  // Mint flow claims: rules require them for org data reads.
+  // Route to geo-blocked on fresh block/review verdicts (same as login.html).
+  try {
+    const gate = await ensureFlowClaims();
+    if (gate && gate.ok && !gate.cached && routeAfterGate(gate.verdict, gate.reason)) return;
+  } catch (_) { /* fails soft */ }
+  currentUser = user;
+
+  // Backup theme pass: in case the fast path or doc-based check could not run.
+  if (window.applyCompanyThemeFromAuth) { try { window.applyCompanyThemeFromAuth(auth); } catch (_) {} }
+
+  let userSnap;
+  try {
+    userSnap = await getDoc(doc(db, 'users', user.uid));
+  } catch (e) {
+    showLoadError(t('couldNotProfile', { msg: e.message || t('unknownError') }));
+    return;
+  }
+  if (!userSnap.exists()) {
+    alert(t('missingProfile'));
+    window.location.href = 'https://login.nivelatolabs.com/?missingProfile=1';
+    return;
+  }
+  if (window.applyCompanyTheme) { try { window.applyCompanyTheme(userSnap.data()); } catch (_) {} }
+  currentUserData = userSnap.data();
+  // The saved language wins for this page's strings from here on.
+  LANG = currentUserData.language === 'es' ? 'es' : 'en';
+  applyStaticLang();
+  orgId = currentUserData.orgId;
+  if (!orgId) {
+    showLoadError(t('noOrg'));
+    return;
+  }
+
+  if (!makePermChecker(currentUserData)('userManagement')) {
+    if (window.nivSaveSettingsReferrer) window.nivSaveSettingsReferrer();
+    window.location.href = '/account/settings';
+    return;
+  }
+
+  try { await startPresence(user.uid); } catch (e) {
+    console.warn('[Nivelato] presence start failed:', e.message);
+  }
+
+  try {
+    const orgSnap = await getDoc(doc(db, 'orgs', orgId));
+    orgData = orgSnap.exists() ? orgSnap.data() : {};
+  } catch (e) {
+    showLoadError(t('couldNotCompany', { msg: e.message || t('unknownError') }));
+    return;
+  }
+  /* The org head and the Updates dot that this page used to render into
+     its own sidebar are rendered by the sidebar module now; the module
+     reads the same org doc and app_updates/latest itself. */
+
+  try {
+    const qs = await getDocs(query(collection(db, 'users'), where('orgId', '==', orgId)));
+    members = qs.docs
+      .map((d) => ({ uid: d.id, ...d.data() }))
+      .filter((m) => m.disabled !== true);
+  } catch (e) {
+    showLoadError(t('couldNotUsers', { msg: e.message || t('unknownError') }));
+    return;
+  }
+
+  window.__nivUsersBooted = true;
+  if (members.length) selectedUid = sortedMembers()[0].uid;
+  renderList();
+  renderDetail();
+  refreshOnline();
+  setInterval(refreshOnline, 60000);
+});
+</script>
+<script src="/modules/shell-bridge.js"></script>
+<script>
+  /* Chrome modules: sidebar (target=company, this page is the Users door)
+     and, per the shell rule, the top bar ONLY at >=901px (never on mobile)
+     and never in embed mode, which is chrome-less from before first paint. */
+  (function () {
+    var embed = false;
+    try { embed = new URLSearchParams(window.location.search).get('embed') === 'users'; } catch (e) {}
+    if (embed || !window.NivShell) return;
+    var lang = 'en';
+    try {
+      var ls = window.localStorage.getItem('nivelato-login-lang');
+      var ck = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1];
+      lang = (ls === 'es' || ls === 'en') ? ls : (ck || 'en');
+    } catch (e) {}
+    window.NivShell.mountSidebar('#chrome-sidebar', { target: 'company', active: 'users', lang: lang });
+    if (window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
+      window.NivShell.mountTopbar('#chrome-topbar', { active: 'users' });
+    }
+  })();
+</script>
+<script>
+  /* Boot watchdog: if the module script cannot run at all (a failed
+     import, a blocked CDN script), the list would otherwise sit on
+     "Loading users..." forever with no error surface. After a grace
+     period, an unbooted page replaces the loading text with an honest
+     error plus a retry. The module sets window.__nivUsersBooted as soon
+     as the first render lands (or a handled error state is shown). */
+  setTimeout(function () {
+    if (window.__nivUsersBooted) return;
+    var es = false;
+    try {
+      es = window.localStorage.getItem('nivelato-login-lang') === 'es'
+        || /(?:^|; )nivelato-login-lang=es(?:;|$)/.test(document.cookie);
+    } catch (e) {}
+    var msg = es ? 'No se pudieron cargar los usuarios. Revisa tu conexión e inténtalo de nuevo.'
+                 : 'Could not load users. Check your connection and try again.';
+    var retry = es ? 'Reintentar' : 'Retry';
+    var list = document.getElementById('user-list');
+    if (list) {
+      list.innerHTML = '<div class="state-error">' + msg + '<br><button class="btn-retry" onclick="window.location.reload()">' + retry + '</button></div>';
+    }
+    var detail = document.getElementById('detail');
+    if (detail) detail.innerHTML = '<div class="state-loading">' + msg + '</div>';
+  }, 15000);
+</script>
+<script src="/press-yaoi.js"></script>
+<script type="module" src="/add-user.js"></script>
+<script src="/nav-referrer.js"></script>
+</body>
+</html>
