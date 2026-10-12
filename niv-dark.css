@@ -450,7 +450,11 @@ body:not(.has-sidebar) .niv-shell {
   padding: 4px 2px 12px;
 }
 .niv-panel-head .niv-company-avatar { width: 44px; height: 44px; font-size: 15px; }
-.niv-panel-head .niv-company-name { font-size: 15px; flex: 1; }
+.niv-panel-head .niv-company-name {
+  font-size: 15px; flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.niv-panel-head .niv-panel-collapse { flex: none; }
 .niv-panel-collapse {
   width: 28px; height: 28px; border-radius: 50%;
   border: 1px solid var(--niv-border);

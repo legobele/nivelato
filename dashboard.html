@@ -765,7 +765,10 @@ body.has-sidebar .niv-shell > main {
    de los tokens del tema. */
 .niv-panel-topzone { flex: none; display: flex; flex-direction: column; }
 body.has-sidebar .niv-panel-bottom { margin-top: auto; }
-.niv-panel-collapserow { display: flex; justify-content: flex-end; padding: 0 2px 4px; margin-top: -6px; }
+/* El boton de colapso vive en la misma fila de la cabecera (avatar, nombre
+   que cede y se trunca, boton fijo a la derecha) con prioridad sobre el
+   nombre. En el riel la cabecera pasa a columna y el boton queda centrado
+   bajo el avatar, como antes. */
 .niv-panel-collapse {
   width: 34px; height: 34px;
   background: var(--niv-accent, #1971c2);
@@ -774,7 +777,6 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 }
 .niv-panel-collapse:hover { background: var(--niv-accent, #1971c2); filter: brightness(1.18); }
 .niv-float-panel.collapsed .niv-panel-head { padding-bottom: 2px; }
-.niv-float-panel.collapsed .niv-panel-collapserow { justify-content: center; padding: 2px 0 6px; margin-top: 0; }
 .niv-float-panel.collapsed .niv-panel-collapse { width: 40px; height: 40px; font-size: 19px; }
 #niv-snav-projects-body { display: none; }
 #niv-snav-projects-body.open { display: block; margin-bottom: 14px; }
@@ -850,8 +852,6 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
   <div class="niv-panel-head" id="niv-panel-head" onclick="openCompanyDialog(event)" style="cursor:pointer" title="Ajustes de la empresa">
     <div class="niv-company-avatar" id="sidebar-avatar">N</div>
     <div class="niv-company-name" id="org-name-badge">…<span id="estradiol-indicator">E2</span></div>
-  </div>
-  <div class="niv-panel-collapserow">
     <button class="niv-panel-collapse" id="niv-panel-collapse" title="Colapsar" aria-label="Colapsar">‹</button>
   </div>
   <div class="org-badge" id="tier-badge" style="display:none;">Pro</div>
