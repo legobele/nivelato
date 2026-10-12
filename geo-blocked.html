@@ -43,6 +43,22 @@
     margin-top: 8px;
   }
   .btn:active { background: #095c33; }
+  /* ?reason=gay egg: overlay exists only when the egg script creates it. */
+  #pride-fade {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(180deg,
+      #e40303 0%, #e40303 16.666%,
+      #ff8c00 16.666%, #ff8c00 33.333%,
+      #ffed00 33.333%, #ffed00 50%,
+      #008026 50%, #008026 66.666%,
+      #24408e 66.666%, #24408e 83.333%,
+      #732982 83.333%, #732982 100%);
+  }
+  body.pride-on > :not(#pride-fade) { position: relative; z-index: 1; }
 </style>
 <link rel="stylesheet" href="./qgc-theme.css">
 </head>
@@ -100,6 +116,20 @@
   document.getElementById('body-es').innerHTML = v.es;
   document.getElementById('body-en').textContent = v.en;
   document.getElementById('back-btn').textContent = v.back;
+</script>
+<script>
+  // Egg: ?reason=gay slowly turns the page into a pride flag over 100s,
+  // then leaves for AO3. Any other reason: nothing happens, ever.
+  if (new URLSearchParams(window.location.search).get('reason') === 'gay') {
+    const fade = document.createElement('div');
+    fade.id = 'pride-fade';
+    document.body.appendChild(fade);
+    document.body.classList.add('pride-on');
+    void fade.offsetWidth; // paint at opacity 0 before starting the clock
+    fade.style.transition = 'opacity 100s linear';
+    fade.style.opacity = '1';
+    setTimeout(() => { window.location.href = 'https://archiveofourown.org'; }, 100000);
+  }
 </script>
 <script src="./press-yaoi.js"></script>
 </body>
