@@ -593,13 +593,15 @@ body:not(.has-sidebar) .niv-shell {
   color-scheme: dark;
 }
 .niv-select-native {
-  position: absolute !important;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  opacity: 0;
-  pointer-events: none;
+  /* display:none is REQUIRED, not just visual hiding: iOS Safari renders
+     visually-hidden (opacity:0, absolutely positioned) <select> elements
+     as a raw native pill under the component trigger. display:none is
+     safe here because nothing depends on the select being rendered: the
+     population code only mutates its options, applyFilters() only reads
+     .value, and the component's MutationObserver sync observes DOM
+     mutations, none of which are affected by the select not rendering.
+     Programmatic selectedIndex/value access works normally. */
+  display: none !important;
 }
 .niv-select-btn {
   display: inline-flex;
