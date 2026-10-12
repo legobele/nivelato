@@ -76,8 +76,6 @@
   .status-line.err { display: block; background: #fff5f5; color: #c92a2a; }
   .backend-current { font-size: 13px; color: #495057; background: #f8f9fa; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
   .backend-current b { color: #212529; }
-.notif-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--niv-accent, #f5a524); flex: none; box-shadow: 0 0 8px var(--niv-accent, #f5a524); }
-.updates-link:hover span:first-child { text-decoration: underline; }
 html, body { overflow-y: auto !important; }
 </style></head>
 <body>
@@ -93,15 +91,16 @@ html, body { overflow-y: auto !important; }
     </div>
   </div>
   <nav class="niv-nav">
-    <a class="niv-nav-btn" href="/account/settings">Mi cuenta</a>
-    <a class="niv-nav-btn active" href="/company/settings">Users</a>
-    <a class="niv-nav-btn linklike" href="#" onclick="return false;">Billing</a>
-    <div class="niv-card" style="margin:0;">
-      <div class="niv-card-title">Updates</div>
-      <a href="/company/updates" id="updates-link" class="updates-link" style="margin:0; text-decoration:none; color:inherit; display:flex; align-items:center; gap:8px; cursor:pointer;">
-        <span>New version available</span>
-        <span class="notif-dot"></span>
-      </a>
+    <div class="niv-nav-group">
+      <div class="niv-nav-group-title">Mi cuenta</div>
+      <a class="niv-nav-btn" href="/account/settings">Mi cuenta</a>
+    </div>
+    <div class="niv-nav-group">
+      <div class="niv-nav-group-title">Compañía</div>
+      <a class="niv-nav-btn" href="/company/users">Usuarios</a>
+      <a class="niv-nav-btn active" href="/company/settings">Ajustes de la compañía</a>
+      <a class="niv-nav-btn" href="/company/updates">Updates</a>
+      <button class="niv-nav-btn soon" disabled>Billing<span class="soon-badge">soon</span></button>
     </div>
   </nav>
 </aside>
@@ -509,5 +508,6 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 </script>
+<script src="../nav-referrer.js"></script>
 </body>
 </html>
