@@ -1939,7 +1939,7 @@ let currentUser;
     if (custEl) {
       const customers = [...new Set(jobs.map(j => j.customer).filter(Boolean))].slice(0, 5);
       custEl.innerHTML = customers.length
-        ? customers.map((c, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}"><span>${esc(c)}</span><span class="dots">...</span></div>`).join('')
+        ? customers.map((c, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="window.openCustomer(decodeURIComponent('${custEnc(c)}'))"><span>${esc(c)}</span><span class="dots">...</span></div>`).join('')
         : '<div class="niv-panel-empty">Sin clientes</div>';
     }
     const measEl = document.getElementById('niv-panel-measures');
@@ -2006,12 +2006,15 @@ let currentUser;
       // Título = cliente - proyecto (el técnico va en la meta, no en el título).
       const titleCustomer = job.customer || 'Sin cliente';
       const titleText = job.project ? `${titleCustomer} - ${job.project}` : titleCustomer;
+      const titleHtml = job.customer
+        ? `<span class="cust-link" title="${escapeHtml(titleCustomer)}" onclick="event.stopPropagation();window.openCustomer(decodeURIComponent('${custEnc(job.customer)}'))">${escapeHtml(titleCustomer)}</span>${job.project ? ` - ${escapeHtml(job.project)}` : ''}`
+        : escapeHtml(titleText);
       return `
         <div class="job-card" tabindex="0" role="button" aria-label="Abrir detalle de la medida de ${escapeHtml(titleCustomer)}"
              onclick="openJob(${i})"
              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openJob(${i});}">
           <div class="job-card-top">
-            <div class="job-title">${escapeHtml(titleText)} ${tag}</div>
+            <div class="job-title">${titleHtml} ${tag}</div>
             <div class="job-date">${escapeHtml(dateStr)}</div>
           </div>
           <div class="job-meta">
@@ -2831,7 +2834,7 @@ let currentUser;
         '<div class="job-card-top"><div class="job-title">' + escapeHtml(q.numero || 'Sin número') +
         ' <span class="qt-badge qt-est-' + escapeHtml(q.estado || 'borrador') + '">' + escapeHtml(QT_ESTADOS[q.estado] || q.estado || '') + '</span></div>' +
         '<div class="job-date">' + escapeHtml(qDateStr(q.creadoEl)) + '</div></div>' +
-        '<div class="job-meta"><span>👤 ' + escapeHtml((q.cliente && q.cliente.nombre) || 'Sin cliente') + '</span>' +
+        '<div class="job-meta"><span>👤 ' + ((q.cliente && q.cliente.nombre) ? '<span class="cust-link" onclick="event.stopPropagation();window.openCustomer(decodeURIComponent(\'' + custEnc(q.cliente.nombre) + '\'))">' + escapeHtml(q.cliente.nombre) + '</span>' : 'Sin cliente') + '</span>' +
         '<span class="qt-total">' + plMoney(total) + '</span></div></div>';
     }).join('');
   };
@@ -3652,7 +3655,10 @@ let currentUser;
     const _tp = document.getElementById('niv-topbar-project');
     if (_tp) _tp.textContent = p.name || 'Proyecto';
     document.getElementById('proj-title').textContent = p.name || 'Proyecto';
-    document.getElementById('proj-subtitle').textContent = p.customer || '';
+    const _psub = document.getElementById('proj-subtitle');
+    if (p.customer) {
+      _psub.innerHTML = `<span class="cust-link" onclick="window.openCustomer(decodeURIComponent('${custEnc(p.customer)}'))">${escapeHtml(p.customer)}</span>`;
+    } else { _psub.textContent = ''; }
     // measurements in this project
     const meas = allJobs.filter(j => j.projectId === projectId);
     const measEl = document.getElementById('proj-measures');
