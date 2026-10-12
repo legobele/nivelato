@@ -29,7 +29,7 @@
  *
  * - /account/settings: key niv:settings-referrer, exposed save hook
  *   nivSaveSettingsReferrer, [data-niv-to-settings] clicks also save,
- *   back button matched by .btn-back, onclick removed on apply.
+ *   back button matched by .niv-btn-back, onclick removed on apply.
  * - /company/settings: its own key niv:company-settings-referrer and
  *   hook nivSaveCompanySettingsReferrer (the saved key belongs to the
  *   company settings visit, never the account one), the widest
@@ -50,7 +50,7 @@
       key: 'niv:settings-referrer',
       saveName: 'nivSaveSettingsReferrer',
       allowed: ['/', '/dashboard.html', '/company/users', '/company/settings', '/company/updates', '/photo.html'],
-      selector: '.btn-back',
+      selector: '.niv-btn-back',
       removeOnclick: true,
       selfByPath: true
     },
