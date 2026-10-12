@@ -55,9 +55,9 @@ function injectStyles() {
   .acct-menu-wrap { position: relative; display: inline-flex; align-items: center; }
   .acct-trigger {
     display: inline-flex; align-items: center; gap: 8px;
-    background: var(--accent-light, #e7f5ff);
-    border: 1px solid var(--accent, #1971c2);
-    color: var(--accent, #1971c2);
+    background: var(--niv-surface-2, #1e1e22);
+    border: 1px solid var(--niv-border, rgba(255,255,255,0.14));
+    color: var(--niv-text, #f5f5f7);
     font-family: inherit; font-size: 12px; font-weight: 600;
     padding: 4px 10px; border-radius: 20px; cursor: pointer;
     max-width: 180px;
@@ -65,7 +65,7 @@ function injectStyles() {
   .acct-trigger:active { transform: scale(0.98); }
   .acct-avatar {
     width: 22px; height: 22px; border-radius: 50%;
-    background: var(--accent, #1971c2); color: #fff;
+    background: var(--niv-accent, #1971c2); color: #fff;
     display: inline-flex; align-items: center; justify-content: center;
     font-size: 11px; font-weight: 700; flex-shrink: 0;
     overflow: hidden;
@@ -74,34 +74,34 @@ function injectStyles() {
   .acct-caret { font-size: 9px; opacity: 0.7; }
   .acct-dropdown {
     position: absolute; top: calc(100% + 8px); right: 0;
-    min-width: 220px; background: #fff;
-    border: 1px solid var(--grey-200, #e9ecef);
-    border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.14);
+    min-width: 220px; background: var(--niv-surface, #17171a);
+    border: 1px solid var(--niv-border, rgba(255,255,255,0.14));
+    border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.45);
     padding: 6px; z-index: 50; display: none;
   }
   .acct-dropdown.open { display: block; }
   .acct-dropdown::before {
     content: ""; position: absolute; top: -6px; right: 16px;
-    width: 12px; height: 12px; background: #fff;
-    border-left: 1px solid var(--grey-200, #e9ecef);
-    border-top: 1px solid var(--grey-200, #e9ecef);
+    width: 12px; height: 12px; background: var(--niv-surface, #17171a);
+    border-left: 1px solid var(--niv-border, rgba(255,255,255,0.14));
+    border-top: 1px solid var(--niv-border, rgba(255,255,255,0.14));
     transform: rotate(45deg);
   }
-  .acct-info { padding: 10px 12px; border-bottom: 1px solid var(--grey-100, #f1f3f5); }
-  .acct-info .nm { font-size: 14px; font-weight: 700; color: var(--grey-900, #212529); }
-  .acct-info .em { font-size: 12px; color: var(--grey-600, #868e96); margin-top: 2px;
+  .acct-info { padding: 10px 12px; border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.08)); }
+  .acct-info .nm { font-size: 14px; font-weight: 700; color: var(--niv-text, #f5f5f7); }
+  .acct-info .em { font-size: 12px; color: var(--niv-text-dim, #a7a7ad); margin-top: 2px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .acct-info .rl { font-size: 11px; font-weight: 600; color: var(--accent, #1971c2);
+  .acct-info .rl { font-size: 11px; font-weight: 600; color: #60a5fa;
     text-transform: capitalize; margin-top: 4px; }
   .acct-item {
     display: flex; align-items: center; gap: 10px; width: 100%;
     padding: 10px 12px; border: none; background: none; cursor: pointer;
-    font-family: inherit; font-size: 13px; font-weight: 500; color: var(--grey-700, #495057);
+    font-family: inherit; font-size: 13px; font-weight: 500; color: var(--niv-text, #f5f5f7);
     border-radius: 8px; text-align: left;
   }
-  .acct-item:hover { background: var(--grey-50, #f8f9fa); }
-  .acct-item.danger { color: var(--red, #c92a2a); }
-  .acct-item.danger:hover { background: var(--red-bg, #fff5f5); }
+  .acct-item:hover { background: var(--niv-surface-2, #1e1e22); }
+  .acct-item.danger { color: #f87171; }
+  .acct-item.danger:hover { background: rgba(248,113,113,0.12); }
   `;
   document.head.appendChild(s);
 }
@@ -153,6 +153,19 @@ function buildMenu({ user, userData }) {
     : escapeHtml(initials(displayName, email));
   const canDashboard = makePermChecker(userData)("viewDashboard");
 
+  // Menu strings follow the resolved UI language (lang cookie first, then
+  // the stored preference): a menu never mixes languages.
+  const _acctLang = (() => {
+    try {
+      const m = document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/);
+      if (m) return m[1];
+      return localStorage.getItem("nivelato-login-lang") === "en" ? "en" : "es";
+    } catch { return "es"; }
+  })();
+  const T = _acctLang === "en"
+    ? { dashboard: "Dashboard", settings: "Settings", signOut: "Sign out" }
+    : { dashboard: "Panel", settings: "Ajustes", signOut: "Cerrar sesión" };
+
   wrap.innerHTML = `
     <button class="acct-trigger" id="acct-trigger" aria-haspopup="true" aria-expanded="false">
       <span class="acct-avatar">${avatarHTML}</span>
@@ -165,9 +178,9 @@ function buildMenu({ user, userData }) {
         ${email ? `<div class="em">${escapeHtml(email)}</div>` : ""}
         <div class="rl">${escapeHtml(roleLabel(userData?.role))}</div>
       </div>
-      ${canDashboard ? `<button class="acct-item" id="acct-dashboard" role="menuitem" onclick="window.location.href='https://app.nivelatolabs.com/dashboard.html?view=home'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:2px;"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg> Dashboard</button>` : ""}
-      <button class="acct-item" id="acct-settings" role="menuitem" onclick="window.location.href='settings.html'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:2px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Ajustes</button>
-      <button class="acct-item danger" id="acct-signout" role="menuitem">Cerrar sesión</button>
+      ${canDashboard ? `<button class="acct-item" id="acct-dashboard" role="menuitem" onclick="window.location.href='https://app.nivelatolabs.com/dashboard.html?view=home'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:2px;"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg> ${T.dashboard}</button>` : ""}
+      <button class="acct-item" id="acct-settings" role="menuitem" onclick="window.location.href='settings.html'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:2px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> ${T.settings}</button>
+      <button class="acct-item danger" id="acct-signout" role="menuitem">${T.signOut}</button>
     </div>
   `;
 
