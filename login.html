@@ -1856,7 +1856,7 @@
   }
   function devToggle() {
     devEnsureDom();
-    if (devIsOpen()) { devRevertClose(); return; }
+    if (devIsOpen()) { devHide(); return; } // M34: chord-close is a plain close; reverting nl_dev_* is no longer a side effect of the toggle
     devOpen();
   }
 

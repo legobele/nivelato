@@ -983,7 +983,7 @@ document.addEventListener('click', (ev) => {
 });
 /* Same data sources as the dashboard panel: orgs/{orgId}/projects for
    the projects list, orgs/{orgId}/jobs (newest first) feeding the
-   unique customers list (max 5) and the recent measures list (max 5).
+   unique customers list (all of them, M21) and the recent measures list (max 5).
    Row bodies activate like the dashboard rows (primary action via
    runRowAction); the deep-link destinations live in the bridge
    defaults and in rowOpenFallback above. */
@@ -1002,7 +1002,7 @@ async function loadLists(db, fs, orgId) {
     const snap = await fs.getDocs(q);
     jobs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   } catch (_) { /* empty states stay */ }
-  const customers = [...new Set(jobs.map((j) => j.customer).filter(Boolean))].slice(0, 5);
+  const customers = [...new Set(jobs.map((j) => j.customer).filter(Boolean))]; // M21: all customers, no silent cap
   const measures = jobs.slice(0, 5).map((j) => ({
     id: j.id,
     label: j.customer || j.project || L('measureFallback'),

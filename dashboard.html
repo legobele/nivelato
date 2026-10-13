@@ -6,6 +6,7 @@
   try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|$)/);if(cm&&cm[1]==='1')document.documentElement.classList.add('niv-compact');var lm=c.match(/; nivelato-login-lang=(es|en)(?:;|$)/);if(lm)document.documentElement.lang=lm[1];}catch(e){}
   </script>
   <script src="./niv-settings.js"></script>
+  <script src="./niv-envmark.js"></script>
   <script src="./company-theme.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#121212" />
@@ -1030,7 +1031,7 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 }
 </style>
 </head>
-<body class="has-sidebar">
+<body class="has-sidebar" data-envmark-interstitial>
 <canvas id="drawing-canvas" style="display:none;width:340px;height:420px"></canvas>
 
 <!-- TOP BAR: on top across ALL the dashboard (wireframe law #1) -->
@@ -1064,14 +1065,14 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
   <button class="btn-save" id="btn-upgrade-plan" onclick="window.showUpgradeModal && window.showUpgradeModal()" style="display:none;margin:10px 16px 0;">Mejorar plan</button>
   <nav class="niv-side-nav" aria-label="Dashboard">
     <div class="niv-navunit" data-navunit="home">
-      <button class="niv-snav" id="snav-home" onclick="window._sideNavGo('home')">
+      <button class="niv-snav" id="snav-home" title="Panel" onclick="window._sideNavGo('home')">
         <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="currentColor"/><path d="M12 5l7 6.3h-1.9V18a1.2 1.2 0 0 1-1.2 1.2h-2.9v-4.7h-2v4.7H8.1A1.2 1.2 0 0 1 6.9 18v-6.7H5z" fill="#fff"/></svg></span>
         <span class="niv-snav-label" id="snav-home-label">Panel</span>
       </button>
     </div>
     <div class="niv-navunit" data-navunit="projects">
       <div class="niv-snav-row">
-        <button class="niv-snav" id="snav-projects" onclick="window._sideNavGo('projects')">
+        <button class="niv-snav" id="snav-projects" title="Proyectos" onclick="window._sideNavGo('projects')">
           <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="currentColor"/><path d="M3.5 7.5A1.6 1.6 0 0 1 5.1 5.9h3.6c.44 0 .86.18 1.16.5l1.54 1.65h7.5A1.6 1.6 0 0 1 20.5 9.65v6.9a1.6 1.6 0 0 1-1.6 1.6H5.1a1.6 1.6 0 0 1-1.6-1.6z" fill="#fff"/></svg></span>
           <span class="niv-snav-label" id="snav-projects-label">Proyectos</span>
         </button>
@@ -1079,14 +1080,14 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
       </div>
     </div>
     <div class="niv-navunit" data-navunit="notifications">
-      <button class="niv-snav" id="snav-notifications" onclick="window._sideNavGo('notifications')">
+      <button class="niv-snav" id="snav-notifications" title="Notificaciones" onclick="window._sideNavGo('notifications')">
         <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="currentColor"/><path d="M12 4.2a5.3 5.3 0 0 0-5.3 5.3v3L5.2 15.5a.75.75 0 0 0 .67 1.1h12.26a.75.75 0 0 0 .67-1.1l-1.5-3v-3A5.3 5.3 0 0 0 12 4.2zM10.1 18.6a1.9 1.9 0 0 0 3.8 0z" fill="#fff"/></svg></span>
         <span class="niv-snav-label" id="snav-notifications-label">Notificaciones</span>
         <span class="niv-notif-badge" id="niv-snav-badge">0</span>
       </button>
     </div>
     <div class="niv-navunit" data-navunit="users">
-      <button class="niv-snav" id="snav-users" onclick="window._sideNavGo('users')">
+      <button class="niv-snav" id="snav-users" title="Usuarios" onclick="window._sideNavGo('users')">
         <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="currentColor"/><path d="M9.2 6.1a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4zM3.9 18.7c.7-3.1 2.8-4.7 5.3-4.7s4.6 1.6 5.3 4.7zM16.6 7.6a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zM15.9 14.3c2.1.3 3.7 1.8 4.3 4.4h-4.5c.35-1.6.42-3.05.2-4.4z" fill="#fff"/></svg></span>
         <span class="niv-snav-label" id="snav-users-label">Usuarios</span>
       </button>
@@ -1115,8 +1116,8 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
     <button class="niv-account-card" id="niv-account-card" onclick="toggleAccountPopup(event)" aria-label="Cuenta" aria-haspopup="true" aria-expanded="false" aria-controls="niv-account-popup">
       <div class="niv-account-avatar" id="niv-account-avatar"></div>
       <div class="niv-account-meta">
-        <div class="niv-account-name" id="niv-account-name">…</div>
-        <div class="niv-account-email" id="niv-account-email">…</div>
+        <div class="niv-account-name" id="niv-account-name"></div>
+        <div class="niv-account-email" id="niv-account-email"></div>
       </div>
     </button>
     <div class="niv-account-popup" id="niv-account-popup" style="display:none">
@@ -4438,6 +4439,13 @@ let currentUser;
     if (collapseBtn) {
       collapseBtn.textContent = on ? '›' : '‹';
       collapseBtn.title = on ? 'Expandir' : 'Colapsar';
+      collapseBtn.setAttribute('aria-label', on ? 'Expandir' : 'Colapsar'); // m19
+    }
+    // p31: persist the MANUAL collapsed state (applyAuto suppresses
+    // itself via _nivSuppressCollapsePersist so window-size-driven
+    // collapses never overwrite the user's choice).
+    if (!window._nivSuppressCollapsePersist) {
+      try { if (typeof _nivSetSetting === 'function') _nivSetSetting('niv-panel-collapsed', on ? '1' : '0'); } catch (_) {}
     }
   };
   (() => {
@@ -4480,14 +4488,21 @@ let currentUser;
       try { handle.setPointerCapture(e.pointerId); } catch (_) {}
       const move = (ev) => {
         if (expanded) return;
-        if (ev.clientX - startX > DRAG_THRESHOLD) {
+        const dx = ev.clientX - startX;
+        if (dx > 0) {
+          // m16: live width feedback short of the expand threshold
+          let target = 300;
+          try { const sw = parseInt(localStorage.getItem('niv-panel-width') || '', 10); if (sw >= 220 && sw <= 520) target = sw; } catch (_) {}
+          panel.style.width = Math.min(target, 76 + dx) + 'px';
+        }
+        if (dx > DRAG_THRESHOLD) {
           expanded = true;
           handle.classList.remove('dragging');
           window._nivSetPanelCollapsed(false);
           cleanup();
         }
       };
-      const up = () => { handle.classList.remove('dragging'); cleanup(); };
+      const up = () => { handle.classList.remove('dragging'); if (!expanded) panel.style.width = ''; cleanup(); };
       const cleanup = () => {
         handle.removeEventListener('pointermove', move);
         handle.removeEventListener('pointerup', up);
@@ -4545,6 +4560,8 @@ let currentUser;
     setText('snav-projects-label', L('Proyectos', 'Projects'));
     setText('snav-notifications-label', L('Notificaciones', 'Notifications'));
     setText('snav-users-label', L('Usuarios', 'Users'));
+    // m20: rail icon tooltips mirror the (localized) labels
+    [['snav-home','snav-home-label'],['snav-projects','snav-projects-label'],['snav-notifications','snav-notifications-label'],['snav-users','snav-users-label']].forEach(([b, l]) => { const btn = document.getElementById(b), lab = document.getElementById(l); if (btn && lab) btn.title = lab.textContent; });
     setText('home-title', L('Panel', 'Dashboard'));
     setText('home-stat-projects-label', L('Proyectos', 'Projects'));
     setText('home-stat-total-label', L('Medidas totales', 'Total measurements'));
@@ -5416,9 +5433,20 @@ let currentUser;
     });
     const applyAuto = () => {
       const narrow = window.innerWidth <= 1150 && window.innerWidth > 900;
-      if (narrow && !panel.classList.contains('collapsed')) { autoCollapsed = true; setCollapsed(true); }
-      else if (!narrow && autoCollapsed) { autoCollapsed = false; setCollapsed(false); }
+      window._nivSuppressCollapsePersist = true;
+      try {
+        if (narrow && !panel.classList.contains('collapsed')) { autoCollapsed = true; setCollapsed(true); }
+        else if (!narrow && autoCollapsed) { autoCollapsed = false; setCollapsed(false); }
+      } finally { window._nivSuppressCollapsePersist = false; }
     };
+    // p31: restore the manual collapsed state on boot (compact mode has
+    // its own boot logic and is left alone here).
+    try {
+      if (!document.body.classList.contains('niv-compact') && typeof _nivGetSetting === 'function' && _nivGetSetting('niv-panel-collapsed') === '1' && !panel.classList.contains('collapsed')) {
+        autoCollapsed = false;
+        setCollapsed(true);
+      }
+    } catch (_) {}
     window.addEventListener('resize', applyAuto);
     applyAuto();
   })();
@@ -5672,6 +5700,7 @@ document.addEventListener('keydown', function(e) {
         el.setAttribute('role', 'option');
         el.setAttribute('aria-selected', opt.value === select.value ? 'true' : 'false');
         el.textContent = opt.textContent;
+        el.title = opt.textContent;
         el.addEventListener('mousedown', function (e) { e.preventDefault(); });
         el.addEventListener('click', function () { choose(i); close(); btn.focus(); });
         el.addEventListener('mousemove', function () { if (activeIdx !== i) setActive(i); });
