@@ -47,8 +47,15 @@ same storage key and allowlist as /account/settings, so the referrer
 aware Back button runs on arrival. /updates and /updates.html already
 worked and are unchanged.
 
-Worker changes still required (nivelato-app-proxy and
-nivelato-dashboard, same edits in both):
+Verified split between hosts (production curl, 3 tries each, bodies
+hashed): dashboard.nivelatolabs.com already serves both routes
+correctly (/account/settings returned settings.html 3/3, /company/updates
+returned updates.html 3/3), so nivelato-dashboard needs no change for
+B2. app.nivelatolabs.com served the legacy wizard for both routes on
+every non geo-blocked try. The worker changes below are therefore
+nivelato-app-proxy only:
+
+Worker changes still required (nivelato-app-proxy):
 
 1. Add explicit routes before any fallback or 404 handling:
    "/account/settings" and "/settings" and "/settings.html" serve
