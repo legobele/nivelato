@@ -193,7 +193,7 @@
     width: 100%; background: transparent; border: 1px solid var(--niv-border);
     border-radius: var(--niv-pill); color: var(--niv-text);
     font: 400 15px 'Inter', system-ui, sans-serif; padding: 12px 18px;
-    text-align: center; margin-bottom: 12px;
+    text-align: left; margin-bottom: 12px;
   }
   .flow-loc-input::placeholder { color: var(--niv-text-dim); }
   .flow-loc-input:focus { outline: none; border-color: var(--niv-accent); }
@@ -201,7 +201,9 @@
   .flow-geo-status.err { color: var(--flow-error); }
 
   /* ---------- base dimensions step ---------- */
-  .flow-dims-wrap { display: grid; grid-template-columns: 1.7fr 1fr; gap: var(--niv-inset); align-items: stretch; }
+  .flow-dims-wrap { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: var(--niv-inset); align-items: stretch; }
+  .flow-dims-wrap > * { min-width: 0; }
+  .flow-card, .flow-why-panel { min-width: 0; }
   .flow-dims-card h2 { text-align: left; }
   .flow-dims-unit { color: var(--niv-text-dim); font-size: 14px; margin: -8px 0 18px; }
   .flow-dim-row { display: flex; align-items: flex-end; gap: 14px; }
@@ -243,8 +245,14 @@
   }
   .flow-why-panel h3 { font-size: 17px; margin: 0 0 8px; }
   .flow-why-panel p { font-size: 14.5px; color: var(--niv-text-dim); line-height: 1.6; margin: 0; }
-  @media (max-width: 900px) { .flow-dims-wrap { grid-template-columns: 1fr; gap: 14px; } }
+  @media (max-width: 900px) { .flow-dims-wrap { grid-template-columns: minmax(0, 1fr); gap: 14px; } }
+  @media (max-width: 600px) {
+    .flow-dim-row { flex-direction: column; align-items: stretch; gap: 12px; }
+    .flow-x { display: none; }
+    .flow-frac { width: 96px; }
+  }
 
+  .flow-step1-continue { margin-top: var(--niv-inset); }
   .flow-stub {
     display: none; margin-top: var(--niv-inset);
     background: var(--niv-surface); border: 1px dashed var(--niv-border);
@@ -299,11 +307,30 @@
   @media (max-width: 900px) {
     body { overflow: auto; height: auto; }
     .flow-shell { flex-direction: column; height: auto; padding: 14px; gap: 14px; }
-    .flow-rail { width: 100%; }
+    /* Compact rail: a slim header, not a full card above the form. */
+    .flow-rail { width: 100%; padding: 14px 16px; }
+    .flow-brand { font-size: 22px; margin-bottom: 4px; }
+    .flow-context { font-size: 13px; margin-bottom: 8px; }
+    .flow-progress-row { margin-bottom: 8px; }
+    .flow-sections { flex-direction: row; flex-wrap: wrap; }
+    .flow-section { flex: 1 1 140px; width: auto; }
+    .flow-hint { flex-basis: 100%; }
+    .flow-rail-spacer { display: none; }
+    .flow-user { margin-top: 8px; }
     .flow-main { gap: 14px; }
-    .flow-graph-panel { min-height: 300px; flex: none; height: 340px; }
-    .flow-cards { grid-template-columns: 1fr; gap: 14px; }
+    /* The form comes first on mobile; the graph moves below it. */
+    #flow-step1, #flow-step2 { order: 1; }
+    .flow-graph-panel { order: 2; min-height: 180px; flex: none; height: 200px; }
+    .flow-cards { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .flow-cards > * { min-width: 0; }
     .flow-stub { margin-top: 14px; }
+    /* Primary action stays reachable: fixed bottom bar on mobile. */
+    .flow-continue {
+      position: fixed; left: 14px; right: 14px; bottom: 12px; z-index: 30;
+      width: auto; margin-top: 0;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, .45);
+    }
+    #flow-step1, #flow-step2 { padding-bottom: 72px; }
   }
 </style>
 </head>
@@ -327,7 +354,7 @@
       <div class="flow-progress-label" id="flow-progress-label">0% done</div>
     </div>
 
-    <nav class="flow-sections niv-scroll" id="flow-sections" aria-label="Secciones">
+    <nav class="flow-sections niv-scroll" id="flow-sections" aria-label="Secciones" data-s-aria="ariaSections">
       <button type="button" class="flow-section active" id="flow-sec-1">
         <span class="flow-ring" data-state="ongoing" id="flow-ring-1"></span>
         <span data-s="sectionDetails">Datos del cliente y el proyecto</span>
@@ -360,14 +387,14 @@
 
   <!-- ======== main column ======== -->
   <main class="flow-main" id="flow-main">
-    <section class="flow-graph-panel" aria-label="Graph">
+    <section class="flow-graph-panel" aria-label="Graph" data-s-aria="ariaGraph">
       <span class="flow-graph-tag" data-s="graph">Gráfica</span>
       <canvas id="flow-graph-canvas"></canvas>
     </section>
 
     <div id="flow-step1">
       <div class="flow-cards">
-        <section class="flow-card" aria-label="Who">
+        <section class="flow-card" aria-label="Who" data-s-aria="ariaWho">
           <h2 data-s="whoTitle">¿Para quién es?</h2>
           <button type="button" class="flow-opt" data-who="individual" data-s="optIndividual">Cliente (individual)</button>
           <button type="button" class="flow-opt" data-who="company-new" data-s="optNew">Empresa o proyecto (nuevo)</button>
@@ -379,9 +406,9 @@
           </div>
         </section>
 
-        <section class="flow-card" aria-label="Where">
+        <section class="flow-card" aria-label="Where" data-s-aria="ariaWhere">
           <h2 data-s="whereTitle">¿Dónde es?</h2>
-          <input type="text" class="flow-loc-input" id="flow-location" data-s-ph="locationPh" placeholder="Ubicación" autocomplete="off" />
+          <input type="text" class="flow-loc-input" id="flow-location" data-s-ph="locationPh" placeholder="Ubicación" autocomplete="off" aria-label="Ubicación" data-s-aria="ariaLocation" />
           <button type="button" class="flow-opt" id="flow-geo" data-s="usePrecise">Usar mi ubicación precisa</button>
           <div class="flow-geo-status" id="flow-geo-status"></div>
           <div class="flow-why">
@@ -391,12 +418,13 @@
         </section>
       </div>
 
+      <button type="button" class="flow-continue flow-step1-continue" id="flow-step1-continue" data-s="continueBtn">Continuar</button>
       <div class="flow-stub" id="flow-next-stub"></div>
     </div>
 
     <div id="flow-step2" style="display:none">
       <div class="flow-dims-wrap">
-        <section class="flow-card flow-dims-card" aria-label="Base dimensions">
+        <section class="flow-card flow-dims-card" aria-label="Base dimensions" data-s-aria="ariaDims">
           <h2 data-s="dimsTitle">Saca tu cinta métrica. ¿Cuáles son las dimensiones base del área?</h2>
           <div class="flow-dims-unit" data-s="dimsUnit">(pulgadas)</div>
           <div class="flow-dim-row">
@@ -404,7 +432,7 @@
               <label for="flow-w-whole" data-s="widthLabel">Ancho</label>
               <div class="flow-dim-pair">
                 <input type="number" class="flow-whole" id="flow-w-whole" min="0" step="1" inputmode="numeric" data-s-ph="wholePh" placeholder="Entero" />
-                <select class="flow-frac" id="flow-w-frac" aria-label="Fracción de pulgada"></select>
+                <select class="flow-frac" id="flow-w-frac" aria-label="Fracción de pulgada" data-s-aria="ariaFraction"></select>
               </div>
             </div>
             <div class="flow-x" aria-hidden="true">x</div>
@@ -412,14 +440,14 @@
               <label for="flow-h-whole" data-s="heightLabel">Alto</label>
               <div class="flow-dim-pair">
                 <input type="number" class="flow-whole" id="flow-h-whole" min="0" step="1" inputmode="numeric" data-s-ph="wholePh" placeholder="Entero" />
-                <select class="flow-frac" id="flow-h-frac" aria-label="Fracción de pulgada"></select>
+                <select class="flow-frac" id="flow-h-frac" aria-label="Fracción de pulgada" data-s-aria="ariaFraction"></select>
               </div>
             </div>
           </div>
           <div class="flow-step-error" id="flow-dims-error" role="alert"></div>
           <button type="button" class="flow-continue" id="flow-dims-continue" data-s="continueBtn">Continuar</button>
         </section>
-        <aside class="flow-why-panel" aria-label="Why">
+        <aside class="flow-why-panel" aria-label="Why" data-s-aria="ariaWhy">
           <h3 data-s="whyTitle3">¿Por qué esto?</h3>
           <p data-s="dimsWhy">Esto nos permite medir los desniveles de la pieza dándonos una referencia con la que trabajar.</p>
         </aside>
@@ -438,6 +466,24 @@
 </div>
 
 <div class="flow-loading" id="flow-loading">Cargando...</div>
+<script>
+/* Pre-boot localization: the module below loads behind Firebase imports,
+   so localize the loader, html lang, and title from the same cookie /
+   localStorage chain the module uses, before it arrives. */
+(function () {
+  try {
+    var ck = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1];
+    var ls = window.localStorage.getItem('nivelato-login-lang');
+    var lang = (ck === 'es' || ck === 'en') ? ck : ((ls === 'es' || ls === 'en') ? ls : 'es');
+    document.documentElement.lang = lang;
+    if (lang === 'en') {
+      document.title = 'Nivelato - New measurement';
+      var l = document.getElementById('flow-loading');
+      if (l) l.textContent = 'Loading...';
+    }
+  } catch (e) { /* defaults stay Spanish, the app default */ }
+})();
+</script>
 
 <!-- ======== exit guard ======== -->
 <div class="flow-guard" id="flow-guard" role="alertdialog" aria-modal="true">
@@ -493,8 +539,17 @@ const STR = {
     geoBusy: 'Obteniendo tu ubicación...', geoAdded: 'Ubicación precisa agregada.',
     geoDenied: 'No se compartió la ubicación. Puedes escribirla en el campo.',
     geoUnsupported: 'Este dispositivo no puede compartir su ubicación.',
-    nextIndividual: 'Sigue: el flujo de cliente nuevo. Llega con la próxima versión de este flujo.',
-    nextReady: 'Datos completos. Las próximas secciones llegan con la próxima versión de este flujo.',
+    nextIndividual: 'Datos completos. Usa Continuar para ir a Dimensiones base.',
+    nextReady: 'Datos completos. Usa Continuar para ir a Dimensiones base.',
+    ariaSections: 'Secciones', ariaGraph: 'Gráfica', ariaWho: 'Para quién es', ariaWhere: 'Dónde es',
+    ariaDims: 'Dimensiones base', ariaWhy: 'Por qué', ariaFraction: 'Fracción de pulgada', ariaLocation: 'Ubicación',
+    ctxProjectCustomer: 'Cliente del proyecto seleccionado',
+    step1HintBoth: 'Completa los datos del cliente y el proyecto y agrega una ubicación para continuar.',
+    step1HintWho: 'Elige para quién es para continuar.',
+    step1HintProject: 'Elige un proyecto para continuar.',
+    step1HintLocation: 'Agrega una ubicación para continuar.',
+    dimsErrorWhole: 'Ambas dimensiones necesitan un número entero. Una fracción sola no es suficiente.',
+    dimsErrorMax: 'Ambas dimensiones deben ser de 1000 pulgadas o menos para continuar.',
     dimsTitle: 'Saca tu cinta métrica. ¿Cuáles son las dimensiones base del área?',
     dimsUnit: '(pulgadas)', widthLabel: 'Ancho', heightLabel: 'Alto', wholePh: 'Entero',
     continueBtn: 'Continuar',
@@ -529,8 +584,17 @@ const STR = {
     geoBusy: 'Getting your location...', geoAdded: 'Precise location added.',
     geoDenied: 'Location was not shared. You can type it in the field instead.',
     geoUnsupported: 'This device cannot share its location.',
-    nextIndividual: 'Next: the new customer flow. It arrives with the next build of this flow.',
-    nextReady: 'Details complete. The next sections arrive with the next build of this flow.',
+    nextIndividual: 'Details complete. Use Continue to go to Base dimensions.',
+    nextReady: 'Details complete. Use Continue to go to Base dimensions.',
+    ariaSections: 'Sections', ariaGraph: 'Graph', ariaWho: 'Who', ariaWhere: 'Where',
+    ariaDims: 'Base dimensions', ariaWhy: 'Why', ariaFraction: 'Fraction of an inch', ariaLocation: 'Location',
+    ctxProjectCustomer: 'Customer of the selected project',
+    step1HintBoth: 'Complete the customer and project details and add a location to continue.',
+    step1HintWho: 'Choose who this is for to continue.',
+    step1HintProject: 'Choose a project to continue.',
+    step1HintLocation: 'Add a location to continue.',
+    dimsErrorWhole: 'Both dimensions need a whole number. A fraction on its own is not enough.',
+    dimsErrorMax: 'Both dimensions must be 1000 inches or less to continue.',
     dimsTitle: 'Get out your measuring tape. What are the base dimensions of the area?',
     dimsUnit: '(inches)', widthLabel: 'Width', heightLabel: 'Height', wholePh: 'Whole',
     continueBtn: 'Continue',
@@ -621,7 +685,24 @@ function dimsTotals() {
     h: (parseFloat(d.hWhole) || 0) + (parseFloat(d.hFrac) || 0)
   };
 }
-function dimsValid() { const t = dimsTotals(); return t.w > 0 && t.h > 0; }
+const DIMS_MAX = 1000;
+function dimsValidationError() {
+  const d = state.dims;
+  const pairs = [[d.wWhole, d.wFrac], [d.hWhole, d.hFrac]];
+  for (const [wholeRaw, fracRaw] of pairs) {
+    const wholeStr = String(wholeRaw ?? '').trim();
+    const frac = parseFloat(fracRaw) || 0;
+    if (wholeStr === '') return frac > 0 ? 'dimsErrorWhole' : 'dimsError';
+    const whole = Number(wholeStr);
+    if (!Number.isFinite(whole) || whole < 0) return 'dimsError';
+    if (!Number.isInteger(whole)) return 'dimsErrorWhole';
+    if (whole === 0 && frac > 0) return 'dimsErrorWhole';
+    if (whole + frac <= 0) return 'dimsError';
+    if (whole + frac > DIMS_MAX) return 'dimsErrorMax';
+  }
+  return null;
+}
+function dimsValid() { return dimsValidationError() === null; }
 function section2Done() {
   const c = state.dims.committed;
   if (!c) return false;
@@ -641,6 +722,21 @@ function progressPct() {
   return Math.round((done / 2) * 100);
 }
 
+/* ---------- step-1 gating (M17) + mobile scroll (M16) ---------- */
+function section1HintText() {
+  const whoMissing = !whoValid();
+  const locMissing = state.location.trim().length === 0;
+  if (!whoMissing && !locMissing) return '';
+  if (whoMissing && locMissing) return S().step1HintBoth;
+  if (whoMissing) return state.who === 'company-existing' ? S().step1HintProject : S().step1HintWho;
+  return S().step1HintLocation;
+}
+function scrollToForm() {
+  if (!window.matchMedia('(max-width: 900px)').matches) return;
+  const target = state.activeSection === 2 ? $('flow-step2') : $('flow-step1');
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 /* ---------- rendering ---------- */
 function applyLang() {
   document.documentElement.lang = LANG;
@@ -653,6 +749,12 @@ function applyLang() {
     const k = el.getAttribute('data-s-ph');
     if (S()[k] != null) el.setAttribute('placeholder', S()[k]);
   });
+  document.querySelectorAll('[data-s-aria]').forEach((el) => {
+    const k = el.getAttribute('data-s-aria');
+    if (S()[k] != null) el.setAttribute('aria-label', S()[k]);
+  });
+  const loader = $('flow-loading');
+  if (loader) loader.textContent = S().loading;
   $('flow-guard-text').innerHTML = S().guardHtml;
 }
 
@@ -662,6 +764,8 @@ function renderContext() {
   let cHtml, pHtml;
   if (state.customerName) {
     cHtml = esc(state.customerName);
+  } else if (state.project) {
+    cHtml = '<span class="dim">' + esc(S().ctxProjectCustomer) + '</span>';
   } else if (state.who === 'individual' || state.who === 'company-new') {
     cHtml = '<span class="dim">' + esc(S().newCustomer) + '</span>';
   } else {
@@ -828,7 +932,14 @@ document.querySelectorAll('[data-who]').forEach((b) => {
 $('flow-location').addEventListener('input', (e) => {
   state.location = e.target.value;
   state.touched = true;
+  if (state.location.trim().length > 0) {
+    const st = $('flow-geo-status');
+    st.textContent = '';
+    st.classList.remove('err');
+  }
+  if ($('flow-hint').textContent) $('flow-hint').textContent = section1HintText();
   renderProgress();
+  renderNextStub();
 });
 
 $('flow-geo').addEventListener('click', () => {
@@ -849,6 +960,7 @@ $('flow-geo').addEventListener('click', () => {
       $('flow-location').value = state.location;
       status.textContent = S().geoAdded;
       renderProgress();
+      renderNextStub();
     },
     () => {
       status.textContent = S().geoDenied;
@@ -862,12 +974,36 @@ $('flow-sec-1').addEventListener('click', () => {
   state.activeSection = 1;
   $('flow-hint').textContent = '';
   render();
+  scrollToForm();
 });
 $('flow-sec-2').addEventListener('click', () => {
+  if (!section1Done()) {
+    state.activeSection = 1;
+    render();
+    $('flow-hint').textContent = section1HintText();
+    scrollToForm();
+    return;
+  }
   state.activeSection = 2;
   state.dims.visited = true;
   $('flow-hint').textContent = '';
   render();
+  scrollToForm();
+});
+$('flow-step1-continue').addEventListener('click', () => {
+  state.touched = true;
+  if (!section1Done()) {
+    $('flow-hint').textContent = section1HintText();
+    if (window.matchMedia('(max-width: 900px)').matches) {
+      $('flow-hint').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    return;
+  }
+  $('flow-hint').textContent = '';
+  state.activeSection = 2;
+  state.dims.visited = true;
+  render();
+  scrollToForm();
 });
 
 /* ---------- base dimensions ---------- */
@@ -910,10 +1046,11 @@ bindDim('flow-h-frac', 'hFrac');
 
 $('flow-dims-continue').addEventListener('click', () => {
   state.touched = true;
-  if (!dimsValid()) {
+  const errKey = dimsValidationError();
+  if (errKey) {
     state.dims.error = true;
     const err = $('flow-dims-error');
-    err.textContent = S().dimsError;
+    err.textContent = S()[errKey];
     err.classList.add('on');
     renderProgress();
     return;
@@ -1067,6 +1204,8 @@ try {
   }
 } catch (_) { /* env marks unavailable: the flow runs without warning cards */ }
 
+applyLang();
+renderProgress();
 if (DEMO) bootDemo();
 else bootReal();
 </script>
