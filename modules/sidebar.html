@@ -123,6 +123,14 @@
      opening a small menu with per-row actions. */
   .dots {
     flex: none;
+    /* p2: 44px touch target, matching the shared .dots hitbox in
+       niv-dark.css (rows grow to meet it). */
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
     background: transparent;
     border: none;
     color: var(--niv-text-dim, #a7a7ad);

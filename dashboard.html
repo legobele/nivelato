@@ -964,7 +964,7 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 
 <!-- TOP BAR: on top across ALL the dashboard (wireframe law #1) -->
 <header class="niv-topbar" id="niv-topbar">
-  <button class="niv-hamburger" onclick="document.body.classList.toggle('nav-open')" aria-label="Menú">☰</button>
+  <button class="niv-hamburger" id="niv-hamburger" onclick="document.body.classList.toggle('nav-open');this.setAttribute('aria-expanded', document.body.classList.contains('nav-open') ? 'true' : 'false')" aria-label="Menú" aria-expanded="false" aria-controls="niv-panel">☰</button>
   <nav class="niv-topbar-tabs" aria-label="Dashboard">
     <button class="niv-tab" id="tab-home" onclick="window.showDashView('home')"><span class="niv-tab-label">Panel</span></button>
     <button class="niv-tab" id="tab-projects" onclick="window.openProjectTab()"><span class="niv-tab-label">Proyectos</span></button>
@@ -975,11 +975,11 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 </header>
 
 <div class="niv-shell">
-<div class="niv-scrim" id="niv-scrim" onclick="document.body.classList.remove('nav-open')"></div>
+<div class="niv-scrim" id="niv-scrim" onclick="document.body.classList.remove('nav-open');var _hb=document.getElementById('niv-hamburger');if(_hb)_hb.setAttribute('aria-expanded','false')"></div>
 <div class="niv-float-panel" id="niv-panel">
   <div id="niv-panel-expand-handle" aria-hidden="true"></div>
   <div class="niv-panel-topzone">
-  <div class="niv-panel-head" id="niv-panel-head" onclick="openCompanyDialog(event)" style="cursor:pointer" title="Ajustes de la empresa" tabindex="-1" aria-haspopup="menu" aria-expanded="false">
+  <div class="niv-panel-head" id="niv-panel-head" onclick="openCompanyDialog(event)" style="cursor:pointer" title="Ajustes de la empresa" tabindex="0" role="button" aria-haspopup="menu" aria-expanded="false">
     <div class="niv-company-avatar" id="sidebar-avatar">N</div>
     <div class="niv-company-name" id="org-name-badge">…<span id="estradiol-indicator">E2</span></div>
     <button class="niv-panel-collapse" id="niv-panel-collapse" title="Colapsar" aria-label="Colapsar">‹</button>
@@ -3832,14 +3832,18 @@ let currentUser;
   window.openCompanyDialog = (e) => {
     if (e && e.target && e.target.id === 'niv-panel-collapse') return;
     if (e && e.target && e.target.closest && e.target.closest('#niv-company-menu')) return; // clicks inside the popover are not trigger clicks
-    if (!window._can || !window._can('userManagement')) return; // no perms: no popover
-    // v1.1: tapping the logo while collapsed expands the sidebar first.
-    // The popover's collapsed-state anchoring assumed expanded layout and
-    // glitched; expanding first keeps every position rule on its happy path.
+    // m17: tapping the logo while collapsed expands the sidebar first,
+    // for EVERYONE. This block used to sit behind the permission check,
+    // so for non-managers the tap was dead: no expand, no feedback.
+    // The popover's collapsed-state anchoring assumed expanded layout
+    // and glitched; expanding first keeps every position rule on its
+    // happy path. Managers continue into the popover below; everyone
+    // else just gets the expand.
     const _panel = document.getElementById('niv-panel');
     if (_panel && _panel.classList.contains('collapsed') && window._nivSetPanelCollapsed) {
       window._nivSetPanelCollapsed(false);
     }
+    if (!window._can || !window._can('userManagement')) return; // no perms: no popover (the expand above still happened)
     const menu = document.getElementById('niv-company-menu');
     if (!menu) return;
     if (menu.style.display !== 'none') { window.closeCompanyDialog(); return; } // toggle
@@ -3915,6 +3919,17 @@ let currentUser;
     collapseBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       window._nivSetPanelCollapsed(!panel.classList.contains('collapsed'));
+    });
+    // m12: the panel head is a menu trigger (role=button, tabindex=0 in
+    // the markup); Enter/Space on the head itself opens the company
+    // menu. Events from nested controls (the collapse toggle, the
+    // popover items) are theirs alone and never reach this branch
+    // because their target is not the head.
+    head.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      if (e.target !== head) return;
+      e.preventDefault();
+      window.openCompanyDialog(e);
     });
   })();
 

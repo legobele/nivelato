@@ -153,7 +153,8 @@
 .niv-field input, .niv-field select, .niv-field textarea {
   width: 100%;
   padding: 12px 14px;
-  font-size: 14px;
+  /* 16px floor (p5): sub-16px inputs make iOS Safari auto-zoom on focus. */
+  font-size: 16px;
   font-family: inherit;
   color: var(--niv-text);
   background: var(--niv-surface-2);
@@ -164,6 +165,12 @@
 .niv-field input:focus, .niv-field select:focus, .niv-field textarea:focus {
   outline: none;
   border-color: var(--niv-accent);
+}
+/* p33: keyboard focus must be visible, not a border tint alone. Modelled
+   on the login language toggle's 2px outline. */
+.niv-field input:focus-visible, .niv-field select:focus-visible, .niv-field textarea:focus-visible {
+  outline: 2px solid var(--niv-accent);
+  outline-offset: 1px;
 }
 
 /* ---- toggle switches (iOS style, green) ---- */
@@ -424,15 +431,31 @@ body:not(.has-sidebar) .niv-shell {
    the avatar on one side and pushed the chevron out on the other. The
    account card likewise keeps its expanded box framing unless it is
    explicitly dissolved into a bare avatar here. */
-.niv-float-panel.collapsed { width: 76px; min-width: 76px; max-width: 76px; resize: none; padding: 16px 10px; }
+/* M42: no max-width clamp here. A 76px max-width applies the moment the
+   .collapsed class lands and caps the used width while the width
+   transition runs invisibly underneath, so collapse snapped in one
+   frame while expand animated. width: 76px alone lands the rail at
+   exactly 76px and lets the transition interpolate every step. */
+.niv-float-panel.collapsed { width: 76px; min-width: 76px; max-width: none; resize: none; padding: 16px 10px; }
 .niv-float-panel.collapsed .niv-panel-head {
   flex-direction: column; align-items: center; justify-content: flex-start;
   gap: 8px; padding: 2px 0 10px;
 }
 .niv-float-panel.collapsed .niv-panel-head .niv-company-avatar { width: 40px; height: 40px; font-size: 14px; }
 .niv-float-panel.collapsed .niv-panel-body,
-.niv-float-panel.collapsed .niv-company-name,
 .niv-float-panel.collapsed .org-badge { display: none; }
+/* m19: the company name and the account meta carry the accessible names
+   of the panel head and the account card in the rail. display:none
+   strips them from the accessibility tree (empty names), so hide them
+   visually instead: out of layout, clipped to 1px, still readable by
+   assistive tech. */
+.niv-float-panel.collapsed .niv-company-name,
+.niv-float-panel.collapsed .niv-account-meta {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%);
+  white-space: nowrap; border: 0;
+}
 .niv-float-panel.collapsed .niv-panel-bottom {
   margin-top: auto; /* the hidden panel body no longer pushes it down: anchor it */
   display: flex; justify-content: center;
@@ -445,7 +468,8 @@ body:not(.has-sidebar) .niv-shell {
   justify-content: center;
 }
 .niv-float-panel.collapsed .niv-account-avatar { width: 40px; height: 40px; }
-.niv-float-panel.collapsed .niv-account-meta { display: none; }
+/* .niv-account-meta collapsed treatment lives with the m19 rule above
+   (visually hidden, NOT display:none, so the card keeps its name). */
 .niv-float-panel.collapsed .niv-account-popup { left: 84px; right: auto; width: 260px; bottom: 16px; }
 
 .niv-panel-head {
@@ -458,6 +482,30 @@ body:not(.has-sidebar) .niv-shell {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .niv-panel-head .niv-panel-collapse { flex: none; }
+/* m12: the panel head is a keyboard-operable menu trigger (dashboard
+   gives it tabindex + role); its focus must be visible. */
+.niv-panel-head:focus-visible { outline: 2px solid var(--niv-accent); outline-offset: 2px; border-radius: 8px; }
+/* m19 (dashboard rail): the dashboard's own collapsed rule sets
+   .niv-snav-label to display:none, which empties the nav buttons'
+   accessible names. This selector outranks that rule (extra body class
+   context) and swaps the removal for a visual-only hide, so each rail
+   button keeps its label as its accessible name. Visual result is
+   identical: no text paints in the rail. */
+body.has-sidebar .niv-float-panel.collapsed .niv-snav-label {
+  display: block; /* explicit: the dashboard rule's display:none must not survive */
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%);
+  white-space: nowrap; border: 0;
+}
+/* m16 (CSS part): the collapsed rail's drag-to-expand handle sits at
+   right:-6px in the dashboard's inline CSS and the panel's
+   overflow-x:hidden clips half of its 12px, leaving a ~5px grab area.
+   Two IDs outrank that rule: keep the whole strip inside the panel so
+   the full grab area (now 16px) receives pointer events. The strip
+   starts right of the centered 40px rail icons, so it steals no icon
+   clicks. */
+#niv-panel > #niv-panel-expand-handle { right: 0; width: 16px; }
 .niv-panel-collapse {
   width: 28px; height: 28px; border-radius: 50%;
   border: 1px solid var(--niv-border);
@@ -502,6 +550,15 @@ body:not(.has-sidebar) .niv-shell {
   }
   body.nav-open .niv-float-panel { transform: translateX(0); }
   .niv-float-panel.collapsed { width: 300px; min-width: 300px; max-width: 85vw; }
+  /* B3: the dashboard's inline shell CSS sets #niv-panel{position:relative}
+     (ID specificity) for its collapse feature, which outranked the
+     .niv-float-panel{position:fixed} rule above: on phones the closed
+     panel stayed in flow and reserved its full height (480-570px of
+     black before the content). This selector (ID + class + body class)
+     outranks the bare ID rule, so at <=900px the panel is a fixed
+     overlay drawer regardless of the dashboard's desktop positioning.
+     Desktop is untouched: this block is max-width 900px only. */
+  body.has-sidebar #niv-panel.niv-float-panel { position: fixed; }
   .niv-hamburger {
     display: inline-flex; align-items: center; justify-content: center;
     width: 44px; height: 44px; flex: none;
@@ -525,6 +582,25 @@ body:not(.has-sidebar) .niv-shell {
   background: var(--niv-surface-2);
   border-color: var(--niv-border);
   color: var(--niv-text);
+}
+/* p5 + p2 + p33 (shared filter controls): the dashboard's own filter
+   CSS sets 13px text and a 38px height on these controls, at lower
+   specificity than the body-prefixed selectors below. 16px text stops
+   the iOS focus auto-zoom, 44px is the minimum touch height, and
+   keyboard focus gets the login-style 2px outline (the dashboard's
+   #filter-date otherwise focuses with no visible indicator). */
+body .filter-row input, body .filter-row select,
+body .date-input-wrap input[type="date"] {
+  font-size: 16px;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+body .filter-row input:focus-visible, body .filter-row select:focus-visible,
+body .date-input-wrap input[type="date"]:focus-visible {
+  outline: 2px solid var(--niv-accent);
+  outline-offset: 2px;
+  border-color: var(--niv-accent);
+  box-shadow: 0 0 0 3px rgba(25,113,194,0.25);
 }
 .filter-row select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23999' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
@@ -623,7 +699,8 @@ body:not(.has-sidebar) .niv-shell {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 38px;
+  /* p2: 44px minimum touch height (was 38px). */
+  height: 44px;
   min-width: 150px;
   padding: 9px 12px 9px 14px;
   background: var(--niv-surface-2);
@@ -680,11 +757,18 @@ body:not(.has-sidebar) .niv-shell {
 .niv-select-option {
   display: flex;
   align-items: center;
+  /* p2: 44px minimum touch height (was ~33px). */
+  min-height: 44px;
+  box-sizing: border-box;
   padding: 8px 10px;
   border-radius: 8px;
   font-size: 13px;
   color: var(--niv-text);
   white-space: nowrap;
+  /* p3: long names ellipsize like the trigger does, instead of being
+     clipped mid-word by the list's max-width. */
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
 }
 .niv-select-option.active { background: rgba(255, 255, 255, 0.07); }
@@ -869,8 +953,10 @@ html::-webkit-scrollbar-thumb:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  min-height: 28px;
+  /* p2: 44px touch target (was 36x28). Panel rows grow to meet it;
+     that is the intended trade, the dots are a primary row action. */
+  min-width: 44px;
+  min-height: 44px;
   box-sizing: border-box;
   color: var(--niv-text-dim);
   letter-spacing: 2px;
@@ -1171,4 +1257,16 @@ html::-webkit-scrollbar-thumb:hover {
   border-color: var(--niv-accent);
   color: var(--niv-text);
   background: rgba(25, 113, 194, 0.15);
+}
+
+/* ---- m18: compact mode topbar rule (owner's stated rule) ----
+   Compact sidebar ON means the topbar is SHOWN in dashboard/company
+   views, in BOTH rail states. The dashboard's inline shell CSS only
+   showed it while collapsed (body.niv-compact.sidebar-collapsed), so
+   manually expanding the rail made the topbar vanish. The ID in this
+   selector outranks the dashboard's class-only rules regardless of
+   order. Desktop only: on mobile the topbar is the floating hamburger
+   shell and follows its own rules. */
+@media (min-width: 901px) {
+  body.has-sidebar.niv-compact header#niv-topbar.niv-topbar { display: flex; }
 }
