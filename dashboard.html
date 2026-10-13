@@ -1037,7 +1037,7 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 <!-- TOP BAR: on top across ALL the dashboard (wireframe law #1) -->
 <header class="niv-topbar" id="niv-topbar">
   <button class="niv-hamburger" id="niv-hamburger" onclick="document.body.classList.toggle('nav-open');this.setAttribute('aria-expanded', document.body.classList.contains('nav-open') ? 'true' : 'false')" aria-label="Menú" aria-expanded="false" aria-controls="niv-panel">☰</button>
-  <nav class="niv-topbar-tabs" aria-label="Dashboard">
+  <nav class="niv-topbar-tabs" aria-label="Vistas">
     <button class="niv-tab" id="tab-home" onclick="window.showDashView('home')"><span class="niv-tab-label">Panel</span></button>
     <button class="niv-tab" id="tab-projects" onclick="window.openProjectTab()"><span class="niv-tab-label">Proyectos</span></button>
     <button class="niv-tab" id="tab-notifications" onclick="window.showDashView('notifications')"><span class="niv-tab-label">Notificaciones</span><span class="niv-notif-badge" id="niv-notif-badge">0</span></button>
@@ -1063,7 +1063,7 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
   </div>
   <div class="org-badge" id="tier-badge" style="display:none;">Pro</div>
   <button class="btn-save" id="btn-upgrade-plan" onclick="window.showUpgradeModal && window.showUpgradeModal()" style="display:none;margin:10px 16px 0;">Mejorar plan</button>
-  <nav class="niv-side-nav" aria-label="Dashboard">
+  <nav class="niv-side-nav" aria-label="Navegación principal">
     <div class="niv-navunit" data-navunit="home">
       <button class="niv-snav" id="snav-home" title="Panel" onclick="window._sideNavGo('home')">
         <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="currentColor"/><path d="M12 5l7 6.3h-1.9V18a1.2 1.2 0 0 1-1.2 1.2h-2.9v-4.7h-2v4.7H8.1A1.2 1.2 0 0 1 6.9 18v-6.7H5z" fill="#fff"/></svg></span>
@@ -4182,9 +4182,32 @@ let currentUser;
     } catch (e) { console.warn('[Nivelato] projects load failed:', e.message); _projects = []; }
     const el = document.getElementById('niv-panel-projects');
     if (el) {
-      el.innerHTML = _projects.length
-        ? _projects.map((p, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="openProject('${p.id}')"><span>${escapeHtml(p.name || 'Proyecto')}</span>${dashDotsBtn('project', p.id, p.name || 'Proyecto')}</div>`).join('')
-        : '<div class="niv-panel-empty">' + L('Sin proyectos', 'No projects') + '</div>';
+      // m35: one-time search toolbar for the projects panel (mirrors the
+      // customers toolbar in refreshFloatPanel)
+      const sec = el.parentElement;
+      if (sec && !document.getElementById('panel-project-tools')) {
+        const tools = document.createElement('div');
+        tools.id = 'panel-project-tools';
+        tools.style.cssText = 'display:flex;gap:8px;align-items:center;margin:2px 0 8px;';
+        tools.innerHTML = '<input type="search" id="panel-project-search" style="flex:1;min-width:0;background:var(--niv-surface-2,#1e1e22);border:1px solid var(--niv-border-soft,rgba(255,255,255,.14));border-radius:9px;color:var(--niv-text,#f5f5f7);font:inherit;font-size:13px;padding:7px 10px;" />';
+        sec.insertBefore(tools, el);
+        tools.querySelector('#panel-project-search').addEventListener('input', (ev) => { window._panelProjFilter = ev.target.value; if (window._renderPanelProjects) window._renderPanelProjects(); });
+      }
+      const searchEl = document.getElementById('panel-project-search');
+      if (searchEl) {
+        searchEl.placeholder = L('Buscar proyectos…', 'Search projects…');
+        if (document.activeElement !== searchEl && searchEl.value !== (window._panelProjFilter || '')) searchEl.value = window._panelProjFilter || '';
+      }
+      window._renderPanelProjects = () => {
+        const needle = (window._panelProjFilter || '').trim().toLowerCase();
+        const list = needle ? _projects.filter((p) => (p.name || '').toLowerCase().includes(needle)) : _projects;
+        const titleEl = document.getElementById('panel-projects-title');
+        if (titleEl) titleEl.textContent = L('Proyectos', 'Projects') + (_projects.length ? ' · ' + _projects.length : '');
+        el.innerHTML = list.length
+          ? list.map((p, i) => `<div class="niv-panel-item${i === 0 && !needle ? ' first' : ''}" onclick="openProject('${p.id}')"><span>${escapeHtml(p.name || 'Proyecto')}</span>${dashDotsBtn('project', p.id, p.name || 'Proyecto')}</div>`).join('')
+          : '<div class="niv-panel-empty">' + (needle ? L('Sin proyectos con ese nombre', 'No projects match that name') : L('Sin proyectos', 'No projects')) + '</div>';
+      };
+      window._renderPanelProjects();
     }
     if (window._dashView === 'customer' && window.renderCustomerOverview) window.renderCustomerOverview();
   };
@@ -4922,11 +4945,11 @@ let currentUser;
     if (projEl) {
       const docHtml = docProjects.map((p) => {
         const n = jobs.filter((j) => j.projectId === p.id).length;
-        return `<div class="cust-proj-row" tabindex="0" role="button" onclick="openProject('${p.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openProject('${p.id}');}"><span class="cust-proj-name">${escapeHtml(p.name || L('Proyecto', 'Project'))}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span></div>`;
+        return `<div class="cust-proj-row" tabindex="0" role="button" onclick="openProject('${p.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openProject('${p.id}');}"><span class="cust-proj-name" title="${escapeHtml(p.name || L('Proyecto', 'Project'))}">${escapeHtml(p.name || L('Proyecto', 'Project'))}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span></div>`;
       }).join('');
       const looseHtml = looseNames.map((nm) => {
         const n = jobs.filter((j) => (j.project || '') === nm && !(j.projectId && docIds.has(j.projectId))).length;
-        return `<div class="cust-proj-row" tabindex="0" role="button" onclick="window.custCreateProject('${encodeURIComponent(nm)}','${encodeURIComponent(key)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.custCreateProject('${encodeURIComponent(nm)}','${encodeURIComponent(key)}');}"><span class="cust-proj-name">${escapeHtml(nm)}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span></div>`;
+        return `<div class="cust-proj-row" tabindex="0" role="button" onclick="window.custCreateProject('${encodeURIComponent(nm)}','${encodeURIComponent(key)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.custCreateProject('${encodeURIComponent(nm)}','${encodeURIComponent(key)}');}"><span class="cust-proj-name" title="${escapeHtml(nm)}">${escapeHtml(nm)}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span></div>`;
       }).join('');
       projEl.innerHTML = (docHtml + looseHtml) || '<div class="niv-panel-empty">' + L('Sin proyectos', 'No projects') + '</div>';
     }

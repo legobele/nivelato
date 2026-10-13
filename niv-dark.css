@@ -522,7 +522,7 @@ body.has-sidebar .niv-float-panel.collapsed .niv-snav-label {
   padding: 8px 4px; font-size: 14px; border-radius: 8px; cursor: pointer;
 }
 .niv-panel-item:hover { background: var(--niv-surface-2); }
-.niv-panel-item.first { font-weight: 700; }
+.niv-panel-item > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .niv-panel-item .dots { color: var(--niv-text-dim); letter-spacing: 2px; padding: 4px 8px; border-radius: 6px; }
 .niv-panel-item .dots:hover { background: #2a2a2f; color: var(--niv-text); }
 .niv-panel-empty { font-size: 13px; color: var(--niv-text-dim); padding: 4px 4px 8px; font-style: italic; }
