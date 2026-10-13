@@ -1611,19 +1611,34 @@ exports.processAccountDeletion = onDocumentUpdated(
 );
 
 // ---------------------------------------------------------------------------
-// In-app company update engine — v0.9 -> v1.0 data migration.
+// In-app company update engine — v0.9 -> v1.0 data migration + version stamp.
 //
-// The app reads app_updates/latest (public read) to learn an update exists.
-// The owner then EITHER taps "Aplicar actualización" (applyCompanyUpdate,
+// "Data migration level" and "applied version" are two different things:
+//   - CURRENT_DATA_VERSION ('1.0') is the data level. The five data steps
+//     below (userCount recompute, permission backfill, notification prefs,
+//     the 1.0 updateHistory record) bring a pre-1.0 org's DATA up to that
+//     level, and they run at most once per org.
+//   - The applied version stamped into orgs/{orgId}.dataVersion is the
+//     version the client compares against: updates.html reads the org's
+//     channel pointer — app_updates/backend (stable) or
+//     app_updates/beta-latest (beta) — and considers the org up to date
+//     only when dataVersion equals that pointer's version/friendlyVersion.
+//     So after the data steps (or instead of them, when the org is already
+//     at the 1.0 data level), runCompanyMigration stamps the pointer's
+//     version (resolveChannelPointerVersion). If the pointer is unreadable
+//     it falls back to stamping CURRENT_DATA_VERSION, exactly as before.
+//
+// The owner EITHER taps "Aplicar actualización" (applyCompanyUpdate,
 // migrates immediately) OR defers it — the app writes a `pendingUpdate` flag
 // on the org doc and pendingUpdateWatcher runs the same migration later,
 // but ONLY when nobody from that org is online (zero users with a fresh
 // presence beacon).
 //
 // Both paths call runCompanyMigration(orgId, appliedBy). It is idempotent:
-// if orgs/{orgId}.dataVersion is already '1.0' it returns { ok: true,
-// already: true } and touches nothing. NEVER call it against a real org by
-// hand; do not deploy it casually — the coordinator owns deploy.
+// an org already at the target version returns { ok: true, already: true }
+// (clearing any stale pendingUpdate flag) and runs no data steps. NEVER
+// call it against a real org by hand; do not deploy it casually — the
+// coordinator owns deploy.
 // ---------------------------------------------------------------------------
 const CURRENT_DATA_VERSION = '1.0';
 const PREVIOUS_DATA_VERSION = '0.9';
@@ -1694,17 +1709,87 @@ async function countOnlineUsers(orgId) {
   return online;
 }
 
+// The org's channel pointer: the doc updates.html compares dataVersion
+// against. Beta orgs read app_updates/beta-latest, everyone else reads
+// app_updates/backend. Returns the pointer's version (its `version` field,
+// falling back to `friendlyVersion`) as a string, or null when the doc is
+// missing, has neither field, or cannot be read.
+async function resolveChannelPointerVersion(orgData) {
+  try {
+    const channel = orgData.updateChannel === 'beta' ? 'beta-latest' : 'backend';
+    const snap = await db.doc('app_updates/' + channel).get();
+    if (!snap.exists) return null;
+    const data = snap.data();
+    const version = data.version || data.friendlyVersion;
+    return version ? String(version) : null;
+  } catch (e) {
+    console.warn('[update] channel pointer read failed', e.message);
+    return null;
+  }
+}
+
 // The migration. appliedBy is a uid or the string 'scheduler'.
-// Returns { ok: true, version: '1.0', steps, userCount } — steps are honest
-// labels of the five actions below, in run order.
+// Data steps run only when the org is at neither the CURRENT data level
+// nor the channel target; an org at the data level but behind the target
+// gets a stamp-only run. Returns { ok: true, version, steps, userCount }
+// where version is the applied version actually stamped (the channel
+// target, or CURRENT_DATA_VERSION when the pointer is unreadable) — or
+// { ok: true, already: true } when the org is already at the target.
 async function runCompanyMigration(orgId, appliedBy) {
   const orgRef = db.doc(`orgs/${orgId}`);
   const orgSnap = await orgRef.get();
   if (!orgSnap.exists) {
     throw new HttpsError('not-found', 'Organización no encontrada.');
   }
-  if (orgSnap.data().dataVersion === CURRENT_DATA_VERSION) {
+  const orgData = orgSnap.data();
+  const target = await resolveChannelPointerVersion(orgData);
+  // An org already AT the target is fully done; an org at '1.0' with
+  // target '1.1.0' needs only the stamp; an org at '0.9'/missing needs
+  // the data steps.
+  const needsDataSteps = orgData.dataVersion !== CURRENT_DATA_VERSION &&
+    orgData.dataVersion !== target;
+  if (!needsDataSteps &&
+      (target ? orgData.dataVersion === target
+              : orgData.dataVersion === CURRENT_DATA_VERSION)) {
+    // Fully up to date. Clear any stale deferred flag and report already.
+    if ('pendingUpdate' in orgData && orgData.pendingUpdate != null) {
+      await orgRef.update({
+        pendingUpdate: admin.firestore.FieldValue.delete(),
+      });
+    }
     return { ok: true, already: true };
+  }
+  if (!needsDataSteps) {
+    // Stamp-only path: the org is at the CURRENT data level but the
+    // channel target is newer (the already case above has returned, so
+    // target is a non-null string different from dataVersion here).
+    let stampUserCount = orgData.userCount;
+    if (stampUserCount == null) {
+      const stampUsersSnap = await db.collection('users')
+        .where('orgId', '==', orgId).get();
+      stampUserCount = 0;
+      for (const u of stampUsersSnap.docs) {
+        if (u.data().disabled === 'rejected') continue;
+        stampUserCount++;
+      }
+    }
+    await orgRef.set({
+      dataVersion: target,
+      pendingUpdate: admin.firestore.FieldValue.delete(),
+    }, { merge: true });
+    await orgRef.collection('updateHistory').doc(target).set({
+      version: target,
+      appliedAt: admin.firestore.FieldValue.serverTimestamp(),
+      appliedBy,
+      steps: ['Version stamped'],
+      userCount: stampUserCount,
+    });
+    console.log('[update] version stamped', orgId, 'to', target, 'by',
+      appliedBy, `(${stampUserCount} users)`);
+    return {
+      ok: true, version: target, steps: ['Version stamped'],
+      userCount: stampUserCount,
+    };
   }
   const steps = [];
 
@@ -1776,6 +1861,23 @@ async function runCompanyMigration(orgId, appliedBy) {
   });
   steps.push('History recorded');
 
+  // Data level reached. If the channel target is newer than the data
+  // level, stamp it as the applied version too (with its own history
+  // record), so the client-side comparison sees the org as up to date.
+  if (target && target !== CURRENT_DATA_VERSION) {
+    await orgRef.set({ dataVersion: target }, { merge: true });
+    await orgRef.collection('updateHistory').doc(target).set({
+      version: target,
+      appliedAt: admin.firestore.FieldValue.serverTimestamp(),
+      appliedBy,
+      steps: ['Version stamped'],
+      userCount,
+    });
+    console.log('[update] migration applied', orgId, 'by', appliedBy,
+      `(${userCount} users)`, 'and version stamped to', target);
+    return { ok: true, version: target, steps, userCount };
+  }
+
   console.log('[update] migration applied', orgId, 'by', appliedBy,
     `(${userCount} users)`);
   return { ok: true, version: CURRENT_DATA_VERSION, steps, userCount };
@@ -1846,15 +1948,9 @@ exports.pendingUpdateWatcher = onSchedule(
       const data = orgDoc.data();
       if (!('pendingUpdate' in data) || data.pendingUpdate == null) continue;
       processed++;
-      if (data.dataVersion === CURRENT_DATA_VERSION) {
-        // Stale flag: migration already landed some other way. Clear it.
-        await orgDoc.ref.update({
-          pendingUpdate: admin.firestore.FieldValue.delete(),
-        });
-        console.log('[update] org', orgDoc.id, ': pendingUpdate cleared, already at',
-          CURRENT_DATA_VERSION);
-        continue;
-      }
+      // No stale-flag special case here: runCompanyMigration decides —
+      // it clears a stale pendingUpdate itself on its already path and
+      // stamps the channel target otherwise.
       const online = await countOnlineUsers(orgDoc.id);
       if (online > 0) {
         console.log('[update] org', orgDoc.id, ': deferring migration,',
@@ -1862,9 +1958,14 @@ exports.pendingUpdateWatcher = onSchedule(
         continue;
       }
       const res = await runCompanyMigration(orgDoc.id, 'scheduler');
-      // runCompanyMigration deletes pendingUpdate as part of step 1.
+      if (res.already) {
+        console.log('[update] org', orgDoc.id,
+          ': pendingUpdate cleared, already up to date');
+        continue;
+      }
+      // runCompanyMigration deletes pendingUpdate as part of its stamp.
       migrated++;
-      console.log('[update] org', orgDoc.id, ': migrated to', CURRENT_DATA_VERSION,
+      console.log('[update] org', orgDoc.id, ': migrated to', res.version,
         'by scheduler,', res.userCount, 'users');
     }
     return { processed, migrated };
