@@ -4,7 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0b0b0e" />
+  <meta name="description" content="Nivelato: mediciones de campo, niveladas, para todo panel que tiene que caber en un hueco. Inicia sesión para continuar." />
   <title>Nivelato - Iniciar sesión</title>
+  <script>
+    // m23: apply the stored/detected language to <html lang> and the title
+    // before first paint, so an English browser does not see a Spanish
+    // paint that flips mid-load. The full dictionary still loads with the
+    // classic i18n script below; this only fixes the document-level bits.
+    (function () {
+      try {
+        var l = null;
+        try { l = localStorage.getItem('nivelato-login-lang'); } catch (e) {}
+        if (l !== 'es' && l !== 'en') {
+          var n = (navigator.language || '').toLowerCase();
+          l = (n === 'en' || n.indexOf('en-') === 0) ? 'en' : 'es';
+        }
+        document.documentElement.setAttribute('lang', l);
+        if (l === 'en') document.title = 'Nivelato - Sign in';
+      } catch (e) {}
+    })();
+  </script>
   <link rel="icon" href="icon-192.png" />
   <link rel="manifest" href="manifest.json" />
   <script src="./niv-settings.js"></script>
@@ -32,6 +51,28 @@
       padding: 24px;
       -webkit-font-smoothing: antialiased;
     }
+    /* m14: skip link + page landmarks */
+    .skip-link {
+      position: absolute; left: 16px; top: -60px; z-index: 10000;
+      background: var(--amber); color: #141414; padding: 10px 16px;
+      border-radius: 8px; font-weight: 700; font-size: 14px;
+      text-decoration: none; transition: top 0.15s;
+    }
+    .skip-link:focus { top: 12px; }
+    #app-card:focus { outline: none; }
+    .site-header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 5;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px; pointer-events: none;
+    }
+    .site-header .site-brand {
+      font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+      font-size: 16px; color: var(--ink);
+    }
+    .site-header .site-brand .adot { color: var(--amber); }
+    .site-header nav { display: flex; gap: 18px; pointer-events: auto; }
+    .site-header nav a { color: var(--muted); font-size: 13px; font-weight: 600; text-decoration: none; }
+    .site-header nav a:hover { color: var(--ink); }
     /* amber radial glow, same language as the homepage hero */
     body::before {
       content: "";
@@ -704,7 +745,15 @@
      on any network (module imports or the ipapi.co geo lookup). The module
      below hydrates it, then swaps the flow UI in the background if geo says
      otherwise. -->
-<div class="card split-card" id="app-card">
+<a class="skip-link" href="#app-card" data-i18n="skip_to_content">Saltar al contenido principal</a>
+<header class="site-header">
+  <span class="site-brand">Nivelato<span class="adot">.</span></span>
+  <nav data-i18n-aria="site_nav_label" aria-label="Navegación principal">
+    <a href="https://nivelatolabs.com" data-i18n="nav_home">Inicio</a>
+    <a href="./ayuda.html" data-i18n="nav_help">Ayuda</a>
+  </nav>
+</header>
+<main class="card split-card" id="app-card" tabindex="-1">
   <div class="split">
     <div class="brand-panel">
       <h1 class="logo">Nivelato<span class="adot">.</span></h1>
@@ -734,7 +783,7 @@
   </div>
     </div>
   </div>
-</div>
+</main>
 
 <script>
   // ---- Nivelato login i18n (classic script — zero network dependencies) ----
@@ -760,7 +809,7 @@
         change_language: 'Cambiar idioma',
         company_details: 'Detalles de la empresa',
         qgc_only_msg: 'Solo puedes iniciar sesión en Quality Glazing Contractors ya que estás en Puerto Rico. También puedes usar una cuenta personal',
-        tagline_qgc_brand: 'Medidas de campo, niveladas, para todo panel que tiene que caber en un hueco.',
+        tagline_qgc_brand: 'Mediciones de campo, niveladas, para todo panel que tiene que caber en un hueco.',
         account_kind_qgc: 'Quality Glass - Trabajo',
         account_kind_work: 'Trabajo',
         account_kind_personal: 'Personal',
@@ -851,6 +900,58 @@
         travel_err_send: 'No pudimos enviar el enlace. Intenta de nuevo.',
         travel_err_link: 'Ese enlace no es válido o ya expiró. Solicita uno nuevo.',
         travel_err_notimpl: 'La verificación de viaje aún no está disponible.',
+        skip_to_content: 'Saltar al contenido principal',
+        site_nav_label: 'Navegación principal',
+        nav_home: 'Inicio',
+        nav_help: 'Ayuda',
+        aria_switch_to_en: 'Cambiar a inglés',
+        aria_switch_to_es: 'Cambiar a español',
+        loading_label: 'Cargando',
+        employee_notice_qgc: 'SOLO PARA EMPLEADOS DE QUALITY GLAZING CONTRACTORS. Si no sabe su usuario o perdió su contraseña, contacte a su administrador.',
+        dev_title: 'Opciones de desarrollo',
+        dev_hint_html: 'Pulsa Ctrl+Alt+D para revertir todos los cambios y cerrar, o Ctrl+Alt+Shift+H para ocultar.<br>Los ajustes se guardan en el navegador. Algunos ajustes pueden cambiar los datos del backend.',
+        dev_gate_title: 'Inicia sesión con Google en una cuenta inscrita en las pruebas cerradas para continuar',
+        dev_gate_sub: 'Por seguridad, este paso es obligatorio',
+        dev_regional: 'Ajustes regionales',
+        dev_regional_desc: 'Cambia el país detectado para la interfaz con restricción geográfica (aviso de PR, modo QGC). Se aplica al recargar.',
+        dev_custom_country: 'Personalizado (ej. CA)',
+        dev_set: 'Establecer',
+        dev_database: 'Base de datos',
+        dev_database_desc: 'Lo que la cuenta con sesión iniciada puede ver. Las lecturas pasan por las reglas de seguridad, así que esta es exactamente la vista que la app tiene de la base de datos.',
+        dev_loading: 'Cargando…',
+        dev_db_path_ph: 'ruta de la colección (ej. users)',
+        dev_db_path_aria: 'Ruta de la colección',
+        dev_browse: 'Explorar',
+        dev_ui: 'Interfaz',
+        dev_ui_desc: 'Previsualiza la página de inicio de sesión como una empresa específica: su marca, su texto de inicio de sesión y sus funciones. Se aplica al recargar.',
+        dev_backend: 'Backend',
+        dev_backend_desc: 'Información del proyecto y estado de Cloud Functions (el inventario viene del servidor, así que siempre coincide con lo desplegado).',
+        dev_ping_backend: 'Probar el backend',
+        dev_not_enrolled: 'Esta cuenta no está inscrita en las pruebas cerradas.',
+        dev_signin_failed: 'No se pudo iniciar sesión',
+        dev_try_again_suffix: '. Intenta de nuevo.',
+        dev_geo_auto: 'Automático (detectar)',
+        dev_geo_us: 'Estados Unidos',
+        dev_not_signed_in_html: '<b>Sin sesión iniciada</b> en esta página. El explorador de abajo sigue funcionando para las colecciones públicas.',
+        dev_no_user_doc: 'sin documento users/{uid}',
+        dev_read_failed: 'la lectura falló',
+        dev_loaded_below: 'cargado abajo',
+        dev_no_docs: 'Sin documentos (o no se pueden leer).',
+        dev_docs_suffix: ' documento(s), toca para ver:',
+        dev_read_failed_prefix: 'La lectura falló: ',
+        dev_browse_failed_prefix: 'La exploración falló: ',
+        dev_browse_failed_suffix: '. Es posible que la ruta no exista o que las reglas lo nieguen.',
+        dev_company_auto: 'Automático (sin forzar)',
+        dev_company_note: 'Fuerza la pantalla de inicio de sesión de la empresa al cargar, como si visitaras su enlace /company/.',
+        dev_label_project: 'proyecto',
+        dev_label_functions_region: 'región de funciones',
+        dev_label_auth_domain: 'dominio de autenticación',
+        dev_label_server_time: 'hora del servidor',
+        dev_pinging: 'Probando…',
+        dev_google_needed: 'Primero necesitas iniciar sesión con Google.',
+        dev_signin_cancelled: 'Inicio de sesión cancelado.',
+        dev_ping_failed_prefix: 'La prueba falló: ',
+        dev_ms_roundtrip: 'ms de ida y vuelta',
         lang_toggle_to_en: 'Switch to English',
         lang_toggle_to_es: 'Cambiar a español'
       },
@@ -960,6 +1061,58 @@
         travel_err_send: 'We could not send the link. Try again.',
         travel_err_link: 'That link is invalid or expired. Request a new one.',
         travel_err_notimpl: 'Travel verification is not available yet.',
+        skip_to_content: 'Skip to main content',
+        site_nav_label: 'Main navigation',
+        nav_home: 'Home',
+        nav_help: 'Help',
+        aria_switch_to_en: 'Switch to English',
+        aria_switch_to_es: 'Switch to Spanish',
+        loading_label: 'Loading',
+        employee_notice_qgc: 'QUALITY GLAZING CONTRACTORS EMPLOYEES ONLY. If you do not know your username or lost your password, contact your administrator.',
+        dev_title: 'Dev options',
+        dev_hint_html: 'Press Ctrl+Alt+D to revert all changes and close or Ctrl+Alt+Shift+H to hide.<br>Settings will persist inside the browser level. Some settings may change the backend data.',
+        dev_gate_title: 'Sign in with Google to an account enrolled in closed-testing to continue',
+        dev_gate_sub: 'For added security this step is required',
+        dev_regional: 'Regional flags',
+        dev_regional_desc: 'Override the detected country for geo-gated UI (PR banner, QGC mode). Applies on reload.',
+        dev_custom_country: 'Custom (e.g. CA)',
+        dev_set: 'Set',
+        dev_database: 'Database',
+        dev_database_desc: 'What the signed-in account can see. Reads go through security rules, so this is exactly the app&rsquo;s view of the DB.',
+        dev_loading: 'Loading…',
+        dev_db_path_ph: 'collection path (e.g. users)',
+        dev_db_path_aria: 'Collection path',
+        dev_browse: 'Browse',
+        dev_ui: 'UI',
+        dev_ui_desc: 'Preview the login page as a specific company: its branding, signin text and company functions. Applies on reload.',
+        dev_backend: 'Backend',
+        dev_backend_desc: 'Project info and Cloud Functions status (inventory comes from the server, so it always matches what&rsquo;s deployed).',
+        dev_ping_backend: 'Ping backend',
+        dev_not_enrolled: 'This account is not enrolled in closed testing.',
+        dev_signin_failed: 'Sign-in failed',
+        dev_try_again_suffix: '. Try again.',
+        dev_geo_auto: 'Auto (detect)',
+        dev_geo_us: 'United States',
+        dev_not_signed_in_html: '<b>Not signed in</b> on this page. The browser below still works for public collections.',
+        dev_no_user_doc: 'no users/{uid} doc',
+        dev_read_failed: 'read failed',
+        dev_loaded_below: 'loaded below',
+        dev_no_docs: 'No documents (or not readable).',
+        dev_docs_suffix: ' doc(s), tap to view:',
+        dev_read_failed_prefix: 'Read failed: ',
+        dev_browse_failed_prefix: 'Browse failed: ',
+        dev_browse_failed_suffix: '. The path may not exist or rules may deny it.',
+        dev_company_auto: 'Auto (no forcing)',
+        dev_company_note: 'Forces the company signin screen on load, like visiting its /company/ link.',
+        dev_label_project: 'project',
+        dev_label_functions_region: 'functions region',
+        dev_label_auth_domain: 'auth domain',
+        dev_label_server_time: 'server time',
+        dev_pinging: 'Pinging…',
+        dev_google_needed: 'Google sign-in needed first.',
+        dev_signin_cancelled: 'Sign-in cancelled.',
+        dev_ping_failed_prefix: 'Ping failed: ',
+        dev_ms_roundtrip: 'ms round-trip',
         lang_toggle_to_en: 'Switch to English',
         lang_toggle_to_es: 'Cambiar a español'
       }
@@ -1011,7 +1164,10 @@
         var dbSaved = false;
         try { dbSaved = localStorage.getItem('nl_lang_db') === '1'; } catch (_) {}
         btn.textContent = t(dbSaved ? 'change_language' : 'select_language');
-        var al = t(lang === 'es' ? 'lang_toggle_to_en' : 'lang_toggle_to_es');
+        // p34: the accessible name must be in the ACTIVE UI language, not
+        // the target language, so a screen reader user hears their own
+        // language (aria_switch_to_* are phrased per active dictionary).
+        var al = t(lang === 'es' ? 'aria_switch_to_en' : 'aria_switch_to_es');
         btn.setAttribute('aria-label', al);
         btn.setAttribute('title', al);
       }
@@ -1389,9 +1545,24 @@
         <div class="tagline" data-i18n="tagline"></div>`}
         <div class="brand-logo-box"><img src="${logoSrc}" alt="${logoAlt}" /></div>
       </div>
-      <div class="main-panel">
+      <div class="main-panel" data-envmark-card>
         ${accountsSectionHTML() || '<div class="accounts-head"><button type="button" id="lang-toggle" class="lang-toggle"></button></div>'}
         ${qgi ? `<div class="exclusivity-note" data-i18n="exclusivity_note_html" data-i18n-html="1"></div>` : ''}
+        ${qgi ? '' : `<div id="form-login">
+          <form id="login-form" autocomplete="on" onsubmit="return false">
+            <div class="field">
+              <label for="login-email" data-i18n="label_email"></label>
+              <input type="email" id="login-email" name="email" data-i18n-ph="ph_email" autocomplete="email" />
+            </div>
+            <div class="field">
+              <label for="login-pass" data-i18n="label_password"></label>
+              <input type="password" id="login-pass" name="password" data-i18n-ph="ph_password" autocomplete="current-password" />
+            </div>
+            <button class="btn-primary" id="btn-login" type="submit" data-i18n="btn_login"></button>
+          </form>
+          <div style="text-align:center;margin-top:10px;"><a href="#" id="forgot-link" class="forgot-link" data-i18n="forgot"></a></div>
+          <div class="error-msg" id="login-error" role="alert"></div>
+        </div>`}
       </div>
     </div>`;
   }
@@ -1481,6 +1652,7 @@
     if (cantAddShown) { renderCantAddUI(); refreshNotices(); return; }
     if (companyShown) { renderCompanyUI(); refreshNotices(); return; }
     if (companySelectShown) { renderCompanySelectUI(); refreshNotices(); return; }
+    if (reauthShown) { renderReauthUI(); refreshNotices(); return; }
     renderForm(QGI ? 'qgi' : 'external', true);
     refreshNotices();
   };
@@ -1522,43 +1694,48 @@
     document.body.appendChild(badge);
     var ov = document.createElement('div');
     ov.id = 'dev-overlay';
+    // p15: every dev-panel string goes through the dictionary (window.nivT),
+    // and the overlay records the language it was built in so devOpen can
+    // rebuild it after a language toggle.
+    var dt = window.nivT;
+    ov.setAttribute('data-dev-lang', (window.nivGetLang && window.nivGetLang()) || 'es');
     ov.innerHTML =
-      '<div class="dev-modal" role="dialog" aria-label="Dev options">'
-      + '<h2>Dev options</h2>'
-      + '<div class="dev-hint">Press Ctrl+Alt+D to revert all changes and close or Ctrl+Alt+Shift+H to hide.<br>Settings will persist inside the browser level. Some settings may change the backend data.</div>'
+      '<div class="dev-modal" role="dialog" aria-label="' + dt('dev_title') + '">'
+      + '<h2>' + dt('dev_title') + '</h2>'
+      + '<div class="dev-hint">' + dt('dev_hint_html') + '</div>'
       + '<div id="dev-gate">'
       + '<div class="dev-card">'
-      + '<div class="dev-card-title">Sign in with Google to an account enrolled in closed-testing to continue</div>'
-      + '<div class="dev-card-sub">For added security this step is required</div>'
-      + '<button class="dev-btn" id="dev-google-btn" type="button">Sign in with Google</button>'
-      + '<button class="dev-btn primary" id="dev-signin-btn" type="button">Sign in</button>'
+      + '<div class="dev-card-title">' + dt('dev_gate_title') + '</div>'
+      + '<div class="dev-card-sub">' + dt('dev_gate_sub') + '</div>'
+      + '<button class="dev-btn" id="dev-google-btn" type="button">' + dt('signin_google') + '</button>'
+      + '<button class="dev-btn primary" id="dev-signin-btn" type="button">' + dt('btn_login') + '</button>'
       + '<div class="dev-err" id="dev-gate-err"></div>'
       + '</div>'
       + '</div>'
       + '<div id="dev-sections" style="display:none">'
-      + '<button class="dev-sec-btn" id="devsec-regional-btn" type="button">Regional flags</button>'
+      + '<button class="dev-sec-btn" id="devsec-regional-btn" type="button">' + dt('dev_regional') + '</button>'
       + '<div class="dev-sec-body" id="devsec-regional" style="display:none">'
-      + '<div class="dev-desc">Override the detected country for geo-gated UI (PR banner, QGC mode). Applies on reload.</div>'
+      + '<div class="dev-desc">' + dt('dev_regional_desc') + '</div>'
       + '<div id="dev-geo-opts"></div>'
-      + '<div class="dev-geo-custom"><input id="dev-geo-custom" maxlength="2" placeholder="Custom (e.g. CA)" aria-label="Custom country code" /><button class="dev-btn" id="dev-geo-apply" type="button" style="width:auto;margin:0;padding:11px 18px;">Set</button></div>'
+      + '<div class="dev-geo-custom"><input id="dev-geo-custom" maxlength="2" placeholder="' + dt('dev_custom_country') + '" aria-label="' + dt('dev_custom_country') + '" /><button class="dev-btn" id="dev-geo-apply" type="button" style="width:auto;margin:0;padding:11px 18px;">' + dt('dev_set') + '</button></div>'
       + '</div>'
-      + '<button class="dev-sec-btn" id="devsec-database-btn" type="button">Database</button>'
+      + '<button class="dev-sec-btn" id="devsec-database-btn" type="button">' + dt('dev_database') + '</button>'
       + '<div class="dev-sec-body" id="devsec-database" style="display:none">'
-      + '<div class="dev-desc">What the signed-in account can see. Reads go through security rules, so this is exactly the app&rsquo;s view of the DB.</div>'
-      + '<div id="dev-db-user"><div class="dev-desc">Loading&hellip;</div></div>'
-      + '<div class="dev-geo-custom"><input id="dev-db-path" placeholder="collection path (e.g. users)" aria-label="Collection path" /><button class="dev-btn" id="dev-db-browse" type="button" style="width:auto;margin:0;padding:11px 18px;">Browse</button></div>'
+      + '<div class="dev-desc">' + dt('dev_database_desc') + '</div>'
+      + '<div id="dev-db-user"><div class="dev-desc">' + dt('dev_loading') + '</div></div>'
+      + '<div class="dev-geo-custom"><input id="dev-db-path" placeholder="' + dt('dev_db_path_ph') + '" aria-label="' + dt('dev_db_path_aria') + '" /><button class="dev-btn" id="dev-db-browse" type="button" style="width:auto;margin:0;padding:11px 18px;">' + dt('dev_browse') + '</button></div>'
       + '<div id="dev-db-results"></div>'
       + '</div>'
-      + '<button class="dev-sec-btn" id="devsec-ui-btn" type="button">UI</button>'
+      + '<button class="dev-sec-btn" id="devsec-ui-btn" type="button">' + dt('dev_ui') + '</button>'
       + '<div class="dev-sec-body" id="devsec-ui" style="display:none">'
-      + '<div class="dev-desc">Preview the login page as a specific company: its branding, signin text and company functions. Applies on reload.</div>'
+      + '<div class="dev-desc">' + dt('dev_ui_desc') + '</div>'
       + '<div id="dev-company-opts"></div>'
       + '</div>'
-      + '<button class="dev-sec-btn" id="devsec-backend-btn" type="button">Backend</button>'
+      + '<button class="dev-sec-btn" id="devsec-backend-btn" type="button">' + dt('dev_backend') + '</button>'
       + '<div class="dev-sec-body" id="devsec-backend" style="display:none">'
-      + '<div class="dev-desc">Project info and Cloud Functions status (inventory comes from the server, so it always matches what&rsquo;s deployed).</div>'
-      + '<div id="dev-backend-info"><div class="dev-desc">Loading&hellip;</div></div>'
-      + '<button class="dev-btn" id="dev-ping-btn" type="button">Ping backend</button>'
+      + '<div class="dev-desc">' + dt('dev_backend_desc') + '</div>'
+      + '<div id="dev-backend-info"><div class="dev-desc">' + dt('dev_loading') + '</div></div>'
+      + '<button class="dev-btn" id="dev-ping-btn" type="button">' + dt('dev_ping_backend') + '</button>'
       + '<div id="dev-ping-result"></div>'
       + '<div id="dev-fn-list"></div>'
       + '</div>'
@@ -1643,6 +1820,15 @@
     document.getElementById('dev-sections').style.display = 'block';
   }
   function devOpen() {
+    // Rebuild a stale-language overlay (language was toggled after it was
+    // first built) so the panel opens in the active language.
+    var existing = document.getElementById('dev-overlay');
+    var curLang = (window.nivGetLang && window.nivGetLang()) || 'es';
+    if (existing && existing.getAttribute('data-dev-lang') !== curLang) {
+      existing.remove();
+      var b = document.getElementById('dev-badge');
+      if (b) b.remove();
+    }
     devEnsureDom();
     document.getElementById('dev-overlay').classList.add('open');
     if (devGet(DEV_UNLOCK_KEY) === '1') devShowSections();
@@ -1694,7 +1880,7 @@
       var snap = await getDoc(doc(devDb, 'devAllowlist', email));
       if (!snap.exists()) {
         await signOut(_devAuth).catch(function () {});
-        errEl.textContent = 'This account is not enrolled in closed testing.';
+        errEl.textContent = window.nivT('dev_not_enrolled');
         return;
       }
       // Keep the dev-gate Google session: the Backend ping reuses it, and the
@@ -1706,16 +1892,16 @@
       var code = (e && e.code) || '';
       if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
       // Surface the real code: the popup failing blank gives us nothing to go on otherwise.
-      errEl.textContent = 'Sign-in failed' + (code ? ' (' + code + ')' : '') + '. Try again.';
+      errEl.textContent = window.nivT('dev_signin_failed') + (code ? ' (' + code + ')' : '') + window.nivT('dev_try_again_suffix');
     }
   }
 
   function devRenderGeoOpts() {
     var cur = devGet(DEV_GEO_KEY) || '';
     var opts = [
-      { v: '', label: 'Auto (detect)' },
+      { v: '', label: window.nivT('dev_geo_auto') },
       { v: 'PR', label: 'Puerto Rico' },
-      { v: 'US', label: 'United States' },
+      { v: 'US', label: window.nivT('dev_geo_us') },
     ];
     var box = document.getElementById('dev-geo-opts');
     box.innerHTML = '';
@@ -1752,18 +1938,18 @@
     var el = document.getElementById('dev-db-user');
     var u = auth.currentUser;
     if (!u) {
-      el.innerHTML = '<div class="dev-kv"><b>Not signed in</b> on this page. The browser below still works for public collections.</div>';
+      el.innerHTML = '<div class="dev-kv">' + window.nivT('dev_not_signed_in_html') + '</div>';
       return;
     }
-    el.innerHTML = '<div class="dev-desc">Loading&hellip;</div>';
+    el.innerHTML = '<div class="dev-desc">' + window.nivT('dev_loading') + '</div>';
     var claims = {};
     try { claims = (await u.getIdTokenResult()).claims || {}; } catch (_) { /* ignore */ }
     var userDoc = null, userDocErr = null;
     try {
       var s = await getDoc(doc(db, 'users', u.uid));
       userDoc = s.exists() ? s.data() : null;
-      if (!s.exists()) userDocErr = 'no users/{uid} doc';
-    } catch (e) { userDocErr = (e && e.code) || 'read failed'; }
+      if (!s.exists()) userDocErr = window.nivT('dev_no_user_doc');
+    } catch (e) { userDocErr = (e && e.code) || window.nivT('dev_read_failed'); }
     var claimRows = Object.keys(claims).filter(function (k) {
       return ['role', 'orgId', 'company', 'flow', 'geoOk', 'licenseStatus', 'email', 'email_verified'].indexOf(k) >= 0;
     }).map(function (k) { return '<b>' + devEsc(k) + '</b>: ' + devEsc(JSON.stringify(claims[k])); }).join('<br>');
@@ -1771,7 +1957,7 @@
       + '<b>uid</b>: ' + devEsc(u.uid) + '<br>'
       + '<b>email</b>: ' + devEsc(u.email || '(none)') + '<br>'
       + (claimRows ? claimRows + '<br>' : '')
-      + '<b>users/{uid}</b>: ' + (userDocErr ? devEsc(userDocErr) : 'loaded below') + '</div>'
+      + '<b>users/{uid}</b>: ' + (userDocErr ? devEsc(userDocErr) : window.nivT('dev_loaded_below')) + '</div>'
       + (userDoc ? '<div class="dev-pre">' + devEsc(JSON.stringify(userDoc, null, 2)) + '</div>' : '');
   }
 
@@ -1779,14 +1965,14 @@
     var path = (document.getElementById('dev-db-path').value || '').trim().replace(/^\/+|\/+$/g, '');
     var resEl = document.getElementById('dev-db-results');
     if (!path) return;
-    resEl.innerHTML = '<div class="dev-desc">Loading&hellip;</div>';
+    resEl.innerHTML = '<div class="dev-desc">' + window.nivT('dev_loading') + '</div>';
     try {
       var snap = await getDocs(query(collection(db, path), limit(25)));
-      if (snap.empty) { resEl.innerHTML = '<div class="dev-desc">No documents (or not readable).</div>'; return; }
+      if (snap.empty) { resEl.innerHTML = '<div class="dev-desc">' + window.nivT('dev_no_docs') + '</div>'; return; }
       resEl.innerHTML = '';
       var head = document.createElement('div');
       head.className = 'dev-desc';
-      head.textContent = snap.size + ' doc(s), tap to view:';
+      head.textContent = snap.size + window.nivT('dev_docs_suffix');
       resEl.appendChild(head);
       snap.forEach(function (d) {
         var b = document.createElement('button');
@@ -1805,15 +1991,15 @@
           } catch (e) {
             var pre2 = document.createElement('div');
             pre2.className = 'dev-err';
-            pre2.textContent = 'Read failed: ' + ((e && e.code) || 'error');
+            pre2.textContent = window.nivT('dev_read_failed_prefix') + ((e && e.code) || 'error');
             b.after(pre2);
           }
         });
         resEl.appendChild(b);
       });
     } catch (e) {
-      resEl.innerHTML = '<div class="dev-err">Browse failed: ' + devEsc((e && e.code) || 'error')
-        + ' — the path may not exist or rules deny it.</div>';
+      resEl.innerHTML = '<div class="dev-err">' + window.nivT('dev_browse_failed_prefix') + devEsc((e && e.code) || 'error')
+        + window.nivT('dev_browse_failed_suffix') + '</div>';
     }
   }
 
@@ -1828,7 +2014,7 @@
       var b = document.createElement('button');
       b.type = 'button';
       b.className = 'dev-geo-opt' + (cur === id ? ' active' : '');
-      b.textContent = (id ? id : 'Auto (no forcing)') + (cur === id ? ' ✓' : '');
+      b.textContent = (id ? id : window.nivT('dev_company_auto')) + (cur === id ? ' ✓' : '');
       b.addEventListener('click', function () {
         if (id) devSet(DEV_COMPANY_KEY, id); else devDel(DEV_COMPANY_KEY);
         location.reload();
@@ -1837,7 +2023,7 @@
     });
     var note = document.createElement('div');
     note.className = 'dev-desc';
-    note.textContent = 'Forces the company signin screen on load, like visiting its /company/ link.';
+    note.textContent = window.nivT('dev_company_note');
     box.appendChild(note);
   }
 
@@ -1846,9 +2032,9 @@
     var el = document.getElementById('dev-backend-info');
     var cfg = defaultFirebaseConfig || {};
     el.innerHTML = '<div class="dev-kv">'
-      + '<b>project</b>: ' + devEsc(cfg.projectId || '?') + '<br>'
-      + '<b>functions region</b>: us-central1<br>'
-      + '<b>auth domain</b>: ' + devEsc(cfg.authDomain || '?') + '</div>';
+      + '<b>' + window.nivT('dev_label_project') + '</b>: ' + devEsc(cfg.projectId || '?') + '<br>'
+      + '<b>' + window.nivT('dev_label_functions_region') + '</b>: us-central1<br>'
+      + '<b>' + window.nivT('dev_label_auth_domain') + '</b>: ' + devEsc(cfg.authDomain || '?') + '</div>';
     document.getElementById('dev-fn-list').innerHTML = '';
     document.getElementById('dev-ping-result').innerHTML = '';
   }
@@ -1867,7 +2053,7 @@
 
   async function devPingBackend() {
     var resEl = document.getElementById('dev-ping-result');
-    resEl.innerHTML = '<div class="dev-desc">Pinging&hellip;</div>';
+    resEl.innerHTML = '<div class="dev-desc">' + window.nivT('dev_pinging') + '</div>';
     try {
       if (!_devApp) {
         try { _devApp = initializeApp(defaultFirebaseConfig, 'nivelato-dev-gate'); }
@@ -1876,22 +2062,22 @@
       }
       if (!_devAuth.currentUser) {
         await devGoogleGate();
-        if (!_devAuth.currentUser) throw new Error('Google sign-in needed first.');
+        if (!_devAuth.currentUser) throw new Error(window.nivT('dev_google_needed'));
       }
       var t0 = Date.now();
       var res = await httpsCallable(getFunctions(_devApp, 'us-central1'), 'devPing')();
       var ms = Date.now() - t0;
       var d = res.data || {};
-      resEl.innerHTML = '<div class="dev-kv"><b>ok</b> · ' + ms + 'ms round-trip<br><b>server time</b>: '
-        + devEsc(d.now || '?') + '<br><b>project</b>: ' + devEsc(d.project || '?') + '</div>';
+      resEl.innerHTML = '<div class="dev-kv"><b>ok</b> · ' + ms + window.nivT('dev_ms_roundtrip') + '<br><b>' + window.nivT('dev_label_server_time') + '</b>: '
+        + devEsc(d.now || '?') + '<br><b>' + window.nivT('dev_label_project') + '</b>: ' + devEsc(d.project || '?') + '</div>';
       if (d.functions) devRenderFnList(d.functions);
     } catch (e) {
       var code = (e && e.code) || '';
       if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
-        resEl.innerHTML = '<div class="dev-desc">Sign-in cancelled.</div>';
+        resEl.innerHTML = '<div class="dev-desc">' + window.nivT('dev_signin_cancelled') + '</div>';
         return;
       }
-      resEl.innerHTML = '<div class="dev-err">Ping failed: ' + devEsc((e && e.message) || code || 'error') + '</div>';
+      resEl.innerHTML = '<div class="dev-err">' + window.nivT('dev_ping_failed_prefix') + devEsc((e && e.message) || code || 'error') + '</div>';
     }
   }
 
@@ -2222,7 +2408,9 @@
   // in the inquiry text). An empty object hides the selectors gracefully.
   // Per-company signin screens (mockup). name/logo are shown as-is (proper
   // nouns); signinText, inquiryText and signinButton are per-language;
-  // employeeNotice is a plain string (same in both languages, by design).
+  // employeeNotice names a dictionary key (employeeNoticeKey) so the notice
+  // renders fully in the active language (M40: the old plain string mixed
+  // an English prefix with a Spanish body in both modes).
   // location is optional and used for nearest-first proximity sorting.
   // domains is optional; used for manual company lookup by domain.
   const COMPANIES = {
@@ -2236,7 +2424,7 @@
         es: 'Ingresa las credenciales de tu empresa para iniciar sesión.',
         en: 'Enter your company credentials to sign in.'
       },
-      employeeNotice: 'QUALITY GLAZING CONTRACTORS EMPLOYEES ONLY. Si no sabe su usuario o perdio su contrasena, contacte a su administrador.',
+      employeeNoticeKey: 'employee_notice_qgc',
       inquiryText: {
         es: 'Si eres una empresa y quieres usar Nivelato en PR, contáctanos por el correo en nivelatolabs.com > Contacto. Recibirás una respuesta dentro de 1 semana. Ten en cuenta que este acceso se otorga después de una reunión para asegurarnos de que obtengas las funciones adecuadas para tu empresa.',
         en: 'If you are a company wanting to use Nivelato in PR. Please contact using the email at nivelatolabs.com > Contact. You will get a response within 1 week. Please note that this access will be given after a meeting and contacting to make sure you get the right features for your company.'
@@ -2269,7 +2457,7 @@
       .then(function (j) {
         if (j && isFinite(+j.latitude) && isFinite(+j.longitude)) {
           userCoords = { lat: +j.latitude, lng: +j.longitude };
-          if (companySelectShown) renderCompanySelectUI(); // re-sort nearest-first
+          if (companySelectShown) { renderCompanySelectUI(); refreshNotices(); } // re-sort nearest-first
         }
       })
       .catch(function () { /* keep config order */ });
@@ -2363,6 +2551,10 @@
       return;
     }
     currentView = view;
+    // m24: every render above rebuilt #app-card and wiped the notice
+    // elements, so refresh them here for ALL navigation paths, not only
+    // the setLang-triggered renders that called refreshNotices before.
+    refreshNotices();
   }
   function navigateTo(view) {
     try { history.pushState({ nivelatoView: view, qgi: QGI, qgcEscape: qgcEscape }, ''); } catch (_) { /* ignore */ }
@@ -2612,7 +2804,8 @@
     try {
       const email = (document.getElementById('addaccount-email').value || '').trim();
       const pass = document.getElementById('addaccount-pass').value || '';
-      if (!email || email.indexOf('@') < 0) { throw { code: 'auth/missing-email' }; }
+      if (!email) { throw { code: 'auth/missing-email' }; }
+      if (email.indexOf('@') < 0) { throw { code: 'auth/invalid-email' }; }
       if (!pass) { throw { code: 'auth/missing-password' }; }
       const cred = await signInWithEmailAndPassword(auth, email, pass);
       await finishAddAccountSignIn(cred.user);
@@ -2728,7 +2921,7 @@
         + '<div class="qgc-only-notice">' + t('qgc_only_msg') + '</div>'
         + '<div class="brand-logo-box"><img src="./qgc-logo.jpg" alt="QGC" /></div>'
         + '</div>'
-        + '<div class="main-panel pinned-panel">'
+        + '<div class="main-panel pinned-panel" data-envmark-card>'
         + '<div class="accounts-title">' + t('signin_with') + '</div>'
         + '<div id="company-select-list" class="scroll-region">' + pills
         + '</div>'
@@ -2971,7 +3164,7 @@
       + '<summary class="company-details-summary">' + t('company_details') + '</summary>'
       + '<div class="company-details-body">'
       + '<div class="tagline">' + escapeHtml(companyText(company, 'signinText')) + '</div>'
-      + '<div class="company-employee-notice">' + escapeHtml(company.employeeNotice || '') + '</div>'
+      + '<div class="company-employee-notice">' + escapeHtml(company.employeeNoticeKey ? t(company.employeeNoticeKey) : (company.employeeNotice || '')) + '</div>'
       + '<div class="company-inquiry">' + escapeHtml(companyText(company, 'inquiryText')) + '</div>'
       + '<div class="company-travel-notice" id="company-travel-notice" style="display:none">' + t('outside_pr_notice') + '</div>'
       + '</div>'
@@ -2995,7 +3188,7 @@
     if (!area || !company) return;
     const id = companyShown;
     if (company.signinWebhook && companySpecCache[id] === undefined) {
-      area.innerHTML = '<div class="niv-spinner" role="status" aria-label="loading"></div>';
+      area.innerHTML = '<div class="niv-spinner" role="status" aria-label="' + escapeHtml(window.nivT('loading_label')) + '"></div>';
       fetchCompanySigninSpec(id).then(function (spec) {
         companySpecCache[id] = spec; // null on failure -> standard form fallback
         if (companyShown === id && document.getElementById('company-form-area')) renderCompanyFormArea();
@@ -3021,13 +3214,16 @@
     const t = window.nivT;
     const qgi = QGI;
     const signinLabel = companyText(company, 'signinButton');
-    area.innerHTML = '<form id="company-form" autocomplete="on" onsubmit="return false">'
+    // novalidate: doCompanySubmit owns validation so a malformed email
+    // reaches the designed err_invalid_email message (m25) instead of
+    // being swallowed by native type=email validation before submit.
+    area.innerHTML = '<form id="company-form" autocomplete="on" novalidate onsubmit="return false">'
       + '<div class="field">'
       + '<label for="company-email">' + t('label_email') + '</label>'
       + '<input type="email" id="company-email" name="email" placeholder="' + t('ph_email') + '" autocomplete="email" />'
       + '</div>'
       + '<div class="field">'
-      + '<label for="company-pass">Password</label>'
+      + '<label for="company-pass">' + t('label_password') + '</label>'
       + '<input type="password" id="company-pass" name="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="current-password" />'
       + '</div>'
       + '<button class="btn-primary' + (qgi ? ' qgi-btn' : '') + '" id="btn-company" type="submit">' + escapeHtml(signinLabel) + '</button>'
@@ -3106,7 +3302,8 @@
     try {
       const email = (document.getElementById('company-email').value || '').trim();
       const pass = (document.getElementById('company-pass').value || '') || '';
-      if (!email || email.indexOf('@') < 0) { throw { code: 'auth/missing-email' }; }
+      if (!email) { throw { code: 'auth/missing-email' }; }
+      if (email.indexOf('@') < 0) { throw { code: 'auth/invalid-email' }; }
       if (!pass) { throw { code: 'auth/missing-password' }; }
       const cred = await signInWithEmailAndPassword(auth, email, pass);
       if (pendingSpec) {
@@ -3241,6 +3438,7 @@
       e.preventDefault();
       travelShown = false;
       renderForm('external', true);
+      refreshNotices();
     });
   }
 
