@@ -172,7 +172,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       background: rgba(0,0,0,0.4);
       align-items: center; justify-content: center;
       padding: 20px;
-      z-index: 100;
+      z-index: 1300;
       display: flex;
       visibility: hidden;
       opacity: 0;
@@ -428,6 +428,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
 
   /* modals */
   .modal { background: #17171a; border: 1px solid rgba(255,255,255,0.28); }
+  #modal .modal-close-bar { background: #17171a; border-top: 1px solid rgba(255,255,255,0.14); }
   .modal::before { background: rgba(255,255,255,0.3); }
   .modal-title { color: #f5f5f7; }
   .detail-row { border-bottom: 1px solid rgba(255,255,255,0.08); }
@@ -1390,6 +1391,7 @@ try {
     <div class="niv-card">
       <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="cust-projects-title">Proyectos</div>
       <div id="cust-projects"><div class="niv-panel-empty">Cargando…</div></div>
+      <div id="cust-loose"></div>
     </div>
     <div class="niv-card" id="cust-quotes-card">
       <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="cust-quotes-title">Cotizaciones</div>
@@ -1619,6 +1621,9 @@ const _jobHasDims = (job) => {
   const d = _huecoDims(job);
   return d.anchoBot != null && d.anchoBot > 0 && d.altoIzq != null && d.altoIzq > 0;
 };
+// D6: a measurement's display title is its area/location when it has
+// one; otherwise fall back to project/customer, then the generic label.
+window.nivJobTitle = (job) => { const a = (job && (job.area || job.location) || '').trim(); if (a) return a; return (job && (job.project || job.customer)) || 'Medida'; };
 // embedGraph payload built ONLY from real measured values.
 const _graphDataFor = (job) => {
   const d = _huecoDims(job);
@@ -2291,7 +2296,7 @@ let currentUser;
     if (measEl) {
       const recent = jobs.slice(0, 5);
       measEl.innerHTML = recent.length
-        ? recent.map((j, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="openMeasure('${j.id}', 'measures')"><span>${esc(j.customer || j.project || 'Medida')}${j.annotatedPhoto ? ' 📷' : ''}</span>${dashDotsBtn('measure', j.id, j.customer || j.project || 'Medida')}</div>`).join('')
+        ? recent.map((j, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="openMeasure('${j.id}', 'measures')"><span>${esc(window.nivJobTitle(j))}${j.annotatedPhoto ? ' 📷' : ''}</span>${dashDotsBtn('measure', j.id, window.nivJobTitle(j))}</div>`).join('')
         : '<div class="niv-panel-empty">' + L('Sin medidas', 'No measurements') + '</div>';
     }
   };
@@ -2372,17 +2377,21 @@ let currentUser;
       const hueco = job.hueco ? `${(job.hueco.anchoBot||job.hueco.anchoBottom||job.hueco.ancho||'?')}" × ${(job.hueco.altoIzq||job.hueco.altoLeft||job.hueco.alto||'?')}"` : '-';
       const notasPreview = job.notas ? (job.notas.length > 30 ? job.notas.slice(0,30) + '…' : job.notas) : '';
       // Título = cliente - proyecto (el técnico va en la meta, no en el título).
+      // D6: con área/ubicación, el título visible es esa área/ubicación.
       const titleCustomer = job.customer || 'Sin cliente';
       const titleText = job.project ? `${titleCustomer} - ${job.project}` : titleCustomer;
       const titleHtml = job.customer
         ? `<span class="cust-link" title="${escapeHtml(titleCustomer)}" onclick="event.stopPropagation();window.openCustomer(decodeURIComponent('${custEnc(job.customer)}'))">${escapeHtml(titleCustomer)}</span>${job.project ? ` - ${escapeHtml(job.project)}` : ''}`
         : escapeHtml(titleText);
+      const hasAreaLoc = !!(job.area || job.location);
+      const displayTitleHtml = hasAreaLoc ? escapeHtml(window.nivJobTitle(job)) : titleHtml;
+      const displayAriaTitle = hasAreaLoc ? window.nivJobTitle(job) : titleCustomer;
       return `
-        <div class="job-card" tabindex="0" role="button" aria-label="Abrir detalle de la medida de ${escapeHtml(titleCustomer)}"
+        <div class="job-card" tabindex="0" role="button" aria-label="Abrir detalle de la medida de ${escapeHtml(displayAriaTitle)}"
              onclick="openJob(${i})"
              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openJob(${i});}">
           <div class="job-card-top">
-            <div class="job-title">${titleHtml} ${tag}</div>
+            <div class="job-title">${displayTitleHtml} ${tag}</div>
             <div class="job-date">${escapeHtml(dateStr)}</div>
           </div>
           <div class="job-meta">
@@ -2402,7 +2411,9 @@ let currentUser;
     window._currentJobIdx = i;
     const job = window._jobs[i];
     const dateStr = _fmtJobDateTime(job.createdAt);
-    document.getElementById('modal-title').textContent = `Medida - ${job.installerName || 'Técnico medidor'}`;
+    document.getElementById('modal-title').textContent = (job.area || job.location)
+      ? window.nivJobTitle(job)
+      : `Medida - ${job.installerName || 'Técnico medidor'}`;
     const row = (l,v) => `<div class="detail-row"><span class="detail-label">${escapeHtml(l)}</span><span class="detail-val">${escapeHtml(v)}</span></div>`;
     const sec = (t) => `<div class="detail-section-title">${t}</div>`;
     let html = '';
@@ -2412,6 +2423,7 @@ let currentUser;
     html += row('Cliente', job.customer || '-');
     html += row('Proyecto', job.project || '-');
     html += row('Ubicación', job.location || '-');
+    if (job.area) html += row('Área', job.area);
     html += sec('Hueco (Abertura)');
     if (job.hueco) {
       // Step-1 value is the base (bottom) width - label it exactly like the wizard.
@@ -2531,6 +2543,7 @@ let currentUser;
     html += l('Cliente', 'customer', job.customer || '');
     html += l('Proyecto', 'project', job.project || '');
     html += l('Ubicación', 'location', job.location || '');
+    html += l('Área', 'area', job.area || '');
     // Medidas crudas editables - los valores derivados se recalculan al guardar.
     const num = (text, key, val) => `<label class="modal-edit-label" for="edit-m-${key}">${escapeHtml(text)}</label><input class="modal-edit-input" id="edit-m-${key}" type="number" min="0" max="20000" step="0.0625" inputmode="decimal" value="${escapeHtml(val ?? '')}" />`;
     const hb0 = job.hueco || {};
@@ -2615,10 +2628,12 @@ let currentUser;
     const customer = document.getElementById('edit-customer')?.value ?? '';
     const project = document.getElementById('edit-project')?.value ?? '';
     const location = document.getElementById('edit-location')?.value ?? '';
+    const area = document.getElementById('edit-area')?.value ?? '';
     const notas = document.getElementById('edit-notas')?.value ?? '';
     if (customer !== (job.customer || '')) updates.customer = customer;
     if (project !== (job.project || '')) updates.project = project;
     if (location !== (job.location || '')) updates.location = location;
+    if (area !== (job.area || '')) updates.area = area;
     if (notas !== (job.notas || '')) updates.notas = notas;
     // Medidas crudas: campo vacío = sin cambio; si algo cambió, recalcular
     // los derivados igual que el wizard.
@@ -3155,6 +3170,18 @@ let currentUser;
     // redesign: la barra superior se entera de cada cambio de vista
     window._dashView = name;
     if (window._onDashViewChange) window._onDashViewChange(name);
+    // URL en sincronía solo para las vistas simples: project/customer/
+    // measure tienen sus propios openers, que ya escriben la URL.
+    if (['home', 'notifications', 'users', 'measures', 'pricelist', 'quotes', 'builder'].includes(name)) {
+      try {
+        const u = new URL(window.location.href);
+        u.searchParams.set('view', name);
+        u.searchParams.delete('project');
+        u.searchParams.delete('customer');
+        u.searchParams.delete('measure');
+        window.history.replaceState(null, '', u.toString());
+      } catch (_) {}
+    }
     window.scrollTo(0, 0);
   };
   window.togglePriceListView = () => {
@@ -4236,7 +4263,7 @@ let currentUser;
     const meas = allJobs.filter(j => j.projectId === projectId);
     const measEl = document.getElementById('proj-measures');
     measEl.innerHTML = meas.length
-      ? meas.map(j => `<div class="niv-proj-measure" onclick="openMeasure('${j.id}', 'project')"><span>${escapeHtml(j.customer || j.project || 'Medida')}${j.annotatedPhoto ? '<span class="niv-photo-badge">📷</span>' : ''}</span>${dashDotsBtn('measure', j.id, j.customer || j.project || 'Medida')}</div>`).join('')
+      ? meas.map(j => `<div class="niv-proj-measure" onclick="openMeasure('${j.id}', 'project')"><span>${escapeHtml(window.nivJobTitle(j))}${j.annotatedPhoto ? '<span class="niv-photo-badge">📷</span>' : ''}</span>${dashDotsBtn('measure', j.id, window.nivJobTitle(j))}</div>`).join('')
       : '<div class="niv-panel-empty">' + L('Sin medidas en este proyecto.', 'No measurements in this project.') + '</div>';
     // assigned users
     renderProjectUsers(p);
@@ -4900,14 +4927,23 @@ let currentUser;
     const jobs = (allJobs || []).filter((j) => j.customer === key);
     const docProjects = (_projects || []).filter((p) => (p.customer || '') === key);
     const docIds = new Set(docProjects.map((p) => p.id));
-    const docNames = new Set(docProjects.map((p) => p.name || ''));
-    // Proyectos sin doc propio: nombres que solo viven en jobs.project.
-    const looseNames = [];
+    // Comparación insensible a acentos/caso/espacios: una variante de un
+    // proyecto real no debe aparecer como nombre suelto fantasma.
+    const _normProj = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const docNorms = new Set(docProjects.map((p) => _normProj(p.name || '')));
+    // Proyectos sin doc propio: nombres que solo viven en jobs.project,
+    // agrupados por nombre normalizado (se muestra el primer nombre tal cual).
+    const looseGroups = [];
+    const _looseByNorm = new Map();
     jobs.forEach((j) => {
       const nm = j.project || '';
-      if (!nm || docNames.has(nm)) return;
+      if (!nm) return;
+      const norm = _normProj(nm);
+      if (!norm || docNorms.has(norm)) return;
       if (j.projectId && docIds.has(j.projectId)) return;
-      if (!looseNames.includes(nm)) looseNames.push(nm);
+      let g = _looseByNorm.get(norm);
+      if (!g) { g = { name: nm, jobs: [] }; _looseByNorm.set(norm, g); looseGroups.push(g); }
+      g.jobs.push(j);
     });
     const quotes = canQuote ? _custQuotesFor(key) : [];
     const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
@@ -4921,7 +4957,7 @@ let currentUser;
       renderCustomerContact(contactEl, key, canQuote, quotes);
     }
     // stats honestas: conteos reales y actividad mas reciente real
-    const projCount = docProjects.length + looseNames.length;
+    const projCount = docProjects.length;
     let recent = null;
     const bump = (v) => { const d = _custDate(v); if (d && (!recent || d > recent)) recent = d; };
     jobs.forEach((j) => bump(j.createdAt));
@@ -4940,18 +4976,26 @@ let currentUser;
     const _cs = document.querySelector('#view-customer .cust-stats');
     if (_cs) _cs.classList.toggle('no-quotes', !canQuote);
     if (canQuote) setText('cust-stat-quotes', String(quotes.length));
-    // proyectos: docs clicables a openProject + nombres sueltos de jobs
+    // proyectos: solo docs reales, clicables a openProject
     const projEl = document.getElementById('cust-projects');
     if (projEl) {
       const docHtml = docProjects.map((p) => {
         const n = jobs.filter((j) => j.projectId === p.id).length;
         return `<div class="cust-proj-row" tabindex="0" role="button" onclick="openProject('${p.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openProject('${p.id}');}"><span class="cust-proj-name" title="${escapeHtml(p.name || L('Proyecto', 'Project'))}">${escapeHtml(p.name || L('Proyecto', 'Project'))}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span></div>`;
       }).join('');
-      const looseHtml = looseNames.map((nm) => {
-        const n = jobs.filter((j) => (j.project || '') === nm && !(j.projectId && docIds.has(j.projectId))).length;
-        return `<div class="cust-proj-row" tabindex="0" role="button" onclick="window.custCreateProject('${encodeURIComponent(nm)}','${encodeURIComponent(key)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.custCreateProject('${encodeURIComponent(nm)}','${encodeURIComponent(key)}');}"><span class="cust-proj-name" title="${escapeHtml(nm)}">${escapeHtml(nm)}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span></div>`;
-      }).join('');
-      projEl.innerHTML = (docHtml + looseHtml) || '<div class="niv-panel-empty">' + L('Sin proyectos', 'No projects') + '</div>';
+      projEl.innerHTML = docHtml || '<div class="niv-panel-empty">' + L('Sin proyectos', 'No projects') + '</div>';
+    }
+    // nombres sueltos: bloque aparte; la fila abre la primera medida del
+    // grupo y el botón explícito es el único camino a crear el proyecto.
+    const looseEl = document.getElementById('cust-loose');
+    if (looseEl) {
+      looseEl.innerHTML = looseGroups.length
+        ? `<div class="niv-card-title" style="font-size:16px;margin-top:16px;margin-bottom:8px;color:var(--niv-text-dim);">${escapeHtml(L('Medidas sin proyecto', 'Measurements without a project'))}</div>` + looseGroups.map((g) => {
+            const n = g.jobs.length;
+            const firstIdx = jobs.indexOf(g.jobs[0]);
+            return `<div class="cust-proj-row" tabindex="0" role="button" onclick="window.openCustomerJob(${firstIdx})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openCustomerJob(${firstIdx});}"><span class="cust-proj-name" title="${escapeHtml(g.name)}">${escapeHtml(g.name)}</span><span style="display:flex;align-items:center;gap:10px;flex:none;"><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span><button class="niv-btn-sm" type="button" onclick="event.stopPropagation();window.custCreateProject('${encodeURIComponent(g.name)}','${encodeURIComponent(key)}')">${escapeHtml(L('Crear proyecto', 'Create project'))}</button></span></div>`;
+          }).join('')
+        : '';
     }
     // cotizaciones: mismas tarjetas que la lista de cotizaciones
     const quotesEl = document.getElementById('cust-quotes');
@@ -4982,7 +5026,7 @@ let currentUser;
             : `<span class="job-tag tag-ok">✓ OK</span>`;
           const hueco = job.hueco ? `${(job.hueco.anchoBot || job.hueco.anchoBottom || job.hueco.ancho || '?')}" × ${(job.hueco.altoIzq || job.hueco.altoLeft || job.hueco.alto || '?')}"` : '-';
           const notasPreview = job.notas ? (job.notas.length > 30 ? job.notas.slice(0, 30) + '…' : job.notas) : '';
-          const titleText = job.project ? `${key} - ${job.project}` : key;
+          const titleText = (job.area || job.location) ? window.nivJobTitle(job) : (job.project ? `${key} - ${job.project}` : key);
           return `
         <div class="job-card" tabindex="0" role="button" aria-label="${escapeHtml(L('Abrir detalle de la medida de ', 'Open measurement details for ') + key)}"
              onclick="window.openCustomerJob(${i})"
@@ -5262,20 +5306,28 @@ let currentUser;
     const hm = document.getElementById('home-measures');
     if (hm) {
       hm.innerHTML = allJobs.length
-        ? allJobs.slice(0, 6).map((j) => `<div class="niv-home-row" onclick="openMeasure('${j.id}', 'home')"><span>${escapeHtml(j.customer || j.project || 'Medida')}${j.annotatedPhoto ? '<span class="niv-photo-badge">📷</span>' : ''}</span>${dashDotsBtn('measure', j.id, j.customer || j.project || 'Medida')}</div>`).join('')
+        ? allJobs.slice(0, 6).map((j) => `<div class="niv-home-row" onclick="openMeasure('${j.id}', 'home')"><span>${escapeHtml(window.nivJobTitle(j))}${j.annotatedPhoto ? '<span class="niv-photo-badge">📷</span>' : ''}</span>${dashDotsBtn('measure', j.id, window.nivJobTitle(j))}</div>`).join('')
         : '<div class="niv-panel-empty">' + L('Sin medidas', 'No measurements') + '</div>';
     }
-    // aviso de actualización: puntero app_updates/latest (config de Job A);
-    // la descripción visible es el campo `description` de esa config.
+    // aviso de actualización: puntero por canal, como updates.html
+    // (stable -> app_updates/backend, beta -> app_updates/beta-latest);
+    // solo se muestra si difiere de orgs/{orgId}.dataVersion.
     (async () => {
       const banner = document.getElementById('home-update-banner');
       if (!banner) return;
       try {
-        const snap = await getDoc(doc(db, 'app_updates', 'latest'));
+        const orgId = window._orgId;
+        if (!orgId) { banner.style.display = 'none'; return; }
+        const orgSnap = await getDoc(doc(db, 'orgs', orgId));
+        const orgData = orgSnap.exists() ? orgSnap.data() : {};
+        const channel = orgData && orgData.updateChannel === 'beta' ? 'beta' : 'stable';
+        const dataVersion = orgData && orgData.dataVersion ? String(orgData.dataVersion) : '0.9';
+        const snap = await getDoc(doc(db, 'app_updates', channel === 'beta' ? 'beta-latest' : 'backend'));
         const d = snap.exists() ? snap.data() : null;
-        if (d && d.version) {
-          document.getElementById('home-update-title').textContent = L('Nueva versión disponible: v', 'New version available: v') + d.version;
-          document.getElementById('home-update-desc').textContent = d.description || '';
+        const pointerVersion = d ? (d.version || d.friendlyVersion) : null;
+        if (pointerVersion && String(dataVersion) !== String(pointerVersion)) {
+          document.getElementById('home-update-title').textContent = L('Nueva versión disponible: v', 'New version available: v') + pointerVersion;
+          document.getElementById('home-update-desc').textContent = d.description || d.notes || '';
           banner.style.display = 'flex';
         } else {
           banner.style.display = 'none';
@@ -5486,6 +5538,10 @@ let currentUser;
       if (v === 'notifications') window.showDashView('notifications');
       else if (v === 'users') window.showDashView('users');
       else if (v === 'home' || v === 'dashboard') window.showDashView('home');
+      else if (v === 'measures') window.showDashView('measures');
+      else if (v === 'pricelist') window.showDashView('pricelist');
+      else if (v === 'quotes') window.showDashView('quotes');
+      else if (v === 'builder') window.showDashView('builder');
       else if (v === 'project') {
         // Row-menu deep link (M3): open THAT project, waiting for the
         // project list to arrive instead of landing on the first one.
