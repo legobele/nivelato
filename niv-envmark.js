@@ -9,10 +9,11 @@
  *    browser presses CTRL+ALT+D (reveal chord). Hidden by default.
  *    Verbatim hint: "Press CTRL+ALT+B to TOGGLE marking account being
  *    signed into & device as a PRODUCTION env".
- * 2. CTRL+ALT+B chord ladder: dev -> unset; prod -> unset; unset -> prod.
+ * 2. CTRL+ALT+B chord ladder: unset -> prod -> dev -> unset.
  *    When setting prod it also marks the account being signed into: the
  *    account is not authed yet at chord time, so the mark is keyed by the
- *    email typed into the card's email field.
+ *    email typed into the card's email field. Setting dev records the
+ *    pending beta intent (see the beta cascade note below).
  * 3. Dev-flag interstitial: when a dev flag is detected, a FULL-SCREEN
  *    solid red interstitial pops up: "DEV ENVIRONMENT DETECTED!!!!" /
  *    "See support.nivelatolabs.com/dev for info and guidance". The
@@ -258,6 +259,8 @@
       betaPromptNo: 'No, solo mi cuenta',
       devTitle: 'DEV ENVIRONMENT DETECTED!!!!',
       devSub: 'Ver support.nivelatolabs.com/dev para información y ayuda',
+      devExit: 'Presiona CTRL+ALT+B para desactivar esta marca y cerrar esta pantalla.',
+      prodState: 'Marca actual: entorno de PRODUCCIÓN',
       betaTitle: 'ADVERTENCIA!!!',
       betaBody: 'Estás en una versión beta de Nivelato. NO USES ESTA VERSIÓN EN UN ENTORNO PROD!!!!!!!!!!!!!!! ESPERA PÉRDIDA DE DATOS O PROBLEMAS'
     },
@@ -276,6 +279,8 @@
       betaPromptNo: 'No, just my account',
       devTitle: 'DEV ENVIRONMENT DETECTED!!!!',
       devSub: 'See support.nivelatolabs.com/dev for info and guidance',
+      devExit: 'Press CTRL+ALT+B to turn off this flag and dismiss this screen.',
+      prodState: 'Current mark: PRODUCTION env',
       betaTitle: 'WARNING!!!',
       betaBody: 'You are on a beta version of Nivelato. DO NOT USE THIS VERSION ON A PROD ENV!!!!!!!!!!!!!!! EXPECT DATA LOSS OR ISSUES'
     }
@@ -308,8 +313,14 @@
   /* ---------------------------------------------------------------- */
   var CSS = [
     '[data-envmark-card]{position:relative;}',
-    '.niv-envmark-footer{position:absolute;left:12px;bottom:8px;right:12px;',
+    /* pointer-events:none (M33): the strip sits over the bottom of the
+     * card and must never click-block the sign-in submit under it. */
+    '.niv-envmark-footer{position:absolute;left:12px;bottom:8px;right:12px;pointer-events:none;',
     'font-size:11px;line-height:1.5;color:#8a8a94;text-align:left;z-index:5;}',
+    '.niv-envmark-footer-state{display:block;font-weight:700;color:#c9c9d2;}',
+    '.niv-envmark-interstitial .exit{font-size:15px;margin:14px 0 0;line-height:1.55;}',
+    '.flow-envcard-prod{background:#17171a;color:#f2f1ec;border:1px solid #2e2e38;',
+    'border-radius:12px;padding:14px;margin:0 0 10px;font-size:13px;line-height:1.55;font-weight:700;}',
     '.niv-envmark-modal-veil{position:fixed;inset:0;z-index:99990;display:none;',
     'align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:18px;}',
     '.niv-envmark-modal-veil.open{display:flex;}',
@@ -358,7 +369,13 @@
    * renderer spins forever. */
   var inOwnWrite = false;
   function isRevealed() { return lsGet(REVEAL_KEY) === '1'; }
-  function setRevealed() { lsSet(REVEAL_KEY, '1'); paintFooters(); }
+  /* Idempotent and non-destructive (M34, env side): revealing an already
+   * revealed footer is a no-op. It never clears the mark, the pending
+   * beta intent, or any other setting. */
+  function setRevealed() {
+    if (isRevealed()) { paintFooters(); return; }
+    lsSet(REVEAL_KEY, '1'); paintFooters();
+  }
   function ensureFooters() {
     if (inOwnWrite) return;
     inOwnWrite = true;
@@ -381,10 +398,32 @@
   function paintFooters() {
     var revealed = isRevealed();
     var hint = t('footerHint');
+    var prod = isProd();
     var els = document.querySelectorAll('[data-envmark-footer]');
     for (var i = 0; i < els.length; i++) {
-      if (els[i].textContent !== hint) els[i].textContent = hint;
-      var want = revealed ? '' : 'none';
+      /* The hint keeps its own span so the verified verbatim string is
+       * never rewritten; the PROD state (m28) is an added sibling line,
+       * shown while the prod mark is active. */
+      var hintEl = els[i].querySelector('[data-envmark-hint]');
+      var stateEl = els[i].querySelector('[data-envmark-state]');
+      if (!hintEl) {
+        hintEl = document.createElement('span');
+        hintEl.setAttribute('data-envmark-hint', '');
+        els[i].appendChild(hintEl);
+      }
+      if (!stateEl) {
+        stateEl = document.createElement('span');
+        stateEl.className = 'niv-envmark-footer-state';
+        stateEl.setAttribute('data-envmark-state', '');
+        els[i].appendChild(stateEl);
+      }
+      if (hintEl.textContent !== hint) hintEl.textContent = hint;
+      var state = prod ? t('prodState') : '';
+      if (stateEl.textContent !== state) stateEl.textContent = state;
+      stateEl.style.display = prod ? '' : 'none';
+      /* Visible after the reveal chord, and also while prod is active
+       * so setting prod has visible feedback (m28). */
+      var want = (revealed || prod) ? '' : 'none';
       if (els[i].style.display !== want) els[i].style.display = want;
     }
   }
@@ -402,15 +441,19 @@
       }
     } catch (_) { /* ignore */ }
   }
-  /* CTRL+ALT+B ladder: dev -> unset, prod -> unset, unset -> prod.
-   * In the dev sign-in modal the same chord turns the dev flag off. */
+  /* CTRL+ALT+B ladder (M30): unset -> prod -> dev -> unset, so DEV is
+   * reachable by keyboard and the beta intent that hangs off setMark('dev')
+   * is recorded. In the dev sign-in modal the same chord turns the dev
+   * flag off (dev -> unset, the last ladder step). */
   function toggleB() {
     var m = getMark();
-    if (m === 'dev' || m === 'prod') {
+    if (m === 'dev') {
       /* turning the flag off also retires the dev sign-in modal: the
        * warning it carries is moot once the flag is gone */
       closeModal();
       setMark('');
+    } else if (m === 'prod') {
+      setMark('dev');
     } else { setMark('prod'); captureAccountFromCard(); }
     refreshAll();
   }
@@ -556,7 +599,11 @@
     var email = card ? cardEmail(card) : '';
     var info = company ? cardCompanyInfo(company) : { id: '', name: '' };
     var changed = false;
-    if (!p.email && email) { p.email = email; changed = true; }
+    /* M35: the intent email is not a one-time snapshot. If the card now
+     * shows a different non-empty email (the natural order is mark first,
+     * type second), follow the card so post-auth enrollment matches the
+     * account actually being signed into. */
+    if (email && p.email !== email) { p.email = email; changed = true; }
     if (!p.companyId && info.id) { p.companyId = info.id; p.companyName = info.name; changed = true; }
     if (changed) setPendingBeta(p);
     maybePromptCompanyBeta();
@@ -623,7 +670,8 @@
       }
       if (isDev()) {
         var html = '<div><h1>' + escapeHtml(t('devTitle')) + '</h1>' +
-          '<a href="' + DEV_URL + '">' + escapeHtml(t('devSub')) + '</a></div>';
+          '<a href="' + DEV_URL + '">' + escapeHtml(t('devSub')) + '</a>' +
+          '<p class="exit">' + escapeHtml(t('devExit')) + '</p></div>';
         if (el.__emHtml !== html) { el.innerHTML = html; el.__emHtml = html; }
         el.classList.add('open');
       } else {
@@ -652,6 +700,9 @@
     inOwnWrite = true;
     try {
       var html = '';
+      if (isProd()) {
+        html += '<div class="flow-envcard-prod">' + escapeHtml(t('prodState')) + '</div>';
+      }
       if (currentChannel() === 'beta') {
         html += '<div class="flow-envcard-beta"><strong>' + escapeHtml(t('betaTitle')) + '</strong>' +
           escapeHtml(t('betaBody')) + '</div>';
@@ -698,17 +749,48 @@
     renderInterstitial();
     renderRailCards();
   }
+  /* Editable-focus guard (M34, env side): the chords must not fire while
+   * the user is typing in a field. On login this also stops the reveal
+   * chord from colliding with typing in the email and password inputs. */
+  function isEditableTarget(e) {
+    try {
+      var el = e && e.target;
+      if (!el) return false;
+      if (el.isContentEditable) return true;
+      var tag = String(el.tagName || '').toLowerCase();
+      return tag === 'input' || tag === 'textarea' || tag === 'select';
+    } catch (_) { return false; }
+  }
+  /* Key identity: prefer e.key, but fall back to e.code (m27). On macOS,
+   * Option+B produces the glyph "∫" as e.key while e.code stays "KeyB";
+   * the same applies to Option+D. */
+  function chordKey(e) {
+    var k = String((e && e.key) || '').toLowerCase();
+    if (k === 'b' || k === 'd') return k;
+    if (e && e.code === 'KeyB') return 'b';
+    if (e && e.code === 'KeyD') return 'd';
+    return k;
+  }
   document.addEventListener('keydown', function (e) {
     var k0 = String(e.key || '').toLowerCase();
     if (k0 === 'escape' && isBetaPromptOpen()) { e.preventDefault(); dismissBetaPrompt(); return; }
     if (!e.ctrlKey || !e.altKey) return;
-    var k = String(e.key || '').toLowerCase();
+    if (isEditableTarget(e)) return;
+    var k = chordKey(e);
     if (k === 'd') { e.preventDefault(); setRevealed(); return; }
     if (k !== 'b') return;
     e.preventDefault();
     if (e.shiftKey) dismissOnly();
     else toggleB();
   });
+  /* M35: typing the email after the mark was set updates the pending
+   * beta intent (refreshPendingBeta follows the visible card email). */
+  document.addEventListener('input', function (e) {
+    try {
+      var el = e && e.target;
+      if (el && String(el.type || '').toLowerCase() === 'email') refreshPendingBeta();
+    } catch (_) { /* ignore */ }
+  }, true);
   function applyQueryEnv() {
     try {
       var q = new URLSearchParams(window.location.search).get('env');
@@ -727,6 +809,23 @@
       lo.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
     } catch (_) { /* ignore */ }
   }
+  /* M32 (env side): late hosts. The MutationObserver in observe() already
+   * calls ensureFooters() when a [data-envmark-card] host is added, and
+   * these bounded retries cover hosts added by a renderer that settles
+   * without a further mutation we can see. This only ever fills hosts
+   * that already carry the attribute; it never creates a host, so it
+   * cannot mask a renderer that drops the attribute. The sign-in modal
+   * needs nothing on this side: interception is a document-level submit
+   * listener keyed on a form inside [data-envmark-card], so it works as
+   * soon as such a host exists. */
+  function scheduleFooterRetries() {
+    var delays = [250, 1000, 2500];
+    for (var i = 0; i < delays.length; i++) {
+      (function (ms) {
+        try { setTimeout(function () { ensureFooters(); }, ms); } catch (_) { /* ignore */ }
+      })(delays[i]);
+    }
+  }
   function boot() {
     injectCss();
     applyQueryEnv();
@@ -735,6 +834,7 @@
     renderInterstitial();
     renderRailCards();
     observe();
+    scheduleFooterRetries();
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);

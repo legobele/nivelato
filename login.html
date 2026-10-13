@@ -1991,23 +1991,47 @@
   // email must match the signed-in account or the intent is dropped
   // (ambiguity = no write). The mark itself stays an alarm, never a gate.
   async function applyPendingBetaCascade() {
+    // Terminal-path rule (m26): a completed attempt and an email MISMATCH
+    // both drop the intent via clearPendingBeta(). A missing signed-in
+    // user is not terminal (no auth to apply against yet), so the intent
+    // is kept in that case only.
+    let dropIntent = false;
     try {
       if (!window.NivEnvMark || !window.NivEnvMark.getPendingBeta) return;
       const p = window.NivEnvMark.getPendingBeta();
-      if (!p || !p.email) return;
+      if (!p) return;
       const user = auth.currentUser;
       if (!user || !user.email) return;
-      if (user.email.toLowerCase() !== String(p.email).toLowerCase()) return;
+      // M35: refresh the intent email from the actual sign-in email at
+      // apply time. The snapshot captured at mark-set time is stale when
+      // the natural order was used (mark first, type the email second),
+      // which left it empty and skipped enrollment entirely.
+      if (!p.email) p.email = user.email;
+      if (user.email.toLowerCase() !== String(p.email).toLowerCase()) { dropIntent = true; return; }
+      dropIntent = true;
       await updateDoc(doc(db, 'users', user.uid), {
         betaEnrolled: true, betaEnrolledAt: serverTimestamp(), betaChannel: 'beta'
       });
       if (p.companyBetaYes === true && p.companyId) {
+        // M36: p.companyId is the UI slug (e.g. "qgc"), not an org doc id.
+        // Resolve the real org from the signed-in user's own doc: its
+        // orgId is the canonical org identifier this same file already
+        // trusts in postAuthRedirect (orgId === 'NJBBG5' for QGC). Never
+        // write to orgs/<slug>. No orgId on the user doc means no company
+        // write at all.
+        let realOrgId = '';
+        try {
+          const userSnap = await getDoc(doc(db, 'users', user.uid));
+          const userData2 = (userSnap && userSnap.exists()) ? (userSnap.data() || {}) : {};
+          realOrgId = String(userData2.orgId || '');
+        } catch (_) { realOrgId = ''; }
+        if (!realOrgId) return;
         // Company opt-in: enroll the org in beta (mirrors
         // beta/enroll-company.html), then adopt the beta channel via the
         // owner-only callable. Direct endpoint call with an explicit ID
         // token, same pattern as mintSsoToken above (centralFunctions is
         // bound to a separate app instance and can't attach auth).
-        await updateDoc(doc(db, 'orgs', p.companyId), {
+        await updateDoc(doc(db, 'orgs', realOrgId), {
           betaEnrolled: true, beta: { enrolledAt: serverTimestamp(), enrolledBy: user.uid }
         });
         const idToken = await user.getIdToken(true);
@@ -2019,7 +2043,13 @@
         if (!resp.ok) throw new Error('setOrgUpdateChannel s' + resp.status);
       }
     } catch (_) { /* best effort: the mark stays an alarm, never a gate */ }
-    try { if (window.NivEnvMark && window.NivEnvMark.clearPendingBeta) window.NivEnvMark.clearPendingBeta(); } catch (_) {}
+    finally {
+      /* finally, not code after the catch: early returns inside the try
+       * (mismatch, missing org) must still drop the intent (m26). */
+      if (dropIntent) {
+        try { if (window.NivEnvMark && window.NivEnvMark.clearPendingBeta) window.NivEnvMark.clearPendingBeta(); } catch (_) {}
+      }
+    }
   }
   async function postAuthRedirect() {
     // Loop breaker: if we just did an SSO handoff within the last 60s, don't

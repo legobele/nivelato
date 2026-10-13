@@ -357,6 +357,25 @@
       lsKey: 'niv-env-accounts', mirror: true,
       normalize: function (v) { return typeof v === 'string' ? v : JSON.stringify(v); }
     },
+    /* Pending beta intent (niv-envmark.js beta cascade, M37): the DEV
+     * mark records { email, companyId, companyName, companyBetaYes, at }
+     * pre-auth on the sign-in origin and login.html applies it post-auth,
+     * which can be on another subdomain, so it must travel in the domain
+     * cookie like every other setting here, not only in the localStorage
+     * mirror. JSON object string, capped like the other JSON settings.
+     * Same security note as 'niv-env-mark': a client-side record of a
+     * user action, never an authorization fact. */
+    'niv-env-pending-beta': {
+      validate: function (v) {
+        if (typeof v !== 'string' || v.length > MAX_COOKIE_VALUE) return false;
+        try {
+          var o = JSON.parse(v);
+          return !!o && typeof o === 'object' && !Array.isArray(o);
+        } catch (e) { return false; }
+      },
+      lsKey: 'niv-env-pending-beta', mirror: true,
+      normalize: function (v) { return typeof v === 'string' ? v : JSON.stringify(v); }
+    },
     /* Automatic updates (updates.html, v1.1): device-level preference for
      * whether available org updates apply automatically.
      * - 'niv-auto-update': '1' | '0'. Master switch.

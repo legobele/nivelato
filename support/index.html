@@ -474,6 +474,14 @@ const FORCED_LANG = null;
 
 const LANG_KEY = 'nivelato-lang';
 function currentLang() {
+  /* M25: the shared nivelato-login-lang domain cookie (set by the app
+   * and login on .nivelatolabs.com) wins first, so an EN app user lands
+   * on EN support. The support-origin localStorage key is the fallback
+   * for choices made on this origin itself. */
+  try {
+    const m = ('; ' + document.cookie).match(/; nivelato-login-lang=(es|en)(?:;|$)/);
+    if (m) return m[1];
+  } catch (e) {}
   try {
     const saved = localStorage.getItem(LANG_KEY);
     if (saved === 'en' || saved === 'es') return saved;

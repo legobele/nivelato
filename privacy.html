@@ -14,7 +14,15 @@
 <style>
   * { box-sizing: border-box; }
   body { font-family: 'Inter', system-ui, sans-serif; margin: 0; background: var(--niv-bg); color: var(--niv-text); line-height: 1.65; }
-  header { background: var(--niv-surface); color: var(--niv-text); padding: 28px 20px; border-bottom: 1px solid var(--niv-border-soft); }
+  header { position: relative; background: var(--niv-surface); color: var(--niv-text); padding: 28px 20px; border-bottom: 1px solid var(--niv-border-soft); }
+  .lang-toggle {
+    position: absolute; top: 14px; right: 14px;
+    background: transparent; border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 999px; color: var(--niv-text);
+    font-family: ui-monospace, "JetBrains Mono", monospace;
+    font-size: .78rem; letter-spacing: .08em; padding: 7px 14px; cursor: pointer;
+  }
+  .lang-toggle:hover { border-color: var(--niv-text); }
   header h1 { margin: 0; font-size: 24px; }
   header p { margin: 6px 0 0; color: var(--niv-text-dim); font-size: 14px; }
   main { max-width: 760px; margin: 0 auto; padding: 28px 20px 60px; }
@@ -29,43 +37,44 @@
 </head>
 <body>
 <header>
-  <h1>Nivelato — Política de Privacidad</h1>
-  <p>Qué datos recopila la app, por qué y cómo se manejan.</p>
+  <button class="lang-toggle" aria-label="Switch language / Cambiar idioma">EN</button>
+  <h1 data-i18n="header.h1">Nivelato — Política de Privacidad</h1>
+  <p data-i18n="header.sub">Qué datos recopila la app, por qué y cómo se manejan.</p>
 </header>
 <main>
-  <a class="niv-btn-back" href="https://support.nivelatolabs.com/">← Centro de ayuda</a>
+  <a class="niv-btn-back" href="https://support.nivelatolabs.com/" data-i18n="back">← Centro de ayuda</a>
   <div class="card">
-    <p>Nivelato es una herramienta de medición móvil. Este documento describe qué datos recopila la app, por qué y cómo se manejan.</p>
+    <p data-i18n="intro">Nivelato es una herramienta de medición móvil. Este documento describe qué datos recopila la app, por qué y cómo se manejan.</p>
 
-    <h2>1. Datos recopilados</h2>
+    <h2 data-i18n="s1.h2">1. Datos recopilados</h2>
     <ul>
-      <li><strong>Mediciones (trabajos):</strong> sí — función principal: guardar mediciones de campo. Almacenadas en Firebase, vinculadas a tu cuenta.</li>
-      <li><strong>Correo electrónico:</strong> sí (al crear cuenta) — identidad de cuenta, vinculación de dispositivo.</li>
-      <li><strong>Identificador de dispositivo (UUID derivado):</strong> sí — restauración de suscripción, límites de dispositivo. Almacenado como hash.</li>
-      <li><strong>Región aproximada:</strong> sí (geolocalización IP, zona horaria, país SIM) — disponibilidad de planes.</li>
-      <li><strong>Postura del dispositivo</strong> (estado VPN, verificación de integridad, puntuación anti-emulador): sí — verificación periódica de integridad de licencia.</li>
-      <li><strong>Versión de la app, modelo de dispositivo, SO:</strong> sí — diagnóstico.</li>
-      <li><strong>Estadísticas de uso</strong> (conteo de guardados): sí — control de cuota por nivel.</li>
+      <li data-i18n="s1.li1"><strong>Mediciones (trabajos):</strong> sí — función principal: guardar mediciones de campo. Almacenadas en Firebase, vinculadas a tu cuenta.</li>
+      <li data-i18n="s1.li2"><strong>Correo electrónico:</strong> sí (al crear cuenta) — identidad de cuenta, vinculación de dispositivo.</li>
+      <li data-i18n="s1.li3"><strong>Identificador de dispositivo (UUID derivado):</strong> sí — restauración de suscripción, límites de dispositivo. Almacenado como hash.</li>
+      <li data-i18n="s1.li4"><strong>Región aproximada:</strong> sí (geolocalización IP, zona horaria, país SIM) — disponibilidad de planes.</li>
+      <li data-i18n="s1.li5"><strong>Postura del dispositivo</strong> (estado VPN, verificación de integridad, puntuación anti-emulador): sí — verificación periódica de integridad de licencia.</li>
+      <li data-i18n="s1.li6"><strong>Versión de la app, modelo de dispositivo, SO:</strong> sí — diagnóstico.</li>
+      <li data-i18n="s1.li7"><strong>Estadísticas de uso</strong> (conteo de guardados): sí — control de cuota por nivel.</li>
     </ul>
 
-    <h2>2. Cómo se usan los datos</h2>
+    <h2 data-i18n="s2.h2">2. Cómo se usan los datos</h2>
     <ul>
-      <li><strong>Servicio principal:</strong> las mediciones se guardan en tu dispositivo + respaldo en Firebase. Puedes eliminar cualquier medición o solicitar la eliminación de toda tu cuenta desde la app (ver §3).</li>
-      <li><strong>Verificación periódica de integridad:</strong> la app realiza una verificación cada 5 minutos mientras está en uso (servicio "Respaldo y verificación de seguridad"). Envía el UUID del dispositivo y la postura del dispositivo (estado VPN, verificación de integridad, detección de emulador). Propósitos: (a) respaldar tus mediciones y (b) verificar la integridad de la licencia.</li>
+      <li data-i18n="s2.li1"><strong>Servicio principal:</strong> las mediciones se guardan en tu dispositivo + respaldo en Firebase. Puedes eliminar cualquier medición o solicitar la eliminación de toda tu cuenta desde la app (ver §3).</li>
+      <li data-i18n="s2.li2"><strong>Verificación periódica de integridad:</strong> la app realiza una verificación cada 5 minutos mientras está en uso (servicio "Respaldo y verificación de seguridad"). Envía el UUID del dispositivo y la postura del dispositivo (estado VPN, verificación de integridad, detección de emulador). Propósitos: (a) respaldar tus mediciones y (b) verificar la integridad de la licencia.</li>
     </ul>
-    <p>Los datos se transmiten cifrados (TLS). No se venden.</p>
+    <p data-i18n="s2.p">Los datos se transmiten cifrados (TLS). No se venden.</p>
 
-    <h2>3. Terceros con los que se comparten datos</h2>
+    <h2 data-i18n="s3.h2">3. Terceros con los que se comparten datos</h2>
     <ul>
-      <li><strong>ipapi.co:</strong> la app envía tu dirección IP a ipapi.co para detectar el país y mostrarte la pantalla inicial correcta (solo enrutamiento). No se envían tu nombre, correo ni mediciones.</li>
-      <li><strong>ipinfo.io:</strong> nuestros servidores (la función flowGate) envían la IP de tu conexión a ipinfo.io para detectar VPN, proxy o relay como parte de la verificación de integridad de la licencia. No se envía tu identidad.</li>
+      <li data-i18n="s3.li1"><strong>ipapi.co:</strong> la app envía tu dirección IP a ipapi.co para detectar el país y mostrarte la pantalla inicial correcta (solo enrutamiento). No se envían tu nombre, correo ni mediciones.</li>
+      <li data-i18n="s3.li2"><strong>ipinfo.io:</strong> nuestros servidores (la función flowGate) envían la IP de tu conexión a ipinfo.io para detectar VPN, proxy o relay como parte de la verificación de integridad de la licencia. No se envía tu identidad.</li>
     </ul>
-    <p>Fuera de estos dos proveedores de geolocalización IP, los datos no se comparten con terceros.</p>
+    <p data-i18n="s3.p">Fuera de estos dos proveedores de geolocalización IP, los datos no se comparten con terceros.</p>
 
-    <h2>4. Eliminación de datos</h2>
+    <h2 data-i18n="s4.h2">4. Eliminación de datos</h2>
     <ul>
-      <li>Puedes eliminar cualquier medición individual desde la app.</li>
-      <li>Para eliminar tu cuenta completa: ve a <strong>Ajustes → Mi cuenta → "Solicitar eliminación de cuenta"</strong>. Tu solicitud queda pendiente hasta que un administrador del taller la apruebe (pestaña Taller → "Solicitudes de eliminación"). Al aprobarla, nuestros servidores borran automáticamente:
+      <li data-i18n="s4.li1">Puedes eliminar cualquier medición individual desde la app.</li>
+      <li data-i18n="s4.li2">Para eliminar tu cuenta completa: ve a <strong>Ajustes → Mi cuenta → "Solicitar eliminación de cuenta"</strong>. Tu solicitud queda pendiente hasta que un administrador del taller la apruebe (pestaña Taller → "Solicitudes de eliminación"). Al aprobarla, nuestros servidores borran automáticamente:
         <ul>
           <li>tu documento de perfil,</li>
           <li>todas tus mediciones (trabajos) y sus fotos anotadas,</li>
@@ -73,31 +82,153 @@
         </ul>
         No existe borrado instantáneo sin aprobación del administrador.
       </li>
-      <li>Los datos guardados solo en tu dispositivo (caché local) se eliminan desinstalando la app.</li>
-      <li>Para solicitudes de datos o eliminación también puedes escribir a <a href="mailto:support@nivelatolabs.com">support@nivelatolabs.com</a>.</li>
+      <li data-i18n="s4.li3">Los datos guardados solo en tu dispositivo (caché local) se eliminan desinstalando la app.</li>
+      <li data-i18n="s4.li4">Para solicitudes de datos o eliminación también puedes escribir a <a href="mailto:support@nivelatolabs.com">support@nivelatolabs.com</a>.</li>
     </ul>
 
-    <h2>5. Retención de datos</h2>
+    <h2 data-i18n="s5.h2">5. Retención de datos</h2>
     <ul>
-      <li><strong>Mediciones:</strong> se conservan en la nube mientras tu cuenta esté activa; al eliminar tu cuenta se borran (ver §4).</li>
-      <li><strong>Modelo de precio web</strong> (fuera de Quality Glass): <strong>$29</strong> por versión mayor por taller + <strong>$4</strong>/usuario/mes, con prueba gratis de 30 días o 200 guardados.</li>
-      <li><strong>QGC:</strong> acceso corporativo para empleados de Quality Glass en Puerto Rico; lo provee la empresa, no se vende por separado.</li>
-      <li><strong>Niveles externos</strong> (p. ej. Ultra fuera de Puerto Rico): siguen el modelo de precio web.</li>
+      <li data-i18n="s5.li1"><strong>Mediciones:</strong> se conservan en la nube mientras tu cuenta esté activa; al eliminar tu cuenta se borran (ver §4).</li>
+      <li data-i18n="s5.li2"><strong>Modelo de precio web</strong> (fuera de Quality Glass): <strong>$29</strong> por versión mayor por taller + <strong>$4</strong>/usuario/mes, con prueba gratis de 30 días o 200 guardados.</li>
+      <li data-i18n="s5.li3"><strong>QGC:</strong> acceso corporativo para empleados de Quality Glass en Puerto Rico; lo provee la empresa, no se vende por separado.</li>
+      <li data-i18n="s5.li4"><strong>Niveles externos</strong> (p. ej. Ultra fuera de Puerto Rico): siguen el modelo de precio web.</li>
     </ul>
 
-    <h2>6. Privacidad de menores</h2>
-    <p>Nivelato no está dirigida a menores de 13 años. No recopilamos datos de niños a sabiendas.</p>
+    <h2 data-i18n="s6.h2">6. Privacidad de menores</h2>
+    <p data-i18n="s6.p">Nivelato no está dirigida a menores de 13 años. No recopilamos datos de niños a sabiendas.</p>
 
-    <h2>7. Contacto</h2>
-    <p>Para solicitudes de datos, eliminación o preguntas: <a href="mailto:support@nivelatolabs.com">support@nivelatolabs.com</a></p>
-    <p>¿Necesitas ayuda usando la app? Visita el <a href="https://support.nivelatolabs.com/">Centro de ayuda de Nivelato</a>.</p>
+    <h2 data-i18n="s7.h2">7. Contacto</h2>
+    <p data-i18n="s7.p1">Para solicitudes de datos, eliminación o preguntas: <a href="mailto:support@nivelatolabs.com">support@nivelatolabs.com</a></p>
+    <p data-i18n="s7.p2">¿Necesitas ayuda usando la app? Visita el <a href="https://support.nivelatolabs.com/">Centro de ayuda de Nivelato</a>.</p>
 
-    <h2>8. Cambios</h2>
-    <p>Esta política puede actualizarse; la pantalla "Ajustes" de la app siempre enlaza la versión actual.</p>
+    <h2 data-i18n="s8.h2">8. Cambios</h2>
+    <p data-i18n="s8.p">Esta política puede actualizarse; la pantalla "Ajustes" de la app siempre enlaza la versión actual.</p>
 
-    <p class="updated">Última actualización: 30 de septiembre de 2026.</p>
+    <p class="updated" data-i18n="updated">Última actualización: 30 de septiembre de 2026.</p>
   </div>
 </main>
 <script src="./press-yaoi.js"></script>
+<script>
+const I18N = {
+  en: {
+  "meta.title": "Nivelato — Privacy Policy",
+  "header.h1": "Nivelato — Privacy Policy",
+  "header.sub": "What data the app collects, why, and how it is handled.",
+  "back": "← Help Center",
+  "intro": "Nivelato is a mobile measurement tool. This document describes what data the app collects, why, and how it is handled.",
+  "s1.h2": "1. Data collected",
+  "s1.li1": "<strong>Measurements (jobs):</strong> yes, main function: saving field measurements. Stored in Firebase, linked to your account.",
+  "s1.li2": "<strong>Email:</strong> yes (when creating an account), account identity, device linking.",
+  "s1.li3": "<strong>Device identifier (derived UUID):</strong> yes, subscription restoration, device limits. Stored as a hash.",
+  "s1.li4": "<strong>Approximate region:</strong> yes (IP geolocation, time zone, SIM country), plan availability.",
+  "s1.li5": "<strong>Device posture</strong> (VPN state, integrity check, anti-emulator score): yes, periodic license integrity verification.",
+  "s1.li6": "<strong>App version, device model, OS:</strong> yes, diagnostics.",
+  "s1.li7": "<strong>Usage statistics</strong> (save count): yes, quota control by tier.",
+  "s2.h2": "2. How the data is used",
+  "s2.li1": "<strong>Main service:</strong> measurements are saved on your device plus a Firebase backup. You can delete any measurement or request deletion of your whole account from the app (see §3).",
+  "s2.li2": "<strong>Periodic integrity verification:</strong> the app runs a check every 5 minutes while it is in use (\"Backup and security verification\" service). It sends the device UUID and the device posture (VPN state, integrity check, emulator detection). Purposes: (a) back up your measurements and (b) verify license integrity.",
+  "s2.p": "Data is transmitted encrypted (TLS). It is not sold.",
+  "s3.h2": "3. Third parties data is shared with",
+  "s3.li1": "<strong>ipapi.co:</strong> the app sends your IP address to ipapi.co to detect the country and show you the correct initial screen (routing only). Your name, email, and measurements are not sent.",
+  "s3.li2": "<strong>ipinfo.io:</strong> our servers (the flowGate function) send your connection IP to ipinfo.io to detect VPN, proxy, or relay as part of license integrity verification. Your identity is not sent.",
+  "s3.p": "Outside these two IP geolocation providers, data is not shared with third parties.",
+  "s4.h2": "4. Data deletion",
+  "s4.li1": "You can delete any individual measurement from the app.",
+  "s4.li2": "To delete your complete account: go to <strong>Settings → My account → \"Request account deletion\"</strong>. Your request stays pending until a workshop administrator approves it (Workshop tab → \"Deletion requests\"). When it is approved, our servers automatically delete:\n        <ul>\n          <li>your profile document,</li>\n          <li>all your measurements (jobs) and their annotated photos,</li>\n          <li>your authentication account (email and sign-in credentials).</li>\n        </ul>\n        There is no instant deletion without administrator approval.",
+  "s4.li3": "Data saved only on your device (local cache) is deleted by uninstalling the app.",
+  "s4.li4": "For data or deletion requests you can also write to <a href=\"mailto:support@nivelatolabs.com\">support@nivelatolabs.com</a>.",
+  "s5.h2": "5. Data retention",
+  "s5.li1": "<strong>Measurements:</strong> they are kept in the cloud while your account is active; when you delete your account they are erased (see §4).",
+  "s5.li2": "<strong>Web pricing model</strong> (outside Quality Glass): <strong>$29</strong> per major version per workshop + <strong>$4</strong>/user/month, with a free trial of 30 days or 200 saves.",
+  "s5.li3": "<strong>QGC:</strong> corporate access for Quality Glass employees in Puerto Rico; the company provides it, it is not sold separately.",
+  "s5.li4": "<strong>External tiers</strong> (e.g. Ultra outside Puerto Rico): they follow the web pricing model.",
+  "s6.h2": "6. Privacy of minors",
+  "s6.p": "Nivelato is not directed at children under 13. We do not knowingly collect data from children.",
+  "s7.h2": "7. Contact",
+  "s7.p1": "For data requests, deletion, or questions: <a href=\"mailto:support@nivelatolabs.com\">support@nivelatolabs.com</a>",
+  "s7.p2": "Need help using the app? Visit the <a href=\"https://support.nivelatolabs.com/\">Nivelato Help Center</a>.",
+  "s8.h2": "8. Changes",
+  "s8.p": "This policy may be updated; the app \"Settings\" screen always links to the current version.",
+  "updated": "Last updated: September 30, 2026."
+  },
+  es: {
+  "meta.title": "Nivelato — Política de Privacidad",
+  "header.h1": "Nivelato — Política de Privacidad",
+  "header.sub": "Qué datos recopila la app, por qué y cómo se manejan.",
+  "back": "← Centro de ayuda",
+  "intro": "Nivelato es una herramienta de medición móvil. Este documento describe qué datos recopila la app, por qué y cómo se manejan.",
+  "s1.h2": "1. Datos recopilados",
+  "s1.li1": "<strong>Mediciones (trabajos):</strong> sí — función principal: guardar mediciones de campo. Almacenadas en Firebase, vinculadas a tu cuenta.",
+  "s1.li2": "<strong>Correo electrónico:</strong> sí (al crear cuenta) — identidad de cuenta, vinculación de dispositivo.",
+  "s1.li3": "<strong>Identificador de dispositivo (UUID derivado):</strong> sí — restauración de suscripción, límites de dispositivo. Almacenado como hash.",
+  "s1.li4": "<strong>Región aproximada:</strong> sí (geolocalización IP, zona horaria, país SIM) — disponibilidad de planes.",
+  "s1.li5": "<strong>Postura del dispositivo</strong> (estado VPN, verificación de integridad, puntuación anti-emulador): sí — verificación periódica de integridad de licencia.",
+  "s1.li6": "<strong>Versión de la app, modelo de dispositivo, SO:</strong> sí — diagnóstico.",
+  "s1.li7": "<strong>Estadísticas de uso</strong> (conteo de guardados): sí — control de cuota por nivel.",
+  "s2.h2": "2. Cómo se usan los datos",
+  "s2.li1": "<strong>Servicio principal:</strong> las mediciones se guardan en tu dispositivo + respaldo en Firebase. Puedes eliminar cualquier medición o solicitar la eliminación de toda tu cuenta desde la app (ver §3).",
+  "s2.li2": "<strong>Verificación periódica de integridad:</strong> la app realiza una verificación cada 5 minutos mientras está en uso (servicio \"Respaldo y verificación de seguridad\"). Envía el UUID del dispositivo y la postura del dispositivo (estado VPN, verificación de integridad, detección de emulador). Propósitos: (a) respaldar tus mediciones y (b) verificar la integridad de la licencia.",
+  "s2.p": "Los datos se transmiten cifrados (TLS). No se venden.",
+  "s3.h2": "3. Terceros con los que se comparten datos",
+  "s3.li1": "<strong>ipapi.co:</strong> la app envía tu dirección IP a ipapi.co para detectar el país y mostrarte la pantalla inicial correcta (solo enrutamiento). No se envían tu nombre, correo ni mediciones.",
+  "s3.li2": "<strong>ipinfo.io:</strong> nuestros servidores (la función flowGate) envían la IP de tu conexión a ipinfo.io para detectar VPN, proxy o relay como parte de la verificación de integridad de la licencia. No se envía tu identidad.",
+  "s3.p": "Fuera de estos dos proveedores de geolocalización IP, los datos no se comparten con terceros.",
+  "s4.h2": "4. Eliminación de datos",
+  "s4.li1": "Puedes eliminar cualquier medición individual desde la app.",
+  "s4.li2": "Para eliminar tu cuenta completa: ve a <strong>Ajustes → Mi cuenta → \"Solicitar eliminación de cuenta\"</strong>. Tu solicitud queda pendiente hasta que un administrador del taller la apruebe (pestaña Taller → \"Solicitudes de eliminación\"). Al aprobarla, nuestros servidores borran automáticamente:\n        <ul>\n          <li>tu documento de perfil,</li>\n          <li>todas tus mediciones (trabajos) y sus fotos anotadas,</li>\n          <li>tu cuenta de autenticación (correo y credenciales de acceso).</li>\n        </ul>\n        No existe borrado instantáneo sin aprobación del administrador.",
+  "s4.li3": "Los datos guardados solo en tu dispositivo (caché local) se eliminan desinstalando la app.",
+  "s4.li4": "Para solicitudes de datos o eliminación también puedes escribir a <a href=\"mailto:support@nivelatolabs.com\">support@nivelatolabs.com</a>.",
+  "s5.h2": "5. Retención de datos",
+  "s5.li1": "<strong>Mediciones:</strong> se conservan en la nube mientras tu cuenta esté activa; al eliminar tu cuenta se borran (ver §4).",
+  "s5.li2": "<strong>Modelo de precio web</strong> (fuera de Quality Glass): <strong>$29</strong> por versión mayor por taller + <strong>$4</strong>/usuario/mes, con prueba gratis de 30 días o 200 guardados.",
+  "s5.li3": "<strong>QGC:</strong> acceso corporativo para empleados de Quality Glass en Puerto Rico; lo provee la empresa, no se vende por separado.",
+  "s5.li4": "<strong>Niveles externos</strong> (p. ej. Ultra fuera de Puerto Rico): siguen el modelo de precio web.",
+  "s6.h2": "6. Privacidad de menores",
+  "s6.p": "Nivelato no está dirigida a menores de 13 años. No recopilamos datos de niños a sabiendas.",
+  "s7.h2": "7. Contacto",
+  "s7.p1": "Para solicitudes de datos, eliminación o preguntas: <a href=\"mailto:support@nivelatolabs.com\">support@nivelatolabs.com</a>",
+  "s7.p2": "¿Necesitas ayuda usando la app? Visita el <a href=\"https://support.nivelatolabs.com/\">Centro de ayuda de Nivelato</a>.",
+  "s8.h2": "8. Cambios",
+  "s8.p": "Esta política puede actualizarse; la pantalla \"Ajustes\" de la app siempre enlaza la versión actual.",
+  "updated": "Última actualización: 30 de septiembre de 2026."
+  }
+};
+const FORCED_LANG = null;
+
+const LANG_KEY = 'nivelato-lang';
+function currentLang() {
+  try {
+    const m = ('; ' + document.cookie).match(/; nivelato-login-lang=(es|en)(?:;|$)/);
+    if (m) return m[1];
+  } catch (e) {}
+  try {
+    const saved = localStorage.getItem(LANG_KEY);
+    if (saved === 'en' || saved === 'es') return saved;
+  } catch (e) {}
+  if (FORCED_LANG) return FORCED_LANG;
+  const nav = (navigator.language || 'en').toLowerCase();
+  return nav.indexOf('es') === 0 ? 'es' : 'en';
+}
+function applyLang(l) {
+  const dict = I18N[l] || I18N.en;
+  document.documentElement.lang = l;
+  if (dict['meta.title']) document.title = dict['meta.title'];
+  document.querySelectorAll('[data-i18n]').forEach(function (el) {
+    const k = el.getAttribute('data-i18n');
+    if (dict[k] !== undefined) el.innerHTML = dict[k];
+  });
+  document.querySelectorAll('.lang-toggle').forEach(function (b) {
+    b.textContent = (l === 'en') ? 'ES' : 'EN';
+  });
+  try { localStorage.setItem(LANG_KEY, l); } catch (e) {}
+}
+document.querySelectorAll('.lang-toggle').forEach(function (b) {
+  b.addEventListener('click', function () {
+    const cur = document.documentElement.lang === 'es' ? 'es' : 'en';
+    applyLang(cur === 'en' ? 'es' : 'en');
+  });
+});
+applyLang(currentLang());
+</script>
 </body>
 </html>
