@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!--
+  Fallback stub for /company (finding m11, routing half).
+  The real /company view is dashboard.html rendered by the out of repo
+  Cloudflare Worker, which serves dashboard.html at this path and
+  injects window.NIVELATO_ROUTE = 'company' so initCompanyView runs.
+  This stub only fires where the worker route is absent (for example
+  plain GitHub Pages) and a bare /company would otherwise 404 or fall
+  through to the legacy wizard. It sends the visitor to the normal
+  dashboard instead. It cannot reproduce the company view on its own:
+  that still needs the worker route. See ROUTING_FIX_NOTES.md.
+-->
+<meta http-equiv="refresh" content="0; url=/dashboard.html" />
+<link rel="canonical" href="/dashboard.html" />
+<link rel="icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<title>Nivelato - Compañía</title>
+<style>
+  body { font-family: Inter, system-ui, -apple-system, sans-serif; background: #0e0e10; color: #f5f5f7; margin: 0; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; }
+  .card { background: #17171a; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; padding: 36px 32px; max-width: 440px; text-align: center; }
+  h1 { font-size: 22px; margin: 0 0 10px; }
+  p { font-size: 15px; color: #a7a7ad; line-height: 1.6; margin: 0; }
+  a { color: #4dabf7; }
+</style>
+<script>
+  // Preserve the query string and hash across the redirect, the same way
+  // ayuda.html preserves its anchor: settings pages read view and embed
+  // parameters from the query string, and dropping them would change what
+  // the destination page renders.
+  location.replace('/dashboard.html' + location.search + location.hash);
+</script>
+</head>
+<body>
+  <div class="card">
+    <h1>Vista de compañía</h1>
+    <p>Te estamos redirigiendo a <a href="/dashboard.html">el panel de la compañía</a>…</p>
+  </div>
+</body>
+</html>

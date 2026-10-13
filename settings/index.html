@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!--
+  Clean URL stub for /settings (finding B2).
+  The real account settings page is settings.html at the repo root, and
+  nav-referrer.js already carries the /settings.html alias entry, so the
+  redirect target is the file path, not this clean URL.
+  GitHub Pages serves this directory index at /settings and /settings/.
+  Production note: SSO_COOKIE_MIGRATION.md records that the app worker
+  (nivelato-app-proxy, outside this repo) answers /settings with a bare
+  404 before the origin is reached. That intercept has to be removed or
+  remapped in the worker for this stub to be reachable on
+  app.nivelatolabs.com. See ROUTING_FIX_NOTES.md.
+-->
+<meta http-equiv="refresh" content="0; url=/settings.html" />
+<link rel="canonical" href="/settings.html" />
+<link rel="icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<title>Nivelato - Ajustes</title>
+<style>
+  body { font-family: Inter, system-ui, -apple-system, sans-serif; background: #0e0e10; color: #f5f5f7; margin: 0; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; }
+  .card { background: #17171a; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; padding: 36px 32px; max-width: 440px; text-align: center; }
+  h1 { font-size: 22px; margin: 0 0 10px; }
+  p { font-size: 15px; color: #a7a7ad; line-height: 1.6; margin: 0; }
+  a { color: #4dabf7; }
+</style>
+<script>
+  // Preserve the query string and hash across the redirect, the same way
+  // ayuda.html preserves its anchor: settings pages read view and embed
+  // parameters from the query string, and dropping them would change what
+  // the destination page renders.
+  location.replace('/settings.html' + location.search + location.hash);
+</script>
+</head>
+<body>
+  <div class="card">
+    <h1>Ajustes de la cuenta</h1>
+    <p>Te estamos redirigiendo a <a href="/settings.html">la página de ajustes de la cuenta</a>…</p>
+  </div>
+</body>
+</html>
