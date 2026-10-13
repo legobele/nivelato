@@ -23,6 +23,19 @@
  *    when a submit happens with the dev flag active. Ctrl+Alt+B turns the
  *    flag off; Ctrl+Alt+Shift+B dismisses the modal only. Continue is RED
  *    (proceeding is the dangerous action); Cancel is the safe default.
+ * 5. In-card DEV warning panel (W5): while the dev mark is active, every
+ *    [data-envmark-card] carries a VISIBLE red panel at its top (same
+ *    verbatim alarm strings as the flow rail dev card). Before this, a
+ *    dev mark had no visible state inside a sign-in card until submit:
+ *    the footer hint only renders for prod / after the reveal chord, and
+ *    the login surfaces do not opt into the full-screen interstitial —
+ *    so an ungated submit path (or a surface where this module failed
+ *    to load) was a fully silent privilege state.
+ *    Sign-in BUTTON gating is a document-level capture click listener
+ *    evaluated at click time, not boot-time per-button wiring: sign-in
+ *    surfaces render buttons dynamically (login.html's add-account
+ *    Google button is created long after boot), and boot wiring left
+ *    every such button silently ungated.
  *
  * Storage (all through NivSettings domain cookies, the single settings
  * system; localStorage mirrors are kept by niv-settings.js itself):
@@ -351,6 +364,10 @@
     'padding:14px;margin:0 0 10px;font-size:13px;line-height:1.55;}',
     '.flow-envcard-dev strong{display:block;font-size:15px;margin-bottom:6px;}',
     '.flow-envcard-dev a{color:#fff;}',
+    '.niv-envmark-devpanel{background:#c81e1e;color:#fff;border-radius:12px;',
+    'padding:14px;margin:0 0 12px;font-size:13px;line-height:1.55;text-align:left;}',
+    '.niv-envmark-devpanel strong{display:block;font-size:15px;margin-bottom:6px;}',
+    '.niv-envmark-devpanel a{color:#fff;}',
     '#flow-env-cards:empty{display:none;}'
   ].join('\n');
   function injectCss() {
@@ -426,6 +443,54 @@
       var want = (revealed || prod) ? '' : 'none';
       if (els[i].style.display !== want) els[i].style.display = want;
     }
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* in-card DEV warning panel (W5)                                    */
+  /* ---------------------------------------------------------------- */
+  /* While the dev mark is active, a red panel is rendered at the top of
+   * every [data-envmark-card] — the in-card counterpart of the flow rail
+   * dev card, with the same verbatim strings. It is the ONLY always-
+   * visible dev state on sign-in surfaces: the footer below it stays
+   * hidden unless revealed or prod, and login pages do not opt into the
+   * full-screen interstitial. Hidden (and emptied) when not dev. */
+  function ensureDevPanels() {
+    if (inOwnWrite) return;
+    inOwnWrite = true;
+    try {
+      var cards = document.querySelectorAll('[data-envmark-card]');
+      for (var i = 0; i < cards.length; i++) {
+        if (!cards[i].querySelector('[data-envmark-devpanel]')) {
+          var p = document.createElement('div');
+          p.className = 'niv-envmark-devpanel';
+          p.setAttribute('data-envmark-devpanel', '');
+          p.setAttribute('role', 'alert');
+          if (cards[i].firstChild) cards[i].insertBefore(p, cards[i].firstChild);
+          else cards[i].appendChild(p);
+        }
+      }
+    } finally { inOwnWrite = false; }
+    paintDevPanels();
+  }
+  function paintDevPanels() {
+    if (inOwnWrite) return;
+    var dev = isDev();
+    var els = document.querySelectorAll('[data-envmark-devpanel]');
+    if (!els.length) return;
+    inOwnWrite = true;
+    try {
+      for (var i = 0; i < els.length; i++) {
+        if (dev) {
+          var html = '<strong>' + escapeHtml(t('devTitle')) + '</strong>' +
+            '<a href="' + DEV_URL + '">' + escapeHtml(t('devSub')) + '</a>';
+          if (els[i].__emHtml !== html) { els[i].innerHTML = html; els[i].__emHtml = html; }
+          if (els[i].style.display === 'none') els[i].style.display = '';
+        } else {
+          if (els[i].__emHtml) { els[i].innerHTML = ''; els[i].__emHtml = ''; }
+          if (els[i].style.display !== 'none') els[i].style.display = 'none';
+        }
+      }
+    } finally { inOwnWrite = false; }
   }
 
   /* ---------------------------------------------------------------- */
@@ -631,25 +696,33 @@
         interceptSubmit(f, ev);
       }, true);
     }
-    var btns = cfg.signinButtons || [];
-    for (var i = 0; i < btns.length; i++) {
-      (function (sel) {
-        var b = document.querySelector(sel);
-        if (!b || b.__envmarkWired) return;
-        b.__envmarkWired = true;
-        b.addEventListener('click', function (ev) {
-          if (!isDev()) return;
-          if (b.__envmarkConfirmed) { b.__envmarkConfirmed = false; return; }
-          ev.preventDefault();
-          ev.stopPropagation();
-          var nativeClick = b.click.bind(b);
-          openModal(function () {
-            b.__envmarkConfirmed = true;
-            try { nativeClick(); } catch (_) { /* ignore */ }
-          });
-        }, true);
-      })(btns[i]);
-    }
+    /* Sign-in buttons: gated by a document-level CAPTURE click listener
+     * evaluated at click time (W5), replacing boot-time per-button
+     * wiring. Boot wiring could only see buttons present at boot, but
+     * sign-in surfaces render their sign-in buttons dynamically —
+     * login.html's add-account Google button (#btn-google) is created
+     * long after this script runs and was silently ungated. The config
+     * is re-read on every click for the same reason. */
+    document.addEventListener('click', function (ev) {
+      var c = window.NivEnvMarkConfig || {};
+      var sels = c.signinButtons || [];
+      if (!sels.length || !isDev()) return;
+      var el = ev.target;
+      if (!el || !el.closest) return;
+      for (var j = 0; j < sels.length; j++) {
+        var b = null;
+        try { b = el.closest(sels[j]); } catch (_) { b = null; }
+        if (!b) continue;
+        if (b.__envmarkConfirmed) { b.__envmarkConfirmed = false; return; }
+        ev.preventDefault();
+        ev.stopPropagation();
+        openModal(function () {
+          b.__envmarkConfirmed = true;
+          try { b.click(); } catch (_) { /* ignore */ }
+        });
+        return;
+      }
+    }, true);
   }
 
   /* ---------------------------------------------------------------- */
@@ -744,6 +817,7 @@
   /* ---------------------------------------------------------------- */
   function refreshAll() {
     paintFooters();
+    paintDevPanels();
     paintModal();
     paintBetaPrompt();
     renderInterstitial();
@@ -801,7 +875,7 @@
   }
   function observe() {
     try {
-      var mo = new MutationObserver(function () { ensureFooters(); });
+      var mo = new MutationObserver(function () { ensureFooters(); ensureDevPanels(); });
       mo.observe(document.documentElement, { childList: true, subtree: true });
     } catch (_) { /* ignore */ }
     try {
@@ -822,7 +896,7 @@
     var delays = [250, 1000, 2500];
     for (var i = 0; i < delays.length; i++) {
       (function (ms) {
-        try { setTimeout(function () { ensureFooters(); }, ms); } catch (_) { /* ignore */ }
+        try { setTimeout(function () { ensureFooters(); ensureDevPanels(); }, ms); } catch (_) { /* ignore */ }
       })(delays[i]);
     }
   }
@@ -830,6 +904,7 @@
     injectCss();
     applyQueryEnv();
     ensureFooters();
+    ensureDevPanels();
     wireInterception();
     renderInterstitial();
     renderRailCards();
