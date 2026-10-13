@@ -1520,6 +1520,8 @@
   let authInitDone = false;
   let authBusy = false;   // a login/signup submit is in flight
   let savePromptShown = false;  // the "save login?" prompt replaced the card
+  let pendingAuthAction = null; // sign-in work gated behind the save-login prompt
+  let persistenceChoiceBusy = false; // a save-login choice is being applied
   let prNoticeOn = false, geoNoticeOn = false, profileNoticeOn = false;
 
   const VALUE_IDS = ['login-email', 'login-pass'];
@@ -2288,37 +2290,51 @@
 
   async function doLogin(e) {
     e.preventDefault();
+    if (authBusy) return;
     authBusy = true;
     const t = window.nivT;
     const btn = document.getElementById('btn-login');
     const errEl = document.getElementById('login-error');
-    btn.disabled = true;
-    btn.textContent = t('btn_login_busy');
-    errEl.classList.remove('visible');
-    try {
-      const email = document.getElementById('login-email').value.trim();
-      const pass  = document.getElementById('login-pass').value;
-      await signInWithEmailAndPassword(auth, email, pass);
-      // QGC device trust: this device proved it is QGC. Remember it so
-      // later visits skip geo-detection and go straight to QGC mode.
-      if (QGI) markQgcAuthed();
-      // Remember this account for the "Cuentas usadas" picker.
+    const email = document.getElementById('login-email').value.trim();
+    const pass  = document.getElementById('login-pass').value;
+    if (btn) { btn.disabled = true; btn.textContent = t('btn_login_busy'); }
+    if (errEl) errEl.classList.remove('visible');
+    // The persistence choice must be applied BEFORE the sign-in runs:
+    // Firebase's documented contract is that setPersistence only governs
+    // sessions created after it is set. The save-login prompt therefore
+    // gates the sign-in itself (see promptPersistenceThen below).
+    promptPersistenceThen(async () => {
       try {
-        const _dn = (auth.currentUser && auth.currentUser.displayName) || '';
-        saveUsedAccount(email, _dn, QGI ? 'qgc' : 'personal');
-      } catch (_) { /* ignore */ }
-      showSaveLoginPrompt();
-    } catch(err) {
-      errEl.textContent = friendlyError(err.code);
-      errEl.classList.add('visible');
-      btn.disabled = false;
-      btn.textContent = t('btn_login');
-      authBusy = false;
-    }
+        await signInWithEmailAndPassword(auth, email, pass);
+        // QGC device trust: this device proved it is QGC. Remember it so
+        // later visits skip geo-detection and go straight to QGC mode.
+        if (QGI) markQgcAuthed();
+        // Remember this account for the "Cuentas usadas" picker.
+        try {
+          const _dn = (auth.currentUser && auth.currentUser.displayName) || '';
+          saveUsedAccount(email, _dn, QGI ? 'qgc' : 'personal');
+        } catch (_) { /* ignore */ }
+        await postAuthRedirect();
+      } catch (err) {
+        // The prompt replaced the form; rebuild it to show the error.
+        renderForm(QGI ? 'qgi' : 'external', true);
+        refreshNotices();
+        const emailEl = document.getElementById('login-email');
+        if (emailEl) emailEl.value = email;
+        const errEl2 = document.getElementById('login-error');
+        if (errEl2) { errEl2.textContent = friendlyError(err && err.code); errEl2.classList.add('visible'); }
+        authBusy = false;
+      }
+    });
   }
 
-  // Post-login: "save login on this device?" — local persistence keeps the
-  // session across restarts; session persistence drops it when the tab closes.
+  // "Save login on this device?" — local persistence keeps the session
+  // across restarts; session persistence drops it when the tab closes.
+  // The prompt is shown BEFORE the sign-in it belongs to and gates it:
+  // the chosen persistence is set on the Auth instance first, and only
+  // then does the pending sign-in action run, so the choice genuinely
+  // governs the session that gets created (both sign-in paths, email
+  // and Google, pass through this gate).
   function showSaveLoginPrompt() {
     savePromptShown = true;
     const t = window.nivT;
@@ -2331,15 +2347,33 @@
       + '<button class="btn-primary" id="btn-save-no" type="button" style="background:transparent;border:1px solid #2c2c31;color:#f2f1ec;margin-top:10px">' + t('save_no') + '</button>'
       + '<div class="error-msg" id="login-error" role="alert"></div>';
     window.nivApplyLang();
-    document.getElementById('btn-save-yes').addEventListener('click', () => finishLoginWithPersistence(browserLocalPersistence));
-    document.getElementById('btn-save-no').addEventListener('click', () => finishLoginWithPersistence(browserSessionPersistence));
+    document.getElementById('btn-save-yes').addEventListener('click', () => finishPersistenceChoice(browserLocalPersistence));
+    document.getElementById('btn-save-no').addEventListener('click', () => finishPersistenceChoice(browserSessionPersistence));
   }
 
-  async function finishLoginWithPersistence(persistence) {
+  // Gate a sign-in action behind the save-login prompt. The action runs
+  // once the user picks a persistence (or immediately re-runs the prompt
+  // render on language change, via __nivelatoOnLangChange).
+  function promptPersistenceThen(action) {
+    pendingAuthAction = action;
+    showSaveLoginPrompt();
+  }
+
+  async function finishPersistenceChoice(persistence) {
+    if (persistenceChoiceBusy) return;
+    persistenceChoiceBusy = true;
+    const yesBtn = document.getElementById('btn-save-yes');
+    const noBtn = document.getElementById('btn-save-no');
+    if (yesBtn) yesBtn.disabled = true;
+    if (noBtn) noBtn.disabled = true;
     try {
       await setPersistence(auth, persistence);
     } catch (_) { /* best effort; default persistence still applies */ }
-    await postAuthRedirect();
+    const action = pendingAuthAction;
+    pendingAuthAction = null;
+    savePromptShown = false;
+    persistenceChoiceBusy = false;
+    if (action) await action();
   }
 
 
@@ -2721,22 +2755,30 @@
     const errEl = document.getElementById('reauth-error');
     if (errEl) errEl.classList.remove('visible');
     if (btn) { btn.disabled = true; btn.textContent = t('btn_login_busy'); }
-    try {
-      const pass = document.getElementById('reauth-pass').value || '';
-      if (!pass) { throw { code: 'auth/missing-password' }; }
-      const cred = await signInWithEmailAndPassword(auth, acct.email, pass);
-      try {
-        const _dn = (cred.user && cred.user.displayName) || '';
-        saveUsedAccount(acct.email, _dn, QGI ? 'qgc' : 'personal');
-      } catch (_) { /* ignore */ }
-      reauthShown = null;
-      authBusy = false;
-      showSaveLoginPrompt();
-    } catch (err) {
-      reauthError(friendlyError(err && err.code));
+    const pass = document.getElementById('reauth-pass').value || '';
+    if (!pass) {
+      reauthError(friendlyError('auth/missing-password'));
       if (btn) { btn.disabled = false; btn.textContent = t('reauth_submit'); }
       authBusy = false;
+      return;
     }
+    // Persistence choice first, then the sign-in (see doLogin).
+    promptPersistenceThen(async () => {
+      try {
+        const cred = await signInWithEmailAndPassword(auth, acct.email, pass);
+        try {
+          const _dn = (cred.user && cred.user.displayName) || '';
+          saveUsedAccount(acct.email, _dn, QGI ? 'qgc' : 'personal');
+        } catch (_) { /* ignore */ }
+        reauthShown = null;
+        await postAuthRedirect();
+      } catch (err) {
+        // The prompt replaced the reauth screen; rebuild it for the error.
+        renderReauthUI();
+        reauthError(friendlyError(err && err.code));
+        authBusy = false;
+      }
+    });
   }
 
   // QGC check for added accounts: the signed-in user must be QGC-verified
@@ -2784,8 +2826,9 @@
       saveUsedAccount(email, _dn, QGI ? 'qgc' : 'personal');
     } catch (_) { /* ignore */ }
     addAccountShown = false;
-    authBusy = false;
-    showSaveLoginPrompt();
+    // The persistence choice was already applied before this sign-in ran
+    // (both add-account callers gate on promptPersistenceThen).
+    await postAuthRedirect();
   }
 
   function addAccountError(msg) {
@@ -2802,19 +2845,29 @@
     const errEl = document.getElementById('addaccount-error');
     if (errEl) errEl.classList.remove('visible');
     if (btn) { btn.disabled = true; btn.textContent = t('btn_login_busy'); }
-    try {
-      const email = (document.getElementById('addaccount-email').value || '').trim();
-      const pass = document.getElementById('addaccount-pass').value || '';
-      if (!email) { throw { code: 'auth/missing-email' }; }
-      if (email.indexOf('@') < 0) { throw { code: 'auth/invalid-email' }; }
-      if (!pass) { throw { code: 'auth/missing-password' }; }
-      const cred = await signInWithEmailAndPassword(auth, email, pass);
-      await finishAddAccountSignIn(cred.user);
-    } catch (err) {
-      addAccountError(friendlyError(err && err.code));
+    const email = (document.getElementById('addaccount-email').value || '').trim();
+    const pass = document.getElementById('addaccount-pass').value || '';
+    const invalid = !email ? 'auth/missing-email'
+      : (email.indexOf('@') < 0 ? 'auth/invalid-email'
+      : (!pass ? 'auth/missing-password' : null));
+    if (invalid) {
+      addAccountError(friendlyError(invalid));
       if (btn) { btn.disabled = false; btn.textContent = t('add_account_submit'); }
       authBusy = false;
+      return;
     }
+    // Persistence choice first, then the sign-in (see doLogin).
+    promptPersistenceThen(async () => {
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, pass);
+        await finishAddAccountSignIn(cred.user);
+      } catch (err) {
+        // The prompt replaced the add-account screen; rebuild for the error.
+        renderAddAccountUI();
+        addAccountError(friendlyError(err && err.code));
+        authBusy = false;
+      }
+    });
   }
 
   async function doGoogleSignIn() {
@@ -2825,19 +2878,26 @@
     const errEl = document.getElementById('addaccount-error');
     if (errEl) errEl.classList.remove('visible');
     if (btn) btn.disabled = true;
-    try {
-      const provider = new GoogleAuthProvider();
-      const cred = await signInWithPopup(auth, provider);
-      await finishAddAccountSignIn(cred.user);
-    } catch (err) {
-      const code = err && err.code;
-      // User dismissed the popup: not an error worth surfacing.
-      if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
-        addAccountError(friendlyError(code));
+    // Persistence choice first, then the sign-in (see doLogin). The
+    // choice click is the user gesture; setPersistence resolves locally
+    // before the popup opens.
+    promptPersistenceThen(async () => {
+      try {
+        const provider = new GoogleAuthProvider();
+        const cred = await signInWithPopup(auth, provider);
+        await finishAddAccountSignIn(cred.user);
+      } catch (err) {
+        const code = err && err.code;
+        // The prompt replaced the add-account screen; rebuild it so the
+        // user lands back where they started.
+        renderAddAccountUI();
+        // User dismissed the popup: not an error worth surfacing.
+        if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
+          addAccountError(friendlyError(code));
+        }
+        authBusy = false;
       }
-      if (btn) btn.disabled = false;
-      authBusy = false;
-    }
+    });
   }
 
   function showCantAddUI() {
