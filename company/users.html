@@ -584,8 +584,9 @@ function sortedMembers() {
 }
 
 function displayName(m) {
+  // p29: always the person's actual name (the owner included). The role
+  // is shown by the detail panel and role controls, not in place of a name.
   const self = m.uid === (currentUser && currentUser.uid);
-  if (m.role === 'owner') return t('owner') + (self ? t('you') : '');
   const base = m.name || m.email || t('unknownUser');
   return self ? base + t('you') : base;
 }

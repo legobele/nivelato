@@ -1375,8 +1375,11 @@ window.embedGraph = function(cvs, data) {
     // dimension labels
     var anchoBot = data.anchoBot || 36;
     var altoIzq = data.altoIzq || 84;
-    var anchoTop = anchoBot - pIv - pDv;
-    var altoDer = altoIzq - tcv - psv;
+    // M39: when the caller passes the measured top/right dimensions, label
+    // the drawing with those real values instead of deriving them from the
+    // offsets (out-of-square openings are not perfect rectangles).
+    var anchoTop = (typeof data.anchoTop === 'number' && isFinite(data.anchoTop)) ? data.anchoTop : anchoBot - pIv - pDv;
+    var altoDer = (typeof data.altoDer === 'number' && isFinite(data.altoDer)) ? data.altoDer : altoIzq - tcv - psv;
     var dim = function(x1, y1, x2, y2, label, vertical) {
       dctx.save();
       dctx.strokeStyle = '#adb5bd';

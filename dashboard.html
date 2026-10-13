@@ -107,7 +107,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     }
     .filter-row select:disabled { color: #adb5bd; background-color: #f8f9fa; cursor: default; }
     .date-input-wrap {
-      flex: 1 1 100%; min-width: 0; max-width: 100%; position: relative;
+      flex: 1 1 240px; min-width: 0; max-width: 100%; position: relative;
     }
     .date-input-wrap input[type="date"] {
       width: 100%; padding: 9px 14px;
@@ -191,6 +191,15 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       max-height: 90dvh;
       overflow-y: auto;
     }
+    /* job detail modal only: the close action lives in a sticky footer
+       bar so it never clips below the fold (p16) */
+    #modal { display: flex; flex-direction: column; overflow: hidden; }
+    #modal .modal-inner { overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+    #modal .modal-close-bar {
+      flex: none; padding-top: 12px; margin-top: 4px;
+      border-top: 1px solid #f1f3f5; background: #fff;
+    }
+    #modal .modal-close-bar .btn-close { margin-top: 0; }
     .modal-inner {
       display: flex;
       gap: 20px;
@@ -221,7 +230,9 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     .detail-row { display: flex; align-items: baseline; gap: 12px; padding: 8px 0; border-bottom: 1px solid #f1f3f5; font-size: 14px; }
     .detail-row:last-child { border-bottom: none; }
     .detail-label { color: #868e96; flex-shrink: 0; min-width: 110px; }
-    .detail-val { font-weight: 600; color: #212529; }
+    .detail-val { font-weight: 600; color: #212529; min-width: 0; overflow-wrap: anywhere; }
+    .detail-row { min-width: 0; }
+    .detail-label { min-width: 110px; }
     .modal-notes { background: #f8f9fa; border-radius: 8px; padding: 12px; font-size: 13px; color: #495057; margin-top: 12px; }
     .detail-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #adb5bd; margin: 16px 0 4px; }
     .detail-section-title:first-child { margin-top: 0; }
@@ -263,7 +274,10 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       .header-logo { font-size: 17px; }
       .org-badge { font-size: 11px; padding: 3px 8px; }
     }
-    @media (max-width: 380px) {
+    @media (max-width: 480px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 320px) {
       .stats-row { grid-template-columns: 1fr; }
     }
 
@@ -465,11 +479,12 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     font-family: inherit; flex: none;
   }
   .niv-back-btn:hover { background: var(--niv-surface-2); }
-  .niv-measure-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .niv-measure-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  #measure-photo-wrap .niv-panel-empty { padding: 28px 16px; }
   @media (max-width: 700px) { .niv-measure-grid { grid-template-columns: 1fr; } }
-  .niv-detail-row { display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; }
-  .niv-detail-row .k { color: var(--niv-text); font-weight: 500; }
-  .niv-detail-row .v { color: var(--niv-text-dim); text-align: right; }
+  .niv-detail-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; font-size: 14px; min-width: 0; }
+  .niv-detail-row .k { color: var(--niv-text); font-weight: 500; flex: none; }
+  .niv-detail-row .v { color: var(--niv-text-dim); text-align: right; min-width: 0; overflow-wrap: anywhere; }
   #measure-photo-wrap img { width: 100%; border-radius: 10px; display: block; }
   .niv-photo-badge {
     display: inline-flex; align-items: center; justify-content: center;
@@ -609,8 +624,15 @@ body.has-sidebar .niv-shell > main {
   max-width: none; margin: 0;
 }
 .niv-proj-grid { gap: 20px; }
-.niv-home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+.niv-home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; align-items: start; }
 .niv-stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .niv-skel {
+    display: inline-block; width: 46px; height: 24px; border-radius: 7px;
+    background: var(--niv-surface-2, #e9ecef); vertical-align: middle;
+    animation: niv-skel-pulse 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes niv-skel-pulse { from { opacity: .45; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .niv-skel { animation: none; } }
 
 /* ---- (3) sidebar drag-resize handle ---- */
 .niv-resize-handle {
@@ -684,6 +706,12 @@ body.has-sidebar #niv-panel.collapsed #niv-panel-expand-handle { display: block;
 .cust-stats .stat-num.cust-recent { font-size: 16px; line-height: 34px; }
 .cust-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
 @media (max-width: 1100px) { .cust-grid { grid-template-columns: 1fr; } }
+.cust-grid.no-quotes { grid-template-columns: 1fr; }
+.stats-row.cust-stats { grid-template-columns: repeat(4, 1fr); }
+.stats-row.cust-stats.no-quotes { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) {
+  .stats-row.cust-stats, .stats-row.cust-stats.no-quotes { grid-template-columns: repeat(2, 1fr); }
+}
 .cust-proj-row {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 12px 4px; border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
@@ -730,6 +758,16 @@ body.has-sidebar #niv-panel.collapsed #niv-panel-expand-handle { display: block;
 .niv-notif-date { color: var(--niv-text-dim, #a7a7ad); font-size: 12px; flex: none; }
 
 @media (max-width: 1100px) { .niv-home-grid { grid-template-columns: 1fr; } }
+@media (max-width: 600px) {
+  #view-measures .filter-row {
+    position: sticky; top: 0; z-index: 60;
+    background: var(--niv-bg, #0e0e10); padding: 10px 0; margin-top: -4px;
+  }
+  /* p9: measures header wraps instead of ellipsizing the title away */
+  #view-measures .measures-head { flex-wrap: wrap; }
+  #view-measures .measures-head h1 { flex: 1 1 auto; white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
+  #view-measures .measures-head #btn-new-measure { margin-left: 0; }
+}
 @media (max-width: 900px) {
   .niv-topbar { padding: 10px 16px; }
   body.has-sidebar .niv-shell > main { padding: 20px 16px 32px; }
@@ -1136,10 +1174,10 @@ try {
     <a class="niv-btn-pill niv-btn-primary" href="/company/updates" id="home-update-link">Ver actualización</a>
   </div>
   <div class="niv-stats-row">
-    <div class="stat-card"><div class="stat-num" id="home-stat-projects">-</div><div class="stat-label" id="home-stat-projects-label">Proyectos</div></div>
-    <div class="stat-card"><div class="stat-num" id="home-stat-total">-</div><div class="stat-label" id="home-stat-total-label">Medidas totales</div></div>
-    <div class="stat-card"><div class="stat-num" id="home-stat-today">-</div><div class="stat-label" id="home-stat-today-label">Hoy</div></div>
-    <div class="stat-card"><div class="stat-num" id="home-stat-members">-</div><div class="stat-label" id="home-stat-members-label">Miembros</div></div>
+    <div class="stat-card"><div class="stat-num" id="home-stat-projects"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-projects-label">Proyectos</div></div>
+    <div class="stat-card"><div class="stat-num" id="home-stat-total"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-total-label">Medidas totales</div></div>
+    <div class="stat-card"><div class="stat-num" id="home-stat-today"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-today-label">Hoy</div></div>
+    <div class="stat-card"><div class="stat-num" id="home-stat-members"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-members-label">Miembros</div></div>
   </div>
   <div class="niv-home-grid">
     <div class="niv-card">
@@ -1169,48 +1207,55 @@ try {
   <div id="users-embed-fallback" style="display:none"><span id="users-fallback-text">No se pudo cargar la vista de usuarios.</span> <a id="users-fallback-link" href="/users" target="_top">Abrir la página completa</a></div>
  </div><!-- /view-users -->
  <div id="view-measures">
-  <div style="display:flex; align-items:center; gap:12px; min-width:0;">
-    <h1 style="margin:0; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Historial de medidas</h1>
+  <div class="measures-head" style="display:flex; align-items:center; gap:12px; min-width:0;">
+    <h1 id="measures-title" style="margin:0; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Historial de medidas</h1>
     <button id="btn-new-measure" onclick="window.location.href='https://app.nivelatolabs.com/'" style="display:none; margin-left:auto; flex-shrink:0; background:var(--niv-accent,#f5a524); color:#000; border:none; border-radius:12px; padding:10px 20px; font-size:15px; font-weight:600; cursor:pointer; font-family:'Inter',system-ui,sans-serif;">+ Nueva medida</button>
   </div>
   <div class="subtitle" id="dash-subtitle">Cargando…</div>
   <script>
-  // rotating loading whimsey
+  // rotating loading whimsey (follows the UI language, EN+ES)
   (function(){
-    const msgs = ["Cargando…", "Nivelando…", "Calibrando el nivel…", "Enderezando marcos…", "Puliendo paneles…"];
+    let lang = 'es';
+    try { if (window.NivSettings && typeof window.NivSettings.getLang === 'function') lang = window.NivSettings.getLang(); } catch (_) {}
+    try { if (lang !== 'en' && localStorage.getItem('nivelato-login-lang') === 'en') lang = 'en'; } catch (_) {}
+    const msgs = lang === 'en'
+      ? ["Loading…", "Leveling…", "Calibrating the level…", "Straightening frames…", "Polishing panels…"]
+      : ["Cargando…", "Nivelando…", "Calibrando el nivel…", "Enderezando marcos…", "Puliendo paneles…"];
     let i = 0;
     const el = document.getElementById("dash-subtitle");
+    if (el) el.textContent = msgs[0];
     const iv = setInterval(() => {
-      if (!el || !el.textContent.startsWith("Carg")) { clearInterval(iv); return; }
+      if (!el || !msgs.includes(el.textContent)) { clearInterval(iv); return; }
       i = (i + 1) % msgs.length;
       el.textContent = msgs[i];
     }, 1800);
   })();
   </script>
   <div id="join-code-section">
-    <span style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
+    <span id="join-code-label" style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
     <span id="join-code-display" style="font-size:24px; font-weight:700; color:#f5a524; letter-spacing:0.15em; font-family:monospace; margin-left:8px;">--</span>
-    <button onclick="copyJoinCode()" id="copy-btn" style="margin-left:auto; background:#f5a524; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;">📋 Copiar</button>
-    <span style="font-size:11px; color:#888; width:100%; margin-top:2px;">Dáselo a tus empleados para que se registren en Nivelato</span>
+    <button onclick="copyJoinCode()" id="copy-btn" style="margin-left:auto; background:#f5a524; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;"><span id="copy-btn-label">📋 Copiar</span></button>
+    <span id="join-code-hint" style="font-size:11px; color:#888; width:100%; margin-top:2px;">Dáselo a tus empleados para que se registren en Nivelato</span>
   </div>
 
   <div class="stats-row">
-    <div class="stat-card"><div class="stat-num" id="stat-total">-</div><div class="stat-label">Medidas totales</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-today">-</div><div class="stat-label">Hoy</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-warn">-</div><div class="stat-label">Con advertencias</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-total"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="stat-total-label">Medidas totales</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-today"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="stat-today-label">Hoy</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-warn"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="stat-warn-label">Con advertencias</div></div>
   </div>
 
   <div class="filter-row">
     <div class="date-input-wrap">
       <input type="date" id="filter-date" onchange="applyFilters()" aria-label="Filtrar por fecha" />
-      <span class="date-placeholder">📅 Filtrar por fecha · dd/mm/aaaa</span>
+      <span class="date-placeholder" id="date-placeholder">📅 Filtrar por fecha · dd/mm/aaaa</span>
     </div>
     <select id="filter-installer" onchange="applyFilters()" aria-label="Filtrar por técnico">
-      <option value="">Todos los técnicos</option>
+      <option value="" id="filter-installer-all">Todos los técnicos</option>
     </select>
     <select id="filter-customer" onchange="applyFilters()" aria-label="Filtrar por cliente">
-      <option value="">Todos los clientes</option>
+      <option value="" id="filter-customer-all">Todos los clientes</option>
     </select>
+    <button type="button" id="btn-clear-filters" class="btn-cancel" style="width:auto;padding:9px 16px;margin:0;flex:none;" onclick="window.clearMeasureFilters()">Limpiar filtros</button>
   </div>
 
   <div class="job-list" id="job-list">
@@ -1306,20 +1351,21 @@ try {
   <button class="btn-save" onclick="saveQuote()">💾 Guardar borrador</button>
  </div>
  <div id="view-project" style="display:none">
-  <button class="btn-cancel" style="width:auto;padding:8px 16px;margin:0 0 12px" onclick="window.showDashView('measures')">← Volver</button>
-  <div style="display:flex; align-items:center; gap:12px;">
+  <button class="btn-cancel" id="proj-back-btn" style="width:auto;padding:8px 16px;margin:0 0 12px" onclick="window.projectBack()">← Volver</button>
+  <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
   <h1 id="proj-title" style="margin:0;">Proyecto</h1>
+  <button class="niv-btn-pill niv-btn-primary" id="proj-new-btn" style="margin-left:auto;" onclick="openNewProject()">+ Nuevo proyecto</button>
   </div>
   <div class="subtitle" id="proj-subtitle"></div>
   <div class="niv-proj-grid">
     <div class="niv-card">
-      <div class="niv-card-title" style="font-size:20px;margin-bottom:16px;">Measurements</div>
+      <div class="niv-card-title" id="proj-measures-title" style="font-size:20px;margin-bottom:16px;">Measurements</div>
       <div id="proj-measures"></div>
     </div>
     <div class="niv-card">
-      <div class="niv-card-title" style="font-size:20px;margin-bottom:16px;">Users assigned</div>
+      <div class="niv-card-title" id="proj-users-title" style="font-size:20px;margin-bottom:16px;">Users assigned</div>
       <div class="niv-users-grid" id="proj-users"></div>
-      <button class="niv-btn-pill" style="width:100%;margin-top:16px;" onclick="openAssignUsers()">Add more</button>
+      <button class="niv-btn-pill" id="proj-addmore-btn" style="width:100%;margin-top:16px;" onclick="openAssignUsers()">Add more</button>
     </div>
   </div>
  </div>
@@ -1334,10 +1380,10 @@ try {
     <div id="cust-contact"><div class="niv-panel-empty">Cargando…</div></div>
   </div>
   <div class="stats-row cust-stats">
-    <div class="stat-card"><div class="stat-num" id="cust-stat-projects">-</div><div class="stat-label" id="cust-stat-projects-label">Proyectos</div></div>
-    <div class="stat-card"><div class="stat-num" id="cust-stat-measures">-</div><div class="stat-label" id="cust-stat-measures-label">Medidas</div></div>
-    <div class="stat-card" id="cust-stat-quotes-card"><div class="stat-num" id="cust-stat-quotes">-</div><div class="stat-label" id="cust-stat-quotes-label">Cotizaciones</div></div>
-    <div class="stat-card"><div class="stat-num cust-recent" id="cust-stat-recent">-</div><div class="stat-label" id="cust-stat-recent-label">Actividad más reciente</div></div>
+    <div class="stat-card"><div class="stat-num" id="cust-stat-projects"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="cust-stat-projects-label">Proyectos</div></div>
+    <div class="stat-card"><div class="stat-num" id="cust-stat-measures"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="cust-stat-measures-label">Medidas</div></div>
+    <div class="stat-card" id="cust-stat-quotes-card"><div class="stat-num" id="cust-stat-quotes"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="cust-stat-quotes-label">Cotizaciones</div></div>
+    <div class="stat-card"><div class="stat-num cust-recent" id="cust-stat-recent"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="cust-stat-recent-label">Actividad más reciente</div></div>
   </div>
   <div class="cust-grid">
     <div class="niv-card">
@@ -1357,20 +1403,21 @@ try {
  <div id="view-measure" style="display:none">
   <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
     <button class="niv-back-btn" id="measure-back-btn" onclick="measureBack()">◁</button>
-    <h1 style="margin:0;">Measure</h1>
+    <h1 id="measure-title" style="margin:0;">Measure</h1>
   </div>
   <div class="niv-measure-grid">
     <div class="niv-card">
-      <div class="niv-card-title" style="font-size:20px;margin-bottom:16px;">Dimensions</div>
+      <div class="niv-card-title" id="measure-dims-title" style="font-size:20px;margin-bottom:16px;">Dimensions</div>
       <canvas id="measure-canvas" width="340" height="420" style="width:100%;border-radius:10px;display:block;"></canvas>
+      <div class="niv-panel-empty" id="measure-nodims" style="display:none;">Sin dimensiones registradas para esta medida.</div>
     </div>
     <div class="niv-card">
-      <div class="niv-card-title" style="font-size:20px;margin-bottom:16px;">Photo</div>
+      <div class="niv-card-title" id="measure-photo-title" style="font-size:20px;margin-bottom:16px;">Photo</div>
       <div id="measure-photo-wrap"><div class="niv-panel-empty">Sin foto</div></div>
     </div>
   </div>
   <div class="niv-card" style="margin-top:16px;">
-    <div class="niv-card-title" style="font-size:16px;margin-bottom:16px;color:var(--niv-text-dim);">Details</div>
+    <div class="niv-card-title" id="measure-details-title" style="font-size:16px;margin-bottom:16px;color:var(--niv-text-dim);">Details</div>
     <div id="measure-details"></div>
   </div>
  </div>
@@ -1398,11 +1445,13 @@ try {
           <button class="niv-share-save" onclick="saveShare()" style="margin-top:8px;padding:6px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Guardar</button>
           <span id="share-status" style="font-size:12px;margin-left:8px;display:none;">✓</span>
         </div>
-        <button class="btn-close" onclick="closeModal()">Cerrar</button>
       </div>
       <div class="modal-canvas-wrap">
         <canvas id="modal-canvas" width="340" height="420"></canvas>
       </div>
+    </div>
+    <div class="modal-close-bar">
+      <button class="btn-close" id="modal-close-btn" onclick="closeModal()">Cerrar</button>
     </div>
   </div>
 </div>
@@ -1524,6 +1573,66 @@ const escapeHtml = (s) => String(s ?? '')
 // onclick argument: encodeURIComponent leaves apostrophes alone, and a
 // name like O'Brien would break the attribute, so escape those too.
 const custEnc = (s) => encodeURIComponent(String(s ?? '')).replace(/'/g, '%27');
+
+// Any stored date value -> Date (or null). Handles Firestore Timestamps,
+// Dates, ISO strings and epoch seconds/millis.
+const _anyDate = (v) => {
+  if (!v) return null;
+  if (v.toDate) { try { const d = v.toDate(); return isNaN(d) ? null : d; } catch (_) { return null; } }
+  const d = v instanceof Date ? v : new Date(typeof v === 'number' && v < 1e12 ? v * 1000 : v);
+  return isNaN(d) ? null : d;
+};
+// m41: ONE date+time format per language, used by every job surface
+// (list cards, job modal, measure detail, customer overview, quotes).
+const _fmtJobDateTime = (v) => {
+  const d = _anyDate(v) || new Date();
+  const loc = (typeof NIV_LANG !== 'undefined' && NIV_LANG === 'en') ? 'en-US' : 'es-PR';
+  return d.toLocaleDateString(loc, { timeZone: 'America/Puerto_Rico', day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
+    d.toLocaleTimeString(loc, { timeZone: 'America/Puerto_Rico', hour: '2-digit', minute: '2-digit', hour12: true });
+};
+const _fmtJobDate = (v) => {
+  const d = _anyDate(v) || new Date();
+  const loc = (typeof NIV_LANG !== 'undefined' && NIV_LANG === 'en') ? 'en-US' : 'es-PR';
+  return d.toLocaleDateString(loc, { timeZone: 'America/Puerto_Rico', day: '2-digit', month: 'short', year: 'numeric' });
+};
+// M13/M39: resolve the four real opening dimensions from a job, honoring
+// every stored alias. Returns nulls for anything never measured: callers
+// must NOT substitute defaults (a dimension-less measure is not a 36x84).
+const _huecoDims = (job) => {
+  const h = (job && job.hueco) || {};
+  const num = (...vals) => {
+    for (const v of vals) {
+      const n = typeof v === 'number' ? v : (v != null && v !== '' ? parseFloat(v) : NaN);
+      if (isFinite(n)) return n;
+    }
+    return null;
+  };
+  return {
+    anchoBot: num(h.anchoBot, h.anchoAbajo, h.anchoBottom, h.ancho),
+    anchoTop: num(h.anchoTop, h.anchoSuperior),
+    altoIzq: num(h.altoIzq, h.altoIzquierda, h.altoLeft, h.alto),
+    altoDer: num(h.altoDer, h.altoDerecha),
+  };
+};
+const _jobHasDims = (job) => {
+  const d = _huecoDims(job);
+  return d.anchoBot != null && d.anchoBot > 0 && d.altoIzq != null && d.altoIzq > 0;
+};
+// embedGraph payload built ONLY from real measured values.
+const _graphDataFor = (job) => {
+  const d = _huecoDims(job);
+  const data = {
+    anchoBot: d.anchoBot,
+    altoIzq: d.altoIzq,
+    pIL: job.desniveles?.paredIzq || 'Nivel',
+    pDL: job.desniveles?.paredDer || 'Nivel',
+    tL: job.desniveles?.techo || 'Nivel',
+    pL: job.desniveles?.piso || 'Nivel',
+  };
+  if (d.anchoTop != null) data.anchoTop = d.anchoTop;
+  if (d.altoDer != null) data.altoDer = d.altoDer;
+  return data;
+};
 
 // PR-local calendar day as YYYY-MM-DD (en-CA) for the "Hoy" stat and date filter.
 const prDay = (d) => new Intl.DateTimeFormat('en-CA', {
@@ -1745,14 +1854,7 @@ document.addEventListener('breadchange', function () {
   const mc = document.getElementById('modal-canvas');
   if (mc && window._currentJobIdx != null && window._jobs && window._jobs[window._currentJobIdx]) {
     const job = window._jobs[window._currentJobIdx];
-    window.embedGraph(mc, {
-      anchoBot: job.hueco?.anchoBot || 36,
-      altoIzq: job.hueco?.altoIzq || 84,
-      pIL: job.desniveles?.paredIzq || 'Nivel',
-      pDL: job.desniveles?.paredDer || 'Nivel',
-      tL: job.desniveles?.techo || 'Nivel',
-      pL: job.desniveles?.piso || 'Nivel'
-    });
+    if (_jobHasDims(job)) window.embedGraph(mc, _graphDataFor(job));
   }
 });
 
@@ -1816,9 +1918,9 @@ async function initCompanyView(user) {
   const memberRows = members.map(m => {
     const rl = CO_ROLE_LABEL[m.role] || m.role || 'Sin rol';
     return '<div style="' + rowStyle + '">' +
-      '<div><div style="font-size:14px;font-weight:600;' + textStyle + '">' + escapeHtml(m.name || 'Sin nombre') + '</div>' +
-      '<div style="font-size:12px;' + dimStyle + '">' + escapeHtml(m.email || '') + '</div></div>' +
-      '<span style="font-size:12px;font-weight:600;color:var(--niv-text, #f5f5f7);background:var(--niv-surface-2, #1e1e22);padding:4px 10px;border-radius:20px;white-space:nowrap">' + escapeHtml(rl) + '</span></div>';
+      '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;' + textStyle + 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(m.name || 'Sin nombre') + '</div>' +
+      '<div style="font-size:12px;' + dimStyle + 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(m.email || '') + '</div></div>' +
+      '<span style="flex:none;font-size:12px;font-weight:600;color:var(--niv-text, #f5f5f7);background:var(--niv-surface-2, #1e1e22);padding:4px 10px;border-radius:20px;white-space:nowrap">' + escapeHtml(rl) + '</span></div>';
   }).join('');
 
   const recentRows = quotes.slice(0, 10).map(q => {
@@ -1835,11 +1937,31 @@ async function initCompanyView(user) {
   document.body.classList.remove('has-sidebar');
   document.body.style.background = 'var(--niv-bg, #0e0e10)';
   document.body.style.color = 'var(--niv-text, #f5f5f7)';
+  // M23: the dashboard's overflow-x:clip guard is scoped to .has-sidebar,
+  // which this view removes; restore the guard on the body itself.
+  document.body.style.overflowX = 'clip';
+  document.documentElement.style.overflowX = 'clip';
+  // M29: this view replaces document.body, so it carries its own way out:
+  // a back control to the dashboard plus sign-out (the shell sidebar
+  // cannot be remounted here without the dashboard's boot sequence).
+  window._coSignOut = async () => {
+    try { await signOut(auth); } catch (_) {}
+    window.location.href = 'https://login.nivelatolabs.com/';
+  };
+  const _coLang = (() => { try { return (window.NivSettings && window.NivSettings.getLang && window.NivSettings.getLang()) || (localStorage.getItem('nivelato-login-lang') === 'en' ? 'en' : 'es'); } catch (_) { return 'es'; } })();
+  const _coL = (es, en) => (_coLang === 'en' ? en : es);
+  // quotes-disabled orgs get a single stat card: full width, not a
+  // half-empty 2-column grid (M29)
+  const statsGridStyle = _hasQuotes ? 'grid-template-columns:repeat(2,1fr)' : 'grid-template-columns:1fr';
   document.body.innerHTML =
     '<main style="padding:24px 20px;max-width:720px;margin:0 auto;background:var(--niv-bg, #0e0e10);color:var(--niv-text, #f5f5f7);font-family:Inter,system-ui,sans-serif;min-height:100dvh">' +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">' +
+      '<a href="/dashboard.html" style="color:var(--niv-text, #f5f5f7);text-decoration:none;font-size:14px;font-weight:600;background:var(--niv-surface-2, #1e1e22);border:1px solid var(--niv-border-soft, rgba(255,255,255,0.14));padding:9px 16px;border-radius:999px">' + escapeHtml(_coL('← Volver al panel', '← Back to dashboard')) + '</a>' +
+      '<button type="button" onclick="window._coSignOut()" style="margin-left:auto;color:var(--niv-text-dim, #a7a7ad);background:transparent;border:1px solid var(--niv-border-soft, rgba(255,255,255,0.14));padding:9px 16px;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">' + escapeHtml(_coL('Cerrar sesión', 'Sign out')) + '</button>' +
+    '</div>' +
     '<h1 style="' + textStyle + '">' + escapeHtml(orgName) + '</h1>' +
-    '<p class="subtitle" style="' + dimStyle + '">Vista de compañía</p>' +
-    '<div class="stats-row" style="grid-template-columns:repeat(2,1fr)">' +
+    '<p class="subtitle" style="' + dimStyle + '">' + escapeHtml(_coL('Vista de compañía', 'Company view')) + '</p>' +
+    '<div class="stats-row" style="' + statsGridStyle + '">' +
       (_hasQuotes ?
         '<div class="stat-card" style="' + statCardStyle + '"><div class="stat-num" style="' + statNumStyle + '">' + nEstado('borrador') + '</div><div class="stat-label" style="' + statLabelStyle + '">Cotizaciones en borrador</div></div>' +
         '<div class="stat-card" style="' + statCardStyle + '"><div class="stat-num" style="' + statNumStyle + '">' + nEstado('aprobada') + '</div><div class="stat-label" style="' + statLabelStyle + '">Cotizaciones aprobadas</div></div>' +
@@ -1962,7 +2084,13 @@ let currentUser;
     document.getElementById('org-name-badge').innerHTML = escapeHtml(orgName) + '<span id="estradiol-indicator">E2</span>';
     // sidebar: company avatar initials + Users link for managers
     const _av = document.getElementById('sidebar-avatar');
-    if (_av) _av.textContent = (orgName || 'N').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    if (_av) {
+      // p8: initials skip stopwords ("Compañía de ejemplo" -> "CE", not "CD")
+      const _stop = new Set(['de', 'la', 'el', 'los', 'las', 'the', 'of', 'y', 'e', '&']);
+      const _words = (orgName || 'N').trim().split(/\s+/).filter(Boolean);
+      const _sig = _words.filter(w => !_stop.has(w.toLowerCase()));
+      _av.textContent = (_sig.length ? _sig : _words).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    }
     // account card: avatar + name + email
     try {
       const _an = document.getElementById('niv-account-name');
@@ -2089,14 +2217,74 @@ let currentUser;
     };
 
   // floating panel: customers + measurements lists
+  // M21: stored customer docs (orgs/{orgId}/customers) also name customers
+  // that have no jobs yet; they merge into the panel list once loaded.
+  let _panelStoredCustomers = null;
+  const _loadStoredCustomers = async () => {
+    if (_panelStoredCustomers !== null) return;
+    _panelStoredCustomers = [];
+    try {
+      const orgId = window._currentOrgId;
+      if (!orgId) return;
+      const snap = await getDocs(collection(db, 'orgs', orgId, 'customers'));
+      _panelStoredCustomers = snap.docs.map(d => { try { return decodeURIComponent(d.id); } catch (_) { return d.id; } }).filter(Boolean);
+      if (window._panelJobs) window.refreshFloatPanel(window._panelJobs);
+    } catch (_) { /* the list still works from jobs alone */ }
+  };
+  // "New customer" fits the implicit model as an (initially empty) customer
+  // doc: the same doc the customer overview reads/writes for contact data.
+  // Creating it opens that customer's overview, where contact info, and
+  // later projects and measures, attach to the exact same name string.
+  window._panelNewCustomer = async () => {
+    const name = (window.prompt(L('Nombre del cliente nuevo:', 'New customer name:')) || '').trim();
+    if (!name) return;
+    try {
+      const orgId = window._currentOrgId;
+      if (!orgId) throw new Error('no org');
+      await setDoc(doc(db, 'orgs', orgId, 'customers', encodeURIComponent(name)), { nombre: name, createdAt: serverTimestamp() }, { merge: true });
+      if (_panelStoredCustomers && !_panelStoredCustomers.includes(name)) _panelStoredCustomers.push(name);
+      if (window._panelJobs) window.refreshFloatPanel(window._panelJobs);
+      window.openCustomer(name);
+    } catch (e) {
+      window.alert(L('No se pudo crear el cliente. Intenta de nuevo.', 'Could not create the customer. Try again.'));
+    }
+  };
+
   window.refreshFloatPanel = (jobs) => {
+    window._panelJobs = jobs;
     const esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const custEl = document.getElementById('niv-panel-customers');
     if (custEl) {
-      const customers = [...new Set(jobs.map(j => j.customer).filter(Boolean))].slice(0, 5);
+      _loadStoredCustomers();
+      // one-time toolbar (search + new customer), injected as a sibling so
+      // the list re-renders below never wipe it
+      const sec = custEl.parentElement;
+      if (sec && !document.getElementById('panel-customer-tools')) {
+        const tools = document.createElement('div');
+        tools.id = 'panel-customer-tools';
+        tools.style.cssText = 'display:flex;gap:8px;align-items:center;margin:2px 0 8px;';
+        tools.innerHTML = '<input type="search" id="panel-customer-search" style="flex:1;min-width:0;background:var(--niv-surface-2,#1e1e22);border:1px solid var(--niv-border-soft,rgba(255,255,255,.14));border-radius:9px;color:var(--niv-text,#f5f5f7);font:inherit;font-size:13px;padding:7px 10px;" />' +
+          '<button type="button" class="niv-plus-btn" id="panel-customer-new" onclick="window._panelNewCustomer()">+</button>';
+        sec.insertBefore(tools, custEl);
+        const inp = tools.querySelector('#panel-customer-search');
+        inp.addEventListener('input', () => { window._panelCustFilter = inp.value; if (window._panelJobs) window.refreshFloatPanel(window._panelJobs); });
+      }
+      const searchEl = document.getElementById('panel-customer-search');
+      if (searchEl) {
+        searchEl.placeholder = L('Buscar clientes…', 'Search customers…');
+        if (document.activeElement !== searchEl && searchEl.value !== (window._panelCustFilter || '')) searchEl.value = window._panelCustFilter || '';
+      }
+      const newBtn = document.getElementById('panel-customer-new');
+      if (newBtn) { newBtn.title = L('Nuevo cliente', 'New customer'); newBtn.setAttribute('aria-label', L('Nuevo cliente', 'New customer')); }
+      // ALL customers, never a silent slice: job names + stored docs
+      const all = [...new Set([...jobs.map(j => j.customer).filter(Boolean), ...(_panelStoredCustomers || [])])];
+      const titleEl = document.getElementById('panel-customers-title');
+      if (titleEl) titleEl.textContent = L('Clientes', 'Customers') + (all.length ? ' · ' + all.length : '');
+      const needle = (window._panelCustFilter || '').trim().toLowerCase();
+      const customers = needle ? all.filter(c => c.toLowerCase().includes(needle)) : all;
       custEl.innerHTML = customers.length
-        ? customers.map((c, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="window.openCustomer(decodeURIComponent('${custEnc(c)}'))"><span>${esc(c)}</span>${dashDotsBtn('customer', null, c)}</div>`).join('')
-        : '<div class="niv-panel-empty">' + L('Sin clientes', 'No customers') + '</div>';
+        ? customers.map((c, i) => `<div class="niv-panel-item${i === 0 && !needle ? ' first' : ''}" onclick="window.openCustomer(decodeURIComponent('${custEnc(c)}'))"><span>${esc(c)}</span>${dashDotsBtn('customer', null, c)}</div>`).join('')
+        : '<div class="niv-panel-empty">' + (needle ? L('Sin clientes con ese nombre', 'No customers match that name') : L('Sin clientes', 'No customers')) + '</div>';
     }
     const measEl = document.getElementById('niv-panel-measures');
     if (measEl) {
@@ -2108,8 +2296,21 @@ let currentUser;
   };
   });
 
+  window.clearMeasureFilters = () => {
+    const d = document.getElementById('filter-date');
+    const i = document.getElementById('filter-installer');
+    const c = document.getElementById('filter-customer');
+    if (d) d.value = '';
+    if (i) i.value = '';
+    if (c) c.value = '';
+    // the niv-select listboxes re-sync from the native selects on change
+    [i, c].forEach((sel) => { if (sel) sel.dispatchEvent(new Event('change', { bubbles: true })); });
+    window.applyFilters();
+  };
+
   window.applyFilters = () => {
     syncDatePlaceholder();
+    window._jobsLimit = 50; // m40: a filter change restarts pagination
     const date = document.getElementById('filter-date').value;
     const installer = document.getElementById('filter-installer').value;
     const customer = document.getElementById('filter-customer').value;
@@ -2123,7 +2324,13 @@ let currentUser;
     }
     if (installer) filtered = filtered.filter(j => j.installerName === installer);
     if (customer) filtered = filtered.filter(j => j.customer === customer);
+    window._jobsFiltered = filtered;
     renderJobs(filtered);
+  };
+
+  window._loadMoreJobs = () => {
+    window._jobsLimit = (window._jobsLimit || 50) + 50;
+    if (window._jobsFiltered) renderJobs(window._jobsFiltered);
   };
 
   function renderJobs(jobs) {
@@ -2145,14 +2352,18 @@ let currentUser;
       // filters just don't match anything" so users know whether to add a
       // measurement or clear the filters.
       const msg = allJobs.length === 0
-        ? 'No hay medidas registradas aún.'
-        : 'No se encontraron medidas con estos filtros. Prueba ajustar la fecha o los filtros.';
+        ? L('No hay medidas registradas aún.', 'No measurements recorded yet.')
+        : L('No se encontraron medidas con estos filtros. Prueba ajustar la fecha o los filtros.', 'No measurements match these filters. Try adjusting the date or filters.');
       list.innerHTML = `<div class="empty-state">${msg}</div>`;
       return;
     }
-    list.innerHTML = jobs.map((job, i) => {
-      const date = job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now());
-      const dateStr = date.toLocaleDateString('es-PR', { timeZone: 'America/Puerto_Rico', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    // m40: render in pages of 50 cards with a load-more control instead
+    // of dumping the entire org history into the DOM at once. Stats and
+    // filters above still run over the full set; only the DOM is paged.
+    const _limit = window._jobsLimit || 50;
+    const _page = jobs.slice(0, _limit);
+    list.innerHTML = _page.map((job, i) => {
+      const dateStr = _fmtJobDateTime(job.createdAt);
       const hasWarn = job.warnings && job.warnings.length > 0;
       const tag = hasWarn
         ? `<span class="job-tag tag-warn">⚠ Advertencias</span>`
@@ -2179,16 +2390,17 @@ let currentUser;
             ${notasPreview ? `<span>📝 ${escapeHtml(notasPreview)}</span>` : ''}
           </div>
         </div>`;
-    }).join('');
-    window._jobs = jobs;
+    }).join('') + (jobs.length > _page.length
+      ? `<button type="button" class="btn-cancel" style="margin-top:4px" onclick="window._loadMoreJobs()">${escapeHtml(L('Cargar más', 'Load more'))} (${_page.length} / ${jobs.length})</button>`
+      : '');
+    window._jobs = _page;
   }
 
   window._currentJobIdx = null;
   window.openJob = (i) => {
     window._currentJobIdx = i;
     const job = window._jobs[i];
-    const date = job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now());
-    const dateStr = date.toLocaleDateString('es-PR', { timeZone: 'America/Puerto_Rico', day:'2-digit', month:'short', year:'numeric' }) + ' ' + date.toLocaleTimeString('es-PR', { timeZone: 'America/Puerto_Rico', hour:'2-digit', minute:'2-digit' });
+    const dateStr = _fmtJobDateTime(job.createdAt);
     document.getElementById('modal-title').textContent = `Medida - ${job.installerName || 'Técnico medidor'}`;
     const row = (l,v) => `<div class="detail-row"><span class="detail-label">${escapeHtml(l)}</span><span class="detail-val">${escapeHtml(v)}</span></div>`;
     const sec = (t) => `<div class="detail-section-title">${t}</div>`;
@@ -2269,23 +2481,36 @@ let currentUser;
       photoImg.alt = 'Foto con medidas';
       if (cw) cw.appendChild(photoImg);
     }
+    let noDimsEl = document.getElementById('modal-nodims');
+    if (!noDimsEl && cw) {
+      noDimsEl = document.createElement('div');
+      noDimsEl.id = 'modal-nodims';
+      noDimsEl.className = 'niv-panel-empty';
+      noDimsEl.style.display = 'none';
+      cw.appendChild(noDimsEl);
+    }
     if (job.annotatedPhoto) {
       if (cw) cw.style.display = 'block';
       if (cvs) cvs.style.display = 'none';
+      if (noDimsEl) noDimsEl.style.display = 'none';
       photoImg.style.display = 'block';
       photoImg.src = job.annotatedPhoto;
-    } else {
+    } else if (_jobHasDims(job)) {
       if (cw) cw.style.display = 'block';
       photoImg.style.display = 'none';
+      if (noDimsEl) noDimsEl.style.display = 'none';
       if (cvs) cvs.style.display = 'block';
-      window.embedGraph(cvs, {
-        anchoBot: job.hueco?.anchoBot || 36,
-        altoIzq: job.hueco?.altoIzq || 84,
-        pIL: job.desniveles?.paredIzq || 'Nivel',
-        pDL: job.desniveles?.paredDer || 'Nivel',
-        tL: job.desniveles?.techo || 'Nivel',
-        pL: job.desniveles?.piso || 'Nivel'
-      });
+      window.embedGraph(cvs, _graphDataFor(job));
+    } else {
+      // M13: no dimensions were ever recorded for this measure. Show that
+      // plainly instead of drawing a fabricated 36x84 opening.
+      if (cw) cw.style.display = 'block';
+      photoImg.style.display = 'none';
+      if (cvs) cvs.style.display = 'none';
+      if (noDimsEl) {
+        noDimsEl.textContent = L('Sin dimensiones registradas para esta medida.', 'No dimensions recorded for this measurement.');
+        noDimsEl.style.display = 'block';
+      }
     }
   };
 
@@ -2970,10 +3195,7 @@ let currentUser;
     );
   }
 
-  const qDateStr = (ts) => {
-    const d = ts && ts.toDate ? ts.toDate() : (ts ? new Date(ts) : new Date());
-    return d.toLocaleDateString('es-PR', { timeZone: 'America/Puerto_Rico', day: '2-digit', month: 'short', year: 'numeric' });
-  };
+  const qDateStr = (ts) => _fmtJobDate(ts);
 
   window.renderQuotes = () => {
     const f = document.getElementById('qt-filter-estado').value;
@@ -3952,6 +4174,10 @@ let currentUser;
     try {
       const snap = await getDocs(collection(db, 'orgs', orgId, 'projects'));
       _projects = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // m34: newest first, client-side (createdAt is not uniformly
+      // indexed across orgs; undated projects sink to the end).
+      const _ts = (v) => { const d = _anyDate(v); return d ? d.getTime() : 0; };
+      _projects.sort((a, b) => _ts(b.createdAt) - _ts(a.createdAt) || _ts(b.updatedAt) - _ts(a.updatedAt));
     } catch (e) { console.warn('[Nivelato] projects load failed:', e.message); _projects = []; }
     const el = document.getElementById('niv-panel-projects');
     if (el) {
@@ -3962,9 +4188,18 @@ let currentUser;
     if (window._dashView === 'customer' && window.renderCustomerOverview) window.renderCustomerOverview();
   };
 
+  let _projectReturnView = 'measures';
+  window.projectBack = () => {
+    const back = _projectReturnView || 'measures';
+    if (back === 'project') { window.showDashView('measures'); return; }
+    window.showDashView(back);
+  };
   window.openProject = async (projectId) => {
     const p = _projects.find(x => x.id === projectId);
     if (!p) return;
+    if (window._dashView && window._dashView !== 'project') {
+      _projectReturnView = window._dashView === 'measure' ? 'measures' : window._dashView;
+    }
     _currentProject = p;
     const _tp = document.getElementById('niv-topbar-project');
     if (_tp) _tp.textContent = p.name || 'Proyecto';
@@ -3986,17 +4221,20 @@ let currentUser;
 
   function renderProjectUsers(p) {
     const el = document.getElementById('proj-users');
-    const uids = p.memberUids || [];
-    // show up to 18 slots like the mockup
-    let html = '';
-    for (let i = 0; i < 18; i++) {
-      const uid = uids[i];
-      const m = uid && window._orgMembers ? window._orgMembers.find(x => x.uid === uid) : null;
-      const label = m ? (m.name || m.email || '?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase()
-                      : (i < uids.length ? '?' : String(i + 1));
-      html += `<div class="niv-user-circle${m ? ' assigned' : ''}" title="${m ? escapeHtml(m.name || m.email) : ''}">${escapeHtml(label)}</div>`;
+    if (!el) return;
+    // M28: render ONLY real assigned users. The old loop always drew 18
+    // numbered circles, so a project with nobody assigned looked staffed.
+    const uids = Array.isArray(p.memberUids) ? p.memberUids.filter(Boolean) : [];
+    if (!uids.length) {
+      el.innerHTML = '<div class="niv-panel-empty" style="grid-column:1/-1;">' +
+        escapeHtml(L('Sin usuarios asignados todavía.', 'No users assigned yet.')) + '</div>';
+      return;
     }
-    el.innerHTML = html;
+    el.innerHTML = uids.map((uid) => {
+      const m = window._orgMembers ? window._orgMembers.find(x => x.uid === uid) : null;
+      const label = m ? (m.name || m.email || '?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase() : '?';
+      return `<div class="niv-user-circle assigned" title="${m ? escapeHtml(m.name || m.email) : ''}">${escapeHtml(label)}</div>`;
+    }).join('');
   }
 
   window.openAssignUsers = () => {
@@ -4014,36 +4252,64 @@ let currentUser;
     const job = allJobs.find(j => j.id === jobId);
     if (!job) return;
     _measureReturnView = returnView || 'measures';
-    // dimensions graph (graph system untouched - just calling embedGraph)
+    // M13: draw the graph only from real dimensions. A measure with no
+    // recorded dimensions gets an explicit no-dimensions state, never a
+    // fabricated 36x84 drawing.
     const cvs = document.getElementById('measure-canvas');
-    if (cvs && window.embedGraph) {
-      window.embedGraph(cvs, {
-        anchoBot: job.hueco?.anchoBot || 36,
-        altoIzq: job.hueco?.altoIzq || 84,
-        pIL: job.desniveles?.paredIzq || 'Nivel',
-        pDL: job.desniveles?.paredDer || 'Nivel',
-        tL: job.desniveles?.techo || 'Nivel',
-        pL: job.desniveles?.piso || 'Nivel'
-      });
+    const noDims = document.getElementById('measure-nodims');
+    if (_jobHasDims(job)) {
+      if (cvs) { cvs.style.display = 'block'; if (window.embedGraph) window.embedGraph(cvs, _graphDataFor(job)); }
+      if (noDims) noDims.style.display = 'none';
+    } else {
+      if (cvs) cvs.style.display = 'none';
+      if (noDims) {
+        noDims.textContent = L('Sin dimensiones registradas para esta medida.', 'No dimensions recorded for this measurement.');
+        noDims.style.display = 'block';
+      }
     }
     // photo
     const pw = document.getElementById('measure-photo-wrap');
     pw.innerHTML = job.annotatedPhoto
       ? `<img src="${escapeHtml(job.annotatedPhoto)}" alt="Foto con medidas" />`
-      : '<div class="niv-panel-empty">Sin foto</div>';
-    // details
-    const date = job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now());
-    const dateStr = date.toLocaleDateString('es-PR', { timeZone: 'America/Puerto_Rico', day:'2-digit', month:'2-digit', year:'numeric' }) + ' ' +
-      date.toLocaleTimeString('es-PR', { timeZone: 'America/Puerto_Rico', hour:'2-digit', minute:'2-digit', hour12: true });
-    const projName = _currentProject ? (_currentProject.name || '') : (job.project || '');
+      : '<div class="niv-panel-empty">' + escapeHtml(L('Sin foto', 'No photo')) + '</div>';
+    // M14: the detail view shows the measurement itself, at parity with
+    // the openJob modal: customer, the four dimensions in text, offsets,
+    // warnings and notes (previously only date/location/project/by).
+    const dims = _huecoDims(job);
+    const dimVal = (v) => v != null ? v + '"' : '-';
+    const desn = job.desniveles || job.desnivel || {};
+    const dval = (v) => {
+      if (v === null || v === undefined) return '-';
+      if (typeof v === 'object') {
+        const l = v.label ?? v.value ?? v.text;
+        return (l === null || l === undefined || String(l) === '') ? '-' : String(l);
+      }
+      return String(v) === '' ? '-' : String(v);
+    };
+    const projName = job.projectId && _currentProject && _currentProject.id === job.projectId
+      ? (_currentProject.name || '') : (job.project || '');
     const rows = [
-      ['Taken at', dateStr],
-      ['Location', job.location || '-'],
-      ['Project', projName || '-'],
-      ['Taken by', job.installerName || '-'],
+      [L('Fecha y hora', 'Taken at'), _fmtJobDateTime(job.createdAt)],
+      [L('Cliente', 'Customer'), job.customer || '-'],
+      [L('Proyecto', 'Project'), projName || '-'],
+      [L('Ubicación', 'Location'), job.location || '-'],
+      [L('Medida por', 'Taken by'), job.installerName || '-'],
+      [L('Ancho abajo (base)', 'Bottom width (base)'), dimVal(dims.anchoBot)],
+      [L('Ancho superior', 'Top width'), dimVal(dims.anchoTop)],
+      [L('Alto izquierdo', 'Left height'), dimVal(dims.altoIzq)],
+      [L('Alto derecho', 'Right height'), dimVal(dims.altoDer)],
+      [L('Pared izq.', 'Left wall'), dval(desn.paredIzq)],
+      [L('Pared der.', 'Right wall'), dval(desn.paredDer)],
+      [L('Techo', 'Ceiling'), dval(desn.techo)],
+      [L('Piso', 'Floor'), dval(desn.piso)],
     ];
-    document.getElementById('measure-details').innerHTML = rows.map(([k, v]) =>
+    let html = rows.map(([k, v]) =>
       `<div class="niv-detail-row"><span class="k">${escapeHtml(k)}</span><span class="v">${escapeHtml(v)}</span></div>`).join('');
+    if (job.warnings && job.warnings.length > 0) {
+      html += `<div class="niv-warn-box" style="margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px">${job.warnings.map(w=>`⚠ ${escapeHtml(w)}`).join('<br>')}</div>`;
+    }
+    if (job.notas) html += `<div class="modal-notes">📝 ${escapeHtml(job.notas)}</div>`;
+    document.getElementById('measure-details').innerHTML = html;
     window.showDashView('measure');
   };
 
@@ -4295,9 +4561,11 @@ let currentUser;
     setText('panel-projects-title', L('Proyectos', 'Projects'));
     setText('panel-customers-title', L('Clientes', 'Customers'));
     setText('panel-measures-title', L('Medidas', 'Measurements'));
-    setText('panel-empty-projects', L('Sin proyectos', 'No projects'));
-    setText('panel-empty-customers', L('Sin clientes', 'No customers'));
-    setText('panel-empty-measures', L('Sin medidas', 'No measurements'));
+    // m38: before auth/data resolves these slots are a neutral loading
+    // state, never an empty-data claim ("Sin clientes" was a lie pre-auth)
+    setText('panel-empty-projects', L('Cargando…', 'Loading…'));
+    setText('panel-empty-customers', L('Cargando…', 'Loading…'));
+    setText('panel-empty-measures', L('Cargando…', 'Loading…'));
     setText('btn-upgrade-plan', L('Mejorar plan', 'Upgrade plan'));
     // Account menu trigger: localized accessible name; aria-expanded is
     // kept in sync by toggleAccountPopup (M43).
@@ -4315,6 +4583,32 @@ let currentUser;
     _setFilterLabel('filter-date', L('Filtrar por fecha', 'Filter by date'));
     _setFilterLabel('filter-installer', L('Filtrar por técnico', 'Filter by technician'));
     _setFilterLabel('filter-customer', L('Filtrar por cliente', 'Filter by customer'));
+    // M26: the measures view itself localizes (it was static Spanish)
+    setText('measures-title', L('Historial de medidas', 'Measurement history'));
+    setText('stat-total-label', L('Medidas totales', 'Total measurements'));
+    setText('stat-today-label', L('Hoy', 'Today'));
+    setText('stat-warn-label', L('Con advertencias', 'With warnings'));
+    setText('btn-new-measure', L('+ Nueva medida', '+ New measurement'));
+    setText('join-code-label', L('CÓDIGO DEL TALLER:', 'WORKSHOP CODE:'));
+    setText('copy-btn-label', L('📋 Copiar', '📋 Copy'));
+    setText('join-code-hint', L('Dáselo a tus empleados para que se registren en Nivelato', 'Give it to your employees so they can sign up for Nivelato'));
+    setText('date-placeholder', L('📅 Filtrar por fecha · dd/mm/aaaa', '📅 Filter by date · mm/dd/yyyy'));
+    setText('filter-installer-all', L('Todos los técnicos', 'All technicians'));
+    setText('filter-customer-all', L('Todos los clientes', 'All customers'));
+    setText('btn-clear-filters', L('Limpiar filtros', 'Clear filters'));
+    setText('modal-close-btn', L('Cerrar', 'Close'));
+    // M27: project + measure detail views localize too
+    setText('proj-measures-title', L('Medidas', 'Measurements'));
+    setText('proj-users-title', L('Usuarios asignados', 'Users assigned'));
+    setText('proj-addmore-btn', L('Agregar más', 'Add more'));
+    setText('proj-back-btn', L('← Volver', '← Back'));
+    setText('proj-new-btn', L('+ Nuevo proyecto', '+ New project'));
+    setText('measure-title', L('Medida', 'Measure'));
+    setText('measure-dims-title', L('Dimensiones', 'Dimensions'));
+    setText('measure-photo-title', L('Foto', 'Photo'));
+    setText('measure-details-title', L('Detalles', 'Details'));
+    if (window._localizeAbout) window._localizeAbout();
+    if (window._panelJobs && window.refreshFloatPanel) window.refreshFloatPanel(window._panelJobs);
     setText('btn-pricelist', L('Precios', 'Prices'));
     setText('btn-quotes', L('Cotizaciones', 'Quotes'));
     setText('popup-account-settings', L('Ajustes de la cuenta', 'Account settings'));
@@ -4371,7 +4665,7 @@ let currentUser;
     const d = v instanceof Date ? v : new Date(v);
     return isNaN(d) ? null : d;
   };
-  const _custFmtDate = (d) => d ? d.toLocaleDateString(NIV_LANG === 'en' ? 'en-US' : 'es-PR', { timeZone: 'America/Puerto_Rico', day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+  const _custFmtDate = (d) => d ? _fmtJobDate(d) : '-';
   const _custQuotesFor = (key) => (window._qItems || []).filter((q) => q && q.cliente && q.cliente.nombre === key);
   // Carga perezosa de cotizaciones por la misma puerta que la vista
   // Cotizaciones (ensureQuotes suscribe el listener y llena _qItems;
@@ -4600,6 +4894,11 @@ let currentUser;
     const qStatCard = document.getElementById('cust-stat-quotes-card');
     if (qCard) qCard.style.display = canQuote ? '' : 'none';
     if (qStatCard) qStatCard.style.display = canQuote ? '' : 'none';
+    // p25/p10: with quotes hidden the grids must not keep an empty column
+    const _cg = document.querySelector('#view-customer .cust-grid');
+    if (_cg) _cg.classList.toggle('no-quotes', !canQuote);
+    const _cs = document.querySelector('#view-customer .cust-stats');
+    if (_cs) _cs.classList.toggle('no-quotes', !canQuote);
     if (canQuote) setText('cust-stat-quotes', String(quotes.length));
     // proyectos: docs clicables a openProject + nombres sueltos de jobs
     const projEl = document.getElementById('cust-projects');
@@ -4636,8 +4935,7 @@ let currentUser;
         measEl.innerHTML = '<div class="empty-state">' + L('Sin medidas para este cliente.', 'No measurements for this customer.') + '</div>';
       } else {
         measEl.innerHTML = jobs.map((job, i) => {
-          const date = _custDate(job.createdAt) || new Date();
-          const dateStr = date.toLocaleDateString('es-PR', { timeZone: 'America/Puerto_Rico', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+          const dateStr = _fmtJobDateTime(job.createdAt);
           const hasWarn = job.warnings && job.warnings.length > 0;
           const tag = hasWarn
             ? `<span class="job-tag tag-warn">⚠ Advertencias</span>`
@@ -5231,6 +5529,7 @@ document.addEventListener('click', function(e) {
 });
 function toggleAboutPopup(e) {
   e.stopPropagation();
+  if (window._localizeAbout) window._localizeAbout();
   document.getElementById('niv-account-popup').style.display = 'none';
   syncAccountCardState();
   document.body.classList.remove('nav-open');
@@ -5239,6 +5538,19 @@ function toggleAboutPopup(e) {
 function closeAboutModal() {
   document.getElementById('niv-about-modal').style.display = 'none';
 }
+// p13: the About copy follows the UI language like the rest of the chrome
+window._localizeAbout = function () {
+  var lang = 'es';
+  try { if (window.NivSettings && typeof window.NivSettings.getLang === 'function') lang = window.NivSettings.getLang(); } catch (_) {}
+  try { if (lang !== 'en' && localStorage.getItem('nivelato-login-lang') === 'en') lang = 'en'; } catch (_) {}
+  var en = lang === 'en';
+  var d = document.getElementById('about-desc');
+  if (d) d.textContent = en
+    ? 'Field measurement for any panel that has to fit an opening: glass, countertops, tile, cabinets, and more.'
+    : 'Medición de campo para cualquier panel que tiene que caber en un hueco: vidrio, encimeras, losetas, gabinetes y más.';
+  var b = document.getElementById('about-close-btn');
+  if (b) b.textContent = en ? 'Close' : 'Cerrar';
+};
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeAboutModal();
 });
@@ -5271,9 +5583,9 @@ document.addEventListener('keydown', function(e) {
   <div class="niv-about-card">
     <h2>Nivelato</h2>
     <div class="niv-about-ver">v1.0.0</div>
-    <p>Field measurement for any panel that has to fit an opening: glass, countertops, tile, cabinets, and more.</p>
+    <p id="about-desc">Field measurement for any panel that has to fit an opening: glass, countertops, tile, cabinets, and more.</p>
     <p>Nivelato Labs, Puerto Rico.</p>
-    <button class="niv-about-close" onclick="closeAboutModal()">Cerrar</button>
+    <button class="niv-about-close" id="about-close-btn" onclick="closeAboutModal()">Cerrar</button>
   </div>
 </div>
   <!-- the measurements are leveled. the whimsy is load-bearing. 🦀 -->
