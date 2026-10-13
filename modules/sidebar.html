@@ -1139,14 +1139,18 @@ async function initFirebase() {
         || (orgData && orgData.flow === undefined && orgId === 'NJBBG5');
       const externalSignal = claimsFlow === 'external' || (orgData && orgData.flow === 'external');
       if (!qgiSignal && externalSignal) showBilling();
-      /* Updates sub label and dot: same reads and semantics as
-         users.html renderUpdatesDot (app_updates/latest vs the org
-         dataVersion, default 0.9). Manager gated, like the entry. */
+      /* Updates sub label and dot: the org's channel pointer (same
+         resolution as resolveRegistryVersion / updates.html: stable ->
+         app_updates/backend, beta -> app_updates/beta-latest, latest =
+         version || friendlyVersion) vs the org dataVersion, default
+         0.9. Manager gated, like the entry. */
       if (canManage) {
         try {
-          const latestSnap = await getDoc(doc(db, 'app_updates', 'latest'));
-          const latest = latestSnap.exists() ? latestSnap.data() : null;
-          const pending = !!(latest && latest.version && dataVersion() !== String(latest.version));
+          const channel = orgData && orgData.updateChannel ? String(orgData.updateChannel) : 'stable';
+          const pointerSnap = await getDoc(doc(db, 'app_updates', channel === 'beta' ? 'beta-latest' : 'backend'));
+          const pointer = pointerSnap.exists() ? pointerSnap.data() : null;
+          const latest = pointer ? (pointer.version || pointer.friendlyVersion) : null;
+          const pending = !!(latest && dataVersion() !== String(latest));
           setUpdatesState(pending ? 'pending' : 'current');
         } catch (_) {
           setUpdatesState('unknown');

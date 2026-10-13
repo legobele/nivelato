@@ -47,6 +47,13 @@
   /* ---------- top bar: desktop only (shell rule) ---------- */
   #chrome-topbar { display: block; }
   .updates-wrap { width: 100%; max-width: 720px; }
+  /* D8 dashboard embed (?embed=panel): chrome-less panel rendering. */
+  body.embed-panel #chrome-topbar,
+  body.embed-panel #chrome-sidebar,
+  body.embed-panel #niv-mobile-nav-toggle,
+  body.embed-panel #btn-back { display: none !important; }
+  body.embed-panel .main { padding: 16px; }
+  body.embed-panel .updates-wrap { max-width: none; margin: 0; }
   /* ---------- main ---------- */
   .main {
     flex: 1;
@@ -186,28 +193,34 @@
   .pref-row + .pref-row { margin-top: 12px; }
   .pref-label { font-size: 14px; font-weight: 600; }
   .pref-sub { font-size: 12px; color: var(--faint); margin-top: 2px; }
-  .switch {
-    position: relative; width: 46px; height: 26px; flex: none;
-    appearance: none; -webkit-appearance: none;
-    background: var(--line); border-radius: 999px; cursor: pointer;
-    transition: background 0.15s; margin: 0;
+  /* C5: automatic updates menu control (replaces the switch + radiogroup) */
+  .autoupdate-menu-wrap { position: relative; }
+  .autoupdate-menu-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 14px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--line); background: transparent;
+    color: var(--text); font-size: 14px; font-weight: 600;
+    font-family: inherit; cursor: pointer;
   }
-  .switch:checked { background: var(--blue); }
-  .switch::after {
-    content: ""; position: absolute; top: 3px; left: 3px;
-    width: 20px; height: 20px; border-radius: 50%;
-    background: #fff; transition: left 0.15s;
+  .autoupdate-menu-btn:hover { background: #141417; }
+  .autoupdate-menu-btn .chev { font-size: 11px; color: var(--muted); }
+  .autoupdate-menu {
+    position: absolute; top: calc(100% + 6px); left: 0; z-index: 50;
+    min-width: 240px; padding: 6px;
+    background: var(--card); border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   }
-  .switch:checked::after { left: 23px; }
-  .cadence-opts { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
-  .cadence-opt {
-    display: flex; align-items: center; gap: 10px;
-    font-size: 13px; color: var(--text); cursor: pointer;
-    padding: 8px 10px; border-radius: var(--radius-sm);
-    border: 1.5px solid transparent;
+  .autoupdate-menu[hidden] { display: none; }
+  .autoupdate-menu-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    width: 100%; padding: 9px 10px; border: none; border-radius: 8px;
+    background: transparent; color: var(--text);
+    font-size: 13px; font-family: inherit; text-align: left; cursor: pointer;
   }
-  .cadence-opt:hover { background: #141417; }
-  .cadence-opt input { accent-color: var(--blue); }
+  .autoupdate-menu-item:hover { background: #141417; }
+  .autoupdate-menu-item .check { color: var(--blue); visibility: hidden; }
+  .autoupdate-menu-item[aria-checked="true"] .check { visibility: visible; }
   .pref-note { font-size: 12px; color: var(--faint); margin-top: 10px; line-height: 1.5; }
   /* download phase readout */
   .dl-meta {
@@ -310,6 +323,7 @@
 <link rel="stylesheet" href="./qgc-theme.css" />
 </head>
 <body>
+<script>/* D8 embed: flag panel mode before any chrome markup paints. */ if (new URLSearchParams(window.location.search).get('embed') === 'panel') document.body.classList.add('embed-panel');</script>
 <div id="chrome-topbar"></div>
 <div class="shell">
   <button type="button" class="niv-mobile-nav-toggle" id="niv-mobile-nav-toggle" aria-expanded="false" aria-controls="chrome-sidebar"><span aria-hidden="true">&#9776;</span><span id="niv-mobile-nav-toggle-label">Navegación</span></button>
@@ -582,7 +596,7 @@ function pendingScheduled() {
 /* The sidebar is the company module (modules/sidebar.html via
    NivShell.mountSidebar): it renders the org head and owns the Updates
    entry's status sub label and dot (ids updates-sub / updates-dot live
-   inside the module iframe, with the same app_updates/latest vs org
+   inside the module iframe, with the same channel-pointer vs org
    dataVersion comparison). This page no longer forks that markup. */
 
 function render() {
@@ -699,45 +713,79 @@ function autoUpdateCadence() {
 function renderAutoUpdateSection() {
   const on = autoUpdateOn();
   const cad = autoUpdateCadence();
+  const current = !on ? t('autoUpdateOff') : (cad === 'immediate' ? t('autoUpdateImmediate') : t('autoUpdateTonight'));
   return `
     <div class="pref-section" id="autoupdate-section">
       <div class="pref-title">${escapeHtml(t('autoUpdateTitle'))}</div>
       <p class="pref-desc">${escapeHtml(t('autoUpdateDesc'))}</p>
       <div class="pref-row">
-        <div>
-          <div class="pref-label">${escapeHtml(on ? t('autoUpdateOn') : t('autoUpdateOff'))}</div>
-        </div>
-        <input type="checkbox" class="switch" id="autoupdate-toggle" ${on ? 'checked' : ''}
-               aria-label="${escapeHtml(t('autoUpdateTitle'))}" />
-      </div>
-      <div id="autoupdate-cadence" ${on ? '' : 'hidden'}>
-        <div class="pref-row" style="margin-top:12px;">
-          <div class="pref-label">${escapeHtml(t('autoUpdateWhen'))}</div>
-        </div>
-        <div class="cadence-opts" role="radiogroup" aria-label="${escapeHtml(t('autoUpdateWhen'))}">
-          <label class="cadence-opt"><input type="radio" name="autoupdate-cadence" value="immediate"${cad === 'immediate' ? ' checked' : ''} />${escapeHtml(t('autoUpdateImmediate'))}</label>
-          <label class="cadence-opt"><input type="radio" name="autoupdate-cadence" value="tonight"${cad === 'tonight' ? ' checked' : ''} />${escapeHtml(t('autoUpdateTonight'))}</label>
+        <div class="autoupdate-menu-wrap">
+          <button type="button" class="autoupdate-menu-btn" id="autoupdate-menu-btn"
+                  aria-haspopup="menu" aria-expanded="false" aria-controls="autoupdate-menu">
+            <span id="autoupdate-menu-label">${escapeHtml(current)}</span>
+            <span class="chev" aria-hidden="true">&#9662;</span>
+          </button>
+          <div class="autoupdate-menu" id="autoupdate-menu" role="menu" aria-label="${escapeHtml(t('autoUpdateTitle'))}" hidden>
+            <button type="button" class="autoupdate-menu-item" role="menuitemradio" aria-checked="${!on}" data-autoupdate-value="off">${escapeHtml(t('autoUpdateOff'))}<span class="check" aria-hidden="true">&#10003;</span></button>
+            <button type="button" class="autoupdate-menu-item" role="menuitemradio" aria-checked="${on && cad === 'immediate'}" data-autoupdate-value="immediate">${escapeHtml(t('autoUpdateImmediate'))}<span class="check" aria-hidden="true">&#10003;</span></button>
+            <button type="button" class="autoupdate-menu-item" role="menuitemradio" aria-checked="${on && cad === 'tonight'}" data-autoupdate-value="tonight">${escapeHtml(t('autoUpdateTonight'))}<span class="check" aria-hidden="true">&#10003;</span></button>
+          </div>
         </div>
       </div>
     </div>
   `;
 }
 function wireAutoUpdateSection() {
-  const toggle = document.getElementById('autoupdate-toggle');
-  if (toggle) {
-    toggle.addEventListener('change', () => {
-      try { if (window.NivSettings) window.NivSettings.set('niv-auto-update', toggle.checked ? '1' : '0'); } catch (_) {}
-      const cad = document.getElementById('autoupdate-cadence');
-      if (cad) cad.hidden = !toggle.checked;
-      // Re-render the on/off label.
-      const label = toggle.closest('.pref-row').querySelector('.pref-label');
-      if (label) label.textContent = toggle.checked ? t('autoUpdateOn') : t('autoUpdateOff');
-    });
+  const btn = document.getElementById('autoupdate-menu-btn');
+  const menu = document.getElementById('autoupdate-menu');
+  if (!btn || !menu) return;
+  const onDocClick = (e) => {
+    if (!menu.contains(e.target) && !btn.contains(e.target)) closeMenu(false);
+  };
+  const onDocKeydown = (e) => {
+    if (e.key === 'Escape') closeMenu(true);
+  };
+  function closeMenu(refocus) {
+    if (menu.hidden) return;
+    menu.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('click', onDocClick, true);
+    document.removeEventListener('keydown', onDocKeydown, true);
+    if (refocus) btn.focus();
   }
-  card.querySelectorAll('input[name="autoupdate-cadence"]').forEach((radio) => {
-    radio.addEventListener('change', () => {
-      if (!radio.checked) return;
-      try { if (window.NivSettings) window.NivSettings.set('niv-auto-update-cadence', radio.value); } catch (_) {}
+  function openMenu() {
+    menu.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+    document.addEventListener('click', onDocClick, true);
+    document.addEventListener('keydown', onDocKeydown, true);
+  }
+  btn.addEventListener('click', () => {
+    if (menu.hidden) openMenu();
+    else closeMenu(false);
+  });
+  menu.querySelectorAll('[data-autoupdate-value]').forEach((item) => {
+    item.addEventListener('click', () => {
+      const v = item.getAttribute('data-autoupdate-value');
+      // Both keys are written in this one handler, so the on/off flag and
+      // the cadence can never land half-updated (Off leaves cadence as-is).
+      try {
+        if (window.NivSettings) {
+          if (v === 'off') {
+            window.NivSettings.set('niv-auto-update', '0');
+          } else {
+            window.NivSettings.set('niv-auto-update', '1');
+            window.NivSettings.set('niv-auto-update-cadence', v);
+          }
+        }
+      } catch (_) {}
+      closeMenu(false);
+      // Re-render the section in place so the button label + checks
+      // reflect the stored preference.
+      const section = document.getElementById('autoupdate-section');
+      if (section) {
+        section.outerHTML = renderAutoUpdateSection();
+        wireAutoUpdateSection();
+      }
     });
   });
 }
@@ -1152,6 +1200,9 @@ onAuthStateChanged(auth, async (user) => {
      chain; the page module re-points both handles when the user level
      language resolves and on later niv:lang changes. */
   (function () {
+    /* D8 embed (?embed=panel): the dashboard panel hosts the card only;
+       the shell chrome is neither mounted here nor painted (CSS). */
+    var embedPanel = document.body.classList.contains('embed-panel');
     var lang = 'es';
     try { if (window.NivSettings) lang = window.NivSettings.getLang(); } catch (e) { /* default es */ }
     var onNav = function (href) {
@@ -1163,12 +1214,14 @@ onAuthStateChanged(auth, async (user) => {
       } catch (e) { /* ignore */ }
     };
     try {
-      window.__nivSidebar = window.NivShell.mountSidebar('#chrome-sidebar', {
-        target: 'company', active: 'updates', lang: lang, onNav: onNav
-      });
+      if (!embedPanel) {
+        window.__nivSidebar = window.NivShell.mountSidebar('#chrome-sidebar', {
+          target: 'company', active: 'updates', lang: lang, onNav: onNav
+        });
+      }
     } catch (e) { /* shell bridge unavailable: the card still works */ }
     try {
-      if (window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
+      if (!embedPanel && window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
         window.__nivTopbar = window.NivShell.mountTopbar('#chrome-topbar', { active: 'home', lang: lang, context: 'settings' });
       }
     } catch (e) { /* ignore */ }

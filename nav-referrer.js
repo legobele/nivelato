@@ -76,7 +76,7 @@
     '/company/updates': {
       key: null,
       saveName: null,
-      allowed: ['/', '/dashboard.html', '/company/users', '/company/settings', '/company/updates', '/photo.html'],
+      allowed: ['/', '/dashboard.html', '/company/users', '/company/settings', '/company/updates', '/account/settings', '/settings.html', '/photo.html'],
       selector: '#btn-back',
       removeOnclick: false,
       selfByPath: false
@@ -90,7 +90,7 @@
     '/updates.html': {
       key: null,
       saveName: null,
-      allowed: ['/', '/dashboard.html', '/company/users', '/company/settings', '/company/updates', '/updates.html', '/photo.html'],
+      allowed: ['/', '/dashboard.html', '/company/users', '/company/settings', '/company/updates', '/account/settings', '/settings.html', '/updates.html', '/photo.html'],
       selector: '#btn-back',
       removeOnclick: false,
       selfByPath: false
