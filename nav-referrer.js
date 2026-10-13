@@ -80,6 +80,20 @@
       selector: '#btn-back',
       removeOnclick: false,
       selfByPath: false
+    },
+    /* m10: updates.html is also served at its file path /updates.html
+       (the route the settings hosts link to). Without this entry the
+       consume side never ran there and Back always fell back to the
+       dashboard home. Same contract as /company/updates: no storage
+       key, document.referrer mirrored against the allowlist, never
+       self by path + search. */
+    '/updates.html': {
+      key: null,
+      saveName: null,
+      allowed: ['/', '/dashboard.html', '/company/users', '/company/settings', '/company/updates', '/updates.html', '/photo.html'],
+      selector: '#btn-back',
+      removeOnclick: false,
+      selfByPath: false
     }
   };
 

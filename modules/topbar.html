@@ -199,7 +199,10 @@ function reportHeight() {
     resizeQueued = false;
     const bar = document.getElementById('niv-topbar');
     const h = bar ? Math.ceil(bar.getBoundingClientRect().height) : 0;
-    if (h > 0) post({ type: 'niv:resize', height: h });
+    /* M20: post even when h is 0. In settings context (and on mobile)
+       the bar renders nothing; if a 0 height is never posted, the host
+       iframe keeps the bridge's initial 60px and leaves a blank strip. */
+    post({ type: 'niv:resize', height: h });
   });
 }
 

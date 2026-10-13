@@ -613,12 +613,17 @@ async function resolveRegistryVersion(db, fs, channel) {
   } catch (_) { /* registry unreachable: the caller falls back */ }
   return null;
 }
-let versionKickStarted = false;
+/* M7: version resolution is per channel, not one-shot. The first kick
+   resolves for the org's current channel; a later kick after the org
+   channel changes re-resolves for the new channel without a reload.
+   The org doc subscription in initFirebase feeds those later kicks. */
+let versionKickChannel = null;
 function kickVersionResolution(db, fs) {
-  if (versionKickStarted) return;
-  versionKickStarted = true;
   const channel = orgData && orgData.updateChannel ? String(orgData.updateChannel) : 'stable';
+  if (versionKickChannel === channel && displayVersion) return;
+  versionKickChannel = channel;
   resolveRegistryVersion(db, fs, channel).then((v) => {
+    if (versionKickChannel !== channel) return; /* a newer kick won */
     displayVersion = v || FALLBACK_VERSION;
     paintVersion();
   });
@@ -903,6 +908,10 @@ function applyDemo() {
        sub label and the dot. The demo persona is a manager, so the
        manager gate renders its doors in demo mode. */
     if (TARGET === 'company') renderManagerEntries();
+    /* p20: the demo version line derives from the same source as the
+       real one (the registry fallback that mirrors repo VERSION),
+       never the stale hardcoded 1.0 the demo org used to paint. */
+    displayVersion = FALLBACK_VERSION;
     orgData = { name: L('demoCompany'), dataVersion: '1.0', flow: 'external' };
     renderCompanyHead();
     if (TARGET === 'company') {
@@ -981,6 +990,23 @@ async function initFirebase() {
         const orgSnap = await getDoc(doc(db, 'orgs', orgId));
         orgData = orgSnap.exists() ? orgSnap.data() : {};
       } catch (_) { orgData = orgData || {}; }
+    }
+    if (orgId && fsMod.onSnapshot) {
+      /* M7: keep the org doc live in this module. When the org's
+         updateChannel changes (e.g. a switch on updates.html), the new
+         channel arrives here and the version line re-resolves for it
+         without a reload; renderCompanyHead repaints the head too. */
+      try {
+        fsMod.onSnapshot(doc(db, 'orgs', orgId), (snap) => {
+          if (!snap.exists()) return;
+          const prevChannel = orgData && orgData.updateChannel;
+          orgData = snap.data() || {};
+          if (TARGET === 'company' || TARGET === 'shell') {
+            renderCompanyHead();
+            if (orgData.updateChannel !== prevChannel) kickVersionResolution(db, fsMod);
+          }
+        }, () => { /* snapshot is a refresh path; the getDoc data stays */ });
+      } catch (_) { /* onSnapshot unavailable: one-shot behavior remains */ }
     }
     if (TARGET === 'company' || TARGET === 'shell') {
       renderCompanyHead();
@@ -1172,7 +1198,13 @@ if (DEMO) {
 /* QA handle: lets a headless harness exercise the registry resolver
    with stubbed Firestore reads (the module's live path needs a
    signed in org session, which a harness does not have). */
-window.NivSidebarModule = { resolveRegistryVersion: resolveRegistryVersion, FALLBACK_VERSION: FALLBACK_VERSION };
+window.NivSidebarModule = {
+  resolveRegistryVersion: resolveRegistryVersion,
+  kickVersionResolution: kickVersionResolution,
+  FALLBACK_VERSION: FALLBACK_VERSION,
+  _setOrgDataForTest: function (d) { orgData = d; },
+  _getDisplayVersionForTest: function () { return displayVersion; }
+};
 </script>
 </body>
 </html>

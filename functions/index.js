@@ -2182,8 +2182,11 @@ exports.setOrgUpdateChannel = onCall({ region: 'us-central1', memory: '256MiB' }
       'La empresa debe inscribirse en la beta antes de adoptar el canal beta.');
   }
   const pointerFor = async (ch) => {
-    const s = await db.doc(ch === 'beta' ? 'app_updates/beta-latest' : 'app_updates/latest').get();
-    return s.exists ? (s.data().version || null) : null;
+    // Stable reads the current stable pointer, app_updates/backend (the
+    // release tooling stamp). The legacy app_updates/latest pointer is
+    // stale (v1.0, Oct 5) and must not feed channelHistory versions.
+    const s = await db.doc(ch === 'beta' ? 'app_updates/beta-latest' : 'app_updates/backend').get();
+    return s.exists ? (s.data().version || s.data().friendlyVersion || null) : null;
   };
   const fromVersion = await pointerFor(fromChannel);
   const toVersion = await pointerFor(channel);

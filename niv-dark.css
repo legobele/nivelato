@@ -1227,7 +1227,11 @@ html::-webkit-scrollbar-thumb:hover {
 
 /* ---- settings component kit: back link and secondary button ---- */
 .niv-btn-back {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 10px 12px 10px 2px;
   margin-bottom: 16px;
   font-size: 13px;
   color: var(--niv-accent);

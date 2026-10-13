@@ -158,7 +158,10 @@
       } else if (d.type === 'niv:resize') {
         if (heightMode !== 'auto') return;
         var h = Number(d.height);
-        if (isFinite(h) && h > 0 && h < 10000) iframe.style.height = Math.ceil(h) + 'px';
+        /* M20: a 0 height is a real resize (a module that renders
+           nothing, e.g. the topbar in settings context, must collapse
+           the iframe from its initial 60px, not leave a blank strip). */
+        if (isFinite(h) && h >= 0 && h < 10000) iframe.style.height = Math.ceil(h) + 'px';
       } else if (d.type === 'niv:section') {
         if (typeof d.section === 'string') state.section = d.section;
         if (typeof opts.onSection === 'function') opts.onSection(d.section);

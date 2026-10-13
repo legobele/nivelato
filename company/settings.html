@@ -20,8 +20,20 @@ try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|
   /* Layout only: the shell sidebar mount point. All surfaces and controls
      come from the niv-dark.css settings kit; no page-private colors here. */
   #chrome-sidebar { width: 300px; flex: none; position: sticky; top: var(--niv-inset); height: calc(100vh - (2 * var(--niv-inset))); }
+  .niv-mobile-nav-toggle { display: none; }
   @media (max-width: 900px) {
-    #chrome-sidebar { width: auto; position: static; height: min(560px, 80vh); }
+    /* M49/m36: compact mobile nav (hamburger bar, sidebar on tap)
+       instead of the up-to-560px stacked sidebar card above the form. */
+    .niv-mobile-nav-toggle {
+      display: flex; align-items: center; gap: 10px;
+      width: calc(100% - 24px); min-height: 48px; padding: 12px 16px; margin: 12px 12px 0;
+      background: var(--niv-surface); color: var(--niv-text);
+      border: 1.5px solid var(--niv-border); border-radius: 12px;
+      font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+      box-sizing: border-box; text-align: left;
+    }
+    #chrome-sidebar { display: none; width: auto; position: static; height: min(560px, calc(100dvh - 140px)); }
+    body.niv-nav-open #chrome-sidebar { display: block; }
   }
   .co-note { font-size: 12px; color: var(--niv-text-dim); margin: 0 0 12px; }
   .co-loading { color: var(--niv-text-dim); font-size: 13px; }
@@ -29,6 +41,7 @@ try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|
 </style>
 </head>
 <body>
+<button type="button" class="niv-mobile-nav-toggle" id="niv-mobile-nav-toggle" aria-expanded="false" aria-controls="chrome-sidebar"><span aria-hidden="true">&#9776;</span><span data-i18n="mobileNav">Navegación</span></button>
 <div class="niv-shell">
 <aside id="chrome-sidebar" aria-label="Nivelato sidebar"></aside>
 <div class="niv-main">
@@ -39,7 +52,9 @@ try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|
     <div class="niv-card-title" data-i18n="deniedTitle">Sin acceso</div>
     <div class="niv-card-desc" data-i18n="deniedDesc">No tienes permiso para ver los ajustes de la compañía.</div>
   </div>
-  <div id="company-area">
+  <!-- m38: the form stays hidden until auth resolves and the
+       userManagement gate passes; no fully enabled form pre-auth. -->
+  <div id="company-area" style="display:none;">
 
   <div class="niv-settings-card" id="card-company-profile">
     <div class="niv-card-title" data-i18n="profileTitle">Perfil de la compañía</div>
@@ -64,7 +79,7 @@ try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|
   <div class="niv-settings-card">
     <div class="niv-card-title" data-i18n="tfaTitle">API de 2FA</div>
     <div class="niv-card-desc" data-i18n="tfaDesc">Dominio o URL del API que el taller usa para el segundo factor de autenticación. Nivel de compañía, no por usuario.</div>
-    <div class="niv-field niv-field-mono"><label data-i18n="tfaUrlLabel">URL del API de 2FA</label><input id="tfa-url" type="url" placeholder="https://taller.example.com/api/2fa" autocomplete="off" /></div>
+    <div class="niv-field niv-field-mono"><label data-i18n="tfaUrlLabel">URL del API de 2FA</label><input id="tfa-url" type="url" placeholder="https://example.com/api/2fa" autocomplete="off" /></div>
     <button class="niv-btn-pill niv-btn-primary" style="width:100%" id="btn-tfa-save" onclick="saveTfaApi()" data-i18n="save">Guardar</button>
     <div class="niv-status-line" id="tfa-status"></div>
   </div>
@@ -144,7 +159,7 @@ import { ensureFlowClaims } from '../geo.js';
    ------------------------------------------------------------------ */
 const STR = {
   es: {
-    docTitle: 'Nivelato - Ajustes de la compañía',
+    docTitle: 'Nivelato - Ajustes de la compañía', mobileNav: 'Navegación',
     back: '← Volver', heading: 'Ajustes de la compañía',
     sub: 'Configuración del taller. Solo usuarios con permiso de gestión.',
     deniedTitle: 'Sin acceso', deniedDesc: 'No tienes permiso para ver los ajustes de la compañía.',
@@ -187,7 +202,7 @@ const STR = {
     missingProfile: 'No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.'
   },
   en: {
-    docTitle: 'Nivelato - Company settings',
+    docTitle: 'Nivelato - Company settings', mobileNav: 'Navigation',
     back: '← Back', heading: 'Company settings',
     sub: 'Shop configuration. Only users with the management permission.',
     deniedTitle: 'No access', deniedDesc: 'You do not have permission to view company settings.',
@@ -252,6 +267,13 @@ function applyLang(lang) {
   if (_listsLoaded) { renderPermissions(); renderRequests(); renderDeleteRequests(); }
 }
 document.addEventListener('niv:lang', (e) => { if (e && e.detail) applyLang(e.detail.lang); });
+/* M19: apply the stored language at page init, before auth resolves.
+   currentLang comes from the NivSettings chain (cookie/localStorage)
+   via the classic boot script above, so an EN preference paints the
+   page (title included) in English from the start instead of waiting
+   for onAuthStateChanged and the userManagement gate. The post-auth
+   applyLang(currentLang) call below stays as the reconciliation. */
+applyLang(currentLang);
 
 let currentUser = null;
 let currentUserData = null;
@@ -636,6 +658,7 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
+  document.getElementById('company-area').style.display = '';
   applyLang(currentLang);
   await loadOrgMembers(orgId);
   _listsLoaded = true;
@@ -653,6 +676,20 @@ onAuthStateChanged(auth, async (user) => {
   // it reads the org doc itself, so this page no longer fills it in.
 });
 
+</script>
+
+<script>
+  /* M49: compact mobile nav toggle (see the <=900px CSS in this page).
+     Desktop never shows the button; on mobile it expands/collapses the
+     settings sidebar host. */
+  (function () {
+    var btn = document.getElementById('niv-mobile-nav-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var open = document.body.classList.toggle('niv-nav-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  })();
 </script>
 <script src="../nav-referrer.js"></script>
 </body>

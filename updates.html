@@ -281,13 +281,25 @@
     font-size: 14px;
     text-align: center;
   }
+  .niv-mobile-nav-toggle { display: none; }
   @media (max-width: 900px) {
     /* Shell rule: the top bar does not exist on mobile. The bridge mount
-       is suppressed in JS and this hides the host box as a second layer;
-       mobile navigation is the sidebar module, stacked above the card. */
+       is suppressed in JS and this hides the host box as a second layer. */
     #chrome-topbar { display: none !important; }
     .shell { flex-direction: column; padding: 12px; }
-    #chrome-sidebar { width: 100%; height: 480px; position: static; }
+    /* M49/m36: compact mobile nav. The sidebar no longer stacks as a
+       480px card above the card; it hides behind the hamburger bar and
+       opens on tap (module scrolls internally at a viewport height). */
+    .niv-mobile-nav-toggle {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; min-height: 48px; padding: 12px 16px;
+      background: var(--card); color: var(--text);
+      border: 1.5px solid var(--line); border-radius: var(--radius-sm);
+      font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+      box-sizing: border-box; text-align: left;
+    }
+    #chrome-sidebar { display: none; width: 100%; height: min(560px, calc(100dvh - 140px)); position: static; }
+    body.niv-nav-open #chrome-sidebar { display: block; }
     .main { padding: 20px 16px; }
     .update-card { padding: 24px 20px; border-radius: var(--radius-lg); }
     .card-top { gap: 14px; margin-bottom: 18px; }
@@ -300,6 +312,7 @@
 <body>
 <div id="chrome-topbar"></div>
 <div class="shell">
+  <button type="button" class="niv-mobile-nav-toggle" id="niv-mobile-nav-toggle" aria-expanded="false" aria-controls="chrome-sidebar"><span aria-hidden="true">&#9776;</span><span id="niv-mobile-nav-toggle-label">Navegación</span></button>
   <div id="chrome-sidebar" aria-label="Navegación de la compañía"></div>
   <main class="main">
     <div class="updates-wrap">
@@ -344,6 +357,7 @@ const card = document.getElementById('update-card');
 const STRINGS = {
   es: {
     docTitle: 'Nivelato - Actualizaciones',
+    mobileNav: 'Navegación',
     back: 'Volver',
     sidebarAria: 'Navegación de la compañía',
     loading: 'Cargando el estado de actualización...',
@@ -386,7 +400,9 @@ const STRINGS = {
     channelChanging: 'Cambiando canal...',
     channelChanged: (c) => 'Canal cambiado a ' + (c === 'beta' ? 'Beta' : 'Estable') + '.',
     channelChangeFailed: (msg) => 'No se pudo cambiar el canal: ' + msg,
-    channelBetaNeedsEnroll: 'Tu taller debe estar inscrito en la beta para usar el canal Beta.',
+    channelEnrollRequired: 'La empresa debe inscribirse en la beta antes de adoptar el canal beta.',
+    channelNoBetaVersion: 'Todavía no hay una versión beta publicada.',
+    channelInvalid: 'El canal debe ser Estable o Beta.',
     autoUpdateTitle: 'Actualizaciones automáticas',
     autoUpdateDesc: 'Cuando hay una actualización disponible, aplicarla sin pedir confirmación.',
     autoUpdateOn: 'Activadas',
@@ -401,6 +417,7 @@ const STRINGS = {
   },
   en: {
     docTitle: 'Nivelato - Updates',
+    mobileNav: 'Navigation',
     back: 'Back',
     sidebarAria: 'Company navigation',
     loading: 'Loading update status...',
@@ -443,7 +460,9 @@ const STRINGS = {
     channelChanging: 'Changing channel...',
     channelChanged: (c) => 'Channel changed to ' + (c === 'beta' ? 'Beta' : 'Stable') + '.',
     channelChangeFailed: (msg) => 'Could not change the channel: ' + msg,
-    channelBetaNeedsEnroll: 'Your workshop must be enrolled in the beta to use the Beta channel.',
+    channelEnrollRequired: 'The company must enroll in the beta before adopting the beta channel.',
+    channelNoBetaVersion: 'No beta version has been published yet.',
+    channelInvalid: 'The channel must be Stable or Beta.',
     autoUpdateTitle: 'Automatic updates',
     autoUpdateDesc: 'When an update is available, apply it without asking for confirmation.',
     autoUpdateOn: 'On',
@@ -473,6 +492,8 @@ function applyLang(lang) {
   if (back) back.textContent = '\u2190 ' + t('back');
   const side = document.getElementById('chrome-sidebar');
   if (side) side.setAttribute('aria-label', t('sidebarAria'));
+  const navToggle = document.getElementById('niv-mobile-nav-toggle-label');
+  if (navToggle) navToggle.textContent = t('mobileNav');
   const loading = document.getElementById('loading-state');
   if (loading) loading.textContent = t('loading');
   try { if (window.__nivSidebar) window.__nivSidebar.setLang(currentLang); } catch (_) { /* ignore */ }
@@ -482,7 +503,10 @@ document.addEventListener('niv:lang', (e) => {
   const l = e && e.detail && e.detail.lang;
   if (l !== 'es' && l !== 'en') return;
   applyLang(l);
-  if (dataReady) render();
+  /* m9: re-render with whatever data state exists, not only after
+     dataReady. Before data lands orgData is null and applyLang above
+     has already re-localized the loading state in place. */
+  if (orgData) render();
 });
 applyLang(currentLang);
 const SECURITY_URL = 'faq.nivelatolabs.com/company/updates#about-security';
@@ -503,6 +527,13 @@ let lastPointerChannel = null; // channel the pointer was last loaded for
    duplicate write, or interleave two renders of the card. */
 let actionInFlight = false;
 let writeInFlight = false;
+/* M6: the last channel status survives render(). render() rebuilds the
+   card innerHTML (including a fresh #channel-status), so the message is
+   kept here and re-emitted by renderChannelSection on every render. */
+let channelStatus = { kind: '', text: '' };
+/* m7: channel switch in flight. Snapshot re-renders must not re-enable
+   the pills mid-flight, and a second switch cannot start. */
+let channelChangeInFlight = false;
 
 function setStatus(kind, text) {
   const el = document.getElementById('update-status');
@@ -575,7 +606,7 @@ function ownerButtons(html) {
    (sidebar module, registry-live) picks the new channel up on its own. */
 function renderChannelSection() {
   const ch = orgChannel();
-  const canChange = isOwner();
+  const canChange = isOwner() && !channelChangeInFlight;
   return `
     <div class="pref-section" id="channel-section">
       <div class="pref-title">${escapeHtml(t('channelTitle'))}</div>
@@ -585,7 +616,7 @@ function renderChannelSection() {
         <button type="button" class="chan-pill${ch === 'beta' ? ' active' : ''}" data-channel="beta"${ch === 'beta' || !canChange ? ' disabled' : ''}>${escapeHtml(t('channelBeta'))}</button>
       </div>
       ${!canChange ? '<p class="pref-note">' + escapeHtml(t('ownerOnly')) + '</p>' : ''}
-      <div class="niv-status-line" id="channel-status"></div>
+      <div class="niv-status-line${channelStatus.kind ? ' ' + channelStatus.kind : ''}" id="channel-status">${escapeHtml(channelStatus.text)}</div>
     </div>
   `;
 }
@@ -596,10 +627,13 @@ function wireChannelSection() {
   });
 }
 async function onChannelChange(channel, pill) {
+  if (channelChangeInFlight) return; // m7: no overlapping switches
   if (!isOwner() || channel === orgChannel()) return;
   if (channel !== 'stable' && channel !== 'beta') return;
-  const statusEl = document.getElementById('channel-status');
+  channelChangeInFlight = true;
   const setCStatus = (kind, text) => {
+    channelStatus = { kind: kind || '', text: text || '' };
+    const statusEl = document.getElementById('channel-status');
     if (!statusEl) return;
     statusEl.className = 'niv-status-line' + (kind ? ' ' + kind : '');
     statusEl.textContent = text || '';
@@ -612,6 +646,7 @@ async function onChannelChange(channel, pill) {
     await setChannel({ channel });
     // Re-read the org doc (the channel write) and the channel pointer,
     // then re-render so the update content follows the new channel.
+    // loadChannelPointer is module scope (M5 hoist), so this resolves.
     const snap = await getDoc(doc(db, 'orgs', orgId));
     if (snap.exists()) orgData = snap.data() || orgData;
     await loadChannelPointer();
@@ -619,13 +654,29 @@ async function onChannelChange(channel, pill) {
     dataReady = true;
     render();
   } catch (e) {
-    const msg = (e && e.message) || t('unknownError');
-    // The callable rejects beta adoption without enrollment; say so plainly.
-    setCStatus('err', t('channelChangeFailed', msg));
-    card.querySelectorAll('#channel-section .chan-pill').forEach((p) => { p.disabled = false; });
+    // m8: the callable's error text is Spanish server copy. Map known
+    // server messages to this page's localized strings and never leak
+    // raw Spanish into an EN failure message.
+    setCStatus('err', t('channelChangeFailed', localizeChannelError(e)));
     // Re-sync the active pill (the change did not land).
     render();
+  } finally {
+    channelChangeInFlight = false;
+    // A render while in flight kept the pills disabled via
+    // renderChannelSection; re-render once so they reflect reality.
+    if (orgData) render();
   }
+}
+/* Map setOrgUpdateChannel server errors to localized page strings. */
+function localizeChannelError(e) {
+  const raw = (e && e.message) || '';
+  if (/inscrib|enroll/i.test(raw)) return t('channelEnrollRequired');
+  if (/versión beta publicada|beta version/i.test(raw)) return t('channelNoBetaVersion');
+  if (/channel debe ser|canal debe ser/i.test(raw)) return t('channelInvalid');
+  if (currentLang === 'en' && /[áéíóúñ¿¡]|\b(debe|todavía|empresa|versión|canal)\b/i.test(raw)) {
+    return t('unknownError');
+  }
+  return raw || t('unknownError');
 }
 
 /* ---- v1.1: automatic updates menu ----
@@ -757,10 +808,10 @@ function renderApplying(stepLabel, pct) {
       <div class="mini-logo">N</div>
       <h1 class="card-title">${title}</h1>
     </div>
-    <div class="progress-label">${escapeHtml(t('applyingPct', pct))}</div>
+    <div class="progress-label" role="status" aria-live="polite">${escapeHtml(t('applyingPct', pct))}</div>
     <div class="progress-step">${escapeHtml(stepLabel || t('starting'))}</div>
     <div class="dl-meta" id="dl-meta" hidden><span id="dl-bytes"></span><span class="dl-rate" id="dl-rate"></span></div>
-    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:${pct}%"></div></div>
+    <div class="progress-track" role="progressbar" aria-label="${escapeHtml(t('applyingFallback'))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}"><div class="progress-fill" id="progress-fill" style="width:${pct}%"></div></div>
     ${notes ? `<div class="notes-box"><p>${notes}</p></div>` : ''}
     ${isOwner() ? '<button class="btn btn-outline" id="btn-cancel">' + escapeHtml(t('cancelUpdate')) + '</button>' : ''}
   `;
@@ -786,6 +837,8 @@ function fmtMB(v) {
 function setBar(pct) {
   const fill = document.getElementById('progress-fill');
   if (fill) fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+  const track = card.querySelector('.progress-track[role="progressbar"]');
+  if (track) track.setAttribute('aria-valuenow', String(Math.round(Math.max(0, Math.min(100, pct)))));
   const label = card.querySelector('.progress-label');
   if (label) label.textContent = t('applyingPct', Math.round(Math.max(0, Math.min(100, pct))));
 }
@@ -1010,6 +1063,33 @@ window.__nivUpdates = {
   _renderForTest: () => render()
 };
 
+// Channel pointer + update descriptor (public read, channel aware).
+// Loaded/refreshes from the org snapshot below so the channel is known.
+// beta -> app_updates/beta-latest (has `version` -> descriptor doc);
+// stable -> app_updates/backend (the stable stamp; friendlyVersion).
+// The legacy app_updates/latest pointer is stale and is never read.
+async function loadChannelPointer() {
+  const ch = orgChannel();
+  const path = ch === 'beta' ? 'beta-latest' : 'backend';
+  try {
+    const snap = await getDoc(doc(db, 'app_updates', path));
+    channelDoc = snap.exists() ? snap.data() : null;
+    updateDocData = null;
+    const ver = channelDoc && channelDoc.version ? String(channelDoc.version) : null;
+    if (ver) {
+      try {
+        const updSnap = await getDoc(doc(db, 'app_updates', ver));
+        updateDocData = updSnap.exists() ? updSnap.data() : null;
+      } catch (_) { /* descriptor optional */ }
+    }
+  } catch (e) {
+    console.warn('[Nivelato] could not read app_updates/' + path + ':', e.message);
+    channelDoc = null;
+    updateDocData = null;
+  }
+  lastPointerChannel = ch;
+}
+
 // ---- auth + data ----
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
@@ -1043,33 +1123,6 @@ onAuthStateChanged(auth, async (user) => {
 
   try { await startPresence(user.uid); } catch (e) {
     console.warn('[Nivelato] presence start failed:', e.message);
-  }
-
-  // Channel pointer + update descriptor (public read, channel aware).
-  // Loaded/refreshes from the org snapshot below so the channel is known.
-  // beta -> app_updates/beta-latest (has `version` -> descriptor doc);
-  // stable -> app_updates/backend (the stable stamp; friendlyVersion).
-  // The legacy app_updates/latest pointer is stale and is never read.
-  async function loadChannelPointer() {
-    const ch = orgChannel();
-    const path = ch === 'beta' ? 'beta-latest' : 'backend';
-    try {
-      const snap = await getDoc(doc(db, 'app_updates', path));
-      channelDoc = snap.exists() ? snap.data() : null;
-      updateDocData = null;
-      const ver = channelDoc && channelDoc.version ? String(channelDoc.version) : null;
-      if (ver) {
-        try {
-          const updSnap = await getDoc(doc(db, 'app_updates', ver));
-          updateDocData = updSnap.exists() ? updSnap.data() : null;
-        } catch (_) { /* descriptor optional */ }
-      }
-    } catch (e) {
-      console.warn('[Nivelato] could not read app_updates/' + path + ':', e.message);
-      channelDoc = null;
-      updateDocData = null;
-    }
-    lastPointerChannel = ch;
   }
 
   // live org doc so scheduling/cancel/apply/channel reflect for everyone
@@ -1125,6 +1178,20 @@ onAuthStateChanged(auth, async (user) => {
        entry (allowlist, never self by path + search). No saved key is
        touched here: the settings keys belong to the settings visits.
        The fallback href in the markup stands otherwise. */
+  })();
+</script>
+
+<script>
+  /* M49: compact mobile nav toggle (see the <=900px CSS in this page).
+     Desktop never shows the button; on mobile it expands/collapses the
+     settings sidebar host. */
+  (function () {
+    var btn = document.getElementById('niv-mobile-nav-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var open = document.body.classList.toggle('niv-nav-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
   })();
 </script>
 <script src="./press-yaoi.js"></script>

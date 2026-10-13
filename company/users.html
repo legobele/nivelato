@@ -353,10 +353,22 @@
   @media (max-width: 1100px) {
     .detail-grid { grid-template-columns: 1fr; }
   }
+  .niv-mobile-nav-toggle { display: none; }
   @media (max-width: 900px) {
     body { height: auto; overflow: visible; }
     .shell { flex-direction: column; flex: none; padding: 12px; gap: 16px; }
-    #chrome-sidebar { width: 100%; height: 380px; flex: none; }
+    /* M49/m36: compact mobile nav (hamburger bar, sidebar on tap)
+       instead of the 380px stacked sidebar card above the user list. */
+    .niv-mobile-nav-toggle {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; min-height: 48px; padding: 12px 16px;
+      background: var(--card); color: var(--text);
+      border: 1.5px solid var(--line); border-radius: var(--radius-sm);
+      font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+      box-sizing: border-box; text-align: left; margin: 12px 12px 0; width: calc(100% - 24px);
+    }
+    #chrome-sidebar { display: none; width: 100%; height: min(560px, calc(100dvh - 140px)); flex: none; }
+    body.niv-nav-open #chrome-sidebar { display: block; }
     .users-col {
       width: 100%;
       max-height: none;
@@ -379,6 +391,7 @@
 </head>
 <body>
 <div id="chrome-topbar"></div>
+<button type="button" class="niv-mobile-nav-toggle" id="niv-mobile-nav-toggle" aria-expanded="false" aria-controls="chrome-sidebar"><span aria-hidden="true">&#9776;</span><span id="nav-toggle-label">Navegación</span></button>
 <div class="shell">
   <div id="chrome-sidebar" aria-label="Company navigation"></div>
 
@@ -420,7 +433,7 @@ try {
 } catch (e) {}
 const STR = {
   en: {
-    team: 'Team', loadingUsers: 'Loading users...', selectUser: 'Select a user to see details.',
+    navMenu: 'Navigation', team: 'Team', loadingUsers: 'Loading users...', selectUser: 'Select a user to see details.',
     noMembers: 'No team members yet.', unknownUser: 'Unknown user', owner: 'Owner', you: ' (you)',
     projectsBy: 'Projects by {name}', loadingProjects: 'Loading projects...', couldNotProjects: 'Could not load projects.',
     noProjects: 'No projects yet.', measuredSpace: 'measured space', measuredSpaces: 'measured spaces',
@@ -440,7 +453,7 @@ const STR = {
     retry: 'Retry'
   },
   es: {
-    team: 'Equipo', loadingUsers: 'Cargando usuarios...', selectUser: 'Selecciona un usuario para ver los detalles.',
+    navMenu: 'Navegación', team: 'Equipo', loadingUsers: 'Cargando usuarios...', selectUser: 'Selecciona un usuario para ver los detalles.',
     noMembers: 'Todavía no hay miembros en el equipo.', unknownUser: 'Usuario desconocido', owner: 'Dueño', you: ' (tú)',
     projectsBy: 'Proyectos de {name}', loadingProjects: 'Cargando proyectos...', couldNotProjects: 'No se pudieron cargar los proyectos.',
     noProjects: 'Todavía no hay proyectos.', measuredSpace: 'espacio medido', measuredSpaces: 'espacios medidos',
@@ -466,6 +479,8 @@ const t = (key, vars) => {
   return out;
 };
 function applyStaticLang() {
+  const nt = document.getElementById('nav-toggle-label');
+  if (nt) nt.textContent = t('navMenu');
   const tt = document.getElementById('team-title');
   if (tt) tt.textContent = t('team');
   const ll = document.getElementById('list-loading');
@@ -1017,6 +1032,20 @@ onAuthStateChanged(auth, async (user) => {
     var detail = document.getElementById('detail');
     if (detail) detail.innerHTML = '<div class="state-loading">' + msg + '</div>';
   }, 15000);
+</script>
+
+<script>
+  /* M49: compact mobile nav toggle (see the <=900px CSS in this page).
+     Desktop never shows the button; on mobile it expands/collapses the
+     settings sidebar host. */
+  (function () {
+    var btn = document.getElementById('niv-mobile-nav-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var open = document.body.classList.toggle('niv-nav-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  })();
 </script>
 <script src="/press-yaoi.js"></script>
 <script type="module" src="/add-user.js"></script>
