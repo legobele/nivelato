@@ -808,6 +808,40 @@ body.has-sidebar .niv-shell > main {
   border-radius: 18px;
   box-shadow: 0 10px 34px rgba(0,0,0,0.38);
 }
+/* Updates second sidebar (D8): the company Updates view opens as a
+   panel beside the main sidebar instead of replacing the content.
+   It iframes updates.html in its embed mode (?embed=panel). */
+#niv-updates-panel {
+  display: none;
+  flex: none; width: 380px; margin-left: var(--niv-inset);
+  flex-direction: column; min-height: 0;
+  background: var(--niv-surface, #17171a);
+  border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+  border-radius: 18px;
+  box-shadow: 0 10px 34px rgba(0,0,0,0.38);
+  overflow: hidden;
+}
+#niv-updates-panel.open { display: flex; }
+.niv-updates-panel-head {
+  flex: none; display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.niv-updates-panel-title { font-weight: 700; font-size: 15px; color: var(--niv-text, #f5f5f7); }
+.niv-updates-panel-close {
+  margin-left: auto; flex: none; width: 32px; height: 32px;
+  border-radius: 9px; border: 1px solid rgba(255,255,255,0.14);
+  background: #1e1e22; color: #f5f5f7; font-size: 15px; cursor: pointer;
+  font-family: 'Inter', system-ui, sans-serif; line-height: 1;
+}
+.niv-updates-panel-close:hover { background: rgba(255,255,255,0.08); }
+#niv-updates-frame { flex: 1 1 auto; width: 100%; min-height: 0; border: 0; background: transparent; }
+@media (max-width: 900px) {
+  #niv-updates-panel {
+    position: fixed; top: 0; right: 0; z-index: 850;
+    width: min(400px, 94vw); height: 100dvh; margin-left: 0;
+    border-radius: 0; border-top: 0; border-bottom: 0; border-right: 0;
+  }
+}
 /* Con la barra colapsada el asa desaparece (display:none) y con ella el
    hueco entre tarjetas: este margen lo conserva. Solo escritorio; en movil
    la barra es un cajon superpuesto y el contenido va a todo lo ancho. */
@@ -1059,6 +1093,7 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
   <div class="niv-company-pop" id="niv-company-menu" style="display:none" role="menu">
     <div class="niv-company-pop-title" id="company-menu-title">Empresa</div>
     <button class="niv-company-pop-item" id="company-menu-settings" role="menuitem" onclick="window.closeCompanyDialog();window.location.href='/company/settings'"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="6" fill="currentColor"/><g stroke="#fff" stroke-width="1.8" stroke-linecap="round"><line x1="6.5" y1="9" x2="17.5" y2="9"/><line x1="6.5" y1="15" x2="17.5" y2="15"/></g><circle cx="10" cy="9" r="2.1" fill="#fff"/><circle cx="14" cy="15" r="2.1" fill="#fff"/></svg><span id="company-menu-settings-label">Ajustes de la empresa</span></button>
+    <button class="niv-company-pop-item" id="company-menu-updates" role="menuitem" onclick="window.closeCompanyDialog();window.openUpdatesPanel()"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="6" fill="currentColor"/><path d="M11 4.8h2v7.4l3.3-3.3 1.4 1.4L12 16l-5.7-5.7 1.4-1.4L11 12.2zM5.4 17.4h13.2v1.9H5.4z" fill="#fff"/></svg><span id="company-menu-updates-label">Actualizaciones</span></button>
     <button class="niv-company-pop-item" id="company-menu-users" role="menuitem" onclick="window.closeCompanyDialog();window.showDashView('users')"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="6" fill="currentColor"/><path d="M9.2 6.1a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4zM3.9 18.7c.7-3.1 2.8-4.7 5.3-4.7s4.6 1.6 5.3 4.7zM16.6 7.6a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zM15.9 14.3c2.1.3 3.7 1.8 4.3 4.4h-4.5c.35-1.6.42-3.05.2-4.4z" fill="#fff"/></svg><span id="company-menu-users-label">Usuarios</span></button>
   </div>
   </div>
@@ -1130,6 +1165,13 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
   </div>
 </div>
 <div class="niv-resize-handle" id="niv-resize-handle" role="separator" aria-orientation="vertical" title="Arrastrar para redimensionar"></div>
+<aside id="niv-updates-panel" aria-label="Actualizaciones">
+  <div class="niv-updates-panel-head">
+    <span class="niv-updates-panel-title" id="niv-updates-panel-title">Actualizaciones</span>
+    <button type="button" class="niv-updates-panel-close" id="niv-updates-panel-close" aria-label="Cerrar">✕</button>
+  </div>
+  <iframe id="niv-updates-frame" title="Actualizaciones"></iframe>
+</aside>
 <script>
 /* Modo "Barra lateral compacta" (preferencia de interfaz guardada en
    Ajustes, clave 'niv-compact-sidebar'): se lee y se aplica durante el
@@ -5134,6 +5176,30 @@ let currentUser;
       Object.keys(units).forEach((k) => units[k].classList.toggle('active', k === key));
       if (key === 'projects') expandOnly('projects');
     };
+  })();
+
+  // ---- Actualizaciones como segunda barra lateral (D8) ----
+  // El panel incrusta updates.html en modo embed (?embed=panel); la
+  // carga es perezosa y el marco se conserva entre aperturas para no
+  // interrumpir una aplicacion en curso.
+  (() => {
+    const panel = document.getElementById('niv-updates-panel');
+    const frame = document.getElementById('niv-updates-frame');
+    if (!panel || !frame) return;
+    let loaded = false;
+    window.openUpdatesPanel = () => {
+      document.body.classList.remove('nav-open');
+      if (!loaded) { frame.src = '/company/updates?embed=panel'; loaded = true; }
+      panel.classList.add('open');
+    };
+    window.closeUpdatesPanel = () => { panel.classList.remove('open'); };
+    const closeBtn = document.getElementById('niv-updates-panel-close');
+    if (closeBtn) closeBtn.addEventListener('click', () => window.closeUpdatesPanel());
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && panel.classList.contains('open')) window.closeUpdatesPanel();
+    });
+    const bannerLink = document.getElementById('home-update-link');
+    if (bannerLink) bannerLink.addEventListener('click', (e) => { e.preventDefault(); window.openUpdatesPanel(); });
   })();
 
   // ---- vista Usuarios: dos superficies, dos puertas (regla IA) ----
