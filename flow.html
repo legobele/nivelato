@@ -408,6 +408,7 @@
 
         <section class="flow-card" aria-label="Where" data-s-aria="ariaWhere">
           <h2 data-s="whereTitle">¿Dónde es?</h2>
+          <input type="text" class="flow-loc-input" id="flow-area" data-s-ph="areaPh" placeholder="Área (ej.: Baño 1)" autocomplete="off" aria-label="Área" data-s-aria="ariaArea" />
           <input type="text" class="flow-loc-input" id="flow-location" data-s-ph="locationPh" placeholder="Ubicación" autocomplete="off" aria-label="Ubicación" data-s-aria="ariaLocation" />
           <button type="button" class="flow-opt" id="flow-geo" data-s="usePrecise">Usar mi ubicación precisa</button>
           <div class="flow-geo-status" id="flow-geo-status"></div>
@@ -534,7 +535,7 @@ const STR = {
     whyTitle: '¿Por qué esto?', whyTitle2: '¿Por qué esto?',
     whoWhy: 'Para que cada medida pertenezca al cliente y proyecto correctos desde el primer paso.',
     pickProject: 'Elige un proyecto', noProjects: 'Todavía no hay proyectos en esta empresa.', loadingProjects: 'Cargando proyectos...',
-    whereTitle: '¿Dónde es?', locationPh: 'Ubicación', usePrecise: 'Usar mi ubicación precisa',
+    whereTitle: '¿Dónde es?', locationPh: 'Ubicación', areaPh: 'Área (ej.: Baño 1)', usePrecise: 'Usar mi ubicación precisa',
     whereWhy: 'La ubicación ancla la medida al lugar donde va la pieza.',
     geoBusy: 'Obteniendo tu ubicación...', geoAdded: 'Ubicación precisa agregada.',
     geoDenied: 'No se compartió la ubicación. Puedes escribirla en el campo.',
@@ -542,7 +543,7 @@ const STR = {
     nextIndividual: 'Datos completos. Usa Continuar para ir a Dimensiones base.',
     nextReady: 'Datos completos. Usa Continuar para ir a Dimensiones base.',
     ariaSections: 'Secciones', ariaGraph: 'Gráfica', ariaWho: 'Para quién es', ariaWhere: 'Dónde es',
-    ariaDims: 'Dimensiones base', ariaWhy: 'Por qué', ariaFraction: 'Fracción de pulgada', ariaLocation: 'Ubicación',
+    ariaDims: 'Dimensiones base', ariaWhy: 'Por qué', ariaFraction: 'Fracción de pulgada', ariaLocation: 'Ubicación', ariaArea: 'Área',
     ctxProjectCustomer: 'Cliente del proyecto seleccionado',
     step1HintBoth: 'Completa los datos del cliente y el proyecto y agrega una ubicación para continuar.',
     step1HintWho: 'Elige para quién es para continuar.',
@@ -579,7 +580,7 @@ const STR = {
     whyTitle: 'Why do this?', whyTitle2: 'Why do this?',
     whoWhy: 'So every measurement belongs to the right customer and project from the very first step.',
     pickProject: 'Choose a project', noProjects: 'No projects yet in this company.', loadingProjects: 'Loading projects...',
-    whereTitle: 'Where is this at?', locationPh: 'Location', usePrecise: 'Use my precise location',
+    whereTitle: 'Where is this at?', locationPh: 'Location', areaPh: 'Area (e.g. Bathroom 1)', usePrecise: 'Use my precise location',
     whereWhy: 'The location anchors the measurement to the place where the piece goes.',
     geoBusy: 'Getting your location...', geoAdded: 'Precise location added.',
     geoDenied: 'Location was not shared. You can type it in the field instead.',
@@ -587,7 +588,7 @@ const STR = {
     nextIndividual: 'Details complete. Use Continue to go to Base dimensions.',
     nextReady: 'Details complete. Use Continue to go to Base dimensions.',
     ariaSections: 'Sections', ariaGraph: 'Graph', ariaWho: 'Who', ariaWhere: 'Where',
-    ariaDims: 'Base dimensions', ariaWhy: 'Why', ariaFraction: 'Fraction of an inch', ariaLocation: 'Location',
+    ariaDims: 'Base dimensions', ariaWhy: 'Why', ariaFraction: 'Fraction of an inch', ariaLocation: 'Location', ariaArea: 'Area',
     ctxProjectCustomer: 'Customer of the selected project',
     step1HintBoth: 'Complete the customer and project details and add a location to continue.',
     step1HintWho: 'Choose who this is for to continue.',
@@ -634,6 +635,8 @@ const state = {
   who: null,               // 'individual' | 'company-new' | 'company-existing'
   project: null,           // { id, name } when an existing project is picked/referred
   customerName: '',        // only when referred with ?customer=
+  // area: the measurement's display title (free-text label, e.g. "Bathroom 1"); will persist to the job doc as `area` when the flow's save step lands
+  area: '',
   location: '',
   locationCoords: null,
   touched: false,          // any interaction, or a referral prefill
@@ -927,6 +930,11 @@ document.querySelectorAll('[data-who]').forEach((b) => {
     if (state.who !== 'company-existing') state.project = null;
     render();
   });
+});
+
+$('flow-area').addEventListener('input', (e) => {
+  state.area = e.target.value;
+  state.touched = true;
 });
 
 $('flow-location').addEventListener('input', (e) => {

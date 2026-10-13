@@ -211,7 +211,7 @@ const DRAFT_KEY = 'nivelato_wizard_draft_v1';
 // (e) la foto anotada vive aquí desde el arranque para que saveDraft/restoreDraft
 // puedan leerla sin caer en la TDZ durante el init
 let annotatedPhotoDataUrl = null;
-const DRAFT_IDS = ['customer-name','project-name','location-name','notas-field',
+const DRAFT_IDS = ['customer-name','project-name','location-name','area-name','notas-field',
   'hueco-ancho-bot-whole','hueco-ancho-bot-frac','hueco-alto-izq-whole','hueco-alto-izq-frac',
   'pI-a-whole','pI-a-frac','pI-b-whole','pI-b-frac',
   'pD-a-whole','pD-a-frac','pD-b-whole','pD-b-frac',
@@ -590,6 +590,7 @@ function _saveCurrentJob(warnings) {
   const customer = document.getElementById('customer-name')?.value || '';
   const project = document.getElementById('project-name')?.value || '';
   const location = document.getElementById('location-name')?.value || '';
+  const area = document.getElementById('area-name')?.value || '';
   const jobData = {
     hueco: { anchoBot: anchoBot, altoIzq: altoIzq, anchoTop: anchoTop, altoDer: altoDer },
     desniveles: {
@@ -608,6 +609,7 @@ function _saveCurrentJob(warnings) {
     customer: customer,
     project: project,
     location: location,
+    area: area,
     warnings: warnings || [],
     notas: notas,
     annotatedPhoto: annotatedPhotoDataUrl || null
