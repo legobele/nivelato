@@ -104,10 +104,36 @@ persists in the same localStorage record the dashboard uses,
 `niv-panel-sections`, keyed by the section `data-seckey`
 (`projects`, `customers`, `measures`). All three start expanded.
 
-List rows are display only in this module. At base there is no URL
-deep link for a project or a measure (the dashboard opens them through
-its own in page state), so row activation stays with the dashboard
-shell; the module renders the lists, it does not fake links.
+Row bodies activate like the dashboard rows: clicking a row runs its
+primary action (project rows open the project, customer rows open the
+customer overview, measure rows open the measure detail) through the
+same `niv:row-open` message the "..." menus use. The "..." button is a
+real menu button (`aria-haspopup="menu"`, `aria-expanded`, a
+localized accessible name): Esc closes and refocuses it, focus moves
+into the menu on open, arrow keys navigate the items, Enter activates,
+and re-clicking the trigger toggles the menu closed. In demo mode the
+Firestore actions (Rename, Delete) show a visible "disabled in demo"
+toast instead of failing silently.
+
+### Row actions (`niv:row-open`) and the host contract
+
+The module posts `{ niv: 1, type: 'niv:row-open', kind, action, id,
+label }` for the menu's navigation actions (project `open`, customer
+`view` and `new-measure`, measure `view`). Hosts mounting the sidebar
+through `shell-bridge.js` may pass `opts.onRowAction(d)`: return
+`false` to handle the action themselves and suppress the default.
+When no host handles it, the bridge navigates to the record itself:
+
+| kind / action | Default destination |
+| --- | --- |
+| project / open | `/dashboard.html?view=project&project=<id>` |
+| customer / view | `/dashboard.html?view=customer&customer=<name>` (the customer name is the record key) |
+| customer / new-measure | `/flow.html?customer=<name>` (the flow's existing `?customer=` referral preselects the customer; `projectId`/`projectName` on the message, when present, are forwarded as `?project=` / `?projectName=`) |
+| measure / view | `/dashboard.html?view=measure&measure=<id>` |
+
+Standalone (not embedded), the module navigates to these same
+defaults itself. Rename and Delete are not host actions: the module
+runs them as Firestore writes (rules enforce permissions).
 
 ### Permission gate (manager only doors)
 
@@ -237,6 +263,7 @@ iframe it created, and only navigates to same origin hrefs.
 | `niv:nav` | module to host | `{ href }` | A nav anchor was clicked. The host performs the top frame navigation. Embedded modules suppress the anchor default after posting, so hosts MUST navigate on this message. Module anchors also carry `target="_top"` as the no JS fallback: standalone, or a host that never loads the module script, still navigates. |
 | `niv:resize` | module to host | `{ height }` | Content height in CSS pixels (uncapped measurement). Auto mode hosts set the iframe height from it. Fixed mode hosts (the company sidebar default) ignore it. |
 | `niv:section` | module to host | `{ section }` | User target only: a subsettings button was clicked. The module marks it active itself, then the host shows the matching section. |
+| `niv:row-open` | module to host | `{ kind, action, id, label }` | A row's navigation action (see "Row actions" above). The bridge navigates to the record by default; a host may intercept with `opts.onRowAction` (return `false` to suppress the default). |
 
 ## Drag and drop messages (wave 3, niv-drag.js)
 

@@ -168,8 +168,22 @@
     cursor: pointer;
   }
   .row-menu-item:hover { background: var(--niv-surface-2, #1e1e22); }
+  .row-menu-item:focus-visible { outline: 2px solid var(--niv-accent, #f5a524); outline-offset: -2px; }
   .row-menu-item.danger { color: #f87171; }
   .row-menu-item.danger:hover { background: rgba(229,72,77,0.12); }
+  .dots:focus-visible { outline: 2px solid var(--niv-accent, #f5a524); outline-offset: 1px; }
+
+  /* Visible feedback toast (demo mode actions, menu failures that are
+     not tied to a single field). */
+  .mod-toast {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(12px);
+    background: var(--niv-surface-2, #1e1e22); color: var(--niv-text, #f5f5f7);
+    border: 1px solid var(--niv-border, rgba(255,255,255,0.28));
+    padding: 10px 16px; border-radius: 999px; font-size: 13px; font-weight: 600;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s;
+    z-index: 1100; max-width: 86vw; text-align: center;
+  }
+  .mod-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   [hidden] { display: none !important; }
 </style>
@@ -336,6 +350,8 @@ const STRINGS = {
     newProject: 'Nuevo proyecto',
     menuOpen: 'Abrir', menuView: 'Ver detalles', menuRename: 'Renombrar', menuDelete: 'Eliminar',
     menuNewMeasure: 'Nueva medida',
+    menuActionsFor: 'Acciones para',
+    demoDisabled: 'Las acciones están desactivadas en el modo de demostración.',
     renamePrompt: (name) => 'Nuevo nombre para "' + name + '":',
     renameFailed: 'No se pudo renombrar. Revisa tus permisos e intenta de nuevo.',
     deleteConfirm: (name) => '¿Eliminar "' + name + '"? Esta acción no se puede deshacer.',
@@ -363,6 +379,8 @@ const STRINGS = {
     newProject: 'New project',
     menuOpen: 'Open', menuView: 'View details', menuRename: 'Rename', menuDelete: 'Delete',
     menuNewMeasure: 'New measurement',
+    menuActionsFor: 'Actions for',
+    demoDisabled: 'Actions are disabled in demo mode.',
     renamePrompt: (name) => 'New name for "' + name + '":',
     renameFailed: 'Could not rename. Check your permissions and try again.',
     deleteConfirm: (name) => 'Delete "' + name + '"? This cannot be undone.',
@@ -723,22 +741,26 @@ function initSections() {
 
 let lastLists = null;
 let demoListsOn = false;
+function dotsBtnHtml(label) {
+  return '<button type="button" class="dots" aria-haspopup="menu" aria-expanded="false" aria-label="'
+    + escapeHtml(L('menuActionsFor') + ' "' + label + '"') + '">...</button>';
+}
 function panelItems(names, emptyKey) {
   if (!names.length) return '<div class="niv-panel-empty">' + escapeHtml(L(emptyKey)) + '</div>';
   return names.map((n, i) =>
-    '<div class="niv-panel-item' + (i === 0 ? ' first' : '') + '" data-kind="customer" data-label="' + escapeHtml(n) + '"><span>' + escapeHtml(n) + '</span><button type="button" class="dots" aria-label="...">...</button></div>'
+    '<div class="niv-panel-item' + (i === 0 ? ' first' : '') + '" data-kind="customer" data-label="' + escapeHtml(n) + '"><span>' + escapeHtml(n) + '</span>' + dotsBtnHtml(n) + '</div>'
   ).join('');
 }
 function projectItems(projects) {
   if (!projects.length) return '<div class="niv-panel-empty">' + escapeHtml(L('emptyProjects')) + '</div>';
   return projects.map((pr, i) =>
-    '<div class="niv-panel-item' + (i === 0 ? ' first' : '') + '" data-kind="project" data-project-id="' + escapeHtml(pr.id) + '" data-label="' + escapeHtml(pr.name) + '"><span>' + escapeHtml(pr.name) + '</span><button type="button" class="dots" aria-label="...">...</button></div>'
+    '<div class="niv-panel-item' + (i === 0 ? ' first' : '') + '" data-kind="project" data-project-id="' + escapeHtml(pr.id) + '" data-label="' + escapeHtml(pr.name) + '"><span>' + escapeHtml(pr.name) + '</span>' + dotsBtnHtml(pr.name) + '</div>'
   ).join('');
 }
 function measureItems(measures) {
   if (!measures.length) return '<div class="niv-panel-empty">' + escapeHtml(L('emptyMeasures')) + '</div>';
   return measures.map((m, i) =>
-    '<div class="niv-panel-item' + (i === 0 ? ' first' : '') + '" data-kind="measure" data-measure-id="' + escapeHtml(m.id) + '" data-measure-label="' + escapeHtml(m.label) + '" data-label="' + escapeHtml(m.label) + '"><span>' + escapeHtml(m.label) + (m.photo ? ' \u{1F4F7}' : '') + '</span><button type="button" class="dots" aria-label="...">...</button></div>'
+    '<div class="niv-panel-item' + (i === 0 ? ' first' : '') + '" data-kind="measure" data-measure-id="' + escapeHtml(m.id) + '" data-measure-label="' + escapeHtml(m.label) + '" data-label="' + escapeHtml(m.label) + '"><span>' + escapeHtml(m.label) + (m.photo ? ' \u{1F4F7}' : '') + '</span>' + dotsBtnHtml(m.label) + '</div>'
   ).join('');
 }
 function renderLists(data) {
@@ -768,14 +790,48 @@ function renderDemoLists() {
    Rename/Delete run as Firestore writes from the module (rules enforce
    permissions; failures surface in the menu). */
 let _rowMenuEl = null;
+let _rowMenuTrigger = null;
 let _modDb = null, _modFs = null, _modOrgId = null;
-function closeRowMenu() {
+function closeRowMenu(refocus) {
   if (_rowMenuEl && _rowMenuEl.parentNode) _rowMenuEl.parentNode.removeChild(_rowMenuEl);
   _rowMenuEl = null;
   document.removeEventListener('pointerdown', _rowMenuOutside, true);
+  document.removeEventListener('keydown', _rowMenuDocKey, true);
+  if (_rowMenuTrigger) {
+    _rowMenuTrigger.setAttribute('aria-expanded', 'false');
+    if (refocus) _rowMenuTrigger.focus();
+    _rowMenuTrigger = null;
+  }
 }
 function _rowMenuOutside(ev) {
-  if (_rowMenuEl && !_rowMenuEl.contains(ev.target)) closeRowMenu();
+  if (_rowMenuEl && !_rowMenuEl.contains(ev.target) && ev.target !== _rowMenuTrigger && !(_rowMenuTrigger && _rowMenuTrigger.contains(ev.target))) closeRowMenu(false);
+}
+function _rowMenuDocKey(ev) {
+  if (ev.key === 'Escape' && _rowMenuEl) { ev.preventDefault(); ev.stopPropagation(); closeRowMenu(true); }
+}
+function showModToast(msg) {
+  let t = document.querySelector('.mod-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.className = 'mod-toast';
+    t.setAttribute('role', 'status');
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  if (t._hideTimer) clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(() => { t.classList.remove('show'); }, 3600);
+}
+/* Default destinations, kept in sync with modules/shell-bridge.js
+   (niv:row-open defaults). Used only when the module is NOT embedded
+   in a host (standalone page): embedded, the host owns navigation. */
+function rowOpenFallback(kind, action, id, label) {
+  const enc = encodeURIComponent;
+  if (kind === 'project' && action === 'open') return id ? '/dashboard.html?view=project&project=' + enc(id) : '/dashboard.html?view=projects';
+  if (kind === 'customer' && action === 'view') return '/dashboard.html?view=customer&customer=' + enc(label || '');
+  if (kind === 'customer' && action === 'new-measure') return '/flow.html?customer=' + enc(label || '');
+  if (kind === 'measure' && action === 'view') return id ? '/dashboard.html?view=measure&measure=' + enc(id) : '/dashboard.html?view=measures';
+  return '/dashboard.html?view=home';
 }
 function rowMenuOptions(kind) {
   if (kind === 'project') {
@@ -797,10 +853,13 @@ function rowMenuOptions(kind) {
   ];
 }
 function openRowMenu(btn, kind, id, label) {
-  closeRowMenu();
+  /* Re-clicking the trigger toggles the menu closed. */
+  if (_rowMenuEl && _rowMenuTrigger === btn) { closeRowMenu(true); return; }
+  closeRowMenu(false);
   const menu = document.createElement('div');
   menu.className = 'row-menu';
   menu.setAttribute('role', 'menu');
+  menu.setAttribute('aria-label', btn.getAttribute('aria-label') || '');
   rowMenuOptions(kind).forEach((opt) => {
     const item = document.createElement('button');
     item.type = 'button';
@@ -809,10 +868,23 @@ function openRowMenu(btn, kind, id, label) {
     item.setAttribute('role', 'menuitem');
     item.addEventListener('click', (ev) => {
       ev.stopPropagation();
-      closeRowMenu();
+      closeRowMenu(false);
       runRowAction(kind, opt.action, id, label);
     });
     menu.appendChild(item);
+  });
+  /* Keyboard operation: Esc closes and refocuses the trigger, arrows
+     cycle the items, Home/End jump, Tab closes and moves on (native
+     menu behaviour). Enter/Space activate natively (real buttons). */
+  menu.addEventListener('keydown', (ev) => {
+    const items = Array.from(menu.querySelectorAll('.row-menu-item'));
+    const idx = items.indexOf(document.activeElement);
+    if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); closeRowMenu(true); }
+    else if (ev.key === 'ArrowDown') { ev.preventDefault(); const n = items[(idx + 1) % items.length]; if (n) n.focus(); }
+    else if (ev.key === 'ArrowUp') { ev.preventDefault(); const n = items[(idx - 1 + items.length) % items.length]; if (n) n.focus(); }
+    else if (ev.key === 'Home') { ev.preventDefault(); if (items[0]) items[0].focus(); }
+    else if (ev.key === 'End') { ev.preventDefault(); if (items[items.length - 1]) items[items.length - 1].focus(); }
+    else if (ev.key === 'Tab') { closeRowMenu(false); }
   });
   document.body.appendChild(menu);
   const r = btn.getBoundingClientRect();
@@ -820,20 +892,36 @@ function openRowMenu(btn, kind, id, label) {
   menu.style.left = Math.max(8, Math.min(window.innerWidth - mw - 8, r.right - mw)) + 'px';
   menu.style.top = Math.min(window.innerHeight - 160, r.bottom + 4) + 'px';
   _rowMenuEl = menu;
+  _rowMenuTrigger = btn;
+  btn.setAttribute('aria-expanded', 'true');
   document.addEventListener('pointerdown', _rowMenuOutside, true);
+  document.addEventListener('keydown', _rowMenuDocKey, true);
+  const first = menu.querySelector('.row-menu-item');
+  if (first) first.focus();
 }
+const _strFn = (key, arg) => { const v = L(key); return typeof v === 'function' ? v(arg) : v; };
 async function runRowAction(kind, action, id, label) {
   if (action === 'open' || action === 'view' || action === 'new-measure') {
-    // Host-first: the shell owns the views. Fallback navigations below
-    // are the sane defaults when no host handles the message.
+    // Host-first: the shell owns the views. When the module stands
+    // alone (no host frame), navigate directly to the same defaults
+    // the bridge would use, so the action is never a dead click.
+    if (window.parent === window) {
+      window.location.href = rowOpenFallback(kind, action, id, label);
+      return;
+    }
     post({ type: 'niv:row-open', kind, action, id: id || null, label: label || '' });
     return;
   }
-  if (!_modDb || !_modFs || !_modOrgId) return;
+  if (!_modDb || !_modFs || !_modOrgId) {
+    /* Demo mode (and any state without Firestore handles): the write
+       cannot run. Say so visibly instead of closing in silence. */
+    showModToast(L('demoDisabled'));
+    return;
+  }
   const fs = _modFs, db = _modDb, orgId = _modOrgId;
   try {
     if (action === 'rename') {
-      const next = window.prompt(L('renamePrompt', label), label);
+      const next = window.prompt(_strFn('renamePrompt', label), label);
       if (next === null) return;
       const name = String(next).trim();
       if (!name || name === label) return;
@@ -846,7 +934,7 @@ async function runRowAction(kind, action, id, label) {
       }
       if (window._modReloadLists) window._modReloadLists();
     } else if (action === 'delete') {
-      if (!window.confirm(L('deleteConfirm', label))) return;
+      if (!window.confirm(_strFn('deleteConfirm', label))) return;
       if (kind === 'project' && id) {
         await fs.deleteDoc(fs.doc(db, 'orgs', orgId, 'projects', id));
       } else if (kind === 'measure' && id) {
@@ -872,11 +960,33 @@ document.addEventListener('click', (ev) => {
   const label = row.getAttribute('data-label') || '';
   openRowMenu(btn, kind, id, label);
 });
+/* Row activation (m1): clicking a row body (not the "..." button)
+   runs the row's primary action, the same destination the dashboard
+   rows use: project rows open the project, customer rows open the
+   customer overview, measure rows open the measure detail. A press
+   that moved (a drag gesture toward the host drag layer) is not a
+   click and never navigates. */
+let _rowPress = null;
+document.addEventListener('pointerdown', (ev) => {
+  const row = ev.target && ev.target.closest ? ev.target.closest('.niv-panel-item') : null;
+  _rowPress = row ? { x: ev.clientX, y: ev.clientY } : null;
+}, true);
+document.addEventListener('click', (ev) => {
+  if (ev.target && ev.target.closest && ev.target.closest('.niv-panel-item .dots')) return;
+  const row = ev.target && ev.target.closest ? ev.target.closest('.niv-panel-item') : null;
+  if (!row) return;
+  if (_rowPress && (Math.abs(ev.clientX - _rowPress.x) > 6 || Math.abs(ev.clientY - _rowPress.y) > 6)) return;
+  const kind = row.getAttribute('data-kind') || 'project';
+  const id = row.getAttribute('data-project-id') || row.getAttribute('data-measure-id') || null;
+  const label = row.getAttribute('data-label') || '';
+  runRowAction(kind, kind === 'project' ? 'open' : 'view', id, label);
+});
 /* Same data sources as the dashboard panel: orgs/{orgId}/projects for
    the projects list, orgs/{orgId}/jobs (newest first) feeding the
    unique customers list (max 5) and the recent measures list (max 5).
-   List rows are display only in this module: no project or measure
-   deep link exists at base, so opening items stays with the shell. */
+   Row bodies activate like the dashboard rows (primary action via
+   runRowAction); the deep-link destinations live in the bridge
+   defaults and in rowOpenFallback above. */
 async function loadLists(db, fs, orgId) {
   if (!orgId) return;
   _modDb = db; _modFs = fs; _modOrgId = orgId;

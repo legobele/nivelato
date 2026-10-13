@@ -488,6 +488,39 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     background: var(--niv-surface);
   }
   .niv-proj-measure:hover { background: var(--niv-surface-2); }
+
+  /* Row "..." menus (same spec as the sidebar module menus): the dots
+     are real buttons and the menu is a floating card. Dashboard-local
+     styles because niv-dark.css is shared and owned elsewhere. */
+  button.dots {
+    background: transparent; border: none; font-family: inherit;
+    font-size: 16px; font-weight: 700; line-height: 1;
+    color: var(--niv-text-dim, #a7a7ad); letter-spacing: 2px;
+    padding: 4px 8px; border-radius: 6px; cursor: pointer; flex: none;
+    position: relative; z-index: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 36px; min-height: 28px; box-sizing: border-box;
+  }
+  button.dots:hover { background: var(--niv-surface-2, #1e1e22); color: var(--niv-text, #f5f5f7); }
+  button.dots:focus-visible { outline: 2px solid var(--niv-accent, #f5a524); outline-offset: 1px; }
+  .dash-row-menu {
+    position: fixed; z-index: 1200; min-width: 180px;
+    background: var(--niv-surface, #17171a);
+    border: 1px solid var(--niv-border, rgba(255,255,255,0.28));
+    border-radius: 12px; box-shadow: 0 10px 34px rgba(0,0,0,0.5);
+    padding: 6px; font-family: 'Inter', system-ui, sans-serif;
+  }
+  .dash-row-menu-item {
+    display: block; width: 100%; text-align: left; background: transparent;
+    border: none; color: var(--niv-text, #f5f5f7); font-size: 13px;
+    font-family: inherit; padding: 9px 12px; border-radius: 8px; cursor: pointer;
+  }
+  .dash-row-menu-item:hover { background: var(--niv-surface-2, #1e1e22); }
+  .dash-row-menu-item:focus-visible { outline: 2px solid var(--niv-accent, #f5a524); outline-offset: -2px; }
+  .dash-row-menu-item.danger { color: #f87171; }
+  .dash-row-menu-item.danger:hover { background: rgba(229,72,77,0.12); }
+  .cust-proj-row:focus-visible { outline: 2px solid var(--niv-accent, #f5a524); outline-offset: -2px; }
+
   .niv-users-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
   .niv-user-circle {
     aspect-ratio: 1; border-radius: 50%;
@@ -1041,7 +1074,7 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
     </div>
   </div>
   <div class="niv-panel-bottom">
-    <button class="niv-account-card" id="niv-account-card" onclick="toggleAccountPopup(event)">
+    <button class="niv-account-card" id="niv-account-card" onclick="toggleAccountPopup(event)" aria-label="Cuenta" aria-haspopup="true" aria-expanded="false" aria-controls="niv-account-popup">
       <div class="niv-account-avatar" id="niv-account-avatar"></div>
       <div class="niv-account-meta">
         <div class="niv-account-name" id="niv-account-name">…</div>
@@ -1169,13 +1202,13 @@ try {
 
   <div class="filter-row">
     <div class="date-input-wrap">
-      <input type="date" id="filter-date" onchange="applyFilters()" />
+      <input type="date" id="filter-date" onchange="applyFilters()" aria-label="Filtrar por fecha" />
       <span class="date-placeholder">📅 Filtrar por fecha · dd/mm/aaaa</span>
     </div>
-    <select id="filter-installer" onchange="applyFilters()">
+    <select id="filter-installer" onchange="applyFilters()" aria-label="Filtrar por técnico">
       <option value="">Todos los técnicos</option>
     </select>
-    <select id="filter-customer" onchange="applyFilters()">
+    <select id="filter-customer" onchange="applyFilters()" aria-label="Filtrar por cliente">
       <option value="">Todos los clientes</option>
     </select>
   </div>
@@ -1529,10 +1562,12 @@ const showMissingProfileScreen = () => {
 // ─── Huella del equipo web ───
 // SHA-1 over this PC's stable signals (hardware + browser). The same PC
 // always produces the same hash, so it identifies the WEB MACHINE in the
-// upgrade pairing: nivelato://upgrade/<huella>?t=<token>. The hash is an
-// identity, NOT a credential (it is low-entropy and travels in plain sight
-// inside the QR); the pairing is authorized by the token, a single-use
-// secret minted server-side by createUpgradeLink.
+// upgrade pairing. The hash is an identity, NOT a credential (it is
+// low-entropy); the pairing is authorized by the token, a single-use
+// secret minted server-side by createUpgradeLink. The QR encodes the
+// boarded deep link nivelato://products?acc=<account>&key=<token>: the
+// fingerprint still travels to the server as the link record key (the
+// createUpgradeLink fp argument), it is just no longer in the QR text.
 async function webPcFingerprint() {
   const parts = [];
   parts.push('ua=' + (navigator.userAgent || ''));
@@ -1581,38 +1616,103 @@ const watchTierForUpgrade = (uid) => {
   } catch (_) { /* watcher is best-effort */ }
 };
 
+// Focus trap helper for modal dialogs (M44): keeps Tab and Shift+Tab
+// cycling among the focusable elements inside `container`. Used by the
+// measure detail/editor modal (#modal-overlay) and the upgrade modal,
+// following the focus-return pattern _closeModalDialog already uses.
+function trapTabWithin(container, e) {
+  if (!container) return;
+  const focusables = Array.from(container.querySelectorAll(
+    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  )).filter((el) => el.offsetParent !== null || el === document.activeElement);
+  if (!focusables.length) { e.preventDefault(); return; }
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  const active = document.activeElement;
+  if (e.shiftKey) {
+    if (active === first || !container.contains(active)) { e.preventDefault(); last.focus(); }
+  } else if (active === last || !container.contains(active)) {
+    e.preventDefault(); first.focus();
+  }
+}
+
 // Upgrade modal for free-tier accounts. NOT a wall: free accounts use the
 // dashboard normally and open this only when they choose to upgrade. The
 // QR deep-links into the Android app, where the purchase options pop up;
 // scanning it also links the phone to this account and sets the home
 // region if unset (redeemUpgradeLink, server-side). The QR itself is
-// rendered by createUpgradeLink and encodes
-// nivelato://upgrade/<huella>?t=<token>.
+// rendered by createUpgradeLink and encodes the boarded deep link
+// nivelato://products?acc=<account>&key=<token>: acc is the account id
+// and key is the single-use pairing token (10-minute TTL, server-side
+// semantics unchanged). The pairing URL is NEVER printed as readable
+// text under the QR: the token is a credential. On a phone-sized
+// viewport the same link is offered as a tappable button instead,
+// because the user cannot scan a QR with the phone they are holding.
+// All strings go through L() (the CTA label is set in
+// _applyDashChromeTexts).
 const showUpgradeModal = async () => {
   if (document.getElementById('upgrade-overlay')) return;
   const user = auth.currentUser;
   if (!user) return;
   watchTierForUpgrade(user.uid);
-  window._upgradeRetry = () => window.location.reload();
-  window._upgradeClose = () => {
+  let prevFocus = document.activeElement;
+  const closeUpgrade = () => {
     const o = document.getElementById('upgrade-overlay');
     if (o) o.remove();
+    document.removeEventListener('keydown', upgradeKeydown, true);
+    if (prevFocus && document.contains(prevFocus)) prevFocus.focus();
   };
-  window._upgradeRegen = () => { window._upgradeClose(); showUpgradeModal(); };
+  const upgradeKeydown = (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); closeUpgrade(); return; }
+    if (e.key === 'Tab') {
+      const card = document.getElementById('upgrade-card');
+      if (card) trapTabWithin(card, e);
+    }
+  };
+  window._upgradeClose = closeUpgrade;
+  // "Ya compré, reintentar" re-checks the account state instead of
+  // blindly reloading: it re-reads users/{uid} (the same doc the tier
+  // watcher snapshots) and reloads ONLY when a paid tier is now there.
+  // Otherwise it says so in place and keeps the modal (and its still
+  // valid QR) open. The onSnapshot watcher remains the live path.
+  window._upgradeRetry = async () => {
+    const st = document.getElementById('upgrade-retry-status');
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      const t = String(((snap.data() || {}).tier || 'free')).toLowerCase();
+      if (['ultra', 'pro', 'qgc'].includes(t)) { window.location.reload(); return; }
+      if (st) st.textContent = L('Todavía no vemos la compra en tu cuenta. Si acabas de pagar, espera unos segundos y vuelve a intentarlo.', 'We do not see the purchase on your account yet. If you just paid, wait a few seconds and try again.');
+    } catch (_) {
+      if (st) st.textContent = L('No se pudo verificar tu cuenta. Revisa tu conexión y vuelve a intentarlo.', 'Could not check your account. Check your connection and try again.');
+    }
+  };
+  window._upgradeRegen = () => { closeUpgrade(); showUpgradeModal(); };
+  const isMobile = !!(window.matchMedia && window.matchMedia('(max-width: 700px)').matches);
   const overlay = document.createElement('div');
   overlay.id = 'upgrade-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', L('Mejora tu plan', 'Upgrade your plan'));
   overlay.innerHTML =
-    '<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">'
-    + '<div style="background:var(--niv-surface);border:1px solid var(--niv-border);color:var(--niv-text);border-radius:16px;padding:32px 28px;max-width:360px;width:100%;text-align:center;font-family:Inter,sans-serif;box-shadow:0 24px 60px rgba(0,0,0,.35)">'
+    '<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto">'
+    + '<div id="upgrade-card" style="position:relative;background:var(--niv-surface);border:1px solid var(--niv-border);color:var(--niv-text);border-radius:16px;padding:32px 28px;max-width:360px;width:100%;max-height:calc(100dvh - 40px);overflow-y:auto;text-align:center;font-family:Inter,sans-serif;box-shadow:0 24px 60px rgba(0,0,0,.35)">'
+    + '<button type="button" onclick="window._upgradeClose()" aria-label="' + escapeHtml(L('Cerrar', 'Close')) + '" style="position:absolute;top:10px;right:10px;background:transparent;border:none;color:var(--niv-text-dim);font-size:20px;line-height:1;padding:6px 10px;border-radius:8px;cursor:pointer">✕</button>'
     + '<div style="font-size:44px;margin-bottom:8px">📊</div>'
-    + '<h2 style="color:var(--niv-text);margin:0 0 8px;font-size:20px">Mejora tu plan</h2>'
-    + '<p style="color:var(--niv-text-dim);font-size:14px;margin:0 0 16px;line-height:1.5">Escanea el código con tu teléfono para abrir las opciones de suscripción en la app de Nivelato. Al escanearlo, el teléfono queda vinculado a tu cuenta. Al completar la compra, las funciones de pago se activan aquí solas.</p>'
-    + '<div id="upgrade-qr-body" style="min-height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin-bottom:16px"><p style="color:var(--niv-text-dim);font-size:14px;margin:0">Generando tu código…</p></div>'
+    + '<h2 style="color:var(--niv-text);margin:0 0 8px;font-size:20px">' + escapeHtml(L('Mejora tu plan', 'Upgrade your plan')) + '</h2>'
+    + '<p style="color:var(--niv-text-dim);font-size:14px;margin:0 0 6px;line-height:1.5">' + escapeHtml(L('Para ver las opciones de compra escanea este código QR con tu teléfono', 'To see purchase options scan this QR code using your phone')) + '</p>'
+    + '<p style="color:var(--niv-text-dim);font-size:13px;margin:0 0 16px;line-height:1.5"><em>' + escapeHtml(L('Debes tener la app instalada', 'Must have app installed')) + '</em></p>'
+    + '<div id="upgrade-qr-body" style="min-height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin-bottom:16px"><p style="color:var(--niv-text-dim);font-size:14px;margin:0">' + escapeHtml(L('Generando tu código…', 'Generating your code…')) + '</p></div>'
+    + '<div id="upgrade-retry-status" role="status" style="color:var(--niv-text-dim);font-size:13px;line-height:1.5;margin-bottom:12px"></div>'
     + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
-    + '<button onclick="window._upgradeRetry()" style="padding:10px 22px;background:var(--niv-accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Ya compré, reintentar</button>'
-    + '<button onclick="window._upgradeClose()" style="padding:10px 22px;background:var(--niv-surface-2);color:var(--niv-text);border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Cerrar</button>'
+    + '<button onclick="window._upgradeRetry()" style="padding:10px 22px;background:var(--niv-accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">' + escapeHtml(L('Ya compré, reintentar', 'I already bought it, check again')) + '</button>'
+    + '<button onclick="window._upgradeClose()" style="padding:10px 22px;background:var(--niv-surface-2);color:var(--niv-text);border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">' + escapeHtml(L('Cerrar', 'Close')) + '</button>'
     + '</div></div></div>';
   document.body.appendChild(overlay);
+  // Backdrop click dismisses (clicks inside the card do not).
+  overlay.firstElementChild.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeUpgrade(); });
+  document.addEventListener('keydown', upgradeKeydown, true);
+  const closeBtn = overlay.querySelector('#upgrade-card button');
+  if (closeBtn) closeBtn.focus();
   const body = document.getElementById('upgrade-qr-body');
   try {
     const fp = await webPcFingerprint();
@@ -1623,14 +1723,19 @@ const showUpgradeModal = async () => {
       (data.qrSvg
         ? '<div style="background:#fff;border:1px solid #e9ecef;border-radius:12px;padding:10px;line-height:0">' + data.qrSvg + '</div>'
         : '')
-      + '<code style="font-size:11px;color:var(--niv-text-dim);word-break:break-all;max-width:280px">' + escapeHtml(data.url || '') + '</code>'
-      + '<p style="color:var(--niv-text-dim);font-size:12px;margin:0">El código vence en 10 minutos. Si expira, cierra y vuelve a abrir.</p>';
+      // No plain-text pairing URL: the token inside it is the pairing
+      // credential. Mobile gets the same link as a tappable button
+      // (the URL itself is still never displayed as text).
+      + (isMobile && data.url
+        ? '<a href="' + escapeHtml(data.url) + '" style="display:inline-block;padding:10px 22px;background:var(--niv-accent);color:#fff;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none">' + escapeHtml(L('Abrir en la app', 'Open in the app')) + '</a>'
+        : '<p style="color:var(--niv-text-dim);font-size:12px;margin:0">' + escapeHtml(L('El enlace seguro va dentro del código QR.', 'The secure link is inside the QR code.')) + '</p>')
+      + '<p style="color:var(--niv-text-dim);font-size:12px;margin:0">' + escapeHtml(L('El código vence en 10 minutos. Si expira, cierra y vuelve a abrir.', 'The code expires in 10 minutes. If it expires, close and reopen.')) + '</p>';
   } catch (e) {
     console.error('[Nivelato] createUpgradeLink falló:', e);
     if (!document.getElementById('upgrade-qr-body')) return;
     body.innerHTML =
-      '<p style="color:#f87171;font-size:14px;margin:0;line-height:1.5">No se pudo generar el código. Revisa tu conexión y vuelve a intentarlo.</p>'
-      + '<button onclick="window._upgradeRegen()" style="padding:10px 22px;background:var(--niv-accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Reintentar</button>';
+      '<p style="color:#f87171;font-size:14px;margin:0;line-height:1.5">' + escapeHtml(L('No se pudo generar el código. Revisa tu conexión y vuelve a intentarlo.', 'Could not generate the code. Check your connection and try again.')) + '</p>'
+      + '<button onclick="window._upgradeRegen()" style="padding:10px 22px;background:var(--niv-accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">' + escapeHtml(L('Reintentar', 'Try again')) + '</button>';
   }
 };
 window.showUpgradeModal = showUpgradeModal;
@@ -1990,14 +2095,14 @@ let currentUser;
     if (custEl) {
       const customers = [...new Set(jobs.map(j => j.customer).filter(Boolean))].slice(0, 5);
       custEl.innerHTML = customers.length
-        ? customers.map((c, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="window.openCustomer(decodeURIComponent('${custEnc(c)}'))"><span>${esc(c)}</span><span class="dots">...</span></div>`).join('')
+        ? customers.map((c, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="window.openCustomer(decodeURIComponent('${custEnc(c)}'))"><span>${esc(c)}</span>${dashDotsBtn('customer', null, c)}</div>`).join('')
         : '<div class="niv-panel-empty">' + L('Sin clientes', 'No customers') + '</div>';
     }
     const measEl = document.getElementById('niv-panel-measures');
     if (measEl) {
       const recent = jobs.slice(0, 5);
       measEl.innerHTML = recent.length
-        ? recent.map((j, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="openMeasure('${j.id}', 'measures')"><span>${esc(j.customer || j.project || 'Medida')}${j.annotatedPhoto ? ' 📷' : ''}</span><span class="dots">...</span></div>`).join('')
+        ? recent.map((j, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="openMeasure('${j.id}', 'measures')"><span>${esc(j.customer || j.project || 'Medida')}${j.annotatedPhoto ? ' 📷' : ''}</span>${dashDotsBtn('measure', j.id, j.customer || j.project || 'Medida')}</div>`).join('')
         : '<div class="niv-panel-empty">' + L('Sin medidas', 'No measurements') + '</div>';
     }
   };
@@ -2425,8 +2530,14 @@ let currentUser;
     }
   };
 
-  // Escape closes the open modal (keyboard a11y).
+  // Escape closes the open modal (keyboard a11y), and Tab is trapped
+  // inside the measure detail/editor modal while it is open (M44):
+  // focus cycles within #modal and returns to the opener on close via
+  // _closeModalDialog / _modalPrevFocus.
   document.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab' && document.getElementById('modal-overlay').classList.contains('open')) {
+      trapTabWithin(document.getElementById('modal'), e);
+    }
     if (e.key === 'Escape' && document.getElementById('modal-overlay').classList.contains('open')) {
       e.preventDefault();
       window._closeModalDialog();
@@ -3679,6 +3790,158 @@ let currentUser;
   syncDatePlaceholder();
 
 
+  // ---- row "..." menus (M1): the same menu spec as the sidebar
+  // module (modules/sidebar.html): projects get Open/Rename/Delete,
+  // customers get View details/New measurement, measures get
+  // View/Delete. The dots are real buttons; a capture-phase delegated
+  // handler opens the menu and stops the click from ever reaching the
+  // row's navigation. Keyboard support mirrors the module menus: Esc
+  // closes and refocuses the trigger, focus moves into the menu,
+  // arrows cycle, Enter activates, re-clicking toggles. ----
+  function dashDotsBtn(kind, id, label) {
+    return '<button type="button" class="dots" data-row-menu data-kind="' + escapeHtml(kind) + '"'
+      + (id ? ' data-id="' + escapeHtml(id) + '"' : '')
+      + ' data-label="' + escapeHtml(label || '') + '"'
+      + ' aria-haspopup="menu" aria-expanded="false"'
+      + ' aria-label="' + escapeHtml(L('Acciones para', 'Actions for') + ' "' + (label || '') + '"') + '">...</button>';
+  }
+  let _dashMenuEl = null;
+  let _dashMenuTrigger = null;
+  function closeDashRowMenu(refocus) {
+    if (_dashMenuEl && _dashMenuEl.parentNode) _dashMenuEl.parentNode.removeChild(_dashMenuEl);
+    _dashMenuEl = null;
+    document.removeEventListener('pointerdown', _dashMenuOutside, true);
+    document.removeEventListener('keydown', _dashMenuDocKey, true);
+    if (_dashMenuTrigger) {
+      _dashMenuTrigger.setAttribute('aria-expanded', 'false');
+      if (refocus) _dashMenuTrigger.focus();
+      _dashMenuTrigger = null;
+    }
+  }
+  function _dashMenuOutside(ev) {
+    if (_dashMenuEl && !_dashMenuEl.contains(ev.target) && !(_dashMenuTrigger && _dashMenuTrigger.contains(ev.target))) closeDashRowMenu(false);
+  }
+  function _dashMenuDocKey(ev) {
+    if (ev.key === 'Escape' && _dashMenuEl) { ev.preventDefault(); ev.stopPropagation(); closeDashRowMenu(true); }
+  }
+  function dashRowMenuOptions(kind) {
+    if (kind === 'project') return [
+      { action: 'open', label: L('Abrir', 'Open'), danger: false },
+      { action: 'rename', label: L('Renombrar', 'Rename'), danger: false },
+      { action: 'delete', label: L('Eliminar', 'Delete'), danger: true }
+    ];
+    if (kind === 'customer') return [
+      { action: 'view', label: L('Ver detalles', 'View details'), danger: false },
+      { action: 'new-measure', label: L('Nueva medida', 'New measurement'), danger: false }
+    ];
+    return [
+      { action: 'view', label: L('Ver detalles', 'View details'), danger: false },
+      { action: 'delete', label: L('Eliminar', 'Delete'), danger: true }
+    ];
+  }
+  function openDashRowMenu(btn) {
+    if (_dashMenuEl && _dashMenuTrigger === btn) { closeDashRowMenu(true); return; }
+    closeDashRowMenu(false);
+    const kind = btn.getAttribute('data-kind') || 'project';
+    const id = btn.getAttribute('data-id') || null;
+    const label = btn.getAttribute('data-label') || '';
+    const menu = document.createElement('div');
+    menu.className = 'dash-row-menu';
+    menu.setAttribute('role', 'menu');
+    menu.setAttribute('aria-label', btn.getAttribute('aria-label') || '');
+    dashRowMenuOptions(kind).forEach((opt) => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'dash-row-menu-item' + (opt.danger ? ' danger' : '');
+      item.textContent = opt.label;
+      item.setAttribute('role', 'menuitem');
+      item.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        closeDashRowMenu(false);
+        window._dashRowAction(kind, opt.action, id, label);
+      });
+      menu.appendChild(item);
+    });
+    menu.addEventListener('keydown', (ev) => {
+      const items = Array.from(menu.querySelectorAll('.dash-row-menu-item'));
+      const idx = items.indexOf(document.activeElement);
+      if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); closeDashRowMenu(true); }
+      else if (ev.key === 'ArrowDown') { ev.preventDefault(); const n = items[(idx + 1) % items.length]; if (n) n.focus(); }
+      else if (ev.key === 'ArrowUp') { ev.preventDefault(); const n = items[(idx - 1 + items.length) % items.length]; if (n) n.focus(); }
+      else if (ev.key === 'Home') { ev.preventDefault(); if (items[0]) items[0].focus(); }
+      else if (ev.key === 'End') { ev.preventDefault(); if (items[items.length - 1]) items[items.length - 1].focus(); }
+      else if (ev.key === 'Tab') { closeDashRowMenu(false); }
+    });
+    document.body.appendChild(menu);
+    const r = btn.getBoundingClientRect();
+    const mw = 200;
+    menu.style.left = Math.max(8, Math.min(window.innerWidth - mw - 8, r.right - mw)) + 'px';
+    menu.style.top = Math.min(window.innerHeight - 170, r.bottom + 4) + 'px';
+    _dashMenuEl = menu;
+    _dashMenuTrigger = btn;
+    btn.setAttribute('aria-expanded', 'true');
+    document.addEventListener('pointerdown', _dashMenuOutside, true);
+    document.addEventListener('keydown', _dashMenuDocKey, true);
+    const first = menu.querySelector('.dash-row-menu-item');
+    if (first) first.focus();
+  }
+  document.addEventListener('click', (ev) => {
+    const btn = ev.target && ev.target.closest ? ev.target.closest('[data-row-menu]') : null;
+    if (!btn) return;
+    ev.stopPropagation();
+    ev.preventDefault();
+    openDashRowMenu(btn);
+  }, true);
+  window._dashRowAction = async (kind, action, id, label) => {
+    const orgId = window._currentOrgId || window._orgId;
+    try {
+      if (kind === 'project' && action === 'open' && id) { window.openProject(id); return; }
+      if (kind === 'customer' && action === 'view') { window.openCustomer(label); return; }
+      if (kind === 'customer' && action === 'new-measure') {
+        window.location.href = '/flow.html?customer=' + encodeURIComponent(label || '');
+        return;
+      }
+      if (kind === 'measure' && action === 'view' && id) {
+        const rv = window._dashView === 'project' ? 'project' : (window._dashView === 'home' ? 'home' : 'measures');
+        window.openMeasure(id, rv);
+        return;
+      }
+      if (action === 'rename' && kind === 'project' && id && orgId) {
+        const next = window.prompt(L('Nuevo nombre para "', 'New name for "') + label + '":', label);
+        if (next === null) return;
+        const name = String(next).trim();
+        if (!name || name === label) return;
+        await updateDoc(doc(db, 'orgs', orgId, 'projects', id), { name });
+        await window.loadProjects();
+        if (_currentProject && _currentProject.id === id) {
+          _currentProject.name = name;
+          const t = document.getElementById('proj-title'); if (t) t.textContent = name;
+          const tp = document.getElementById('niv-topbar-project'); if (tp) tp.textContent = name;
+        }
+        if (window._dashView === 'home' && window.renderHomeOverview) window.renderHomeOverview();
+        return;
+      }
+      if (action === 'delete' && orgId && id) {
+        if (!window.confirm(L('¿Eliminar "', 'Delete "') + label + L('"? Esta acción no se puede deshacer.', '"? This cannot be undone.'))) return;
+        if (kind === 'project') {
+          await deleteDoc(doc(db, 'orgs', orgId, 'projects', id));
+          await window.loadProjects();
+          if (window._dashView === 'home' && window.renderHomeOverview) window.renderHomeOverview();
+        } else if (kind === 'measure') {
+          await deleteDoc(doc(db, 'orgs', orgId, 'jobs', id));
+          allJobs = allJobs.filter((j) => j.id !== id);
+          window.applyFilters();
+          if (window.refreshFloatPanel) window.refreshFloatPanel(allJobs);
+          if (window._dashView === 'home' && window.renderHomeOverview) window.renderHomeOverview();
+          if (window._dashView === 'project' && _currentProject) window.openProject(_currentProject.id);
+        }
+        return;
+      }
+    } catch (e) {
+      window.alert(L('La acción no se pudo completar.', 'The action could not be completed.'));
+    }
+  };
+
   // ---- projects ----
   let _projects = [];
   let _currentProject = null;
@@ -3693,7 +3956,7 @@ let currentUser;
     const el = document.getElementById('niv-panel-projects');
     if (el) {
       el.innerHTML = _projects.length
-        ? _projects.map((p, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="openProject('${p.id}')"><span>${escapeHtml(p.name || 'Proyecto')}</span><span class="dots">...</span></div>`).join('')
+        ? _projects.map((p, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="openProject('${p.id}')"><span>${escapeHtml(p.name || 'Proyecto')}</span>${dashDotsBtn('project', p.id, p.name || 'Proyecto')}</div>`).join('')
         : '<div class="niv-panel-empty">' + L('Sin proyectos', 'No projects') + '</div>';
     }
     if (window._dashView === 'customer' && window.renderCustomerOverview) window.renderCustomerOverview();
@@ -3714,7 +3977,7 @@ let currentUser;
     const meas = allJobs.filter(j => j.projectId === projectId);
     const measEl = document.getElementById('proj-measures');
     measEl.innerHTML = meas.length
-      ? meas.map(j => `<div class="niv-proj-measure" onclick="openMeasure('${j.id}', 'project')"><span>${escapeHtml(j.customer || j.project || 'Medida')}${j.annotatedPhoto ? '<span class="niv-photo-badge">📷</span>' : ''}</span><span class="dots">...</span></div>`).join('')
+      ? meas.map(j => `<div class="niv-proj-measure" onclick="openMeasure('${j.id}', 'project')"><span>${escapeHtml(j.customer || j.project || 'Medida')}${j.annotatedPhoto ? '<span class="niv-photo-badge">📷</span>' : ''}</span>${dashDotsBtn('measure', j.id, j.customer || j.project || 'Medida')}</div>`).join('')
       : '<div class="niv-panel-empty">' + L('Sin medidas en este proyecto.', 'No measurements in this project.') + '</div>';
     // assigned users
     renderProjectUsers(p);
@@ -4035,6 +4298,23 @@ let currentUser;
     setText('panel-empty-projects', L('Sin proyectos', 'No projects'));
     setText('panel-empty-customers', L('Sin clientes', 'No customers'));
     setText('panel-empty-measures', L('Sin medidas', 'No measurements'));
+    setText('btn-upgrade-plan', L('Mejorar plan', 'Upgrade plan'));
+    // Account menu trigger: localized accessible name; aria-expanded is
+    // kept in sync by toggleAccountPopup (M43).
+    const _acct = document.getElementById('niv-account-card');
+    if (_acct) _acct.setAttribute('aria-label', L('Cuenta', 'Account'));
+    // Filter labels (M45): the date input and the two selects (whose
+    // visible control is the niv-select button, synced here too).
+    const _setFilterLabel = (id, txt) => {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute('aria-label', txt);
+      const wrap = el && el.closest ? el.closest('.niv-select') : null;
+      const btn = wrap ? wrap.querySelector('.niv-select-btn') : null;
+      if (btn) btn.setAttribute('aria-label', txt);
+    };
+    _setFilterLabel('filter-date', L('Filtrar por fecha', 'Filter by date'));
+    _setFilterLabel('filter-installer', L('Filtrar por técnico', 'Filter by technician'));
+    _setFilterLabel('filter-customer', L('Filtrar por cliente', 'Filter by customer'));
     setText('btn-pricelist', L('Precios', 'Prices'));
     setText('btn-quotes', L('Cotizaciones', 'Quotes'));
     setText('popup-account-settings', L('Ajustes de la cuenta', 'Account settings'));
@@ -4192,7 +4472,14 @@ let currentUser;
     if (c.telefono) rows.push(['Teléfono', 'Phone', c.telefono, 'telefono']);
     if (c.email) rows.push(['Email', 'Email', c.email, 'email']);
     if (c.direccion) rows.push(['Dirección', 'Address', c.direccion, 'direccion']);
-    const canEdit = !!window._can && (window._can('userManagement') || (window._currentUserData && window._currentUserData.role === 'owner'));
+    if (c.notas) rows.push(['Notas', 'Notes', c.notas, 'notas']);
+    // Gate aligned with firestore.rules (m3): customers/{customerId}
+    // allows create/update by ANY member who canWriteOrgData (an
+    // active org member), not just userManagement/owner. The old UI
+    // gate was narrower than the rules and hid Edit from permitted
+    // members. Disabled (pending) accounts are not active members.
+    const canEdit = !!window._currentUserData && window._currentUserData.disabled !== true
+      && !!(window._currentOrgId || window._currentUserData.orgId);
     const editBtn = canEdit
       ? `<button class="niv-btn-sm" type="button" id="cust-contact-edit">${escapeHtml(L('Editar', 'Edit'))}</button>`
       : '';
@@ -4200,32 +4487,62 @@ let currentUser;
       (rows.length
         ? rows.map(([es, en, v]) => `<div class="niv-detail-row"><span class="k">${escapeHtml(L(es, en))}</span><span class="v">${escapeHtml(v)}</span></div>`).join('')
         : '<div class="niv-panel-empty">' + escapeHtml(L('Sin datos de contacto registrados.', 'No contact details on record.')) + '</div>')
-      + (editBtn ? `<div style="margin-top:10px;">${editBtn}</div><div class="niv-status-line" id="cust-contact-status"></div>` : '');
+      + (editBtn ? `<div style="margin-top:10px;">${editBtn}</div><div style="color:var(--niv-text-dim);font-size:12px;margin-top:6px;">${escapeHtml(L('El nombre es la clave del registro: identifica al cliente en medidas, proyectos y cotizaciones, y no se puede cambiar aquí.', 'The name is the record key: it identifies this customer across measurements, projects and quotes, and cannot be changed here.'))}</div><div class="niv-status-line" id="cust-contact-status"></div>` : '');
     const btn = document.getElementById('cust-contact-edit');
     if (btn) btn.addEventListener('click', () => showCustomerContactForm(contactEl, key, c));
   };
   function showCustomerContactForm(contactEl, key, c) {
+    // The inputs live in a real <form> and Save is type="submit", so
+    // the submit path is the one validation gate (M50). The customer
+    // record model requires NO field here (contact details are all
+    // optional in orgs/{orgId}/customers/{name}; the name itself is
+    // the doc key and is not a field of this form), so nothing is
+    // marked required: the only validation is format, an email that
+    // is filled in must look like an email, checked explicitly with a
+    // localized inline error (native type=email bubbles follow the
+    // browser language, not the account language). The customers doc
+    // is the contact record, so it is also the obvious home for the
+    // notas field (m2): it merges alongside telefono/email/direccion.
     contactEl.innerHTML = `
-      <div class="niv-field"><label>${escapeHtml(L('Teléfono', 'Phone'))}</label>
+      <form id="cust-contact-form" novalidate>
+      <div style="color:var(--niv-text-dim);font-size:12px;margin-bottom:8px;">${escapeHtml(L('El nombre es la clave del registro y no se puede cambiar aquí.', 'The name is the record key and cannot be changed here.'))}</div>
+      <div class="niv-field"><label for="cust-f-telefono">${escapeHtml(L('Teléfono', 'Phone'))}</label>
         <input type="tel" id="cust-f-telefono" value="${escapeHtml(c.telefono || '')}" maxlength="40" /></div>
-      <div class="niv-field"><label>Email</label>
+      <div class="niv-field"><label for="cust-f-email">Email</label>
         <input type="email" id="cust-f-email" value="${escapeHtml(c.email || '')}" maxlength="120" /></div>
-      <div class="niv-field"><label>${escapeHtml(L('Dirección', 'Address'))}</label>
+      <div class="niv-field"><label for="cust-f-direccion">${escapeHtml(L('Dirección', 'Address'))}</label>
         <input type="text" id="cust-f-direccion" value="${escapeHtml(c.direccion || '')}" maxlength="200" /></div>
+      <div class="niv-field"><label for="cust-f-notas">${escapeHtml(L('Notas', 'Notes'))}</label>
+        <textarea id="cust-f-notas" maxlength="500" style="min-height:56px;resize:vertical;">${escapeHtml(c.notas || '')}</textarea></div>
       <div style="display:flex;gap:10px;margin-top:8px;">
-        <button class="niv-btn-sm niv-btn-primary" type="button" id="cust-contact-save">${escapeHtml(L('Guardar', 'Save'))}</button>
+        <button class="niv-btn-sm niv-btn-primary" type="submit" id="cust-contact-save">${escapeHtml(L('Guardar', 'Save'))}</button>
         <button class="niv-btn-sm" type="button" id="cust-contact-cancel">${escapeHtml(L('Cancelar', 'Cancel'))}</button>
       </div>
-      <div class="niv-status-line" id="cust-contact-status"></div>`;
+      <div class="niv-status-line" id="cust-contact-status" role="alert"></div>
+      </form>`;
     document.getElementById('cust-contact-cancel').addEventListener('click', () => {
       window.renderCustomerOverview();
     });
-    document.getElementById('cust-contact-save').addEventListener('click', async () => {
+    document.getElementById('cust-contact-form').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
       const status = document.getElementById('cust-contact-status');
+      const emailEl = document.getElementById('cust-f-email');
+      const email = emailEl.value.trim();
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        emailEl.setAttribute('aria-invalid', 'true');
+        emailEl.focus();
+        if (status) {
+          status.className = 'niv-status-line err';
+          status.textContent = L('Ingresa un correo electrónico válido.', 'Enter a valid email address.');
+        }
+        return;
+      }
+      emailEl.removeAttribute('aria-invalid');
       const data = {
         telefono: document.getElementById('cust-f-telefono').value.trim(),
-        email: document.getElementById('cust-f-email').value.trim(),
+        email,
         direccion: document.getElementById('cust-f-direccion').value.trim(),
+        notas: document.getElementById('cust-f-notas').value.trim(),
         updatedAt: serverTimestamp()
       };
       try {
@@ -4289,11 +4606,11 @@ let currentUser;
     if (projEl) {
       const docHtml = docProjects.map((p) => {
         const n = jobs.filter((j) => j.projectId === p.id).length;
-        return `<div class="cust-proj-row" onclick="openProject('${p.id}')"><span class="cust-proj-name">${escapeHtml(p.name || L('Proyecto', 'Project'))}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span></div>`;
+        return `<div class="cust-proj-row" tabindex="0" role="button" onclick="openProject('${p.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openProject('${p.id}');}"><span class="cust-proj-name">${escapeHtml(p.name || L('Proyecto', 'Project'))}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span></div>`;
       }).join('');
       const looseHtml = looseNames.map((nm) => {
         const n = jobs.filter((j) => (j.project || '') === nm && !(j.projectId && docIds.has(j.projectId))).length;
-        return `<div class="cust-proj-row" onclick="window.custCreateProject('${encodeURIComponent(nm)}','${encodeURIComponent(key)}')"><span class="cust-proj-name">${escapeHtml(nm)}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span></div>`;
+        return `<div class="cust-proj-row" tabindex="0" role="button" onclick="window.custCreateProject('${encodeURIComponent(nm)}','${encodeURIComponent(key)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.custCreateProject('${encodeURIComponent(nm)}','${encodeURIComponent(key)}');}"><span class="cust-proj-name">${escapeHtml(nm)}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span></div>`;
       }).join('');
       projEl.innerHTML = (docHtml + looseHtml) || '<div class="niv-panel-empty">' + L('Sin proyectos', 'No projects') + '</div>';
     }
@@ -4607,7 +4924,7 @@ let currentUser;
     const hm = document.getElementById('home-measures');
     if (hm) {
       hm.innerHTML = allJobs.length
-        ? allJobs.slice(0, 6).map((j) => `<div class="niv-home-row" onclick="openMeasure('${j.id}', 'home')"><span>${escapeHtml(j.customer || j.project || 'Medida')}${j.annotatedPhoto ? '<span class="niv-photo-badge">📷</span>' : ''}</span><span class="dots">...</span></div>`).join('')
+        ? allJobs.slice(0, 6).map((j) => `<div class="niv-home-row" onclick="openMeasure('${j.id}', 'home')"><span>${escapeHtml(j.customer || j.project || 'Medida')}${j.annotatedPhoto ? '<span class="niv-photo-badge">📷</span>' : ''}</span>${dashDotsBtn('measure', j.id, j.customer || j.project || 'Medida')}</div>`).join('')
         : '<div class="niv-panel-empty">' + L('Sin medidas', 'No measurements') + '</div>';
     }
     // aviso de actualización: puntero app_updates/latest (config de Job A);
@@ -4820,6 +5137,42 @@ let currentUser;
       if (v === 'notifications') window.showDashView('notifications');
       else if (v === 'users') window.showDashView('users');
       else if (v === 'home' || v === 'dashboard') window.showDashView('home');
+      else if (v === 'project') {
+        // Row-menu deep link (M3): open THAT project, waiting for the
+        // project list to arrive instead of landing on the first one.
+        let pid = null;
+        try { pid = new URLSearchParams(window.location.search).get('project'); } catch (_) {}
+        if (!pid) { window.openProjectTab(); return; }
+        let tries = 0;
+        const iv = setInterval(() => {
+          tries++;
+          if ((_projects || []).some((x) => x.id === pid)) {
+            clearInterval(iv);
+            window.openProject(pid);
+          } else if (tries >= 24) {
+            clearInterval(iv);
+            window.openProjectTab();
+          }
+        }, 500);
+      }
+      else if (v === 'measure') {
+        // Row-menu deep link (M3): open THAT measure's detail, waiting
+        // for the jobs snapshot instead of the generic measures list.
+        let mid = null;
+        try { mid = new URLSearchParams(window.location.search).get('measure'); } catch (_) {}
+        if (!mid) { window.showDashView('measures'); return; }
+        let tries = 0;
+        const iv = setInterval(() => {
+          tries++;
+          if ((allJobs || []).some((x) => x.id === mid)) {
+            clearInterval(iv);
+            window.openMeasure(mid, 'measures');
+          } else if (tries >= 24) {
+            clearInterval(iv);
+            window.showDashView('measures');
+          }
+        }, 500);
+      }
       else if (v === 'projects') window.openProjectTab();
       else if (v === 'customer') {
         let cust = null;
@@ -4860,19 +5213,26 @@ let currentUser;
 }
 </style>
 <script>
+function syncAccountCardState() {
+  const p = document.getElementById('niv-account-popup');
+  const card = document.getElementById('niv-account-card');
+  if (card) card.setAttribute('aria-expanded', (p && p.style.display !== 'none') ? 'true' : 'false');
+}
 function toggleAccountPopup(e) {
   e.stopPropagation();
   const p = document.getElementById('niv-account-popup');
   const open = p.style.display !== 'none';
   p.style.display = open ? 'none' : 'flex';
+  syncAccountCardState();
 }
 document.addEventListener('click', function(e) {
   const p = document.getElementById('niv-account-popup');
-  if (p && p.style.display !== 'none' && !p.contains(e.target)) p.style.display = 'none';
+  if (p && p.style.display !== 'none' && !p.contains(e.target)) { p.style.display = 'none'; syncAccountCardState(); }
 });
 function toggleAboutPopup(e) {
   e.stopPropagation();
   document.getElementById('niv-account-popup').style.display = 'none';
+  syncAccountCardState();
   document.body.classList.remove('nav-open');
   document.getElementById('niv-about-modal').style.display = 'flex';
 }
@@ -4950,6 +5310,8 @@ document.addEventListener('keydown', function(e) {
     btn.className = 'niv-select-btn';
     btn.setAttribute('aria-haspopup', 'listbox');
     btn.setAttribute('aria-expanded', 'false');
+    var selLabel = select.getAttribute('aria-label');
+    if (selLabel) btn.setAttribute('aria-label', selLabel);
     var label = document.createElement('span');
     label.className = 'niv-select-label';
     var chev = document.createElement('span');

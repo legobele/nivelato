@@ -11,6 +11,15 @@
      niv:nav     module to host  { href }   host navigates the top frame
      niv:resize  module to host  { height } host sizes the iframe
      niv:section module to host  { section } user target sub nav clicks
+     niv:row-open module to host { kind, action, id, label }
+                   Row context-menu "open" actions. A host may handle
+                   them via opts.onRowAction(d): return false to
+                   suppress the default navigation. When no host
+                   handles the message, the bridge navigates to the
+                   record itself (defaults in rowOpenDest below):
+                   project open, customer details, customer new
+                   measurement (flow with the customer preselected),
+                   and measure detail all carry their record.
    Both sides validate event.origin === location.origin. The bridge
    never navigates to an href whose origin differs from the host origin.
 */
@@ -35,6 +44,44 @@
     } catch (e) { /* storage unavailable */ }
     return 'es';
   }
+  /* Default destination for a niv:row-open message the host did not
+     handle. Kept in sync with rowOpenFallback in modules/sidebar.html
+     (the module uses it when it is not embedded at all).
+       project/open         -> that project's view
+                               (/dashboard.html?view=project&project=<id>)
+       customer/view        -> that customer's overview
+                               (/dashboard.html?view=customer&customer=<name>)
+       customer/new-measure -> the flow with the customer preselected
+                               (/flow.html?customer=<name>; the flow's
+                               existing ?customer= referral handling.
+                               When the message also carries projectId
+                               and projectName, both are forwarded as
+                               ?project= / ?projectName=.)
+       measure/view         -> that measure's detail
+                               (/dashboard.html?view=measure&measure=<id>)
+     Anything else lands on the dashboard home. */
+  function rowOpenDest(d) {
+    var enc = encodeURIComponent;
+    if (d.kind === 'project' && d.action === 'open') {
+      return d.id ? '/dashboard.html?view=project&project=' + enc(d.id) : '/dashboard.html?view=projects';
+    }
+    if (d.kind === 'customer' && d.action === 'view') {
+      return '/dashboard.html?view=customer&customer=' + enc(d.label || '');
+    }
+    if (d.kind === 'customer' && d.action === 'new-measure') {
+      var dest = '/flow.html?customer=' + enc(d.label || '');
+      if (d.projectId) {
+        dest += '&project=' + enc(d.projectId);
+        if (d.projectName) dest += '&projectName=' + enc(d.projectName);
+      }
+      return dest;
+    }
+    if (d.kind === 'measure' && d.action === 'view') {
+      return d.id ? '/dashboard.html?view=measure&measure=' + enc(d.id) : '/dashboard.html?view=measures';
+    }
+    return '/dashboard.html?view=home';
+  }
+
   function sameOriginHref(href) {
     if (typeof href !== 'string' || !href) return null;
     try {
@@ -143,17 +190,16 @@
       } else if (d.type === 'niv:row-open') {
         /* Row context-menu "open" actions from the module lists. Hosts
            may handle via opts.onRowAction (return false to suppress the
-           default). Defaults are the sane dashboard destinations. */
+           default). Defaults navigate to the record itself, never to a
+           generic list: the customer name is the customer key (the
+           dashboard overview and the flow both key customers by their
+           exact name), the project/measure ids are the doc ids. */
         var handled = false;
         if (typeof opts.onRowAction === 'function') {
           try { handled = opts.onRowAction(d) === false; } catch (e) { handled = false; }
         }
         if (!handled) {
-          var dest = '/dashboard.html?view=home';
-          if (d.kind === 'project' && d.action === 'open') dest = '/dashboard.html?view=projects';
-          else if (d.kind === 'measure' && d.action === 'view') dest = '/dashboard.html?view=measures';
-          else if (d.kind === 'customer' && d.action === 'new-measure') dest = '/flow.html';
-          window.location.href = dest;
+          window.location.href = rowOpenDest(d);
         }
       } else if (d.type === 'niv:resize') {
         if (heightMode !== 'auto') return;

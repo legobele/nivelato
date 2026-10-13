@@ -794,21 +794,26 @@ exports.homeRegionMonitor = onSchedule(
 // Flow: a signed-in web user opens "Mejorar plan" on the dashboard. The web
 // computes a stable fingerprint of the PC (SHA-1 over hardware/browser
 // signals) and calls createUpgradeLink, which stores an upgradeLinks doc and
-// returns a QR (SVG) of:
+// returns a QR (SVG) of the boarded deep link:
 //
-//     nivelato://upgrade/<fp>?t=<token>
+//     nivelato://products?acc=<account>&key=<token>
 //
-// The fingerprint IDENTIFIES the web machine (same PC, same hash, forever);
-// it is low-entropy and public by design, so it authorizes NOTHING. The
-// token authorizes the binding: 192-bit random, doc-id keyed, 10-minute
-// TTL, single-use, attempt-capped. The app opens the link, and once the user
-// is signed in there, NivelatoCloud calls redeemUpgradeLink over HTTPS with
-// { token, fp, email, deviceUuid }. The server checks the token, the
-// fingerprint, and that the app account email matches the web account email
-// on the record; then it links the device to the account and sets the home
-// region if unset. The purchase itself still happens in the app (Play
-// Billing) and the tier syncs back to users/{uid} via the existing
-// syncTierToAccount path.
+// acc is the account identifier (the web user's uid, the same uid the
+// link record is minted for); key is the pairing token. The fingerprint
+// IDENTIFIES the web machine (same PC, same hash, forever); it is
+// low-entropy and public by design, so it authorizes NOTHING, and it is
+// no longer carried in the QR text: it stays on the link record (keyed
+// by the createUpgradeLink fp argument, which also drives live-link
+// reuse). The token authorizes the binding: 192-bit random, doc-id
+// keyed, 10-minute TTL, single-use, attempt-capped. The app opens the
+// link, and once the user is signed in there, NivelatoCloud calls
+// redeemUpgradeLink over HTTPS with { token, fp, email, deviceUuid }.
+// The server checks the token, the fingerprint, and that the app
+// account email matches the web account email on the record; then it
+// links the device to the account and sets the home region if unset.
+// The purchase itself still happens in the app (Play Billing) and the
+// tier syncs back to users/{uid} via the existing syncTierToAccount
+// path.
 //
 // Home region source: the country the SERVER observes for the web request
 // (ipIntel, same derivation flowGate uses), captured at mint time on the
@@ -868,7 +873,7 @@ exports.createUpgradeLink = onCall({ region: 'us-central1', memory: '256MiB' }, 
       usedAt: null, attempts: 0, deviceUuid: null,
     });
   }
-  const url = `nivelato://upgrade/${fp}?t=${token}`;
+  const url = `nivelato://products?acc=${uid}&key=${token}`;
   let qrSvg = null;
   try {
     const QRCode = require('qrcode');
