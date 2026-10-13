@@ -146,6 +146,67 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     .date-input-wrap input[type="date"]:hover::-webkit-calendar-picker-indicator,
     .date-input-wrap input[type="date"]:focus::-webkit-calendar-picker-indicator { opacity: 1; }
 
+    /* FILTERS MENU: the whole filter row (date, technician, customer,
+       clear) collapsed into one menu so the row can never overflow or
+       collide on narrow screens. The trigger mirrors the .niv-select
+       button and the panel mirrors its listbox surface; behavior mirrors
+       the auto-update menu on updates.html (aria-expanded, Escape and
+       click-outside close). The controls inside keep their own styles
+       and handlers — only their container changed. */
+    .filters-menu-wrap { position: relative; }
+    .filters-menu-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      height: 44px; min-width: 150px;
+      padding: 9px 12px 9px 14px;
+      background: var(--niv-surface-2);
+      border: 1.5px solid var(--niv-border-soft);
+      border-radius: 8px;
+      color: var(--niv-text);
+      font-family: inherit; font-size: 13px; cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .filters-menu-btn:hover { border-color: var(--niv-border); }
+    .filters-menu-btn:focus-visible,
+    .filters-menu-btn[aria-expanded="true"] {
+      border-color: var(--niv-accent);
+      box-shadow: 0 0 0 3px rgba(25, 113, 194, 0.25);
+      outline: none;
+    }
+    .filters-menu-btn.has-active { border-color: var(--niv-accent); }
+    .filters-menu-btn-label { flex: 1; text-align: left; white-space: nowrap; }
+    .filters-menu-badge {
+      flex: none; min-width: 20px; height: 20px; padding: 0 6px;
+      border-radius: var(--niv-pill);
+      background: var(--niv-accent); color: #fff;
+      font-size: 11px; font-weight: 700; line-height: 20px; text-align: center;
+    }
+    .filters-menu-badge[hidden] { display: none; }
+    .filters-menu-chev {
+      flex: none; display: inline-flex; font-size: 11px;
+      color: var(--niv-text-dim); transition: transform 0.15s;
+    }
+    .filters-menu-btn[aria-expanded="true"] .filters-menu-chev { transform: rotate(180deg); }
+    .filters-menu-panel {
+      position: absolute; top: calc(100% + 6px); left: 0; z-index: 300;
+      width: min(320px, calc(100vw - 24px));
+      display: flex; flex-direction: column; gap: 10px;
+      padding: 12px;
+      background: var(--niv-surface-2);
+      border: 1px solid var(--niv-border-soft);
+      border-radius: 12px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    }
+    .filters-menu-panel[hidden] { display: none; }
+    .filters-menu-panel .date-input-wrap { flex: none; width: 100%; }
+    .filters-menu-panel .niv-select,
+    .filters-menu-panel .niv-select-btn { width: 100%; }
+    .filters-menu-panel > select { width: 100%; }
+    @media (max-width: 600px) {
+      .filters-menu-wrap { width: 100%; }
+      .filters-menu-btn { width: 100%; }
+      .filters-menu-panel { left: 0; right: 0; width: auto; }
+    }
+
     /* JOB LIST */
     .job-list { display: flex; flex-direction: column; gap: 10px; }
     .job-card {
@@ -1289,17 +1350,26 @@ try {
   </div>
 
   <div class="filter-row">
-    <div class="date-input-wrap">
-      <input type="date" id="filter-date" onchange="applyFilters()" aria-label="Filtrar por fecha" />
-      <span class="date-placeholder" id="date-placeholder">📅 Filtrar por fecha · dd/mm/aaaa</span>
+    <div class="filters-menu-wrap">
+      <button type="button" id="btn-filters-menu" class="filters-menu-btn" aria-haspopup="true" aria-expanded="false" aria-controls="filters-menu-panel">
+        <span class="filters-menu-btn-label" id="filters-menu-label">Filtros</span>
+        <span class="filters-menu-badge" id="filters-menu-badge" hidden></span>
+        <span class="filters-menu-chev" aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="filters-menu-panel" id="filters-menu-panel" role="group" aria-label="Filtros" hidden>
+        <div class="date-input-wrap">
+          <input type="date" id="filter-date" onchange="applyFilters()" aria-label="Filtrar por fecha" />
+          <span class="date-placeholder" id="date-placeholder">📅 Filtrar por fecha · dd/mm/aaaa</span>
+        </div>
+        <select id="filter-installer" onchange="applyFilters()" aria-label="Filtrar por técnico">
+          <option value="" id="filter-installer-all">Todos los técnicos</option>
+        </select>
+        <select id="filter-customer" onchange="applyFilters()" aria-label="Filtrar por cliente">
+          <option value="" id="filter-customer-all">Todos los clientes</option>
+        </select>
+        <button type="button" id="btn-clear-filters" class="btn-cancel" style="width:100%;padding:9px 16px;margin:0;" onclick="window.clearMeasureFilters()">Limpiar filtros</button>
+      </div>
     </div>
-    <select id="filter-installer" onchange="applyFilters()" aria-label="Filtrar por técnico">
-      <option value="" id="filter-installer-all">Todos los técnicos</option>
-    </select>
-    <select id="filter-customer" onchange="applyFilters()" aria-label="Filtrar por cliente">
-      <option value="" id="filter-customer-all">Todos los clientes</option>
-    </select>
-    <button type="button" id="btn-clear-filters" class="btn-cancel" style="width:auto;padding:9px 16px;margin:0;flex:none;" onclick="window.clearMeasureFilters()">Limpiar filtros</button>
   </div>
 
   <div class="job-list" id="job-list">
@@ -2374,6 +2444,10 @@ let currentUser;
     if (customer) filtered = filtered.filter(j => j.customer === customer);
     window._jobsFiltered = filtered;
     renderJobs(filtered);
+    // every filter mutation funnels through here (control changes, the
+    // loader refresh, clearMeasureFilters), so the collapsed Filtros
+    // button's active-count badge stays truthful from this one call
+    if (window.syncFiltersBadge) window.syncFiltersBadge();
   };
 
   window._loadMoreJobs = () => {
@@ -4705,6 +4779,9 @@ let currentUser;
     setText('filter-installer-all', L('Todos los técnicos', 'All technicians'));
     setText('filter-customer-all', L('Todos los clientes', 'All customers'));
     setText('btn-clear-filters', L('Limpiar filtros', 'Clear filters'));
+    setText('filters-menu-label', L('Filtros', 'Filters'));
+    const _filtersPanel = document.getElementById('filters-menu-panel');
+    if (_filtersPanel) _filtersPanel.setAttribute('aria-label', L('Filtros', 'Filters'));
     setText('modal-close-btn', L('Cerrar', 'Close'));
     // M27: project + measure detail views localize too
     setText('proj-measures-title', L('Medidas', 'Measurements'));
@@ -5955,6 +6032,76 @@ document.addEventListener('keydown', function(e) {
 
   enhanceNivSelect(document.getElementById('filter-installer'));
   enhanceNivSelect(document.getElementById('filter-customer'));
+})();
+</script>
+<script>
+/* filters menu: the measurement-history filters (date, technician,
+   customer, clear) live behind one "Filtros" button so the row can
+   never overflow on narrow screens. Open/close mirrors the auto-update
+   menu on updates.html: aria-expanded on the trigger, hidden panel,
+   capture-phase document listeners added on open and removed on close,
+   click-outside closes, Escape closes and refocuses the trigger. The
+   controls inside are the originals — same ids, same inline onchange
+   handlers, same state — so filtering behavior is unchanged; the badge
+   is re-synced from applyFilters() (window.syncFiltersBadge), the one
+   funnel every filter change passes through. */
+(function () {
+  var btn = document.getElementById('btn-filters-menu');
+  var panel = document.getElementById('filters-menu-panel');
+  var badge = document.getElementById('filters-menu-badge');
+  if (!btn || !panel || !badge) return;
+
+  function isOpen() { return !panel.hidden; }
+
+  function onDocClick(e) {
+    if (!panel.contains(e.target) && !btn.contains(e.target)) closePanel(false);
+  }
+  function onDocKeydown(e) {
+    if (e.key !== 'Escape') return;
+    // a niv-select listbox open inside the panel owns this Escape: its
+    // own handler closes the listbox, the panel stays open
+    if (panel.querySelector('.niv-select.open')) return;
+    closePanel(true);
+  }
+  function openPanel() {
+    if (isOpen()) return;
+    panel.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+    document.addEventListener('click', onDocClick, true);
+    document.addEventListener('keydown', onDocKeydown, true);
+  }
+  function closePanel(refocus) {
+    if (!isOpen()) return;
+    panel.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('click', onDocClick, true);
+    document.removeEventListener('keydown', onDocKeydown, true);
+    if (refocus) btn.focus();
+  }
+
+  btn.addEventListener('click', function () {
+    if (isOpen()) closePanel(false); else openPanel();
+  });
+
+  // active-filter count badge: since the individual controls are no
+  // longer on screen, the trigger itself must show when filters bite
+  window.syncFiltersBadge = function () {
+    var n = 0;
+    var d = document.getElementById('filter-date');
+    var i = document.getElementById('filter-installer');
+    var c = document.getElementById('filter-customer');
+    if (d && d.value) n++;
+    if (i && i.value) n++;
+    if (c && c.value) n++;
+    badge.textContent = String(n);
+    badge.hidden = n === 0;
+    btn.classList.toggle('has-active', n > 0);
+  };
+  window.syncFiltersBadge();
+
+  // Limpiar filtros also returns the user to the unfiltered list; keep
+  // the panel open so they can watch the list reset / keep filtering
+  // (the click is inside the panel, so click-outside never fires).
 })();
 </script>
 <script src="./nav-referrer.js"></script>
