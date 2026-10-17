@@ -90,3 +90,14 @@ industrial software, presented like it matters.
   screens in this draft: the app shell nav is structural (sidebar
   with state), and the site draft nav is a sticky full-width bar;
   a floating pill would fight both. Revisit at go-live review.
+
+## Fifth reference: Bennett & Clive (Awwwards SOTD)
+
+Received as an additional visual reference in the same black and
+white cinematic family as Belgrade Arbor, Heron AI, CoMinVi, and
+Terminal Industries. Both fetches of its Awwwards page returned
+jury scores only (individual jurors 7.0-8.4, Awwwards users 8.63),
+with no usable element breakdown, so no specific technique is
+borrowed or asserted from it. It changes nothing in this system:
+the earlier explicit directives win in any conflict (monochrome,
+futuristic, functional app screens first).
