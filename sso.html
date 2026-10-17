@@ -13,8 +13,8 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Inter', system-ui, sans-serif;
-    background: #f0f2f5;
-    color: #212529;
+    background: #050505;
+    color: #fafafa;
     min-height: 100dvh;
     display: flex;
     align-items: center;
@@ -33,7 +33,7 @@
   .logo {
     font-size: 28px;
     font-weight: 700;
-    color: #1971c2;
+    color: #111418;
     margin-bottom: 4px;
     letter-spacing: -0.02em;
   }
@@ -55,7 +55,7 @@
   .btn {
     width: 100%;
     padding: 14px;
-    background: #1971c2;
+    background: #111418;
     color: #fff;
     border: none;
     border-radius: 10px;
@@ -88,7 +88,7 @@
 <body>
 <div class="card" data-envmark-card>
   <div class="logo">Nivelato</div>
-  <div class="tagline">Inicio de sesión único</div>
+  <div class="tagline">Inicia sesión con tu cuenta</div>
   <div class="app-name" id="sso-app-name">Solicitado por: -</div>
   <button class="btn" id="sso-btn" onclick="if(window.signIn){window.signIn()}else{var e=document.getElementById('sso-error');e.textContent='Cargando el inicio de sesión… espera un momento e inténtalo de nuevo.';e.style.display='block';}">Continuar con Nivelato</button>
   <div class="error" id="sso-error"></div>

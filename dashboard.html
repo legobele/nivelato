@@ -38,7 +38,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     }
     .header-logo { font-size: 20px; font-weight: 700; color: #f5a524; }
     .header-right { display: flex; align-items: center; gap: 12px; }
-    .org-badge { font-size: 12px; background: rgba(245,165,36,.12); color: #f5a524; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+    .org-badge { font-size: 12px; background: rgba(255,255,255,.10); color: #fafafa; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
     .btn-logout { font-size: 13px; color: #868e96; background: none; border: none; cursor: pointer; font-family: inherit; }
     .btn-logout:hover { color: #c92a2a; }
 
@@ -467,7 +467,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     background: #1e1e22; border: 1.5px solid rgba(255,255,255,0.14); color: #f5f5f7; color-scheme: dark;
   }
   .filter-row input:focus, .filter-row select:focus, .date-input-wrap input[type="date"]:focus {
-    border-color: #f5a524; box-shadow: 0 0 0 3px rgba(25,113,194,0.25);
+    border-color: #f5a524; box-shadow: 0 0 0 3px rgba(255,255,255,0.25);
   }
   .filter-row select:disabled { color: #6c757d; background-color: #17171a; }
   .date-input-wrap .date-placeholder { color: #a7a7ad; }
@@ -500,12 +500,12 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   .btn-close, .btn-cancel { background: #1e1e22; color: #f5f5f7; border: 1px solid rgba(255,255,255,0.14); }
   .btn-delete { background: rgba(229,72,77,0.12); border-color: rgba(229,72,77,0.5); color: #f87171; }
   .btn-delete:hover { background: rgba(229,72,77,0.2); }
-  .btn-edit { background: rgba(25,113,194,0.15); border-color: #f5a524; color: #60a5fa; }
-  .btn-edit:hover { background: rgba(25,113,194,0.25); }
+  .btn-edit { background: rgba(255,255,255,0.10); border-color: #f5a524; color: #fafafa; }
+  .btn-edit:hover { background: rgba(255,255,255,0.25); }
   .btn-save { background: #f5a524; }
   .btn-save:hover { background: #1864ab; }
   .modal-edit-input { background: #1e1e22; border-color: rgba(255,255,255,0.14); color: #f5f5f7; }
-  .modal-edit-input:focus { border-color: #f5a524; box-shadow: 0 0 0 3px rgba(25,113,194,0.25); }
+  .modal-edit-input:focus { border-color: #f5a524; box-shadow: 0 0 0 3px rgba(255,255,255,0.25); }
   .modal-edit-label { color: #6c757d; }
   /* GRAPH CANVAS: untouched by design. background stays as the graph system renders it. */
   .empty-state, .loading { color: #a7a7ad; }
@@ -516,10 +516,10 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   #pl-list .job-card, #qt-list .job-card { background: #17171a; }
 
   /* org badge in sidebar */
-  .niv-sidebar .org-badge { background: rgba(25,113,194,0.2); color: #60a5fa; border: 1px solid rgba(25,113,194,0.5); }
+  .niv-sidebar .org-badge { background: rgba(255,255,255,0.08); color: #fafafa; border: 1px solid rgba(255,255,255,0.35); }
 
   /* sidebar nav active state sync */
-  .niv-nav-btn.active { background: linear-gradient(135deg, #0ea5a5, #f5a524); }
+  .niv-nav-btn.active { background: linear-gradient(135deg, #fafafa, #c9c9ce); color: #050505; }
 
 
 
@@ -655,7 +655,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   display: inline-flex; align-items: center; gap: 8px;
 }
 .niv-tab:hover { color: var(--niv-text, #f5f5f7); }
-.niv-tab.active { background: linear-gradient(135deg, #0ea5a5, #1971c2); color: #fff; }
+.niv-tab.active { background: linear-gradient(135deg, #fafafa, #c9c9ce); color: #050505; }
 .niv-notif-badge {
   display: none; min-width: 20px; height: 20px; padding: 0 6px;
   border-radius: 999px; background: var(--niv-red, #e5484d); color: #fff;
@@ -1104,7 +1104,7 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 .niv-tab-indicator {
   position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; z-index: 0;
   border-radius: 999px; pointer-events: none; opacity: 0;
-  background: linear-gradient(135deg, #0ea5a5, #1971c2);
+  background: linear-gradient(135deg, #fafafa, #c9c9ce);
   box-shadow: 0 6px 16px rgba(0,0,0,0.38), 0 2px 5px rgba(0,0,0,0.28);
   transition: left 0.38s cubic-bezier(0.25, 1.35, 0.35, 1), width 0.38s cubic-bezier(0.25, 1.35, 0.35, 1), opacity 0.18s ease;
 }

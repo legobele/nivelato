@@ -14,8 +14,8 @@
   --grey-700: #495057;
   --grey-800: #343a40;
   --grey-900: #212529;
-  --accent:   #1971c2;
-  --accent-light: #e7f5ff;
+  --accent:   #111418;
+  --accent-light: #eceef0;
   --green:    #2f9e44;
   --green-bg: #ebfbee;
   --red:      #c92a2a;
@@ -179,10 +179,10 @@ html, body {
 #derived-hueco-note {
   margin-top: 10px;
   padding: 8px 12px;
-  background: #e7f5ff;
+  background: #eceef0;
   border-radius: 8px;
   font-size: 13px;
-  color: #1971c2;
+  color: #111418;
   font-weight: 500;
 }
 
