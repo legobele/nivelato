@@ -180,10 +180,7 @@ html, body { overflow-y: auto !important; }
     <div class="niv-settings-card">
       <div class="niv-card-title" data-i18n="langTitle">Idioma</div>
       <div class="niv-card-desc" data-i18n="langDesc">Idioma de la pantalla de inicio de sesión. Se guarda en tu cuenta y aplica en tus dispositivos.</div>
-      <div style="display:flex;gap:10px;margin-top:4px;">
-        <button class="niv-btn-secondary" id="lang-btn-es" style="margin-top:0">Español</button>
-        <button class="niv-btn-secondary" id="lang-btn-en" style="margin-top:0">English</button>
-      </div>
+      <div class="niv-lang" style="margin:4px 0 0"><button type="button" id="lang-toggle" class="niv-lang-current" aria-expanded="false" aria-haspopup="listbox" aria-controls="niv-lang-list"><span class="niv-lang-current-label"></span><span class="niv-lang-chev" aria-hidden="true">\u25be</span></button><div class="niv-lang-list" id="niv-lang-list" role="listbox" hidden></div></div>
       <div class="niv-saved-msg" id="lang-saved" data-i18n="langSaved">✓ Idioma guardado</div>
       <div class="niv-status-line" id="lang-status"></div>
     </div>
@@ -697,10 +694,27 @@ async function saveNotifPrefs() {
    Firestore write is preserved in saveLangPref and the DB still wins on
    load; after load and after save the value is handed to NivSettings
    (setLang), which owns the cross subdomain cookie and its mirror. */
+const LANG_LABELS = { en: 'English', es: 'Español' };
 function markLangButtons(lang) {
-  for (const l of ['es', 'en']) {
-    const b = document.getElementById('lang-btn-' + l);
-    if (b) b.classList.toggle('lang-active', l === lang);
+  const btn = document.getElementById('lang-toggle');
+  if (btn) {
+    const label = btn.querySelector('.niv-lang-current-label');
+    if (label) label.textContent = LANG_LABELS[lang] || lang.toUpperCase();
+  }
+  const list = document.getElementById('niv-lang-list');
+  if (list) {
+    if (!list.firstChild) {
+      for (const code of Object.keys(LANG_LABELS)) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'niv-lang-option';
+        b.setAttribute('role', 'option');
+        b.setAttribute('data-lang', code);
+        b.textContent = LANG_LABELS[code];
+        list.appendChild(b);
+      }
+    }
+    list.querySelectorAll('.niv-lang-option').forEach(o => o.setAttribute('aria-selected', o.getAttribute('data-lang') === lang ? 'true' : 'false'));
   }
 }
 async function loadLangPref() {
@@ -725,9 +739,31 @@ async function loadLangPref() {
   markLangButtons(lang);
   try { if (window.NivSettings && window.NivSettings.setLang) window.NivSettings.setLang(lang); } catch (_) { /* ignore */ }
   if (window.NivAccountSettings) window.NivAccountSettings.applyLang(lang);
-  for (const l of ['es', 'en']) {
-    const b = document.getElementById('lang-btn-' + l);
-    if (b) b.addEventListener('click', () => saveLangPref(l));
+  const langBtn = document.getElementById('lang-toggle');
+  const langList = document.getElementById('niv-lang-list');
+  if (langBtn && langList && !langBtn.dataset.bound) {
+    langBtn.dataset.bound = '1';
+    langBtn.addEventListener('click', () => {
+      const willOpen = langList.hidden;
+      langList.hidden = !willOpen;
+      langBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    });
+    langList.addEventListener('click', (e) => {
+      const opt = e.target && e.target.closest ? e.target.closest('.niv-lang-option') : null;
+      if (!opt) return;
+      langList.hidden = true;
+      langBtn.setAttribute('aria-expanded', 'false');
+      saveLangPref(opt.getAttribute('data-lang'));
+    });
+    document.addEventListener('click', (e) => {
+      if (!(e.target && e.target.closest && e.target.closest('.niv-lang'))) {
+        langList.hidden = true;
+        langBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { langList.hidden = true; langBtn.setAttribute('aria-expanded', 'false'); }
+    });
   }
 }
 async function saveLangPref(l) {

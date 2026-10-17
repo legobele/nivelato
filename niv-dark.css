@@ -816,7 +816,7 @@ body .date-input-wrap input[type="date"]:focus-visible {
    .niv-setting-desc      <div class="niv-setting-desc">Text</div>: dim description under .niv-setting-label.
    .niv-saved-msg         <div class="niv-saved-msg">Text</div>: centered saved confirmation; hidden until the page sets display via .show or inline style.
    .niv-btn-back          <a class="niv-btn-back" href="...">Back</a>: back link above a page title.
-   .niv-btn-secondary     <button class="niv-btn-secondary">Label</button>: full width secondary button; .lang-active marks the selected language option.
+   .niv-btn-secondary     <button class="niv-btn-secondary">Label</button>: full width secondary button.
    .niv-settings-card     Alias of .niv-card (defined with it above): dark settings card; use with .niv-card-title and .niv-card-desc.
 
    CLASS API (pre-existing classes that already cover part of the kit;
@@ -1257,11 +1257,6 @@ html::-webkit-scrollbar-thumb:hover {
 }
 .niv-btn-secondary:hover { border-color: var(--niv-border); }
 .niv-btn-secondary:disabled { opacity: 0.6; cursor: default; }
-.niv-btn-secondary.lang-active {
-  border-color: var(--niv-accent);
-  color: var(--niv-text);
-  background: rgba(25, 113, 194, 0.15);
-}
 
 /* ---- m18: compact mode topbar rule (owner's stated rule) ----
    Compact sidebar ON means the topbar is SHOWN in dashboard/company
