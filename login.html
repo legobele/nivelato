@@ -247,18 +247,16 @@
        the panel header row — never in a menu (Oct 17, 2026). */
     /* company signin: QGC row on top, details collapsed */
     .company-single { display: flex; flex-direction: column; gap: 16px; }
-    .company-details { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-    .company-details-summary { padding: 12px 16px; cursor: pointer; font-weight: 600; list-style: none; display: flex; align-items: center; justify-content: space-between; }
-    .company-details-summary::-webkit-details-marker { display: none; }
-    .company-details-summary::after { content: '›'; font-size: 20px; transition: transform .2s; }
-    .company-details[open] .company-details-summary::after { transform: rotate(90deg); }
-    .company-details-body { padding: 0 16px 16px; }
     .company-title { font-size: 32px; margin: 0; }
-    @media (min-width: 769px) {
-      .company-details-summary { display: none; }
-      .company-details { border: none; }
-      .company-details-body { padding: 0; }
-    }
+    /* Company Details is a dedicated view (Oct 17, 2026), not a
+       dropdown: this row navigates to 'company-details:<id>'. */
+    .company-details-link { display: flex; align-items: center; justify-content: space-between; width: 100%; background: transparent; border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; color: var(--ink); font-weight: 600; font-size: 14px; font-family: inherit; cursor: pointer; text-align: left; }
+    .company-details-link:hover { border-color: var(--dim); }
+    .company-details-link:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+    .company-details-chev { font-size: 20px; line-height: 1; color: var(--muted); }
+    .company-info-row { display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+    .company-info-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: .18em; color: var(--muted); text-transform: uppercase; }
+    .company-info-value { font-size: 14px; font-weight: 600; color: var(--ink); }
     .accounts-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
     .accounts-head .accounts-title { margin-bottom: 0; }
     .accounts-head .niv-lang, .company-head .niv-lang { margin: 0 0 0 auto; flex: none; }
@@ -873,6 +871,8 @@
         select_language: 'Seleccionar idioma',
         change_language: 'Cambiar idioma',
         company_details: 'Detalles de la empresa',
+        company_location: 'Ubicación',
+        company_domain: 'Dominio',
         tagline_qgc_brand: 'Mediciones de campo, niveladas, para todo panel que tiene que caber en un hueco.',
         account_kind_qgc: 'Quality Glass - Trabajo',
         account_kind_work: 'Trabajo',
@@ -1026,6 +1026,8 @@
         select_language: 'Select language',
         change_language: 'Change language',
         company_details: 'Company Details',
+        company_location: 'Location',
+        company_domain: 'Domain',
         tagline_qgc_brand: 'Field measurements, leveled, for any panel that has to fit an opening.',
         account_kind_qgc: 'Quality Glass - Work',
         account_kind_work: 'Work',
@@ -1767,6 +1769,7 @@
     // Every branch rebuilds #app-card (wiping the notice elements), so
     // re-render the notices in the new language on ALL paths, not just the
     // main form fallthrough.
+    if (companyInfoShown) { renderCompanyInfoUI(); refreshNotices(); return; }
     if (savePromptShown) { showSaveLoginPrompt(); refreshNotices(); return; }
     if (travelShown) { renderTravelUI(); refreshNotices(); return; }
     if (addAccountShown) { renderAddAccountUI(); refreshNotices(); return; }
@@ -2650,7 +2653,8 @@
   // otherwise the cant-add error screen is shown instead.
   let addAccountShown = false; // add-account screen is visible
   let cantAddShown = false;    // cant-add error screen is visible
-  let companyShown = null;     // company-branded signin screen is visible (company id)
+  let companyShown = null;
+  let companyInfoShown = null;     // company-branded signin screen is visible (company id)
   let companySelectShown = false; // "join a company" selector is visible
   let reauthShown = null;      // password-only re-auth screen is visible (account object)
 
@@ -2678,29 +2682,34 @@
   }
   function renderView(view) {
     if (view === 'main') {
-      addAccountShown = false; cantAddShown = false; companyShown = null; companySelectShown = false; reauthShown = null;
+      addAccountShown = false; cantAddShown = false; companyShown = null; companyInfoShown = null; companySelectShown = false; reauthShown = null;
       if (QGI) qgcEscape = false;
       renderForm(QGI ? 'qgi' : 'external', true);
       refreshNotices();
     } else if (view === 'add-account') {
-      addAccountShown = true; cantAddShown = false; companyShown = null; companySelectShown = false;
+      addAccountShown = true; cantAddShown = false; companyShown = null; companyInfoShown = null; companySelectShown = false;
       renderAddAccountUI();
     } else if (view === 'company-select') {
-      companySelectShown = true; addAccountShown = false; cantAddShown = false; companyShown = null; reauthShown = null;
+      companySelectShown = true; addAccountShown = false; cantAddShown = false; companyShown = null; companyInfoShown = null; reauthShown = null;
       if (QGI) qgcEscape = false;
       renderCompanySelectUI();
     } else if (view === 'cant-add') {
-      cantAddShown = true; addAccountShown = false; companyShown = null; companySelectShown = false; reauthShown = null;
+      cantAddShown = true; addAccountShown = false; companyShown = null; companyInfoShown = null; companySelectShown = false; reauthShown = null;
       renderCantAddUI();
     } else if (view === 'reauth') {
       // Password-only re-auth: the account is fixed, only the password is asked.
       if (!reauthShown || !reauthShown.email) { backToMainView(); return; }
-      addAccountShown = false; cantAddShown = false; companyShown = null; companySelectShown = false;
+      addAccountShown = false; cantAddShown = false; companyShown = null; companyInfoShown = null; companySelectShown = false;
       renderReauthUI();
+    } else if (typeof view === 'string' && view.indexOf('company-details:') === 0) {
+      const id = view.slice('company-details:'.length);
+      if (!COMPANIES[id]) return;
+      companyShown = id; companyInfoShown = id; addAccountShown = false; cantAddShown = false; companySelectShown = false; reauthShown = null;
+      renderCompanyInfoUI();
     } else if (typeof view === 'string' && view.indexOf('company:') === 0) {
       const id = view.slice('company:'.length);
       if (!COMPANIES[id]) return; // unknown company: ignore stale state
-      companyShown = id; addAccountShown = false; cantAddShown = false; companySelectShown = false; reauthShown = null;
+      companyShown = id; companyInfoShown = null; addAccountShown = false; cantAddShown = false; companySelectShown = false; reauthShown = null;
       renderCompanyUI();
     } else {
       return;
@@ -3341,22 +3350,14 @@
       + '</div>'
       + '<div class="card-scrollzone">'
       + '<h1 class="logo company-title' + (qgi ? ' qgi' : '') + '">' + escapeHtml(company.name) + '</h1>'
-      + '<details class="company-details" id="company-details">'
-      + '<summary class="company-details-summary">' + t('company_details') + '</summary>'
-      + '<div class="company-details-body">'
-      + '<div class="tagline">' + escapeHtml(companyText(company, 'signinText')) + '</div>'
-      + '<div class="company-employee-notice">' + escapeHtml(company.employeeNoticeKey ? t(company.employeeNoticeKey) : (company.employeeNotice || '')) + '</div>'
-      + '<div class="company-inquiry">' + escapeHtml(companyText(company, 'inquiryText')) + '</div>'
-      + '<div class="company-travel-notice" id="company-travel-notice" style="display:none">' + t('outside_pr_notice') + '</div>'
-      + '</div>'
-      + '</details>'
+      + '<button type="button" class="company-details-link" id="company-details-link"><span>' + t('company_details') + '</span><span class="company-details-chev" aria-hidden="true">&#8250;</span></button>'
       + '<div id="company-form-area"></div>'
       + '</div>'
       + '</div>';
     window.nivApplyLang();
     document.getElementById('company-back').addEventListener('click', goBackView);
-    // Desktop: company details expanded by default; mobile: collapsed.
-    try { if (window.innerWidth > 768) document.getElementById('company-details').open = true; } catch (_) {}
+    const detailsLink = document.getElementById('company-details-link');
+    if (detailsLink) detailsLink.addEventListener('click', function () { navigateTo('company-details:' + companyShown); });
     renderCompanyFormArea();
     updateCompanyTravelNotice();
   }
@@ -3364,6 +3365,46 @@
   // Decides which form goes in the area: webhook spec (cached or fetched),
   // falling back to the standard email/password form when there is no
   // webhook or the spec fetch failed. Never throws; never blocks signin.
+  // ---- Company Details view (dedicated page, Oct 17, 2026) ----
+  // Everything the old <details> dropdown carried, plus the record
+  // fields the sign-in screen did not show: location and sign-in
+  // domain. Read-only, exactly like the dropdown was. The travel
+  // notice element lives here now (it rides the company record);
+  // updateCompanyTravelNotice() targets it as before.
+  function renderCompanyInfoUI() {
+    const t = window.nivT;
+    const card = document.getElementById('app-card');
+    if (!card || !companyInfoShown) return;
+    const company = COMPANIES[companyInfoShown];
+    if (!company) return;
+    const loc = (company.location && company.location.label)
+      ? '<div class="company-info-row"><span class="company-info-label">' + t('company_location') + '</span><span class="company-info-value">' + escapeHtml(company.location.label) + '</span></div>' : '';
+    const doms = (company.domains && company.domains.length)
+      ? '<div class="company-info-row"><span class="company-info-label">' + t('company_domain') + '</span><span class="company-info-value">' + escapeHtml(company.domains.join(', ')) + '</span></div>' : '';
+    card.innerHTML = '<div class="company-single" data-envmark-card data-company-id="' + escapeHtml(companyInfoShown) + '">'
+      + '<div class="company-head">'
+      + '<button type="button" class="back-btn" id="companyinfo-back" aria-label="' + t('go_back') + '">&#8249;</button>'
+      + '<div class="account-pill">'
+      + '<span class="account-avatar account-avatar-logo"><img src="' + escapeHtml(company.logo) + '" alt="' + escapeHtml(company.name) + '" /></span>'
+      + '<span class="account-meta"><span class="account-name">' + escapeHtml(company.name) + '</span></span>'
+      + '</div>'
+      + langSelectorHTML()
+      + '</div>'
+      + '<div class="card-scrollzone">'
+      + '<div class="company-info-label" style="margin-bottom:6px">' + t('company_details') + '</div>'
+      + '<h1 class="logo company-title" style="margin-bottom:16px">' + escapeHtml(company.name) + '</h1>'
+      + loc + doms
+      + '<div class="tagline">' + escapeHtml(companyText(company, 'signinText')) + '</div>'
+      + '<div class="company-employee-notice">' + escapeHtml(company.employeeNoticeKey ? t(company.employeeNoticeKey) : (company.employeeNotice || '')) + '</div>'
+      + '<div class="company-inquiry">' + escapeHtml(companyText(company, 'inquiryText')) + '</div>'
+      + '<div class="company-travel-notice" id="company-travel-notice" style="display:none">' + t('outside_pr_notice') + '</div>'
+      + '</div>'
+      + '</div>';
+    window.nivApplyLang();
+    document.getElementById('companyinfo-back').addEventListener('click', goBackView);
+    updateCompanyTravelNotice();
+  }
+
   function renderCompanyFormArea() {
     const area = document.getElementById('company-form-area');
     const company = companyShown && COMPANIES[companyShown];
