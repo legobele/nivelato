@@ -704,13 +704,15 @@ function markLangButtons(lang) {
   const list = document.getElementById('niv-lang-list');
   if (list) {
     if (!list.firstChild) {
-      for (const code of Object.keys(LANG_LABELS)) {
+      const codes = (window.NivAccountSettings && window.NivAccountSettings.STR)
+        ? Object.keys(window.NivAccountSettings.STR) : Object.keys(LANG_LABELS);
+      for (const code of codes) {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'niv-lang-option';
         b.setAttribute('role', 'option');
         b.setAttribute('data-lang', code);
-        b.textContent = LANG_LABELS[code];
+        b.textContent = LANG_LABELS[code] || code.toUpperCase();
         list.appendChild(b);
       }
     }
@@ -718,6 +720,11 @@ function markLangButtons(lang) {
   }
 }
 async function loadLangPref() {
+  // Paint + bind the selector right away with the language the page is
+  // already displaying, so the control is never blank while Firestore
+  // answers; the resolution below is unchanged and re-paints (DB wins).
+  try { if (window.NivAccountSettings && window.NivAccountSettings.getLang) markLangButtons(window.NivAccountSettings.getLang()); } catch (_) { /* ignore */ }
+  bindLangSelector();
   let lang = 'es';
   try {
     const snap = await getDoc(doc(db, 'users', currentUser.uid));
@@ -739,6 +746,9 @@ async function loadLangPref() {
   markLangButtons(lang);
   try { if (window.NivSettings && window.NivSettings.setLang) window.NivSettings.setLang(lang); } catch (_) { /* ignore */ }
   if (window.NivAccountSettings) window.NivAccountSettings.applyLang(lang);
+  bindLangSelector();
+}
+function bindLangSelector() {
   const langBtn = document.getElementById('lang-toggle');
   const langList = document.getElementById('niv-lang-list');
   if (langBtn && langList && !langBtn.dataset.bound) {
