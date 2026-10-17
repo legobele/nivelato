@@ -131,16 +131,6 @@
       color: var(--muted);
       margin-bottom: 28px;
     }
-    .exclusivity-note {
-      font-size: 12px;
-      color: var(--ink);
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.28);
-      border-radius: 10px;
-      padding: 10px 14px;
-      margin-bottom: 20px;
-      line-height: 1.5;
-    }
     .geo-note {
       font-size: 12px;
       color: var(--amber2);
@@ -510,18 +500,6 @@
     }
     .account-avatar-logo { overflow: hidden; background: #fff; }
     .account-avatar-logo img { width: 100%; height: 100%; object-fit: contain; padding: 3px; box-sizing: border-box; display: block; }
-    .qgc-only-notice {
-      font-weight: 600;
-      font-size: 13.5px;
-      line-height: 1.5;
-      color: var(--ink);
-      margin: 16px 0 4px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.16);
-      border-radius: 12px;
-      padding: 12px 14px;
-      text-align: left;
-    }
     .account-meta { min-width: 0; display: flex; flex-direction: column; }
     .account-name {
       font-size: 14px;
@@ -754,9 +732,9 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
        QGC/PR is a TENANT treatment inside this same system: same
        mountain, same glass, same Breakout lockup. The tenant shows
        as a contained logo tile + name block (.tenant-block); the PR
-       restriction and exclusivity info render as glass notice rows
-       (.qgc-only-notice / .exclusivity-note / .geo-note / #pr-note),
-       never as gray slabs. The old gray tenant theme has no rules
+       restriction and exclusivity info renders as ONE glass notice
+       row (#pr-note, merged text in QGC mode; .geo-note is the
+       separate location-undetected notice), never as gray slabs. The old gray tenant theme has no rules
        left in this file; the body.qgc-theme class survives only as
        a JS mode flag. */
     :root { --login-top-clear: 152px; --login-bottom-clear: 64px; }
@@ -818,7 +796,6 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
       .tenant-block, .tenant-block.center { flex-direction: row; text-align: left; margin-top: 0; margin-left: auto; padding: 8px 10px; }
       .tenant-block.center .tenant-meta { text-align: left; }
       .tenant-logo { flex-basis: 44px; width: 44px; height: 44px; }
-      .qgc-only-notice { order: 3; width: 100%; margin-top: 10px; padding: 9px 11px; font-size: 12.5px; }
       /* At these heights the pinned-panel pattern (list scrolls,
          action pinned) runs out of room once the PR banner is in
          the panel: the panel becomes one scroll zone instead, so
@@ -925,7 +902,6 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
         page_title: 'Nivelato - Iniciar sesión',
         tagline: 'Mediciones de campo, niveladas, para todo panel que tiene que caber en un hueco.',
         tagline_qgi: 'Nivelato, exclusivo de Quality Glass en Puerto Rico',
-        exclusivity_note_html: 'En Puerto Rico, Nivelato es de uso <b>exclusivo de Quality Glass</b>. El registro es solo para empleados.',
         tablist_label: 'Iniciar sesión o solicitar acceso',
         tab_login: 'Iniciar sesión',
         tab_signup: 'Solicitar acceso',
@@ -935,7 +911,6 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
         select_language: 'Seleccionar idioma',
         change_language: 'Cambiar idioma',
         company_details: 'Detalles de la empresa',
-        qgc_only_msg: 'Solo puedes iniciar sesión en Quality Glazing Contractors ya que estás en Puerto Rico. También puedes usar una cuenta personal',
         tagline_qgc_brand: 'Mediciones de campo, niveladas, para todo panel que tiene que caber en un hueco.',
         account_kind_qgc: 'Quality Glass - Trabajo',
         account_kind_work: 'Trabajo',
@@ -982,6 +957,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
         signup_note_qgi_html: 'Tu solicitud será revisada por <b>Quality Glass</b>. Te avisaremos cuando tengas acceso.',
         geo_note: 'No pudimos detectar tu ubicación; estás viendo la versión general de Nivelato.',
         pr_note_1: 'En Puerto Rico, el uso empresarial de Nivelato es exclusivo para empleados de Quality Glass. ',
+        pr_notice_merged_1: 'En Puerto Rico, el uso empresarial de Nivelato es exclusivo para empleados de Quality Glass. Inicia sesión con Quality Glazing Contractors o usa una cuenta personal. Los demás pueden usar la app gratuita: ',
         pr_note_2: 'Los demás pueden usar la app gratuita: ',
         pr_note_link: 'Descargar en Google Play',
         profile_note: 'No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.',
@@ -1086,7 +1062,6 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
         page_title: 'Nivelato - Sign in',
         tagline: 'Field measurements, leveled, for any panel that has to fit an opening.',
         tagline_qgi: 'Nivelato, exclusive to Quality Glass in Puerto Rico',
-        exclusivity_note_html: 'In Puerto Rico, Nivelato is for <b>Quality Glass</b> exclusive use. Registration is for employees only.',
         tablist_label: 'Sign in or request access',
         tab_login: 'Sign in',
         tab_signup: 'Request access',
@@ -1096,7 +1071,6 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
         select_language: 'Select language',
         change_language: 'Change language',
         company_details: 'Company Details',
-        qgc_only_msg: 'You may only sign into Quality Glazing Contractors since you are in Puerto Rico. However you can also use a personal account',
         tagline_qgc_brand: 'Field measurements, leveled, for any panel that has to fit an opening.',
         account_kind_qgc: 'Quality Glass - Work',
         account_kind_work: 'Work',
@@ -1143,6 +1117,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
         signup_note_qgi_html: 'Your request will be reviewed by <b>Quality Glass</b>. We will let you know when you have access.',
         geo_note: 'We could not detect your location; you are seeing the general version of Nivelato.',
         pr_note_1: 'In Puerto Rico, business use of Nivelato is exclusive to Quality Glass employees. ',
+        pr_notice_merged_1: 'In Puerto Rico, business use of Nivelato is exclusive to Quality Glass employees. Sign in with Quality Glazing Contractors, or use a personal account. Everyone else can use the free app: ',
         pr_note_2: 'Everyone else can use the free app: ',
         pr_note_link: 'Download on Google Play',
         profile_note: 'We could not find your user profile. Sign in again to fix it.',
@@ -1668,15 +1643,13 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
       <div class="brand-panel">
         ${qgi
           ? `<h1 class="logo">Nivelato<span class="adot">.</span></h1>
-        <div class="tagline" data-i18n="tagline_qgc_brand"></div>
-        <div class="qgc-only-notice" data-i18n="qgc_only_msg"></div>`
+        <div class="tagline" data-i18n="tagline_qgc_brand"></div>`
           : `<h1 class="logo">Nivelato<span class="adot">.</span></h1>
         <div class="tagline" data-i18n="tagline"></div>`}
         ${qgi ? `<div class="tenant-block"><div class="tenant-logo"><img src="./qgc-logo.jpg" alt="Quality Glazing Contractors" /></div><div class="tenant-meta"><div class="tenant-name">Quality Glazing Contractors</div><div class="tenant-tag">[ Tenant \u00b7 Puerto Rico ]</div></div></div>` : `<div class="brand-logo-box"><img src="${logoSrc}" alt="${logoAlt}" /></div>`}
       </div>
       <div class="main-panel" data-envmark-card>
         ${accountsSectionHTML() || '<div class="accounts-head"><button type="button" id="lang-toggle" class="lang-toggle"></button></div>'}
-        ${qgi ? `<div class="exclusivity-note" data-i18n="exclusivity_note_html" data-i18n-html="1"></div>` : ''}
         ${qgi ? '' : `<div id="form-login">
           <form id="login-form" autocomplete="on" onsubmit="return false">
             <div class="field">
@@ -1744,9 +1717,16 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
     note.id = 'pr-note';
     note.setAttribute('role', 'alert');
     note.className = 'geo-note';
-    note.innerHTML = t('pr_note_1')
-      + t('pr_note_2')
-      + '<a href="https://play.google.com/store/apps/details?id=com.nivelato.app">' + t('pr_note_link') + '</a>.';
+    // One-warning rule (Oct 17, 2026): in QGC mode this notice IS the
+    // PR warning — geo lock, personal-account alternative and the
+    // exclusivity + free-app line merged into a single element, so it
+    // never stacks with a second QGC notice in the brand panel.
+    note.innerHTML = (typeof QGI !== 'undefined' && QGI)
+      ? t('pr_notice_merged_1')
+        + '<a href="https://play.google.com/store/apps/details?id=com.nivelato.app">' + t('pr_note_link') + '</a>.'
+      : t('pr_note_1')
+        + t('pr_note_2')
+        + '<a href="https://play.google.com/store/apps/details?id=com.nivelato.app">' + t('pr_note_link') + '</a>.';
     noticeHost(card).prepend(note);
   }
 
@@ -3113,7 +3093,6 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
         + '<div class="brand-panel" style="text-align:center">'
         + '<h1 class="logo">Nivelato<span class="adot">.</span></h1>'
         + '<div class="tagline">' + t('tagline_qgc_brand') + '</div>'
-        + '<div class="qgc-only-notice">' + t('qgc_only_msg') + '</div>'
         + '<div class="tenant-block center"><div class="tenant-logo"><img src="./qgc-logo.jpg" alt="Quality Glazing Contractors" /></div><div class="tenant-meta"><div class="tenant-name">Quality Glazing Contractors</div><div class="tenant-tag">[ Tenant \u00b7 Puerto Rico ]</div></div></div>'
         + '</div>'
         + '<div class="main-panel pinned-panel" data-envmark-card>'
