@@ -156,8 +156,9 @@ Web translation used in this draft:
   the brand panel nested inside it, account pills, and the
   floating header pills (brand and nav) on login. On flow: the
   rail and step cards only, dimmed deeper for a working screen.
-- Never over body text, never on the QGC theme (that theme keeps
-  its own backdrop and card; the mountain layer is hidden there).
+- Never over body text. (The QGC gray theme that used to hide the
+  mountain layer was retired Oct 17, 2026; glass now applies on
+  every login surface, QGC included. See the QGC section below.)
 - Fallback: where backdrop-filter is unsupported, an @supports
   block takes the glass near-opaque dark so every surface stays
   fully readable over the photo.
@@ -352,9 +353,10 @@ Verified in headless Chromium on the real dashboard and flow
 pages at mobile width: every tile's "Nivelato Labs" and
 "DO NOT SHARE" / "DO NOT SHARE · DEV" reads without squinting,
 and app content under the tiles stays perfectly legible. The
-app has no light theme — its lightest real surface is the QGC
-tenant gray (body #2a2a2e, cards #3a3a3e), where the tile also
-reads cleanly. On a hypothetical pure-white page the text would
+app has no light theme — its lightest real surface at the time
+was the QGC tenant gray (body #2a2a2e, cards #3a3a3e; that theme
+was retired later the same day), where the tile also reads
+cleanly. On a hypothetical pure-white page the text would
 sit faint (the colored mark still carries the pattern) — the
 halo keeps it discernible, and no such surface exists in the
 app.
@@ -383,3 +385,50 @@ resolves its user doc. State is mirrored onto
 Not to be confused with flow.html's existing loadWatermark():
 that is the testing-channel version stamp ("TEST - v…"), a
 separate system that predates this one.
+
+## QGC/PR tenant treatment + login layout law (Oct 17, 2026)
+
+Giulia ordered the entire QGC/PR login experience rebuilt in the
+main design system ("EVERYTHING qgc/pr needs to be set back to the
+main design system"). What changed, presentation only — tenant
+detection, geo logic, sign-in methods, handlers and redirects are
+untouched:
+
+- **The gray tenant theme is gone.** The `body.qgc-theme` rule set
+  (page #2a2a2e, cards #3a3a3e, gray #63636b buttons, and the QGC
+  logo stretched fullscreen at distorted aspect behind everything)
+  was deleted from login.html, and `qgc-theme.css` — which applied
+  the same gray reskin across the whole app for QGC users — is now
+  an empty stub with a retirement note. `company-theme.js` still
+  sets the `body.qgc-theme` class as a mode flag; no stylesheet
+  keys off it. The Liquid Glass rules are no longer gated off in
+  QGC mode: QGC users get the same mountain, glass and Breakout
+  lockup as everyone else.
+- **Tenant treatment.** Inside the brand panel, the tenant is a
+  `.tenant-block`: the tenant's logo contained (never cropped,
+  never stretched) on a light tile, the tenant's full name, and a
+  mono HUD tag. Company pills and the company sign-in header show
+  logos contained on white for the same reason. The PR sign-in
+  restriction, the PR business-exclusivity banner (with its Google
+  Play link) and the exclusivity note keep their exact copy and
+  dictionary keys, rendered as glass notice rows (`.qgc-only-notice`,
+  `#pr-note`, `.exclusivity-note`, `.geo-note` — one component).
+  The green QGI button/tab accents are gone; QGC actions use the
+  system primary. The language control is the system's text pill
+  at every width (the small-screen globe-emoji swap is deleted).
+- **Layout law, every login surface.** Sign-in, company select
+  (both modes), company sign-in, add-account, reauth, cant-add,
+  travel and the save-login prompt share one contract: the card
+  fits the dynamic viewport (`max-height` in dvh, sized between
+  `--login-top-clear` and `--login-bottom-clear`, which reserve
+  room for the fixed Variant B header and the fixed footer HUD
+  labels — the two collision sources in the old layout). There is
+  no page-level scroll on the login screen. Inside the card the
+  branding/header zone and pinned actions stay put; the middle
+  content scrolls internally (`.main-panel`, `.card-scrollzone`,
+  the company-select list region). Notices are inserted into the
+  scroll zone, never at the card's top edge where the back chevron
+  sits. Auth-adjacent pages audited under the same law: sso.html
+  and geo-blocked.html already fit it (short centered cards); the
+  PR company application page (apply-pr-company.html) was retokened
+  from the retired amber brand to monochrome with the Breakout mark.
