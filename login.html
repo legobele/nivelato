@@ -6,6 +6,16 @@
   <meta name="theme-color" content="#0b0b0e" />
   <meta name="description" content="Nivelato: mediciones de campo, niveladas, para todo panel que tiene que caber en un hueco. Inicia sesión para continuar." />
   <title>Nivelato - Iniciar sesión</title>
+<link rel="canonical" href="https://login.nivelatolabs.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nivelato Labs">
+<meta property="og:title" content="Nivelato - Iniciar sesión">
+<meta property="og:description" content="Nivelato: mediciones de campo, niveladas, para todo panel que tiene que caber en un hueco. Inicia sesión para continuar.">
+<meta property="og:url" content="https://login.nivelatolabs.com/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Nivelato - Iniciar sesión">
+<meta name="twitter:description" content="Nivelato: mediciones de campo, niveladas, para todo panel que tiene que caber en un hueco. Inicia sesión para continuar.">
+<meta name="robots" content="noindex, nofollow">
   <script>
     // m23: apply the stored/detected language to <html lang> and the title
     // before first paint, so an English browser does not see a Spanish
@@ -34,9 +44,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
     <style>
     :root{
-      --bg:#0b0b0e; --bg2:#121216; --card:#16161c; --line:#232329;
-      --ink:#f2f1ec; --muted:#a7a7b3; --dim:#6d6d78;
-      --amber:#f5a524; --amber2:#ffcf5c;
+      --bg:#050505; --bg2:#0a0a0b; --card:#0e0e10; --line:#26262b;
+      --ink:#fafafa; --muted:#a8a8b0; --dim:#6f6f77;
+      --amber:#ffffff; --amber2:#e6e6e9;
       --red:#ff8787; --green:#69db7c; --green-deep:#2b8a3e;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -82,9 +92,20 @@
       right: -140px;
       width: 480px;
       height: 480px;
-      background: radial-gradient(circle, rgba(245,165,36,.13), transparent 65%);
+      background: radial-gradient(circle, rgba(255,255,255,.07), transparent 65%);
       pointer-events: none;
     }
+    .entry-claim { position: fixed; top: 76px; left: 0; right: 0; z-index: 2; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .34em; color: var(--muted); text-transform: uppercase; pointer-events: none; }
+    @media (max-width: 640px) { .entry-claim { display: none; } }
+    /* CoMinVi treatment (HOLOGRAPHIK reference): one central object,
+       huge restraint. A glass pane drawn in SVG lines behind the card,
+       tiny mono labels in the corners. Purely presentational. */
+    .pane-motif { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 0; }
+    .pane-motif svg { width: min(88vmin, 760px); height: auto; opacity: .5; }
+    .corner-label { position: fixed; bottom: 18px; z-index: 2; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .3em; color: var(--dim); text-transform: uppercase; pointer-events: none; }
+    .corner-label.left { left: 22px; } .corner-label.right { right: 22px; text-align: right; }
+    @media (max-width: 640px) { .corner-label.right { display: none; } }
+    @media (prefers-reduced-motion: no-preference) { .pane-motif svg { animation: pane-in 1.2s cubic-bezier(.22,1,.36,1) both; } @keyframes pane-in { from { opacity: 0; transform: scale(.985); } to { opacity: .5; transform: scale(1); } } }
     .card {
       background: var(--card);
       border: 1px solid var(--line);
@@ -123,8 +144,8 @@
     .geo-note {
       font-size: 12px;
       color: var(--amber2);
-      background: rgba(245,165,36,.07);
-      border: 1px solid rgba(245,165,36,.32);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.28);
       border-radius: 10px;
       padding: 10px 14px;
       margin-bottom: 16px;
@@ -728,7 +749,116 @@
       body { padding: 16px; }
       .card { padding: 32px 22px; }
     }
-  </style>
+    /* ---- Liquid Glass (Oct 2026 pass) ----
+       Apple Liquid Glass principles translated to CSS: the controls
+       and navigation form one functional layer that floats above the
+       content; the content (here, the mountain photo) lives underneath
+       and infuses the material. Judicious color in the control layer:
+       monochrome glass, so the content stays in focus. Glass is
+       translucency + backdrop blur/saturation + a specular top-edge
+       highlight + a soft inner glow, and it sits on interactive
+       surfaces only: the sign-in card, the brand panel inside it,
+       account pills, and the floating header pills. Never over body
+       text. Presentational only; no markup logic changed. */
+    .mtn-backdrop { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+    .mtn-backdrop img {
+      width: 100%; height: 100%; display: block;
+      object-fit: cover; object-position: center 30%;
+      filter: grayscale(1) contrast(1.07) brightness(.62);
+    }
+    .mtn-backdrop::after {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(5,5,5,.52), rgba(5,5,5,.30) 42%, rgba(5,5,5,.80));
+    }
+    body.qgc-theme .mtn-backdrop { display: none; }
+    body:not(.qgc-theme) .card {
+      background: linear-gradient(140deg, rgba(255,255,255,.14), rgba(255,255,255,.05) 52%, rgba(255,255,255,.09));
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
+      backdrop-filter: blur(18px) saturate(150%);
+      border: 1px solid rgba(255,255,255,.24);
+      border-radius: 20px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.38), inset 0 -1px 0 rgba(255,255,255,.05), inset 1px 0 0 rgba(255,255,255,.07), 0 24px 60px rgba(0,0,0,.55);
+    }
+    body:not(.qgc-theme) .brand-panel {
+      background: rgba(255,255,255,.055);
+      border-color: rgba(255,255,255,.15);
+      border-radius: 16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.16);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+    body:not(.qgc-theme) .account-pill {
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.14);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+    body:not(.qgc-theme) .field input { background: rgba(5,5,6,.42); border-color: rgba(255,255,255,.20); }
+    .site-header .site-brand, .site-header nav {
+      background: rgba(12,12,14,.34);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 999px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 10px 26px rgba(0,0,0,.35);
+      -webkit-backdrop-filter: blur(14px) saturate(150%);
+      backdrop-filter: blur(14px) saturate(150%);
+    }
+    .site-header .site-brand { padding: 8px 16px; }
+    .site-header nav { padding: 8px 16px; align-items: center; }
+    /* Landmarks translation: glass elements form one defined group
+       with shared tokens, and grouped glass settles together, so the
+       group's state changes animate as one material. The header is
+       two glass clusters (brand, nav), not one blob, and the fixed
+       glass header lets page content scroll underneath it. */
+    body:not(.qgc-theme) .card, body:not(.qgc-theme) .brand-panel,
+    body:not(.qgc-theme) .account-pill,
+    .site-header .site-brand, .site-header nav {
+      transition: background-color .3s ease, box-shadow .3s ease, border-color .3s ease;
+    }
+    .photo-credit {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 2; font-family: 'JetBrains Mono', monospace; font-size: 9px;
+      letter-spacing: .14em; color: var(--dim); white-space: nowrap;
+    }
+    .photo-credit a { color: var(--muted); text-decoration: none; pointer-events: auto; }
+    .photo-credit a:hover { color: var(--ink); }
+    @media (max-width: 640px) { .photo-credit { display: none; } }
+    /* Fallback: no backdrop-filter support, the glass goes near-opaque
+       so every surface stays fully readable over the photo. */
+    @supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+      body:not(.qgc-theme) .card { background: linear-gradient(140deg, rgba(30,30,34,.97), rgba(14,14,16,.98)); }
+      body:not(.qgc-theme) .brand-panel { background: rgba(20,20,23,.96); }
+      body:not(.qgc-theme) .field input { background: rgba(5,5,6,.9); }
+      .site-header .site-brand, .site-header nav { background: rgba(12,12,14,.92); }
+    }
+
+/* ---- Variant B entry header (EDOLUS concept, chosen Oct 2026) ----
+   The two glass header pills become one centered lockup over the
+   mountain backdrop: Breakout outline mark above the wide wordmark,
+   a minimal menu glyph at the right, and a top-only scrim. The
+   wordmark family is held in one token. Anybody is set at weight
+   900 and 150% width; .08em spacing keeps it airy without making
+   the expanded letterforms weak. */
+@font-face{font-family:'Anybody';src:url('./assets/fonts/Anybody-Variable.ttf') format('truetype');font-weight:100 900;font-stretch:50% 150%;font-display:swap}
+.site-header{--wordmark-font:'Anybody','Archivo Black',system-ui,sans-serif;--wordmark-spacing:.08em;height:118px;padding:22px 20px 10px;align-items:flex-start;justify-content:center;background:transparent;pointer-events:none}
+.site-header::before{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.46),rgba(0,0,0,0) 88%);pointer-events:none}
+.site-header .variant-lockup{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:9px;max-width:calc(100vw - 112px);color:#fff;text-decoration:none;pointer-events:auto}
+.site-header .variant-mark{width:34px;height:34px;color:#fff;flex:none}
+.site-header .variant-mark svg{display:block;width:100%;height:100%}
+.site-header .variant-wordmark{font-family:var(--wordmark-font);font-weight:900;font-stretch:150%;font-size:clamp(.92rem,2.2vw,1.18rem);line-height:1;letter-spacing:var(--wordmark-spacing);text-indent:var(--wordmark-spacing);text-transform:uppercase;white-space:nowrap;text-shadow:0 1px 14px rgba(0,0,0,.35)}
+.site-header .variant-menu-button{position:absolute;top:24px;right:20px;z-index:2;width:44px;height:44px;padding:0 10px;border:0;background:transparent;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;pointer-events:auto}
+.site-header .variant-menu-button i{display:block;width:22px;height:2.5px;border-radius:2px;background:currentColor}
+.variant-menu{position:fixed;inset:0;z-index:80;background:rgba(3,3,4,.96);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s ease,visibility 0s linear .25s;overflow-y:auto}
+body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .25s ease}
+.variant-menu-inner{width:min(440px,calc(100vw - 48px));margin:0 auto;padding:126px 0 44px;display:flex;flex-direction:column;gap:2px}
+.variant-menu-inner nav{display:flex;flex-direction:column;gap:2px}
+.variant-menu-inner nav a{min-height:54px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid rgba(255,255,255,.10);color:#fff;text-decoration:none;font-size:1.08rem;font-weight:600;text-align:center}
+.variant-menu-inner nav a:hover,.variant-menu-inner nav a:focus-visible{background:rgba(255,255,255,.06)}
+.variant-menu-close{position:absolute;top:24px;right:20px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:transparent;color:#fff;font-size:1.35rem;line-height:1;cursor:pointer}
+.entry-claim{top:128px}
+@media(max-width:640px){.site-header{height:108px;padding:18px 16px 8px}.site-header .variant-mark{width:30px;height:30px}.site-header .variant-wordmark{font-size:.88rem}.site-header .variant-menu-button{top:18px;right:12px}.variant-menu-close{top:18px;right:12px}.variant-menu-inner{padding-top:112px}}
+@media(prefers-reduced-motion:reduce){.variant-menu{transition:none}}
+</style>
   <!-- dear source-viewer: the measurements are leveled. the whimsy is load-bearing. 🦀 -->
   <script type="module" src="crab.js"></script>
   <script type="module" src="gay.js"></script>
@@ -742,24 +872,47 @@
   <script type="module" src="irs.js"></script>
 </head>
 <body>
+<div class="mtn-backdrop" aria-hidden="true"><img src="./assets/mountains-oeschinensee.jpg" alt="" /></div>
+<div class="entry-claim" aria-hidden="true">Field measurement, reinvented</div>
+<div class="pane-motif" aria-hidden="true"><svg viewBox="0 0 600 600" fill="none" stroke="#fafafa" stroke-width="1">
+<rect x="110" y="90" width="380" height="420" stroke-opacity="0.55"/>
+<rect x="128" y="108" width="344" height="384" stroke-opacity="0.22"/>
+<text x="300" y="38" text-anchor="middle" fill="#6f6f77" stroke="none" font-family="'JetBrains Mono', monospace" font-size="11" letter-spacing="3">[ WIDTH ]</text>
+<line x1="110" y1="52" x2="490" y2="52" stroke-opacity="0.7"/><line x1="110" y1="42" x2="110" y2="62" stroke-opacity="0.7"/><line x1="490" y1="42" x2="490" y2="62" stroke-opacity="0.7"/>
+<text x="30" y="300" text-anchor="middle" transform="rotate(-90 30 300)" fill="#6f6f77" stroke="none" font-family="'JetBrains Mono', monospace" font-size="11" letter-spacing="3">[ HEIGHT ]</text>
+<line x1="52" y1="90" x2="52" y2="510" stroke-opacity="0.7"/><line x1="42" y1="90" x2="62" y2="90" stroke-opacity="0.7"/><line x1="42" y1="510" x2="62" y2="510" stroke-opacity="0.7"/>
+<line x1="110" y1="510" x2="300" y2="300" stroke-opacity="0.3"/><circle cx="300" cy="300" r="3" fill="#fafafa" fill-opacity="0.6" stroke="none"/>
+</svg></div>
+<div class="corner-label left" aria-hidden="true">[ Nivelato Labs ]</div>
+<div class="corner-label right" aria-hidden="true">[ Offset measuring software ]</div>
+<div class="photo-credit">Photo: <a href="https://commons.wikimedia.org/wiki/File:20190725_Oeschinensee-Panorama,_Kandersteg_(06540-42_stitch).jpg" target="_blank" rel="noopener noreferrer">© Günter Seggebäing, Wikimedia Commons</a> · <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 3.0</a></div>
 <!-- M17: the default (external) form is STATIC HTML — first paint never waits
      on any network (module imports or the ipapi.co geo lookup). The module
      below hydrates it, then swaps the flow UI in the background if geo says
      otherwise. -->
 <a class="skip-link" href="#app-card" data-i18n="skip_to_content">Saltar al contenido principal</a>
 <header class="site-header">
-  <span class="site-brand">Nivelato<span class="adot">.</span></span>
-  <nav data-i18n-aria="site_nav_label" aria-label="Navegación principal">
-    <a href="https://nivelatolabs.com" data-i18n="nav_home">Inicio</a>
-    <a href="./ayuda.html" data-i18n="nav_help">Ayuda</a>
-  </nav>
+  <a class="variant-lockup" href="https://nivelatolabs.com" aria-label="Nivelato Labs">
+    <span class="variant-mark"><svg viewBox="-5 -5 110 110" fill="none" stroke="currentColor" stroke-width="6.5" aria-hidden="true" focusable="false"><path d="M55 20 H20 V84 H84 V43" stroke-linejoin="miter"/><path d="M80 -1 L84.5 13.5 L99 18 L84.5 22.5 L80 37 L75.5 22.5 L61 18 L75.5 13.5 Z" stroke-linejoin="bevel"/></svg></span>
+    <span class="variant-wordmark">Nivelato Labs</span>
+  </a>
+  <button class="variant-menu-button" type="button" onclick="document.body.classList.add('variant-menu-open');this.setAttribute('aria-expanded','true')" aria-label="Open menu" aria-expanded="false" aria-controls="login-variant-menu"><i></i><i></i><i></i></button>
 </header>
+<div class="variant-menu" id="login-variant-menu">
+  <button class="variant-menu-close" type="button" onclick="document.body.classList.remove('variant-menu-open');document.querySelector('.variant-menu-button').setAttribute('aria-expanded','false')" aria-label="Close menu">×</button>
+  <div class="variant-menu-inner">
+    <nav data-i18n-aria="site_nav_label" aria-label="Navegación principal">
+      <a href="https://nivelatolabs.com" onclick="document.body.classList.remove('variant-menu-open');document.querySelector('.variant-menu-button').setAttribute('aria-expanded','false')" data-i18n="nav_home">Inicio</a>
+      <a href="./ayuda.html" onclick="document.body.classList.remove('variant-menu-open');document.querySelector('.variant-menu-button').setAttribute('aria-expanded','false')" data-i18n="nav_help">Ayuda</a>
+    </nav>
+  </div>
+</div>
 <main class="card split-card" id="app-card" tabindex="-1">
   <div class="split">
     <div class="brand-panel">
       <h1 class="logo">Nivelato<span class="adot">.</span></h1>
       <div class="tagline" data-i18n="tagline">Mediciones de campo, niveladas, para todo panel que tiene que caber en un hueco.</div>
-      <div class="brand-logo-box"><img src="./icon-192.png" alt="Nivelato" /></div>
+      <div class="brand-logo-box"><img src="./assets/breakout-gradient.svg" alt="Nivelato" /></div>
     </div>
     <div class="main-panel" data-envmark-card>
       <div class="accounts-section" id="accounts-section" style="display:none">
@@ -1535,7 +1688,7 @@
   }
 
   function formHTML(qgi) {
-    const logoSrc = qgi ? './qgc-logo.jpg' : './icon-192.png';
+    const logoSrc = qgi ? './qgc-logo.jpg' : './assets/breakout-gradient.svg';
     const logoAlt = qgi ? 'Quality Glass' : 'Nivelato';
     return `
     <div class="split">
@@ -3718,5 +3871,8 @@
   }
 </script>
 <script src="./press-yaoi.js"></script>
+<!-- Cloudflare Web Analytics -->
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "ba83c66be7af41d899cb499dfa1442c8"}'></script>
+<!-- End Cloudflare Web Analytics -->
 </body>
 </html>

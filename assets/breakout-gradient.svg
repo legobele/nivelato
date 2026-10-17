@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-5 -5 110 110" fill="none" stroke="url(#breakoutGradient)" stroke-width="6.5">
+  <title>Nivelato Labs — Breakout (gradient colorway)</title>
+  <!-- Gradient colorway of the Breakout outline mark. Geometry identical to
+       concept-3-breakout-outline.svg (the single-color currentColor master,
+       which this file sits alongside and does not replace).
+       Gradient: linear, userSpaceOnUse, from the frame's bottom-left corner
+       (20, 84) to the star's breakout tip (92, 5), so the sweep starts in the
+       frame and ends where the star breaks out. Stops are evenly spaced:
+         0%   #fee800
+         33%  #ff0e0e
+         67%  #ff0d88
+         100% #8202ff
+       To re-skin the whole mark, redefine this one gradient. -->
+  <defs>
+    <linearGradient id="breakoutGradient" gradientUnits="userSpaceOnUse" x1="20" y1="84" x2="92" y2="5">
+      <stop offset="0" stop-color="#fee800"/>
+      <stop offset="0.333" stop-color="#ff0e0e"/>
+      <stop offset="0.667" stop-color="#ff0d88"/>
+      <stop offset="1" stop-color="#8202ff"/>
+    </linearGradient>
+  </defs>
+  <!-- Dimension-line frame: one continuous bracket path, gap left at top right for the breakout. -->
+  <path d="M55 20 H20 V84 H84 V43" stroke-linejoin="miter"/>
+  <!-- Four-point star breaking out of the frame, drawn as a hollow outline (transparent interior). -->
+  <path d="M80 -1 L84.5 13.5 L99 18 L84.5 22.5 L80 37 L75.5 22.5 L61 18 L75.5 13.5 Z" stroke-linejoin="bevel"/>
+</svg>

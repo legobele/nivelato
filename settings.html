@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<title>Nivelato - Ajustes</title>
+<meta name="description" content="Ajustes de tu cuenta de Nivelato: perfil, idioma, notificaciones y preferencias de la aplicación de medición de campo.">
+<meta name="robots" content="noindex, nofollow">
 <base href="/">
 <meta charset="UTF-8" />
 <script src="./company-theme.js"></script>
@@ -23,7 +26,7 @@
   .btn-delete-account { width: 100%; margin-top: 16px; padding: 12px 16px; min-height: 44px; background: #fff; border: 1.5px solid #ffc9c9; border-radius: 12px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; color: #c92a2a; transition: background 0.15s; }
   .btn-delete-account:hover { background: #fff5f5; }
   .btn-delete-account:disabled { opacity: 0.5; cursor: default; }
-  .btn-primary { width: 100%; padding: 12px 16px; min-height: 48px; background: #1971c2; color: #fff; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .btn-primary { width: 100%; padding: 12px 16px; min-height: 48px; background: #fafafa; color: #050505; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
   .btn-primary:active { transform: scale(0.98); background: #1864ab; }
   .btn-primary:disabled { opacity: 0.6; cursor: default; }
   /* second sidebar layout: company sidebar stays in .niv-shell, the
@@ -70,7 +73,7 @@ html, body { overflow-y: auto !important; }
   /* settings dark theme */
   body { background: #0e0e10; color: #f5f5f7; }
   .settings-shell { max-width: none; padding: 0; }
-  #profile-pic-fallback { background: #1971c2; }
+  #profile-pic-fallback { background: #26262b; }
   .btn-delete-account { background: transparent; border-color: rgba(229,72,77,0.5); color: #f87171; }
   .btn-delete-account:hover { background: rgba(229,72,77,0.1); }
   #delete-request-status { background: rgba(230,119,0,0.15) !important; color: #fbbf24 !important; }
@@ -102,11 +105,10 @@ html, body { overflow-y: auto !important; }
       <div class="niv-nav-group-title" data-i18n="groupCompany">Compañía</div>
       <a class="niv-nav-btn" href="/company/settings" data-i18n="companyProfile">Ajustes de la compañía</a>
       <a class="niv-nav-btn" href="/company/users" data-i18n="companyTeam">Equipo y usuarios</a>
-      <a class="niv-nav-btn" href="/company/updates" data-i18n="companyUpdates">Actualizaciones</a>
     </div>
     <!-- Account settings shows ONLY account navigation in its sidebar
          (Giulia, 2026-10-12): no company zone here. The company doors
-         (Usuarios, Ajustes de la compañía, Updates, Billing) live in
+         (Usuarios, Ajustes de la compañía, Billing) live in
          the company sidebar module on the company pages, not on the
          user settings surface. v1.1 amends: in company context the
          company-settings section above IS shown. -->
@@ -128,7 +130,7 @@ html, body { overflow-y: auto !important; }
       <div class="niv-card-desc" data-i18n="accountInfoDesc">Datos de tu perfil en Nivelato.</div>
       <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
         <img id="profile-pic" alt="Foto de perfil" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:#e9ecef;display:none;" />
-        <div id="profile-pic-fallback" style="width:64px;height:64px;border-radius:50%;background:#1971c2;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;"></div>
+        <div id="profile-pic-fallback" style="width:64px;height:64px;border-radius:50%;background:#26262b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;"></div>
         <div>
           <input type="file" id="profile-pic-input" accept="image/*" style="display:none;" />
           <button class="niv-btn-secondary" id="btn-change-pic" style="padding:8px 16px;font-size:13px;width:auto;margin-top:0;" data-i18n="changePhoto">Cambiar foto</button>
@@ -264,7 +266,7 @@ html, body { overflow-y: auto !important; }
   var STR = {
     es: {
       docTitle: 'Nivelato - Ajustes', pageTitle: 'Ajustes', pageSub: 'Configuración de tu cuenta', back: '← Volver',
-      mobileNav: 'Navegación', groupCompany: 'Compañía', companyProfile: 'Ajustes de la compañía', companyTeam: 'Equipo y usuarios', companyUpdates: 'Actualizaciones',
+      mobileNav: 'Navegación', groupCompany: 'Compañía', companyProfile: 'Ajustes de la compañía', companyTeam: 'Equipo y usuarios',
       accountInfo: 'Información de la cuenta', accountInfoDesc: 'Datos de tu perfil en Nivelato.', changePhoto: 'Cambiar foto',
       uploading: 'Subiendo...', photoUpdated: 'Foto actualizada.', photoFailed: 'No se pudo subir la foto. Intenta de nuevo.',
       lblName: 'Nombre', lblEmail: 'Correo', lblRole: 'Rol', lblOrg: 'Taller', lblCode: 'Código',
@@ -304,7 +306,7 @@ html, body { overflow-y: auto !important; }
     },
     en: {
       docTitle: 'Nivelato - Settings', pageTitle: 'Settings', pageSub: 'Your account settings', back: '← Back',
-      mobileNav: 'Navigation', groupCompany: 'Company', companyProfile: 'Company settings', companyTeam: 'Team & users', companyUpdates: 'Updates',
+      mobileNav: 'Navigation', groupCompany: 'Company', companyProfile: 'Company settings', companyTeam: 'Team & users',
       accountInfo: 'Account information', accountInfoDesc: 'Your Nivelato profile details.', changePhoto: 'Change photo',
       uploading: 'Uploading...', photoUpdated: 'Photo updated.', photoFailed: 'The photo could not be uploaded. Try again.',
       lblName: 'Name', lblEmail: 'Email', lblRole: 'Role', lblOrg: 'Workshop', lblCode: 'Code',

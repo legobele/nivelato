@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#0e0e10" />
 <link rel="icon" href="/icon-192.png" />
 <title>Nivelato - Sidebar</title>
+<meta name="robots" content="noindex, nofollow">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/niv-dark.css" />
 <style>
@@ -219,12 +220,11 @@
       <nav class="niv-nav" aria-label="Settings">
         <div class="niv-nav-group">
           <div class="niv-nav-group-title" data-i18n="groupCompany">Compañía</div>
-          <!-- Manager only doors (Usuarios, Ajustes de la compañía,
-               Updates) live in templates: they are NOT rendered at all
+          <!-- Manager only doors (Usuarios, Ajustes de la compañía)
+               live in templates: they are NOT rendered at all
                until the in module permission gate passes. See README. -->
           <template data-manager-gate="users"><a class="niv-nav-btn" href="/company/users" target="_top" data-nav-key="users"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><path class="glyph" d="M9.2 6.1a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4zM3.9 18.7c.7-3.1 2.8-4.7 5.3-4.7s4.6 1.6 5.3 4.7zM16.6 7.6a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zM15.9 14.3c2.1.3 3.7 1.8 4.3 4.4h-4.5c.35-1.6.42-3.05.2-4.4z"/></svg></span><span class="mod-nav-label" data-i18n="users">Usuarios</span></a></template>
           <template data-manager-gate="settings"><a class="niv-nav-btn" href="/company/settings" target="_top" data-nav-key="settings"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><rect class="glyph" x="4.6" y="6.1" width="14.8" height="1.9" rx="0.95"/><rect class="glyph" x="4.6" y="11.05" width="14.8" height="1.9" rx="0.95"/><rect class="glyph" x="4.6" y="16" width="14.8" height="1.9" rx="0.95"/><circle class="glyph" cx="9" cy="7.05" r="2.1"/><circle class="glyph" cx="15" cy="12" r="2.1"/><circle class="glyph" cx="8" cy="16.95" r="2.1"/></svg></span><span class="mod-nav-label" data-i18n="companySettings">Ajustes de la compañía</span></a></template>
-          <template data-manager-gate="updates"><a class="niv-nav-btn" href="/company/updates" target="_top" data-nav-key="updates" id="nav-updates"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><path class="glyph" d="M11 4.8h2v7.4l3.3-3.3 1.4 1.4L12 16l-5.7-5.7 1.4-1.4L11 12.2zM5.4 17.4h13.2v1.9H5.4z"/></svg></span><span class="mod-nav-label" data-i18n="updates">Updates</span><span class="nav-sub" id="updates-sub">Comprobando...</span><span class="dot" id="updates-dot"></span></a></template>
           <span id="billing-slot" hidden><button class="niv-nav-btn soon" type="button" disabled id="nav-billing"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><path class="glyph" fill-rule="evenodd" d="M4.9 6.9A1.9 1.9 0 0 1 6.8 5h10.4a1.9 1.9 0 0 1 1.9 1.9v10.2a1.9 1.9 0 0 1-1.9 1.9H6.8a1.9 1.9 0 0 1-1.9-1.9zm1.9 2v6.2h10.4V8.9z"/></svg></span><span class="mod-nav-label" data-i18n="billing">Billing</span><span class="soon-badge" data-i18n="soon">soon</span></button></span>
         </div>
         <div class="niv-nav-group">
@@ -334,10 +334,9 @@ const STRINGS = {
   es: {
     title: 'Nivelato - Ajustes',
     groupCompany: 'Compañía', groupAccount: 'Cuenta', groupAccountSettings: 'Mi cuenta',
-    users: 'Usuarios', companySettings: 'Ajustes de la compañía', updates: 'Updates',
+    users: 'Usuarios', companySettings: 'Ajustes de la compañía',
     billing: 'Billing', soon: 'soon', myAccount: 'Mi cuenta',
     loading: 'Cargando...', companyFallback: 'Compañía',
-    checking: 'Comprobando...', newVersion: 'Nueva versión disponible', upToDate: 'Actualizado',
     secCuenta: 'Cuenta', secNotificaciones: 'Notificaciones', secInterfaz: 'Interfaz',
     secSeguridad: 'Seguridad', secDatos: 'Datos y privacidad',
     secProjects: 'Proyectos', secCustomers: 'Clientes', secMeasures: 'Medidas',
@@ -363,10 +362,9 @@ const STRINGS = {
   en: {
     title: 'Nivelato - Settings',
     groupCompany: 'Company', groupAccount: 'Account', groupAccountSettings: 'My account',
-    users: 'Users', companySettings: 'Company settings', updates: 'Updates',
+    users: 'Users', companySettings: 'Company settings',
     billing: 'Billing', soon: 'soon', myAccount: 'My account',
     loading: 'Loading...', companyFallback: 'Company',
-    checking: 'Checking...', newVersion: 'New version available', upToDate: 'Up to date',
     secCuenta: 'Account', secNotificaciones: 'Notifications', secInterfaz: 'Interface',
     secSeguridad: 'Security', secDatos: 'Data and privacy',
     secProjects: 'Projects', secCustomers: 'Customers', secMeasures: 'Measurements',
@@ -451,10 +449,6 @@ function applyLang() {
   document.querySelectorAll('.js-org-name').forEach((nameEl) => {
     if (nameEl.getAttribute('data-state') === 'loading') nameEl.textContent = L('loading');
   });
-  const sub = document.getElementById('updates-sub');
-  if (sub && sub.getAttribute('data-state') === 'checking') sub.textContent = L('checking');
-  if (sub && sub.getAttribute('data-state') === 'pending') sub.textContent = L('newVersion');
-  if (sub && sub.getAttribute('data-state') === 'current') sub.textContent = L('upToDate');
 }
 
 /* ---------------- messaging ---------------- */
@@ -489,14 +483,13 @@ const NAV_KEYS_BY_PATH = {
   '/company/users': 'users',
   '/users': 'users',
   '/company/settings': 'settings',
-  '/company/updates': 'updates',
   '/account/settings': 'account'
 };
 function keyFromValue(v) {
   if (!v) return null;
   const s = String(v);
   if (NAV_KEYS_BY_PATH[s]) return NAV_KEYS_BY_PATH[s];
-  if (['users', 'settings', 'updates', 'billing', 'account', 'home', 'projects', 'notifications'].includes(s)) return s;
+  if (['users', 'settings', 'billing', 'account', 'home', 'projects', 'notifications'].includes(s)) return s;
   try {
     const u = new URL(s, window.location.origin);
     return NAV_KEYS_BY_PATH[u.pathname] || null;
@@ -603,8 +596,8 @@ const dataVersion = () => (orgData && orgData.dataVersion) ? String(orgData.data
    deliberately NOT a display source. When the registry cannot be
    read, the header falls back to the repo VERSION value below (keep
    it in sync with the repo-root VERSION file). The org doc's
-   dataVersion keeps its own job: it is the org's update-check state
-   for the Updates dot, not a display string. */
+   dataVersion remains only as a last-resort fallback in
+   paintVersion, never a primary display source. */
 const FALLBACK_VERSION = '1.1.0'; /* mirrors repo-root VERSION */
 let displayVersion = null;
 function paintVersion() {
@@ -655,16 +648,6 @@ function renderCompanyHead() {
   });
   paintVersion();
 }
-function setUpdatesState(state) {
-  const sub = document.getElementById('updates-sub');
-  const dot = document.getElementById('updates-dot');
-  if (!sub || !dot) return;
-  sub.setAttribute('data-state', state);
-  if (state === 'pending') { sub.textContent = L('newVersion'); dot.classList.add('on'); }
-  else if (state === 'current') { sub.textContent = L('upToDate'); dot.classList.remove('on'); }
-  else if (state === 'unknown') { sub.textContent = ''; dot.classList.remove('on'); }
-  reportHeight();
-}
 function showBilling() {
   const slot = document.getElementById('billing-slot');
   if (slot) slot.hidden = false;
@@ -672,7 +655,7 @@ function showBilling() {
 }
 
 /* ---------------- manager gate ----------------
-   Manager only doors (Usuarios, Ajustes de la compañía, Updates) are
+   Manager only doors (Usuarios, Ajustes de la compañía) are
    cloned out of their templates ONLY when the gate passes. The gate is
    the pages own permission source: makePermChecker from
    /permissions.js run on the signed in users/{uid} doc (role plus
@@ -689,8 +672,6 @@ function renderManagerEntries() {
     const node = tpl.content.firstElementChild.cloneNode(true);
     tpl.replaceWith(node);
   });
-  const sub = document.getElementById('updates-sub');
-  if (sub) { sub.setAttribute('data-state', 'checking'); sub.textContent = L('checking'); }
   applyLang();
   if (activeKey) setActiveCompany(activeKey);
   reportHeight();
@@ -1013,10 +994,9 @@ async function loadLists(db, fs, orgId) {
 
 function applyDemo() {
   if (TARGET === 'company' || TARGET === 'shell') {
-    /* Placeholder org on the external flow, with a pending update, so a
-       single screenshot exercises the head, the Billing entry, the live
-       sub label and the dot. The demo persona is a manager, so the
-       manager gate renders its doors in demo mode. */
+    /* Placeholder org on the external flow, so a single screenshot
+       exercises the head and the Billing entry. The demo persona is a
+       manager, so the manager gate renders its doors in demo mode. */
     if (TARGET === 'company') renderManagerEntries();
     /* p20: the demo version line derives from the same source as the
        real one (the registry fallback that mirrors repo VERSION),
@@ -1026,7 +1006,6 @@ function applyDemo() {
     renderCompanyHead();
     if (TARGET === 'company') {
       showBilling();
-      setUpdatesState('pending');
       setActiveCompany(params.get('active') || 'users');
     } else {
       setActiveCompany(params.get('active') || 'home');
@@ -1103,9 +1082,9 @@ async function initFirebase() {
     }
     if (orgId && fsMod.onSnapshot) {
       /* M7: keep the org doc live in this module. When the org's
-         updateChannel changes (e.g. a switch on updates.html), the new
-         channel arrives here and the version line re-resolves for it
-         without a reload; renderCompanyHead repaints the head too. */
+         updateChannel changes, the new channel arrives here and the
+         version line re-resolves for it without a reload;
+         renderCompanyHead repaints the head too. */
       try {
         fsMod.onSnapshot(doc(db, 'orgs', orgId), (snap) => {
           if (!snap.exists()) return;
@@ -1139,23 +1118,6 @@ async function initFirebase() {
         || (orgData && orgData.flow === undefined && orgId === 'NJBBG5');
       const externalSignal = claimsFlow === 'external' || (orgData && orgData.flow === 'external');
       if (!qgiSignal && externalSignal) showBilling();
-      /* Updates sub label and dot: the org's channel pointer (same
-         resolution as resolveRegistryVersion / updates.html: stable ->
-         app_updates/backend, beta -> app_updates/beta-latest, latest =
-         version || friendlyVersion) vs the org dataVersion, default
-         0.9. Manager gated, like the entry. */
-      if (canManage) {
-        try {
-          const channel = orgData && orgData.updateChannel ? String(orgData.updateChannel) : 'stable';
-          const pointerSnap = await getDoc(doc(db, 'app_updates', channel === 'beta' ? 'beta-latest' : 'backend'));
-          const pointer = pointerSnap.exists() ? pointerSnap.data() : null;
-          const latest = pointer ? (pointer.version || pointer.friendlyVersion) : null;
-          const pending = !!(latest && dataVersion() !== String(latest));
-          setUpdatesState(pending ? 'pending' : 'current');
-        } catch (_) {
-          setUpdatesState('unknown');
-        }
-      }
     }
     reportHeight();
   });
@@ -1283,8 +1245,6 @@ window.addEventListener('message', (ev) => {
 
 /* ---------------- boot ---------------- */
 document.querySelectorAll('.js-org-name').forEach((el) => el.setAttribute('data-state', 'loading'));
-/* updates-sub lives inside the manager gate template until the gate
-   passes; its checking state is stamped when it is cloned in. */
 applyLang();
 initSections();
 if (TARGET === 'company' || TARGET === 'shell') {

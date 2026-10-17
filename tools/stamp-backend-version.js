@@ -18,7 +18,7 @@
 //        (writes the retroactive history from SUPPORT_SURFACES.md 3.5)
 //
 // Auth: reads %USERPROFILE%\.config\configstore\firebase-tools.json and
-// uses tokens.access_token (same pattern as tools/seed-app-updates.js).
+// uses tokens.access_token (the firebase CLI's stored token).
 // No firebase-admin dependency; Firestore REST only.
 //
 // Writes for a web stamp:
@@ -60,7 +60,7 @@ function loadAccessToken() {
   return token;
 }
 
-// --- Firestore REST value format (same as tools/seed-app-updates.js) --
+// --- Firestore REST value format ----------------------------------------
 function toValue(v) {
   if (v === null || v === undefined) return { nullValue: null };
   if (typeof v === 'boolean') return { booleanValue: v };

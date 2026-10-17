@@ -7,7 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0d0d0f" />
 <link rel="manifest" href="/manifest.json" />
-<title>Nivelato - Users</title>
+<title>Nivelato - Usuarios de la compañía</title>
+<meta name="description" content="Usuarios de la compañía en Nivelato: administra los miembros de tu taller, sus roles y sus permisos de acceso.">
+<meta name="robots" content="noindex, nofollow">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/niv-dark.css" />
 <link rel="stylesheet" href="/qgc-theme.css" />
@@ -964,9 +966,9 @@ onAuthStateChanged(auth, async (user) => {
     showLoadError(t('couldNotCompany', { msg: e.message || t('unknownError') }));
     return;
   }
-  /* The org head and the Updates dot that this page used to render into
-     its own sidebar are rendered by the sidebar module now; the module
-     reads the same org doc and app_updates/latest itself. */
+  /* The org head that this page used to render into its own sidebar is
+     rendered by the sidebar module now; the module reads the same org
+     doc itself. */
 
   try {
     const qs = await getDocs(query(collection(db, 'users'), where('orgId', '==', orgId)));

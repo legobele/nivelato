@@ -380,9 +380,10 @@ service cloud.firestore {
         );
     }
 
-    // App updates feed — public read (lets the app show update banners
-    // without auth, like nivelato_config/version); console/function-only
-    // write. Seeded by tools/seed-app-updates.js.
+    // Version registry projections — public read (clients and debug
+    // surfaces read the current version stamps without auth, like
+    // nivelato_config/version); console/function-only write. Stamped
+    // at deploy time by tools/stamp-backend-version.js.
     match /app_updates/{docId} {
       allow read: if true;
       allow write: if false;

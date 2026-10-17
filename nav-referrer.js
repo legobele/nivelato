@@ -20,8 +20,8 @@
  * /company/users bounce for non-managers).
  *
  * Generalization (wave 3): the consume side used to run only on
- * /account/settings, so company/settings.html and updates.html each
- * carried an inline copy of the same logic. The PAGES table below is
+ * /account/settings, so company/settings.html carried its own inline
+ * copy of the same logic. The PAGES table below is
  * the whole per-page difference: storage key (pages that own one),
  * allowlist, back-button selector, and how "never self" is checked.
  * A page opts in by including this script, exactly as before; the
@@ -35,12 +35,6 @@
  *   company settings visit, never the account one), the widest
  *   allowlist (it also allows /account/settings and /users), back
  *   button matched by .niv-btn-back.
- * - /company/updates: no storage key at all. This page never owned a
- *   saved referrer; it only mirrors its allowlist against
- *   document.referrer, and it must not touch the settings keys, which
- *   belong to the settings visits. Its "never self" check compares
- *   path + search, as its inline copy did, so a referrer to this page
- *   with a different query string is still honored.
  */
 (function () {
   var FALLBACK = '/dashboard.html?view=home';
@@ -49,7 +43,7 @@
     '/account/settings': {
       key: 'niv:settings-referrer',
       saveName: 'nivSaveSettingsReferrer',
-      allowed: ['/', '/dashboard.html', '/company/users', '/company/settings', '/company/updates', '/photo.html'],
+      allowed: ['/', '/dashboard.html', '/company/users', '/company/settings', '/photo.html'],
       selector: '.niv-btn-back',
       removeOnclick: true,
       selfByPath: true
@@ -60,7 +54,7 @@
     '/settings.html': {
       key: 'niv:settings-referrer',
       saveName: 'nivSaveSettingsReferrer',
-      allowed: ['/', '/dashboard.html', '/company/users', '/company/settings', '/company/updates', '/photo.html'],
+      allowed: ['/', '/dashboard.html', '/company/users', '/company/settings', '/photo.html'],
       selector: '.niv-btn-back',
       removeOnclick: true,
       selfByPath: true
@@ -68,32 +62,10 @@
     '/company/settings': {
       key: 'niv:company-settings-referrer',
       saveName: 'nivSaveCompanySettingsReferrer',
-      allowed: ['/', '/dashboard.html', '/company/users', '/company/updates', '/account/settings', '/users', '/photo.html'],
+      allowed: ['/', '/dashboard.html', '/company/users', '/account/settings', '/users', '/photo.html'],
       selector: '.niv-btn-back',
       removeOnclick: false,
       selfByPath: true
-    },
-    '/company/updates': {
-      key: null,
-      saveName: null,
-      allowed: ['/', '/dashboard.html', '/company/users', '/company/settings', '/company/updates', '/account/settings', '/settings.html', '/photo.html'],
-      selector: '#btn-back',
-      removeOnclick: false,
-      selfByPath: false
-    },
-    /* m10: updates.html is also served at its file path /updates.html
-       (the route the settings hosts link to). Without this entry the
-       consume side never ran there and Back always fell back to the
-       dashboard home. Same contract as /company/updates: no storage
-       key, document.referrer mirrored against the allowlist, never
-       self by path + search. */
-    '/updates.html': {
-      key: null,
-      saveName: null,
-      allowed: ['/', '/dashboard.html', '/company/users', '/company/settings', '/company/updates', '/account/settings', '/settings.html', '/updates.html', '/photo.html'],
-      selector: '#btn-back',
-      removeOnclick: false,
-      selfByPath: false
     }
   };
 

@@ -32,12 +32,11 @@ own copies from nested paths.
   channel, `app_updates/beta-latest` for beta orgs and
   `app_updates/backend` for a stable stamp, falling back to the
   repo `VERSION` value when the registry is unreachable; the org
-  doc's `dataVersion` is only the Updates-dot comparison state,
-  never the displayed version),
+  doc's `dataVersion` is never the displayed version, only a
+  last-resort fallback),
   the three panel list sections, then the tier nav groups:
   - Company group: Users (`/company/users`), Company settings
-    (`/company/settings`), Updates (`/company/updates`), Billing (see
-    gating below).
+    (`/company/settings`), Billing (see gating below).
   - Account group: My account (`/account/settings`).
 - `?target=shell`: the dashboard facing sidebar nav (the app shell
   context). Company head, then the app nav (Panel
@@ -137,7 +136,7 @@ runs them as Firestore writes (rules enforce permissions).
 
 ### Permission gate (manager only doors)
 
-Usuarios, Company settings and Updates are manager only doors. They
+Usuarios and Company settings are manager only doors. They
 are stored as `<template data-manager-gate="...">` in the markup and
 are NOT rendered at all until the module's own gate passes; non
 managers, signed out visitors, and unknown roles get a module without
@@ -154,9 +153,7 @@ How the module obtains the role, in order:
 2. If the user doc cannot be read, it falls back to the flowGate
    claims on the ID token: `claims.role` fed to the same checker.
 3. If neither source resolves a role, the gate stays shut
-   (fail closed). The Updates status read (`app_updates/latest`) only
-   runs when the gate passes, because its entry does not exist
-   otherwise.
+   (fail closed).
 
 The demo persona is a manager, so demo mode renders the doors (see
 below). Billing is gated separately, by flow, not by this gate.
@@ -181,15 +178,6 @@ Before reading, the module best effort mints flow claims via
 `/geo.js` `ensureFlowClaims()`, like the sibling pages, and fails soft
 if that helper or Firebase is unreachable.
 
-### Updates status (manager gated entry)
-
-Same reads and element semantics as `renderUpdatesDot` in users.html:
-ids `updates-sub` and `updates-dot` inside the Updates anchor, the org
-`dataVersion` (default `0.9`) compared against `app_updates/latest`:
-a different latest version sets the sub label to the New version
-available state and turns the dot on; otherwise the sub label reads
-Up to date and the dot stays off. A failed read blanks the sub label.
-
 ### Demo mode (`?demo=1`, combinable with `target` and `lang`)
 
 Renders with placeholder data and NO Firebase import at all, so QA can
@@ -197,8 +185,7 @@ screenshot the chrome without auth:
 
 - Company: demo org head (Example Company, Nivelato v1.0), the manager
   doors rendered, Billing shown (the demo org is on the external
-  flow), the Updates entry in its pending state (New version
-  available, dot on), Users marked active, and one placeholder row in
+  flow), Users marked active, and one placeholder row in
   each list section.
 - Shell: demo org head, the app nav with Panel active and Usuarios
   pointing at `/users`, and one placeholder row in each list section.
@@ -240,7 +227,7 @@ module: Dashboard, Projects, Notifications and Users pills plus the
   the module has no data source of its own.
 - Settings context (`?ctx=settings`, or `context: 'settings'` on the
   mount / in `niv:init`): hosts in the settings shell (account and
-  company settings, users administration, updates) mount the bar
+  company settings, users administration) mount the bar
   this way. The bar is then a frame, not a navigation surface: the
   pills render inert (no `href`, no `target`, no `niv:nav`, no
   active pill), because every pill destination is a dashboard view
@@ -259,7 +246,7 @@ iframe it created, and only navigates to same origin hrefs.
 | Type | Direction | Payload | Meaning |
 | --- | --- | --- | --- |
 | `niv:ready` | module to host | `{ target }` | Module loaded. `target` is `company`, `shell`, `user` or `topbar`. Host replies with `niv:init`; the bridge also sends init on iframe load, and init is idempotent. |
-| `niv:init` | host to module | `{ target, active, section, lang }` | Configure the module. `lang` is `es` or `en`. For the sidebar company target, `active` is a nav key (`users`, `settings`, `updates`, `billing`, `account`) or an href or path such as `/company/users`. For the shell target, `active` is `home`, `projects`, `notifications` or `users`. For the user target, `section` (or `active`) is one of the five `data-section` keys. Topbar only extensions: `project` sets the current project label; `context: 'settings'` switches the bar to its inert settings context. |
+| `niv:init` | host to module | `{ target, active, section, lang }` | Configure the module. `lang` is `es` or `en`. For the sidebar company target, `active` is a nav key (`users`, `settings`, `billing`, `account`) or an href or path such as `/company/users`. For the shell target, `active` is `home`, `projects`, `notifications` or `users`. For the user target, `section` (or `active`) is one of the five `data-section` keys. Topbar only extensions: `project` sets the current project label; `context: 'settings'` switches the bar to its inert settings context. |
 | `niv:nav` | module to host | `{ href }` | A nav anchor was clicked. The host performs the top frame navigation. Embedded modules suppress the anchor default after posting, so hosts MUST navigate on this message. Module anchors also carry `target="_top"` as the no JS fallback: standalone, or a host that never loads the module script, still navigates. |
 | `niv:resize` | module to host | `{ height }` | Content height in CSS pixels (uncapped measurement). Auto mode hosts set the iframe height from it. Fixed mode hosts (the company sidebar default) ignore it. |
 | `niv:section` | module to host | `{ section }` | User target only: a subsettings button was clicked. The module marks it active itself, then the host shows the matching section. |
@@ -322,8 +309,8 @@ drag is active, in the module and in the native panel alike.
     active: 'home',              // home | projects | notifications | users
     project: 'Current project name'
   });
-  // Live updates without reload:
-  sidebar.setActive('updates');
+  // Live changes without reload:
+  sidebar.setActive('users');
   sidebar.setSection('seguridad');
   sidebar.setLang('en');
   topbar.setProject('Other project');
@@ -363,11 +350,11 @@ files) owns writing them.
 Every string the modules render ships in a complete ES/EN pair in the
 module's string table and is selected by the resolved language
 (cookie, then `?lang=`, then `niv:init`). That covers nav labels,
-group and section titles, list empty states, chevron labels, the
-Updates sub label states, aria labels and document titles. Three
+group and section titles, list empty states, chevron labels,
+aria labels and document titles. Two
 labels are intentionally identical in both languages because that is
 how every sibling page renders them in both languages today, as
-feature names: `Updates`, `Billing`, and the `soon` badge.
+feature names: `Billing` and the `soon` badge.
 
 Audit findings outside this directory (not fixed here; page workers
 own those files):
@@ -406,6 +393,6 @@ nothing (it self-suppresses in CSS).
 5. Topbar: pass `active` for the current view and keep `project`
    updated with `setProject` when the open project changes.
 6. Routes used by the modules (`/company/users`, `/company/settings`,
-   `/company/updates`, `/account/settings`, `/dashboard.html?view=...`)
+   `/account/settings`, `/dashboard.html?view=...`)
    are the worker served paths the pages already link to; the modules
    do not change any routing.
