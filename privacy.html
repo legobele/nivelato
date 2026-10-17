@@ -17,14 +17,8 @@
   * { box-sizing: border-box; }
   body { font-family: 'Inter', system-ui, sans-serif; margin: 0; background: var(--niv-bg); color: var(--niv-text); line-height: 1.65; }
   header { position: relative; background: var(--niv-surface); color: var(--niv-text); padding: 28px 20px; border-bottom: 1px solid var(--niv-border-soft); }
-  .lang-toggle {
-    position: absolute; top: 14px; right: 14px;
-    background: transparent; border: 1px solid rgba(255,255,255,0.35);
-    border-radius: 999px; color: var(--niv-text);
-    font-family: ui-monospace, "JetBrains Mono", monospace;
-    font-size: .78rem; letter-spacing: .08em; padding: 7px 14px; cursor: pointer;
-  }
-  .lang-toggle:hover { border-color: var(--niv-text); }
+  /* Language selector placement (component styles: niv-dark.css) */
+  header .niv-lang { position: absolute; top: 14px; right: 14px; margin: 0; }
   header h1 { margin: 0; font-size: 24px; }
   header p { margin: 6px 0 0; color: var(--niv-text-dim); font-size: 14px; }
   main { max-width: 760px; margin: 0 auto; padding: 28px 20px 60px; }
@@ -39,7 +33,7 @@
 </head>
 <body>
 <header>
-  <button class="lang-toggle" aria-label="Switch language / Cambiar idioma">EN</button>
+  <div class="niv-lang"><button type="button" id="lang-toggle" class="niv-lang-current" aria-expanded="false" aria-haspopup="listbox" aria-controls="niv-lang-list"><span class="niv-lang-current-label"></span><span class="niv-lang-chev" aria-hidden="true">\u25be</span></button><div class="niv-lang-list" id="niv-lang-list" role="listbox" hidden></div></div>
   <h1 data-i18n="header.h1">Nivelato — Política de Privacidad</h1>
   <p data-i18n="header.sub">Qué datos recopila la app, por qué y cómo se manejan.</p>
 </header>
@@ -211,6 +205,29 @@ function currentLang() {
   const nav = (navigator.language || 'en').toLowerCase();
   return nav.indexOf('es') === 0 ? 'es' : 'en';
 }
+const LANG_LABELS = { en: 'English', es: 'Español' };
+function paintLangSelector(l) {
+  var btn = document.getElementById('lang-toggle');
+  if (!btn) return;
+  var label = btn.querySelector('.niv-lang-current-label');
+  if (label) label.textContent = LANG_LABELS[l] || l.toUpperCase();
+  var list = document.getElementById('niv-lang-list');
+  if (!list) return;
+  if (!list.firstChild) {
+    Object.keys(I18N).forEach(function (code) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'niv-lang-option';
+      b.setAttribute('role', 'option');
+      b.setAttribute('data-lang', code);
+      b.textContent = LANG_LABELS[code] || code.toUpperCase();
+      list.appendChild(b);
+    });
+  }
+  list.querySelectorAll('.niv-lang-option').forEach(function (o) {
+    o.setAttribute('aria-selected', o.getAttribute('data-lang') === l ? 'true' : 'false');
+  });
+}
 function applyLang(l) {
   const dict = I18N[l] || I18N.en;
   document.documentElement.lang = l;
@@ -219,17 +236,32 @@ function applyLang(l) {
     const k = el.getAttribute('data-i18n');
     if (dict[k] !== undefined) el.innerHTML = dict[k];
   });
-  document.querySelectorAll('.lang-toggle').forEach(function (b) {
-    b.textContent = (l === 'en') ? 'ES' : 'EN';
-  });
+  paintLangSelector(l);
   try { localStorage.setItem(LANG_KEY, l); } catch (e) {}
 }
-document.querySelectorAll('.lang-toggle').forEach(function (b) {
-  b.addEventListener('click', function () {
-    const cur = document.documentElement.lang === 'es' ? 'es' : 'en';
-    applyLang(cur === 'en' ? 'es' : 'en');
+var langBtn = document.getElementById('lang-toggle');
+var langList = document.getElementById('niv-lang-list');
+function closeLangList() {
+  if (langList) langList.hidden = true;
+  if (langBtn) langBtn.setAttribute('aria-expanded', 'false');
+}
+if (langBtn && langList) {
+  langBtn.addEventListener('click', function () {
+    var willOpen = langList.hidden;
+    langList.hidden = !willOpen;
+    langBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
   });
-});
+  langList.addEventListener('click', function (e) {
+    var opt = e.target && e.target.closest ? e.target.closest('.niv-lang-option') : null;
+    if (!opt) return;
+    closeLangList();
+    applyLang(opt.getAttribute('data-lang'));
+  });
+  document.addEventListener('click', function (e) {
+    if (!(e.target && e.target.closest && e.target.closest('.niv-lang'))) closeLangList();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLangList(); });
+}
 applyLang(currentLang());
 </script>
 </body>
