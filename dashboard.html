@@ -241,7 +241,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       visibility: hidden;
       opacity: 0;
       pointer-events: none;
-      transition: visibility 0.3s, opacity 0.3s;
+      transition: visibility var(--niv-mo-view, 300ms), opacity var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1));
     }
     .modal-overlay.open {
       visibility: visible;
@@ -255,6 +255,17 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       width: 100%; max-width: 820px;
       max-height: 90dvh;
       overflow-y: auto;
+    }
+    /* Motion system (Oct 2026): on desktop the dialog eases in
+       with the overlay instead of popping. Scoped to min-width
+       so the mobile bottom-sheet transform below is untouched. */
+    @media (min-width: 601px) {
+      .modal {
+        opacity: 0; transform: translateY(10px) scale(.99);
+        transition: opacity var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)),
+                    transform var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1));
+      }
+      .modal-overlay.open .modal { opacity: 1; transform: none; }
     }
     /* job detail modal only: the close action lives in a sticky footer
        bar so it never clips below the fold (p16) */
@@ -724,8 +735,12 @@ body.niv-resizing { cursor: col-resize; user-select: none; }
    Collapsed = 76px icon rail (explicit, so the transition always has
    interpolable endpoints; auto widths do not animate). */
 #niv-panel {
-  transition: width 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: width var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1));
 }
+/* Motion system (Oct 2026): the float panel fades when it is
+   un-hidden instead of snapping in. Opacity only — a transform
+   here would re-pin fixed descendants. Keyframes: niv-dark.css. */
+.niv-float-panel { animation: niv-mo-fade var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)); }
 body.has-sidebar #niv-panel.collapsed {
   width: 76px;
 }

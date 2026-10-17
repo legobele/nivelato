@@ -219,6 +219,86 @@ translated, no SwiftUI APIs invented into the web build):
   existing entrance animation and hover states carry the glass,
   and everything still honors prefers-reduced-motion.
 
+## Motion system: "zero jump-cuts" (Oct 17, 2026)
+
+Giulia's rule: no jump-cuts anywhere in Nivelato. One motion
+language covers the app AND the marketing site (the site repo
+mirrors this section in docs/motion-system.md). Motion is
+additive only — transitions and keyframe entrances layered on
+the existing view toggles — and every animation collapses
+under `prefers-reduced-motion`.
+
+**Tokens** (identical names and values in both repos):
+- `--niv-mo-ease: cubic-bezier(.22, 1, .36, 1)` — the system's
+  one easing family (the ease-out already used by the login
+  pane entrance and the site hero).
+- `--niv-mo-micro: 160ms` — state changes: hover, press,
+  focus, chevrons, switch knobs, dropdown pops.
+- `--niv-mo-view: 300ms` — view/panel/menu/modal transitions:
+  step swaps, section swaps, overlay fades, progress width.
+- `--niv-mo-enter: 560ms` — page entrances only: the app body
+  fade, the site hero rise and scroll reveals.
+- Distances: entrances rise 10px (app views/modals) or 26px
+  (site hero/reveal, the established site standard); page
+  fades travel 0px. Everything fades from opacity 0.
+
+**Safety rules (binding):**
+- Entrances animate FROM a hidden keyframe TO the element's
+  natural state, with no fill mode holding a hidden end
+  state. If JS fails, content is simply there — animation
+  never gates visibility. (The site's reveal system already
+  works this way: `.reveal` only hides under `html.js`.)
+- No transform animations on `<body>`, step containers, or
+  any ancestor of a fixed element: a transform makes that
+  ancestor the containing block for fixed descendants and
+  the mobile flow action bar jumps when the animation ends
+  (the trap the Liquid Glass pass documented). Page and
+  flow-step entrances are opacity-only for this reason.
+- The brand watermark overlay never animates. It is a static
+  deterrent layer; motion on it would be decoration on a
+  security surface.
+
+**Where it lives:**
+- App: token definitions, keyframes (`niv-mo-page-in`,
+  `niv-mo-fade`, `niv-mo-view-in`, `niv-mo-pop`), the body
+  page fade, button/tab/field/select/switch/row transitions
+  and the global reduced-motion collapse are in niv-dark.css
+  (loaded by every app page). Retimes on top: flow.html
+  (step fade, progress fill, rail sections, continue press),
+  settings.html (section swap), dashboard.html (modal
+  overlay + desktop dialog entrance, sidebar width, float
+  panel fade), login.html (view slides, variant menu),
+  autism.css (step panels, canvas-app progress, buttons),
+  modules/sidebar.html (toast, chevrons, glyphs).
+- Site: one motion block per page before `</head>` unifies
+  the hero rise and scroll reveals on the enter token, the
+  variant menu open/close on the view token (both
+  directions), menu content rise, the language selector
+  expand, and button/link micro transitions. The scroll cue
+  (scroll-fix pass) should adopt these tokens for its fade
+  when it is next touched: its 450ms ease fade is the one
+  remaining off-system timing.
+
+**Deferred, deliberately:**
+- Number tweens (flow % label, flow totals, dashboard
+  builder totals): the values swap via textContent in
+  existing render code; easing them needs JS counters, and
+  this pass is CSS-only by the no-break rule. Width-based
+  numbers (progress fills) already ease.
+- Skeleton-to-content crossfades in the dashboard: content
+  replaces skeletons through many independent render paths;
+  a CSS-only crossfade would need a hook in each. The page
+  fade plus the skeleton pulse covers the wait for now.
+- Sidebar section collapse (`.niv-panel-sec`): the body is
+  display-toggled; a smooth collapse needs height
+  restructuring (the codebase's own notes flag a previous
+  attempt snapping). Chevron rotation already eases.
+- Menu content exit on the site: the overlay fade covers
+  close; a content exit would need a closing-state class
+  hook in the menu JS. Enter is animated, exit is the fade.
+- App cross-page transitions beyond the fade: pages are
+  full reloads; the body fade-in is the transition.
+
 ## Brand watermark: free-tier screenshot deterrent (Oct 17, 2026)
 
 Giulia's spec: on web, free-tier accounts get the logo as a

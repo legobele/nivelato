@@ -693,8 +693,8 @@
       from { transform: translateX(-48px); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
-    .niv-anim-fwd { animation: niv-slide-fwd 280ms ease; }
-    .niv-anim-back { animation: niv-slide-back 280ms ease; }
+    .niv-anim-fwd { animation: niv-slide-fwd var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)); }
+    .niv-anim-back { animation: niv-slide-back var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)); }
     @media (prefers-reduced-motion: reduce) {
       .niv-anim-fwd, .niv-anim-back { animation: none; }
     }
@@ -848,11 +848,13 @@
 .site-header .variant-wordmark{font-family:var(--wordmark-font);font-weight:900;font-stretch:150%;font-size:clamp(.92rem,2.2vw,1.18rem);line-height:1;letter-spacing:var(--wordmark-spacing);text-indent:var(--wordmark-spacing);text-transform:uppercase;white-space:nowrap;text-shadow:0 1px 14px rgba(0,0,0,.35)}
 .site-header .variant-menu-button{position:absolute;top:24px;right:20px;z-index:2;width:44px;height:44px;padding:0 10px;border:0;background:transparent;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;pointer-events:auto}
 .site-header .variant-menu-button i{display:block;width:22px;height:2.5px;border-radius:2px;background:currentColor}
-.variant-menu{position:fixed;inset:0;z-index:80;background:rgba(3,3,4,.96);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s ease,visibility 0s linear .25s;overflow-y:auto}
-body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .25s ease}
+.variant-menu{position:fixed;inset:0;z-index:80;background:rgba(3,3,4,.96);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)),visibility 0s linear var(--niv-mo-view, 300ms);overflow-y:auto}
+body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events:auto;transition:opacity var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1))}
 .variant-menu-inner{width:min(440px,calc(100vw - 48px));margin:0 auto;padding:126px 0 44px;display:flex;flex-direction:column;gap:2px}
+body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1))}
+@keyframes niv-mo-menu-in{from{opacity:0;transform:translateY(10px)}}
 .variant-menu-inner nav{display:flex;flex-direction:column;gap:2px}
-.variant-menu-inner nav a{min-height:54px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid rgba(255,255,255,.10);color:#fff;text-decoration:none;font-size:1.08rem;font-weight:600;text-align:center}
+.variant-menu-inner nav a{min-height:54px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid rgba(255,255,255,.10);color:#fff;text-decoration:none;font-size:1.08rem;font-weight:600;text-align:center;transition:background-color var(--niv-mo-micro, 160ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1))}
 .variant-menu-inner nav a:hover,.variant-menu-inner nav a:focus-visible{background:rgba(255,255,255,.06)}
 .variant-menu-close{position:absolute;top:24px;right:20px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:transparent;color:#fff;font-size:1.35rem;line-height:1;cursor:pointer}
 .entry-claim{top:128px}

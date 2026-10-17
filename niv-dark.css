@@ -1288,3 +1288,97 @@ html::-webkit-scrollbar-thumb:hover {
 .niv-share-save { color: #050505; }
 .niv-sidebar, .niv-main { letter-spacing: 0.005em; }
 .niv-company-name, .niv-panel-title { letter-spacing: -0.01em; }
+
+/* ============================================================
+   MOTION SYSTEM (Oct 2026) — "zero jump-cuts"
+   One motion language for Nivelato, shared with the marketing
+   site (same token names and values; see DESIGN_SYSTEM_LABS.md).
+   Additive only: every rule here is a transition or a keyframe
+   entrance on elements that are fully visible without it. No
+   content visibility is ever gated on an animation completing:
+   entrances animate FROM a hidden keyframe TO the element's
+   natural state, with no fill mode holding a hidden end state.
+   Page entrances are opacity-only: a transform on <body> or on
+   step containers would become the containing block for fixed
+   descendants (the mobile flow action bar bug) — never add one.
+   ============================================================ */
+:root {
+  --niv-mo-ease: cubic-bezier(.22, 1, .36, 1);
+  --niv-mo-micro: 160ms;
+  --niv-mo-view: 300ms;
+  --niv-mo-enter: 560ms;
+}
+@keyframes niv-mo-page-in { from { opacity: 0; } }
+@keyframes niv-mo-fade { from { opacity: 0; } }
+@keyframes niv-mo-view-in { from { opacity: 0; transform: translateY(10px); } }
+@keyframes niv-mo-pop { from { opacity: 0; transform: translateY(4px); } }
+
+/* Page entrance: every app page that loads this sheet fades in
+   instead of hard-cutting from the previous page/white flash. */
+body { animation: niv-mo-page-in var(--niv-mo-view) var(--niv-mo-ease); }
+
+/* View/panel entrances: panels are display-toggled by existing
+   code; the animation restarts on each none -> block flip, so
+   switching sections/panels eases in instead of snapping. */
+.niv-tab-panel.active { animation: niv-mo-view-in var(--niv-mo-view) var(--niv-mo-ease); }
+
+/* Buttons: state changes ease, presses give tactile feedback. */
+.niv-btn-pill, .niv-btn-sm, .niv-btn-danger {
+  transition: background-color var(--niv-mo-micro) var(--niv-mo-ease),
+              border-color var(--niv-mo-micro) var(--niv-mo-ease),
+              color var(--niv-mo-micro) var(--niv-mo-ease),
+              filter var(--niv-mo-micro) var(--niv-mo-ease),
+              transform var(--niv-mo-micro) var(--niv-mo-ease);
+}
+.niv-btn-pill:active, .niv-btn-sm:active, .niv-btn-danger:active { transform: scale(.98); }
+.niv-nav-btn {
+  transition: background-color var(--niv-mo-micro) var(--niv-mo-ease),
+              border-color var(--niv-mo-micro) var(--niv-mo-ease),
+              color var(--niv-mo-micro) var(--niv-mo-ease);
+}
+.niv-tab-btn {
+  transition: background-color var(--niv-mo-micro) var(--niv-mo-ease),
+              color var(--niv-mo-micro) var(--niv-mo-ease),
+              box-shadow var(--niv-mo-micro) var(--niv-mo-ease);
+}
+.niv-tab-btn:active { transform: scale(.98); }
+
+/* Fields: focus border/shadow ease in instead of snapping. */
+.niv-field input, .niv-field select, .niv-field textarea {
+  transition: border-color var(--niv-mo-micro) var(--niv-mo-ease),
+              box-shadow var(--niv-mo-micro) var(--niv-mo-ease);
+}
+
+/* Custom select: chevron, button and dropdown list all ease;
+   the list pops when it un-hides (display flip restarts it). */
+.niv-select-btn {
+  transition: border-color var(--niv-mo-micro) var(--niv-mo-ease),
+              box-shadow var(--niv-mo-micro) var(--niv-mo-ease);
+}
+.niv-select-chevron { transition: transform var(--niv-mo-micro) var(--niv-mo-ease); }
+.niv-select-list:not([hidden]) { animation: niv-mo-pop var(--niv-mo-micro) var(--niv-mo-ease); }
+.niv-select-option {
+  transition: background-color var(--niv-mo-micro) var(--niv-mo-ease),
+              color var(--niv-mo-micro) var(--niv-mo-ease);
+}
+
+/* Toggle switches: track and knob on the system timing. */
+.niv-switch .track { transition: background-color var(--niv-mo-micro) var(--niv-mo-ease); }
+.niv-switch .track::after { transition: transform var(--niv-mo-micro) var(--niv-mo-ease); }
+
+/* List rows: selection/hover background eases. */
+.niv-user-row {
+  transition: background-color var(--niv-mo-micro) var(--niv-mo-ease),
+              border-color var(--niv-mo-micro) var(--niv-mo-ease);
+}
+
+/* Everything collapses under reduced motion: entrances land on
+   their natural state instantly, state changes are instant. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

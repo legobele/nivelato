@@ -413,6 +413,32 @@
       .flow-continue { background: var(--niv-surface); }
     }
   }
+
+  /* ---- MOTION SYSTEM (Oct 2026, "zero jump-cuts") ----
+     Tokens and keyframes come from niv-dark.css (loaded by this
+     page). Step swaps are display toggles in existing code; the
+     fade restarts on each none -> block flip. OPACITY ONLY on
+     the step containers: a transform here would become the
+     containing block for the fixed mobile action bar (the exact
+     trap the glass pass documented above) and make it jump. */
+  #flow-step1, #flow-step2 { animation: niv-mo-fade var(--niv-mo-view) var(--niv-mo-ease); }
+  .flow-shell { animation: niv-mo-fade var(--niv-mo-view) var(--niv-mo-ease); }
+  .flow-progress-fill { transition: width var(--niv-mo-view) var(--niv-mo-ease); }
+  .flow-section {
+    transition: background-color var(--niv-mo-micro) var(--niv-mo-ease),
+                border-color var(--niv-mo-micro) var(--niv-mo-ease);
+  }
+  .flow-ring { transition: border-color var(--niv-mo-micro) var(--niv-mo-ease); }
+  .flow-continue {
+    transition: filter var(--niv-mo-micro) var(--niv-mo-ease),
+                transform var(--niv-mo-micro) var(--niv-mo-ease);
+  }
+  .flow-continue:active { transform: scale(.99); }
+  .flow-step-error.on { animation: niv-mo-fade var(--niv-mo-view) var(--niv-mo-ease); }
+  .flow-card input, .flow-card select, .flow-card textarea {
+    transition: border-color var(--niv-mo-micro) var(--niv-mo-ease),
+                box-shadow var(--niv-mo-micro) var(--niv-mo-ease);
+  }
 </style>
 </head>
 <body data-envmark-interstitial>
