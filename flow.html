@@ -332,6 +332,52 @@
     }
     #flow-step1, #flow-step2 { padding-bottom: 72px; }
   }
+
+  /* ---- Liquid Glass (Oct 2026 pass) ----
+     Same material as the login surface: one functional glass layer
+     floating over content, monochrome so the content stays in focus.
+     This is a working screen, so the mountain sits deeper here:
+     dimmed hard under a scrim, glass only on the rail and the step
+     cards, readings and form fields keep their own opaque fills.
+     Presentational only. */
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image: url('./assets/mountains-oeschinensee.jpg');
+    background-size: cover; background-position: center 25%;
+    filter: grayscale(1) contrast(1.05) brightness(.5);
+    opacity: .5;
+  }
+  body::after {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(5,5,5,.62), rgba(5,5,5,.82));
+  }
+  .flow-shell { position: relative; z-index: 1; }
+  .flow-rail, .flow-card {
+    background: linear-gradient(150deg, rgba(255,255,255,.085), rgba(255,255,255,.03) 55%, rgba(255,255,255,.05));
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
+    border-color: rgba(255,255,255,.20);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.20), 0 18px 40px rgba(0,0,0,.42);
+  }
+  @supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+    .flow-rail, .flow-card { background: var(--niv-surface); }
+  }
+  /* Landmarks translation: content scrolls underneath glass chrome.
+     On mobile the primary action is a fixed bottom bar; giving it
+     the same glass turns it into a sheet floating over the scrolling
+     form instead of a solid block ending it. */
+  @media (max-width: 900px) {
+    .flow-continue {
+      background: linear-gradient(150deg, rgba(255,255,255,.13), rgba(255,255,255,.05));
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
+      backdrop-filter: blur(16px) saturate(140%);
+      border: 1px solid rgba(255,255,255,.22);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 10px 28px rgba(0,0,0,.45);
+    }
+    @supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+      .flow-continue { background: var(--niv-surface); }
+    }
+  }
 </style>
 </head>
 <body data-envmark-interstitial>

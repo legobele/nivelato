@@ -739,6 +739,88 @@
       body { padding: 16px; }
       .card { padding: 32px 22px; }
     }
+    /* ---- Liquid Glass (Oct 2026 pass) ----
+       Apple Liquid Glass principles translated to CSS: the controls
+       and navigation form one functional layer that floats above the
+       content; the content (here, the mountain photo) lives underneath
+       and infuses the material. Judicious color in the control layer:
+       monochrome glass, so the content stays in focus. Glass is
+       translucency + backdrop blur/saturation + a specular top-edge
+       highlight + a soft inner glow, and it sits on interactive
+       surfaces only: the sign-in card, the brand panel inside it,
+       account pills, and the floating header pills. Never over body
+       text. Presentational only; no markup logic changed. */
+    .mtn-backdrop { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+    .mtn-backdrop img {
+      width: 100%; height: 100%; display: block;
+      object-fit: cover; object-position: center 30%;
+      filter: grayscale(1) contrast(1.07) brightness(.62);
+    }
+    .mtn-backdrop::after {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(5,5,5,.52), rgba(5,5,5,.30) 42%, rgba(5,5,5,.80));
+    }
+    body.qgc-theme .mtn-backdrop { display: none; }
+    body:not(.qgc-theme) .card {
+      background: linear-gradient(140deg, rgba(255,255,255,.14), rgba(255,255,255,.05) 52%, rgba(255,255,255,.09));
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
+      backdrop-filter: blur(18px) saturate(150%);
+      border: 1px solid rgba(255,255,255,.24);
+      border-radius: 20px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.38), inset 0 -1px 0 rgba(255,255,255,.05), inset 1px 0 0 rgba(255,255,255,.07), 0 24px 60px rgba(0,0,0,.55);
+    }
+    body:not(.qgc-theme) .brand-panel {
+      background: rgba(255,255,255,.055);
+      border-color: rgba(255,255,255,.15);
+      border-radius: 16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.16);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+    body:not(.qgc-theme) .account-pill {
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.14);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+    body:not(.qgc-theme) .field input { background: rgba(5,5,6,.42); border-color: rgba(255,255,255,.20); }
+    .site-header .site-brand, .site-header nav {
+      background: rgba(12,12,14,.34);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 999px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 10px 26px rgba(0,0,0,.35);
+      -webkit-backdrop-filter: blur(14px) saturate(150%);
+      backdrop-filter: blur(14px) saturate(150%);
+    }
+    .site-header .site-brand { padding: 8px 16px; }
+    .site-header nav { padding: 8px 16px; align-items: center; }
+    /* Landmarks translation: glass elements form one defined group
+       with shared tokens, and grouped glass settles together, so the
+       group's state changes animate as one material. The header is
+       two glass clusters (brand, nav), not one blob, and the fixed
+       glass header lets page content scroll underneath it. */
+    body:not(.qgc-theme) .card, body:not(.qgc-theme) .brand-panel,
+    body:not(.qgc-theme) .account-pill,
+    .site-header .site-brand, .site-header nav {
+      transition: background-color .3s ease, box-shadow .3s ease, border-color .3s ease;
+    }
+    .photo-credit {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 2; font-family: 'JetBrains Mono', monospace; font-size: 9px;
+      letter-spacing: .14em; color: var(--dim); white-space: nowrap;
+    }
+    .photo-credit a { color: var(--muted); text-decoration: none; pointer-events: auto; }
+    .photo-credit a:hover { color: var(--ink); }
+    @media (max-width: 640px) { .photo-credit { display: none; } }
+    /* Fallback: no backdrop-filter support, the glass goes near-opaque
+       so every surface stays fully readable over the photo. */
+    @supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+      body:not(.qgc-theme) .card { background: linear-gradient(140deg, rgba(30,30,34,.97), rgba(14,14,16,.98)); }
+      body:not(.qgc-theme) .brand-panel { background: rgba(20,20,23,.96); }
+      body:not(.qgc-theme) .field input { background: rgba(5,5,6,.9); }
+      .site-header .site-brand, .site-header nav { background: rgba(12,12,14,.92); }
+    }
   </style>
   <!-- dear source-viewer: the measurements are leveled. the whimsy is load-bearing. 🦀 -->
   <script type="module" src="crab.js"></script>
@@ -753,6 +835,7 @@
   <script type="module" src="irs.js"></script>
 </head>
 <body>
+<div class="mtn-backdrop" aria-hidden="true"><img src="./assets/mountains-oeschinensee.jpg" alt="" /></div>
 <div class="entry-claim" aria-hidden="true">Field measurement, reinvented</div>
 <div class="pane-motif" aria-hidden="true"><svg viewBox="0 0 600 600" fill="none" stroke="#fafafa" stroke-width="1">
 <rect x="110" y="90" width="380" height="420" stroke-opacity="0.55"/>
@@ -765,6 +848,7 @@
 </svg></div>
 <div class="corner-label left" aria-hidden="true">[ Nivelato Labs ]</div>
 <div class="corner-label right" aria-hidden="true">[ Offset measuring software ]</div>
+<div class="photo-credit">Photo: <a href="https://commons.wikimedia.org/wiki/File:20190725_Oeschinensee-Panorama,_Kandersteg_(06540-42_stitch).jpg" target="_blank" rel="noopener noreferrer">© Günter Seggebäing, Wikimedia Commons</a> · <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 3.0</a></div>
 <!-- M17: the default (external) form is STATIC HTML — first paint never waits
      on any network (module imports or the ipapi.co geo lookup). The module
      below hydrates it, then swaps the flow UI in the background if geo says

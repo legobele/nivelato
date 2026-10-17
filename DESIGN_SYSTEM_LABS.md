@@ -128,3 +128,93 @@ Translated into the pass:
   and entry surfaces. They are not pasted over dense workflows,
   and no spec values are invented: labels name the measurement,
   the product's own numbers supply the value.
+
+## Liquid Glass pass (Oct 17, 2026)
+
+Giulia's directive: "We need a good image of some mountains, and a
+glassy texture. See Apple's Liquid Glass."
+
+Principles taken from Apple's Liquid Glass overview and HIG
+guidance (verified at overview level): Liquid Glass is a dynamic
+material for the controls and navigation layer; that layer floats
+above edge-to-edge content, content lives underneath and infuses
+the material; be judicious with color in controls and navigation
+so they stay legible and let the content show through; put the
+most important content in focus; it does not mean reinventing the
+app. Named optical details (refraction, specular highlights) live
+in Apple's "Adopting Liquid Glass" sub-doc and WWDC sessions, not
+the overview; the specular edge used here is the CSS translation.
+
+Web translation used in this draft:
+- One functional glass layer: translucency (white at 3 to 14
+  percent over dark), backdrop-filter blur 8 to 18px with
+  saturation 140 to 160 percent, a 1px specular top edge via
+  box-shadow inset, and a soft inner glow. Content infuses the
+  layer because the photo shows through the blur.
+- Glass sits on interactive surfaces only: login sign-in card
+  (20px radius, glass forms run rounder than the 6px work cards),
+  the brand panel nested inside it, account pills, and the
+  floating header pills (brand and nav) on login. On flow: the
+  rail and step cards only, dimmed deeper for a working screen.
+- Never over body text, never on the QGC theme (that theme keeps
+  its own backdrop and card; the mountain layer is hidden there).
+- Fallback: where backdrop-filter is unsupported, an @supports
+  block takes the glass near-opaque dark so every surface stays
+  fully readable over the photo.
+- Motion unchanged: nothing new animates; the existing pane-in
+  entrance still respects prefers-reduced-motion.
+
+Backdrop photo (real photograph, never AI generated):
+- Subject: Oeschinensee (Oeschinen Lake) and the Bluemlisalp
+  massif, Kandersteg, Switzerland. Snow peaks above a turquoise
+  lake. File: assets/mountains-oeschinensee.jpg (1600 x 855,
+  384 KB, re-encoded from the 1920px Commons version).
+- Photographer: Günter Seggebäing (Wikimedia Commons user
+  "Watzmann"), photo taken 25 July 2019.
+- License: CC BY-SA 3.0. Source page:
+  https://commons.wikimedia.org/wiki/File:20190725_Oeschinensee-Panorama,_Kandersteg_(06540-42_stitch).jpg
+  License text: https://creativecommons.org/licenses/by-sa/3.0/
+- Design call: the shipped asset is the untouched color photo.
+  The monochrome treatment happens in CSS at display time
+  (grayscale, slight contrast lift, brightness down, plus a dark
+  scrim gradient), so the black and white language holds while a
+  whisper of the scene stays underneath the glass. Recorded here
+  because the license asks for changes to be indicated: display
+  treatment only, file unmodified.
+- Credit on the page: login carries a small mono photo credit
+  line (bottom center, desktop) linking the photographer credit
+  and the license, per the license's online-use terms.
+
+## Sixth reference: Landmarks, "Building an app with Liquid Glass"
+
+Apple's Landmarks sample tutorial (developer.apple.com,
+"Landmarks: Building an app with Liquid Glass"), pointed at by
+Giulia for implementation-level technique. Verified techniques
+from the page, and their web translations in this draft (effects
+translated, no SwiftUI APIs invented into the web build):
+
+- Background extension effect: the featured image extends edge
+  to edge and blurs underneath the glass panels; headline and
+  controls are layered above the extension, only the image
+  extends. Here: the mountain photo is a full-bleed fixed layer
+  (inset 0, cover) and blurs under the glass sign-in card and the
+  glass header pills via backdrop-filter; all text and controls
+  sit in layers above it.
+- Scroll content extends underneath glass panels: here, the
+  fixed glass header pills let the login page scroll beneath
+  them on short screens, and on flow mobile the fixed primary
+  action bar is now glass, a sheet floating over the scrolling
+  form. The desktop flow rail and cards are glass over the same
+  full-bleed mountain layer.
+- Toolbars take the glass automatically, grouped into related
+  clusters rather than one blob: here, the login header is two
+  distinct glass pills (brand cluster, nav cluster).
+- Custom elements get glass, grouped in a container so they read
+  as one material with their own identities: here, the glass
+  group (card, brand panel, account pills, header pills, flow
+  rail and cards, flow continue sheet) shares one token set
+  (fill stops, edge highlight, blur range) and one transition
+  timing, so grouped glass settles together.
+- Animations: no new motion was invented for this pass. The
+  existing entrance animation and hover states carry the glass,
+  and everything still honors prefers-reduced-motion.
