@@ -13,7 +13,7 @@
   :root{
     --bg:#0b0b0e; --bg2:#121216; --card:#16161c; --line:#232329;
     --ink:#f2f1ec; --muted:#a7a7b3; --dim:#6d6d78;
-    --amber:#f5a524; --amber2:#ffcf5c; --laser:#c8f542; --red:#e5484d;
+    --amber:#ffffff; --amber2:#e6e6e9; --laser:#69db7c; --red:#e5484d;
     --radius:14px;
   }
   *{margin:0;padding:0;box-sizing:border-box}
@@ -30,7 +30,7 @@
   .brand .tick::after{content:"";position:absolute;left:5px;top:5px;width:12px;height:6px;border-left:3px solid var(--amber);border-bottom:3px solid var(--amber);transform:rotate(-45deg)}
   /* hero */
   header{padding:72px 0 32px;position:relative;overflow:hidden}
-  header::before{content:"";position:absolute;top:-120px;right:-120px;width:480px;height:480px;background:radial-gradient(circle,rgba(245,165,36,.12),transparent 65%);pointer-events:none}
+  header::before{content:"";position:absolute;top:-120px;right:-120px;width:480px;height:480px;background:radial-gradient(circle,rgba(255,255,255,.10),transparent 65%);pointer-events:none}
   .kicker{font-family:'JetBrains Mono',monospace;font-size:.78rem;letter-spacing:.28em;color:var(--amber);text-transform:uppercase;margin-bottom:18px}
   h1{font-family:'Space Grotesk';font-size:clamp(2rem,5vw,3.2rem);line-height:1.06;font-weight:700;letter-spacing:-.02em}
   .lede{margin-top:16px;font-size:1.05rem;color:var(--muted);max-width:58ch}
@@ -48,7 +48,7 @@
     color:var(--ink);font-family:inherit;font-size:.95rem;padding:12px 14px;outline:none;
     transition:border-color .15s, box-shadow .15s;
   }
-  input:focus,select:focus,textarea:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,165,36,.18)}
+  input:focus,select:focus,textarea:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(255,255,255,.18)}
   input.invalid,select.invalid,textarea.invalid{border-color:var(--red);box-shadow:0 0 0 3px rgba(229,72,77,.15)}
   .radio-group.invalid-group .radio-card{border-color:var(--red)}
   textarea{resize:vertical;min-height:96px}
@@ -61,13 +61,13 @@
   .radio-card input{accent-color:var(--amber);margin-top:4px;flex:none;width:17px;height:17px}
   .radio-card .rt{font-weight:600;font-size:.95rem}
   .radio-card .rd{font-size:.85rem;color:var(--muted)}
-  .radio-card.selected{border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,165,36,.12)}
+  .radio-card.selected{border-color:var(--amber);box-shadow:0 0 0 3px rgba(255,255,255,.12)}
   .err{font-size:.83rem;color:var(--red);margin-top:6px;display:none}
   .err.show{display:block}
   .form-error{background:rgba(229,72,77,.1);border:1px solid rgba(229,72,77,.4);color:#ff9a9e;border-radius:10px;padding:13px 16px;font-size:.92rem;margin-bottom:20px;display:none}
   .form-error.show{display:block}
   .btn{display:inline-block;background:var(--amber);color:#141414;font-weight:600;padding:14px 34px;border-radius:999px;font-size:1rem;border:none;cursor:pointer;font-family:inherit;transition:transform .15s,box-shadow .15s,opacity .15s;width:100%}
-  .btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 24px rgba(245,165,36,.35)}
+  .btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,255,255,.22)}
   .btn:disabled{opacity:.55;cursor:wait}
   /* success */
   #success{display:none;text-align:center;padding:80px 0 100px}
@@ -85,7 +85,7 @@
 <body>
 <nav>
   <div class="wrap">
-    <a class="brand" href="https://nivelatolabs.com/"><span class="tick"></span>Nivelato</a>
+    <a class="brand" href="https://nivelatolabs.com/"><img src="./assets/breakout-gradient.svg" alt="" width="26" height="26" />Nivelato</a>
   </div>
 </nav>
 
