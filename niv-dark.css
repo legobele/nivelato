@@ -1374,6 +1374,69 @@ body { animation: niv-mo-page-in var(--niv-mo-view) var(--niv-mo-ease); }
 
 /* Everything collapses under reduced motion: entrances land on
    their natural state instantly, state changes are instant. */
+/* ============================================================
+   LANGUAGE SELECTOR (.niv-lang) — the registry-driven component,
+   mirroring the marketing site's Variant B language selector
+   (Oct 17, 2026). Markup: a .niv-lang wrapper holding a
+   .niv-lang-current button (label = the ACTIVE language, from a
+   LANG_LABELS map) and a .niv-lang-list listbox whose options are
+   built from the page's dictionary keys — never hard-coded. To add
+   a language: add its dictionary + one LANG_LABELS line. The list
+   unfolds on the motion tokens; the selected option carries
+   aria-selected. Placement (margins) is owned by each surface.
+   ============================================================ */
+.niv-lang { position: relative; display: block; width: fit-content; margin: 0 0 12px auto; }
+.niv-lang-current {
+  display: flex; align-items: center; gap: 8px;
+  background: transparent;
+  border: 1px solid var(--line, var(--niv-border-soft));
+  color: var(--muted, var(--niv-text-dim));
+  border-radius: var(--niv-pill);
+  padding: 8px 14px;
+  font-size: 12px; font-weight: 600; font-family: inherit;
+  cursor: pointer; line-height: 1;
+  transition: border-color var(--niv-mo-micro) var(--niv-mo-ease),
+              color var(--niv-mo-micro) var(--niv-mo-ease);
+}
+.niv-lang-current:hover { color: var(--ink, var(--niv-text)); border-color: var(--dim, var(--niv-border)); }
+.niv-lang-current:focus-visible { outline: 2px solid var(--ink, var(--niv-text)); outline-offset: 2px; }
+.niv-lang-chev { display: inline-block; font-size: 10px; transition: transform var(--niv-mo-micro) var(--niv-mo-ease); }
+.niv-lang-current[aria-expanded="true"] .niv-lang-chev { transform: rotate(180deg); }
+.niv-lang-list {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 60;
+  min-width: 176px;
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 6px;
+  background: rgba(16, 16, 20, .94);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .5);
+}
+.niv-lang-list[hidden] { display: none; }
+.niv-lang-list:not([hidden]) { animation: niv-lang-in var(--niv-mo-view) var(--niv-mo-ease); }
+@keyframes niv-lang-in { from { opacity: 0; transform: translateY(-4px); } }
+.niv-lang-option {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; padding: 10px 12px;
+  background: transparent; border: 1px solid transparent; border-radius: 8px;
+  color: var(--ink, var(--niv-text));
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  cursor: pointer; text-align: left;
+  transition: background-color var(--niv-mo-micro) var(--niv-mo-ease),
+              border-color var(--niv-mo-micro) var(--niv-mo-ease);
+}
+.niv-lang-option:hover { background: rgba(255, 255, 255, .07); }
+.niv-lang-option:focus-visible { outline: 2px solid var(--ink, var(--niv-text)); outline-offset: -2px; }
+.niv-lang-option[aria-selected="true"] { background: rgba(255, 255, 255, .09); border-color: rgba(255, 255, 255, .14); }
+.niv-lang-option[aria-selected="true"]::after { content: '\2713'; font-size: 12px; color: var(--ink, var(--niv-text)); }
+@media (prefers-reduced-motion: reduce) {
+  .niv-lang-list:not([hidden]) { animation: none; }
+  .niv-lang-chev { transition: none; }
+}
+
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .01ms !important;

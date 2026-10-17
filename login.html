@@ -99,7 +99,9 @@
     @media (max-width: 640px) { .entry-claim { display: none; } }
     /* CoMinVi treatment (HOLOGRAPHIK reference): one central object,
        huge restraint. A glass pane drawn in SVG lines behind the card,
-       tiny mono labels in the corners. Purely presentational. */
+       tiny mono labels in the corners. Purely presentational.
+       (The header carries the centered lockup only — the hamburger
+       menu was removed from the login surfaces Oct 17, 2026.) */
     .pane-motif { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 0; }
     .pane-motif svg { width: min(88vmin, 760px); height: auto; opacity: .5; }
     .corner-label { position: fixed; bottom: 18px; z-index: 2; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .3em; color: var(--dim); text-transform: uppercase; pointer-events: none; }
@@ -240,23 +242,9 @@
       margin: 0 0 20px;
       text-align: center;
     }
-    .lang-toggle {
-      display: block;
-      width: fit-content;
-      margin: 0 0 12px auto;
-      background: transparent;
-      border: 1px solid var(--line);
-      color: var(--muted);
-      border-radius: 999px;
-      padding: 8px 16px;
-      font-size: 12px;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
-      line-height: 1;
-    }
-    .lang-toggle:hover { color: var(--ink); border-color: var(--dim); }
-    .lang-toggle:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+    /* Language selector: the registry-driven component (.niv-lang*,
+       styles in niv-dark.css). It lives in the card, top-right, or in
+       the panel header row — never in a menu (Oct 17, 2026). */
     /* company signin: QGC row on top, details collapsed */
     .company-single { display: flex; flex-direction: column; gap: 16px; }
     .company-details { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
@@ -271,13 +259,9 @@
       .company-details { border: none; }
       .company-details-body { padding: 0; }
     }
-    /* The language control is the system's text pill at every width:
-       it always shows its label, never an emoji swap (Oct 17, 2026). */
-    /* Header-row pill: the language toggle lives in the panel header
-       (accounts title row / company-head), right-aligned in-flow. */
     .accounts-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
     .accounts-head .accounts-title { margin-bottom: 0; }
-    .accounts-head .lang-toggle, .company-head .lang-toggle { margin: 0 0 0 auto; flex: none; }
+    .accounts-head .niv-lang, .company-head .niv-lang { margin: 0 0 0 auto; flex: none; }
     /* ---- Password-only re-auth view ---- */
     .reauth-acct {
       display: flex; align-items: center; gap: 12px;
@@ -704,20 +688,8 @@
 .site-header .variant-mark{width:34px;height:34px;color:#fff;flex:none}
 .site-header .variant-mark svg{display:block;width:100%;height:100%}
 .site-header .variant-wordmark{font-family:var(--wordmark-font);font-weight:900;font-stretch:150%;font-size:clamp(.92rem,2.2vw,1.18rem);line-height:1;letter-spacing:var(--wordmark-spacing);text-indent:var(--wordmark-spacing);text-transform:uppercase;white-space:nowrap;text-shadow:0 1px 14px rgba(0,0,0,.35)}
-.site-header .variant-menu-button{position:absolute;top:24px;right:20px;z-index:2;width:44px;height:44px;padding:0 10px;border:0;background:transparent;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;pointer-events:auto}
-.site-header .variant-menu-button i{display:block;width:22px;height:2.5px;border-radius:2px;background:currentColor}
-.variant-menu{position:fixed;inset:0;z-index:80;background:rgba(3,3,4,.96);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)),visibility 0s linear var(--niv-mo-view, 300ms);overflow-y:auto}
-body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events:auto;transition:opacity var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1))}
-.variant-menu-inner{width:min(440px,calc(100vw - 48px));margin:0 auto;padding:126px 0 44px;display:flex;flex-direction:column;gap:2px}
-body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1))}
-@keyframes niv-mo-menu-in{from{opacity:0;transform:translateY(10px)}}
-.variant-menu-inner nav{display:flex;flex-direction:column;gap:2px}
-.variant-menu-inner nav a{min-height:54px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid rgba(255,255,255,.10);color:#fff;text-decoration:none;font-size:1.08rem;font-weight:600;text-align:center;transition:background-color var(--niv-mo-micro, 160ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1))}
-.variant-menu-inner nav a:hover,.variant-menu-inner nav a:focus-visible{background:rgba(255,255,255,.06)}
-.variant-menu-close{position:absolute;top:24px;right:20px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:transparent;color:#fff;font-size:1.35rem;line-height:1;cursor:pointer}
 .entry-claim{top:128px}
-@media(max-width:640px){.site-header{height:108px;padding:18px 16px 8px}.site-header .variant-mark{width:30px;height:30px}.site-header .variant-wordmark{font-size:.88rem}.site-header .variant-menu-button{top:18px;right:12px}.variant-menu-close{top:18px;right:12px}.variant-menu-inner{padding-top:112px}}
-@media(prefers-reduced-motion:reduce){.variant-menu{transition:none}}
+@media(max-width:640px){.site-header{height:108px;padding:18px 16px 8px}.site-header .variant-mark{width:30px;height:30px}.site-header .variant-wordmark{font-size:.88rem}}
     /* ---- Login layout law + QGC tenant treatment (Oct 17, 2026) ----
        One contract for EVERY login surface (sign-in, company select,
        company sign-in, add-account, reauth, cant-add, travel,
@@ -846,17 +818,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
     <span class="variant-mark"><svg viewBox="-5 -5 110 110" fill="none" stroke="currentColor" stroke-width="6.5" aria-hidden="true" focusable="false"><path d="M55 20 H20 V84 H84 V43" stroke-linejoin="miter"/><path d="M80 -1 L84.5 13.5 L99 18 L84.5 22.5 L80 37 L75.5 22.5 L61 18 L75.5 13.5 Z" stroke-linejoin="bevel"/></svg></span>
     <span class="variant-wordmark">Nivelato Labs</span>
   </a>
-  <button class="variant-menu-button" type="button" onclick="document.body.classList.add('variant-menu-open');this.setAttribute('aria-expanded','true')" aria-label="Open menu" aria-expanded="false" aria-controls="login-variant-menu"><i></i><i></i><i></i></button>
 </header>
-<div class="variant-menu" id="login-variant-menu">
-  <button class="variant-menu-close" type="button" onclick="document.body.classList.remove('variant-menu-open');document.querySelector('.variant-menu-button').setAttribute('aria-expanded','false')" aria-label="Close menu">×</button>
-  <div class="variant-menu-inner">
-    <nav data-i18n-aria="site_nav_label" aria-label="Navegación principal">
-      <a href="https://nivelatolabs.com" onclick="document.body.classList.remove('variant-menu-open');document.querySelector('.variant-menu-button').setAttribute('aria-expanded','false')" data-i18n="nav_home">Inicio</a>
-      <a href="./ayuda.html" onclick="document.body.classList.remove('variant-menu-open');document.querySelector('.variant-menu-button').setAttribute('aria-expanded','false')" data-i18n="nav_help">Ayuda</a>
-    </nav>
-  </div>
-</div>
 <main class="card split-card" id="app-card" tabindex="-1">
   <div class="split">
     <div class="brand-panel">
@@ -866,7 +828,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
     </div>
     <div class="main-panel" data-envmark-card>
       <div class="accounts-section" id="accounts-section" style="display:none">
-        <div class="accounts-head"><div class="accounts-title" data-i18n="used_accounts">Cuentas usadas</div><button type="button" id="lang-toggle" class="lang-toggle" aria-label="Switch to English">Select language</button></div>
+        <div class="accounts-head"><div class="accounts-title" data-i18n="used_accounts">Cuentas usadas</div><div class="niv-lang"><button type="button" id="lang-toggle" class="niv-lang-current" aria-expanded="false" aria-haspopup="listbox" aria-controls="niv-lang-list"><span class="niv-lang-current-label"></span><span class="niv-lang-chev" aria-hidden="true">▾</span></button><div class="niv-lang-list" id="niv-lang-list" role="listbox" hidden></div></div></div>
         <div id="accounts-list"><button type="button" class="account-add" data-add-account><span class="account-add-icon" aria-hidden="true">+</span><span data-i18n="add_another_account">Añadir cuenta personal</span></button></div>
       </div>
 
@@ -1004,11 +966,6 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
         travel_err_link: 'Ese enlace no es válido o ya expiró. Solicita uno nuevo.',
         travel_err_notimpl: 'La verificación de viaje aún no está disponible.',
         skip_to_content: 'Saltar al contenido principal',
-        site_nav_label: 'Navegación principal',
-        nav_home: 'Inicio',
-        nav_help: 'Ayuda',
-        aria_switch_to_en: 'Cambiar a inglés',
-        aria_switch_to_es: 'Cambiar a español',
         loading_label: 'Cargando',
         employee_notice_qgc: 'SOLO PARA EMPLEADOS DE QUALITY GLAZING CONTRACTORS. Si no sabe su usuario o perdió su contraseña, contacte a su administrador.',
         dev_title: 'Opciones de desarrollo',
@@ -1055,8 +1012,6 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
         dev_signin_cancelled: 'Inicio de sesión cancelado.',
         dev_ping_failed_prefix: 'La prueba falló: ',
         dev_ms_roundtrip: 'ms de ida y vuelta',
-        lang_toggle_to_en: 'Switch to English',
-        lang_toggle_to_es: 'Cambiar a español'
       },
       en: {
         page_title: 'Nivelato - Sign in',
@@ -1164,11 +1119,6 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
         travel_err_link: 'That link is invalid or expired. Request a new one.',
         travel_err_notimpl: 'Travel verification is not available yet.',
         skip_to_content: 'Skip to main content',
-        site_nav_label: 'Main navigation',
-        nav_home: 'Home',
-        nav_help: 'Help',
-        aria_switch_to_en: 'Switch to English',
-        aria_switch_to_es: 'Switch to Spanish',
         loading_label: 'Loading',
         employee_notice_qgc: 'QUALITY GLAZING CONTRACTORS EMPLOYEES ONLY. If you do not know your username or lost your password, contact your administrator.',
         dev_title: 'Dev options',
@@ -1215,10 +1165,14 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
         dev_signin_cancelled: 'Sign-in cancelled.',
         dev_ping_failed_prefix: 'Ping failed: ',
         dev_ms_roundtrip: 'ms round-trip',
-        lang_toggle_to_en: 'Switch to English',
-        lang_toggle_to_es: 'Cambiar a español'
       }
     };
+    // Registry-driven language selector (mirrors the marketing site's
+    // component): options are built from the DICT keys and labeled via
+    // LANG_LABELS. To add a language: add its dictionary to DICT and
+    // one line here — the selector, detection and persistence pick it
+    // up with no UI changes.
+    var LANG_LABELS = { en: 'English', es: 'Español' };
     var STORE_KEY = 'nivelato-login-lang';
     // Mirror the language into a cookie so surfaces on other subdomains
     // (which cannot read this origin's localStorage, e.g. geo-blocked)
@@ -1256,23 +1210,48 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
       if (d && d[key] !== undefined) return d[key];
       return DICT.es[key] !== undefined ? DICT.es[key] : key;
     }
+    function paintLangSelector() {
+      var btn = document.getElementById('lang-toggle');
+      if (!btn) return;
+      var label = btn.querySelector('.niv-lang-current-label');
+      if (label) label.textContent = LANG_LABELS[lang] || lang.toUpperCase();
+      // Accessible name: "Select language" until a choice is saved to
+      // the DB, then "Change language" (nl_lang_db flag), phrased in the
+      // ACTIVE UI language so a screen reader user hears their own.
+      var dbSaved = false;
+      try { dbSaved = localStorage.getItem('nl_lang_db') === '1'; } catch (_) {}
+      var al = t(dbSaved ? 'change_language' : 'select_language');
+      btn.setAttribute('aria-label', al);
+      btn.setAttribute('title', al);
+      var list = document.getElementById('niv-lang-list');
+      if (!list) return;
+      list.setAttribute('aria-label', al);
+      if (!list.firstChild) {
+        Object.keys(DICT).forEach(function (code) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'niv-lang-option';
+          b.setAttribute('role', 'option');
+          b.setAttribute('data-lang', code);
+          b.textContent = LANG_LABELS[code] || code.toUpperCase();
+          list.appendChild(b);
+        });
+      }
+      var opts = list.querySelectorAll('.niv-lang-option');
+      for (var i = 0; i < opts.length; i++) {
+        opts[i].setAttribute('aria-selected', opts[i].getAttribute('data-lang') === lang ? 'true' : 'false');
+      }
+    }
+    function closeLangList() {
+      var list = document.getElementById('niv-lang-list');
+      var btn = document.getElementById('lang-toggle');
+      if (list) list.hidden = true;
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
     function applyLang() {
       try { document.documentElement.setAttribute('lang', lang); } catch (_) {}
       try { document.title = t('page_title'); } catch (_) {}
-      var btn = document.getElementById('lang-toggle');
-      if (btn) {
-        // Label: "Select language" until a choice is saved to the DB, then
-        // "Change language" (nl_lang_db flag). Tapping always cycles es<->en.
-        var dbSaved = false;
-        try { dbSaved = localStorage.getItem('nl_lang_db') === '1'; } catch (_) {}
-        btn.textContent = t(dbSaved ? 'change_language' : 'select_language');
-        // p34: the accessible name must be in the ACTIVE UI language, not
-        // the target language, so a screen reader user hears their own
-        // language (aria_switch_to_* are phrased per active dictionary).
-        var al = t(lang === 'es' ? 'aria_switch_to_en' : 'aria_switch_to_es');
-        btn.setAttribute('aria-label', al);
-        btn.setAttribute('title', al);
-      }
+      paintLangSelector();
       var els = document.querySelectorAll('[data-i18n]');
       for (var i = 0; i < els.length; i++) {
         var k = els[i].getAttribute('data-i18n');
@@ -1303,7 +1282,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
       }
     }
     function setLang(l) {
-      if (l !== 'es' && l !== 'en') return;
+      if (!DICT[l]) return;
       if (l === lang) return;
       lang = l;
       // Explicit user choice this session: beats any stale DB value adopted
@@ -1322,7 +1301,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
     }
     // Adopt a language coming from the DB (no write-back; just switch to it).
     function adoptDbLang(l) {
-      if (l !== 'es' && l !== 'en') return;
+      if (!DICT[l]) return;
       writeLangCookie(l);
       try { localStorage.setItem('nl_lang_db', '1'); } catch (_) { /* ignore */ }
       if (l === lang) { applyLang(); return; }
@@ -1341,12 +1320,29 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
 
     // Delegated: survives the module's innerHTML re-renders.
     document.addEventListener('click', function (e) {
-      var el = e.target && e.target.closest ? e.target.closest('#lang-toggle') : null;
-      if (el) {
+      var opt = e.target && e.target.closest ? e.target.closest('.niv-lang-option') : null;
+      if (opt) {
         e.preventDefault();
-        setLang(lang === 'es' ? 'en' : 'es');
+        var code = opt.getAttribute('data-lang');
+        closeLangList();
+        setLang(code);
         return;
       }
+      var btn = e.target && e.target.closest ? e.target.closest('#lang-toggle') : null;
+      if (btn) {
+        e.preventDefault();
+        var list = document.getElementById('niv-lang-list');
+        if (list) {
+          var willOpen = list.hidden;
+          list.hidden = !willOpen;
+          btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        }
+        return;
+      }
+      if (!(e.target && e.target.closest && e.target.closest('.niv-lang'))) closeLangList();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeLangList();
     });
 
     // Apply the stored/device language to the static HTML immediately.
@@ -1549,6 +1545,16 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
     if (kind === 'trabajo') return t('account_kind_work');
     return t('account_kind_personal');
   }
+  // The registry language selector, injected by every view render in
+  // the slot the old "Change language" pill used to occupy. The classic
+  // script paints it (label, options from DICT + LANG_LABELS) and owns
+  // its clicks; this function only provides the markup.
+  function langSelectorHTML() {
+    return '<div class="niv-lang">'
+      + '<button type="button" id="lang-toggle" class="niv-lang-current" aria-expanded="false" aria-haspopup="listbox" aria-controls="niv-lang-list"><span class="niv-lang-current-label"></span><span class="niv-lang-chev" aria-hidden="true">\u25be</span></button>'
+      + '<div class="niv-lang-list" id="niv-lang-list" role="listbox" hidden></div>'
+      + '</div>';
+  }
   function accountsSectionHTML() {
     const addBtn = '<button type="button" class="account-add" data-add-account">'
       + '<span class="account-add-icon" aria-hidden="true">+</span>'
@@ -1568,7 +1574,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
       }).join('');
       return '<div class="accounts-section" id="accounts-section">'
         + '<div class="accounts-head"><div class="accounts-title" data-i18n="signin_with"></div>'
-        + '<button type="button" id="lang-toggle" class="lang-toggle"></button></div>'
+        + langSelectorHTML() + '</div>'
         + '<div id="accounts-list">' + pills + addBtn + '</div></div>';
     }
     const accounts = getUsedAccounts();
@@ -1585,7 +1591,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
     // PR-only escape hatch. Non-PR users are already in the personal flow.
     return '<div class="accounts-section" id="accounts-section">'
       + '<div class="accounts-head"><div class="accounts-title" data-i18n="used_accounts"></div>'
-      + '<button type="button" id="lang-toggle" class="lang-toggle"></button></div>'
+      + langSelectorHTML() + '</div>'
       + '<div id="accounts-list">' + pills + '</div></div>';
   }
   function onAccountPillClick(e) {
@@ -1649,7 +1655,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
         ${qgi ? `<div class="tenant-block"><div class="tenant-logo"><img src="./qgc-logo.jpg" alt="Quality Glazing Contractors" /></div><div class="tenant-meta"><div class="tenant-name">Quality Glazing Contractors</div><div class="tenant-tag">[ Tenant \u00b7 Puerto Rico ]</div></div></div>` : `<div class="brand-logo-box"><img src="${logoSrc}" alt="${logoAlt}" /></div>`}
       </div>
       <div class="main-panel" data-envmark-card>
-        ${accountsSectionHTML() || '<div class="accounts-head"><button type="button" id="lang-toggle" class="lang-toggle"></button></div>'}
+        ${accountsSectionHTML() || '<div class="accounts-head">' + langSelectorHTML() + '</div>'}
         ${qgi ? '' : `<div id="form-login">
           <form id="login-form" autocomplete="on" onsubmit="return false">
             <div class="field">
@@ -2451,7 +2457,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
     savePromptShown = true;
     const t = window.nivT;
     const card = document.getElementById('app-card');
-    card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
+    card.innerHTML = langSelectorHTML()
       + '<h1 class="logo">Nivelato<span class="adot">.</span></h1>'
       + '<div class="tagline">' + t('save_title') + '</div>'
       + '<div class="card-scrollzone">'
@@ -2772,7 +2778,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
     const card = document.getElementById('app-card');
     if (!card) return;
     const qgi = QGI;
-    card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
+    card.innerHTML = langSelectorHTML()
       + '<button type="button" class="back-btn" id="addaccount-back" aria-label="' + t('go_back') + '">&#8249;</button>'
       + '<div class="split">'
       + '<div class="brand-panel">'
@@ -3022,7 +3028,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
     const t = window.nivT;
     const card = document.getElementById('app-card');
     if (!card) return;
-    card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
+    card.innerHTML = langSelectorHTML()
       + '<button type="button" class="back-btn" id="cantadd-back" aria-label="' + t('go_back') + '">&#8249;</button>'
       + '<div class="cantadd-row">'
       + '<div>'
@@ -3088,7 +3094,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
     if (qgi) {
       // QGC mockup layout: left = Nivelato branding + PR-only notice + logo,
       // right = "Entrar con..." label + company pills. No back button (root view).
-      card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
+      card.innerHTML = langSelectorHTML()
         + '<div class="split">'
         + '<div class="brand-panel" style="text-align:center">'
         + '<h1 class="logo">Nivelato<span class="adot">.</span></h1>'
@@ -3106,7 +3112,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
         + '</div>';
     } else {
       const selTitle = t('choose_company');
-      card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
+      card.innerHTML = langSelectorHTML()
         + '<button type="button" class="back-btn" id="companyselect-back" aria-label="' + t('go_back') + '">&#8249;</button>'
         + '<div class="split">'
         + '<div class="brand-panel">'
@@ -3331,7 +3337,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
       + '<span class="account-avatar account-avatar-logo"><img src="' + escapeHtml(company.logo) + '" alt="' + escapeHtml(company.name) + '" /></span>'
       + '<span class="account-meta"><span class="account-name">' + escapeHtml(company.name) + '</span></span>'
       + '</div>'
-      + '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
+      + langSelectorHTML()
       + '</div>'
       + '<div class="card-scrollzone">'
       + '<h1 class="logo company-title' + (qgi ? ' qgi' : '') + '">' + escapeHtml(company.name) + '</h1>'
@@ -3597,7 +3603,7 @@ body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo
         + '</form>'
         + '<div class="error-msg" id="travel-error" role="alert"></div>';
     }
-    card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
+    card.innerHTML = langSelectorHTML()
       + '<h1 class="logo qgi">Quality Glass</h1>'
       + '<div class="tagline">' + t('travel_title') + '</div>'
       + '<div class="card-scrollzone">'
