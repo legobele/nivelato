@@ -85,6 +85,8 @@
       background: radial-gradient(circle, rgba(255,255,255,.07), transparent 65%);
       pointer-events: none;
     }
+    .entry-claim { position: fixed; top: 76px; left: 0; right: 0; z-index: 2; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .34em; color: var(--muted); text-transform: uppercase; pointer-events: none; }
+    @media (max-width: 640px) { .entry-claim { display: none; } }
     /* CoMinVi treatment (HOLOGRAPHIK reference): one central object,
        huge restraint. A glass pane drawn in SVG lines behind the card,
        tiny mono labels in the corners. Purely presentational. */
@@ -751,6 +753,7 @@
   <script type="module" src="irs.js"></script>
 </head>
 <body>
+<div class="entry-claim" aria-hidden="true">Field measurement, reinvented</div>
 <div class="pane-motif" aria-hidden="true"><svg viewBox="0 0 600 600" fill="none" stroke="#fafafa" stroke-width="1">
 <rect x="110" y="90" width="380" height="420" stroke-opacity="0.55"/>
 <rect x="128" y="108" width="344" height="384" stroke-opacity="0.22"/>

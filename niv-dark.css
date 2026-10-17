@@ -100,7 +100,7 @@
 }
 .niv-nav-btn:hover { background: var(--niv-surface-2); }
 .niv-nav-btn.active {
-  background: linear-gradient(135deg, #0ea5a5, #1971c2);
+  background: linear-gradient(135deg, #fafafa, #c9c9ce);
   border-color: transparent;
   font-weight: 700;
 }
@@ -204,7 +204,7 @@
   background: var(--niv-surface);
 }
 .niv-user-row.selected {
-  background: linear-gradient(135deg, #0ea5a5, #1971c2);
+  background: linear-gradient(135deg, #fafafa, #c9c9ce);
   border-color: transparent;
 }
 .niv-user-avatar {

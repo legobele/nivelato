@@ -66,3 +66,27 @@ chrome.
 - Status colors unchanged (success/error semantics).
 - Ships later through the normal route only: build, Play closed
   track, download from Play. Nothing ships from this draft.
+
+## Fourth reference: Terminal Industries (Awwwards SOTD Sep 3, 2025)
+
+Trucking/logistics presented cinematically: real truck at dusk, a
+digital wireframe overlay on the trailer, one bold claim, floating
+pill nav. The pattern across all four references is the same:
+industrial software, presented like it matters.
+
+- Overlay motif: for Nivelato this is a measurement grid and
+  dimension lines drawn over the work. No suitable real glass/shop
+  photo exists in this repo (only icons, logos, and a test fixture),
+  so the login motif is done purely in CSS/SVG geometry: an outlined
+  glass pane with dimension lines and end ticks. When a real shop
+  photo is chosen later, the same SVG overlay drops on top of it.
+  Never AI generated imagery.
+- Bold claim on entry surfaces: login carries one line,
+  "Field measurement, reinvented", in mono micro-label style.
+  Capability-neutral on purpose: it claims an attitude, not a
+  feature the product does not have.
+- Floating pill nav: recorded as a CANDIDATE component for entry
+  and marketing-adjacent surfaces only. Not adopted in working app
+  screens in this draft: the app shell nav is structural (sidebar
+  with state), and the site draft nav is a sticky full-width bar;
+  a floating pill would fight both. Revisit at go-live review.
