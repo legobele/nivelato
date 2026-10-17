@@ -71,19 +71,21 @@
 
   .flow-progress-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
   .flow-progress {
-    position: relative; flex: 1; height: 26px;
+    position: relative; flex: 1; height: 8px;
     border: 1px solid var(--niv-border); border-radius: var(--niv-pill);
     background: var(--niv-surface-2); overflow: hidden;
   }
   .flow-progress-fill {
     position: absolute; inset: 0 auto 0 0; width: 0%;
-    background: rgba(34, 197, 94, .28);
+    background: var(--niv-accent);
+    border-radius: var(--niv-pill);
     transition: width .35s ease;
   }
+  /* The dot is never positioned by renderProgress() (it only sets the
+     fill width), so it sat as a static green nub wherever the markup
+     left it. Hidden: the slim fill alone reads as progress now. */
   .flow-progress-dot {
-    position: absolute; top: 50%; left: 7px; transform: translateY(-50%);
-    width: 13px; height: 13px; border-radius: 50%;
-    background: var(--flow-done);
+    display: none;
   }
   .flow-progress-label { font-size: 14px; font-weight: 600; white-space: nowrap; }
 
@@ -185,6 +187,20 @@
   .flow-why { margin-top: 16px; border-top: 1px solid var(--niv-border-soft); padding-top: 12px; }
   .flow-why h3 { font-size: 14px; margin: 0 0 4px; }
   .flow-why p { font-size: 13.5px; color: var(--niv-text-dim); line-height: 1.5; margin: 0; }
+
+  /* ---------- review summary (final step) ----------
+     Label/value rows with design-system breathing room: a full
+     padding block per row instead of tight stacked lines, hairline
+     dividers between rows, none after the last. */
+  .flow-summary { display: flex; flex-direction: column; margin: 20px 0 24px; font-size: 15px; }
+  .flow-summary-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 16px; padding: 11px 2px;
+    border-bottom: 1px solid var(--niv-border-soft);
+  }
+  .flow-summary-row:last-child { border-bottom: none; padding-bottom: 2px; }
+  .flow-summary-row .k { color: var(--niv-text-dim); }
+  .flow-summary-row .v { font-weight: 600; text-align: right; }
 
   .flow-projects { margin-top: 6px; display: none; }
   .flow-projects.open { display: block; }
@@ -326,13 +342,21 @@
     .flow-cards { grid-template-columns: minmax(0, 1fr); gap: 14px; }
     .flow-cards > * { min-width: 0; }
     .flow-stub { margin-top: 14px; }
-    /* Primary action stays reachable: fixed bottom bar on mobile. */
+    /* Primary action stays reachable: fixed bottom bar on mobile.
+       The clearance system lives on the step CONTAINER (.flow-main),
+       not on individual steps, so every step's last row or card —
+       present and future — clears the bar at end of scroll:
+       clearance = bar gap + measured bar height + breathing room. */
+    :root {
+      --flow-bar-h: 50px; /* measured rendered height of the mobile bar */
+      --flow-bar-gap: calc(12px + env(safe-area-inset-bottom, 0px));
+    }
     .flow-continue {
-      position: fixed; left: 14px; right: 14px; bottom: 12px; z-index: 30;
+      position: fixed; left: 14px; right: 14px; bottom: var(--flow-bar-gap); z-index: 30;
       width: auto; margin-top: 0;
       box-shadow: 0 10px 28px rgba(0, 0, 0, .45);
     }
-    #flow-step1, #flow-step2 { padding-bottom: 72px; }
+    .flow-main { padding-bottom: calc(var(--flow-bar-gap) + var(--flow-bar-h) + 18px); }
   }
 
   /* ---- Liquid Glass (Oct 2026 pass) ----
@@ -369,6 +393,15 @@
      the same glass turns it into a sheet floating over the scrolling
      form instead of a solid block ending it. */
   @media (max-width: 900px) {
+    /* backdrop-filter makes .flow-card the containing block for
+       fixed-position descendants, which trapped the mobile action
+       bar inside the dims card (it floated over the card's last rows
+       instead of pinning to the viewport). Mobile cards keep the
+       glass gradient, border and shadow but drop the blur, so the
+       fixed bar pins to the viewport on every step. The rail keeps
+       its blur: it has no fixed descendants. This rule must stay
+       after the glass assignment above to win the cascade. */
+    .flow-card { -webkit-backdrop-filter: none; backdrop-filter: none; }
     .flow-continue {
       background: linear-gradient(150deg, rgba(255,255,255,.13), rgba(255,255,255,.05));
       -webkit-backdrop-filter: blur(16px) saturate(140%);
