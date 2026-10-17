@@ -821,7 +821,34 @@
       body:not(.qgc-theme) .field input { background: rgba(5,5,6,.9); }
       .site-header .site-brand, .site-header nav { background: rgba(12,12,14,.92); }
     }
-  </style>
+
+/* ---- Variant B entry header (EDOLUS concept, chosen Oct 2026) ----
+   The two glass header pills become one centered lockup over the
+   mountain backdrop: Breakout outline mark above the wide wordmark,
+   a minimal menu glyph at the right, and a top-only scrim. The
+   wordmark family is held in one token. Anybody is set at weight
+   900 and 150% width; .08em spacing keeps it airy without making
+   the expanded letterforms weak. */
+@font-face{font-family:'Anybody';src:url('./assets/fonts/Anybody-Variable.ttf') format('truetype');font-weight:100 900;font-stretch:50% 150%;font-display:swap}
+.site-header{--wordmark-font:'Anybody','Archivo Black',system-ui,sans-serif;--wordmark-spacing:.08em;height:118px;padding:22px 20px 10px;align-items:flex-start;justify-content:center;background:transparent;pointer-events:none}
+.site-header::before{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.46),rgba(0,0,0,0) 88%);pointer-events:none}
+.site-header .variant-lockup{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:9px;max-width:calc(100vw - 112px);color:#fff;text-decoration:none;pointer-events:auto}
+.site-header .variant-mark{width:34px;height:34px;color:#fff;flex:none}
+.site-header .variant-mark svg{display:block;width:100%;height:100%}
+.site-header .variant-wordmark{font-family:var(--wordmark-font);font-weight:900;font-stretch:150%;font-size:clamp(.92rem,2.2vw,1.18rem);line-height:1;letter-spacing:var(--wordmark-spacing);text-indent:var(--wordmark-spacing);text-transform:uppercase;white-space:nowrap;text-shadow:0 1px 14px rgba(0,0,0,.35)}
+.site-header .variant-menu-button{position:absolute;top:24px;right:20px;z-index:2;width:44px;height:44px;padding:0 10px;border:0;background:transparent;color:#fff;display:flex;align-items:flex-end;justify-content:center;gap:3px;cursor:pointer;pointer-events:auto}
+.site-header .variant-menu-button i{display:block;width:2.5px;border-radius:2px;background:currentColor}
+.variant-menu{position:fixed;inset:0;z-index:80;background:rgba(3,3,4,.96);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s ease,visibility 0s linear .25s;overflow-y:auto}
+body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .25s ease}
+.variant-menu-inner{width:min(440px,calc(100vw - 48px));margin:0 auto;padding:126px 0 44px;display:flex;flex-direction:column;gap:2px}
+.variant-menu-inner nav{display:flex;flex-direction:column;gap:2px}
+.variant-menu-inner nav a{min-height:54px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid rgba(255,255,255,.10);color:#fff;text-decoration:none;font-size:1.08rem;font-weight:600;text-align:center}
+.variant-menu-inner nav a:hover,.variant-menu-inner nav a:focus-visible{background:rgba(255,255,255,.06)}
+.variant-menu-close{position:absolute;top:24px;right:20px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:transparent;color:#fff;font-size:1.35rem;line-height:1;cursor:pointer}
+.entry-claim{top:128px}
+@media(max-width:640px){.site-header{height:108px;padding:18px 16px 8px}.site-header .variant-mark{width:30px;height:30px}.site-header .variant-wordmark{font-size:.88rem}.site-header .variant-menu-button{top:18px;right:12px}.variant-menu-close{top:18px;right:12px}.variant-menu-inner{padding-top:112px}}
+@media(prefers-reduced-motion:reduce){.variant-menu{transition:none}}
+</style>
   <!-- dear source-viewer: the measurements are leveled. the whimsy is load-bearing. 🦀 -->
   <script type="module" src="crab.js"></script>
   <script type="module" src="gay.js"></script>
@@ -855,12 +882,21 @@
      otherwise. -->
 <a class="skip-link" href="#app-card" data-i18n="skip_to_content">Saltar al contenido principal</a>
 <header class="site-header">
-  <span class="site-brand">Nivelato<span class="adot">.</span></span>
-  <nav data-i18n-aria="site_nav_label" aria-label="Navegación principal">
-    <a href="https://nivelatolabs.com" data-i18n="nav_home">Inicio</a>
-    <a href="./ayuda.html" data-i18n="nav_help">Ayuda</a>
-  </nav>
+  <a class="variant-lockup" href="https://nivelatolabs.com" aria-label="Nivelato Labs">
+    <span class="variant-mark"><svg viewBox="-5 -5 110 110" fill="none" stroke="currentColor" stroke-width="6.5" aria-hidden="true" focusable="false"><path d="M55 20 H20 V84 H84 V43" stroke-linejoin="miter"/><path d="M80 -1 L84.5 13.5 L99 18 L84.5 22.5 L80 37 L75.5 22.5 L61 18 L75.5 13.5 Z" stroke-linejoin="bevel"/></svg></span>
+    <span class="variant-wordmark">Nivelato Labs</span>
+  </a>
+  <button class="variant-menu-button" type="button" onclick="document.body.classList.add('variant-menu-open');this.setAttribute('aria-expanded','true')" aria-label="Open menu" aria-expanded="false" aria-controls="login-variant-menu"><i style="height:6px"></i><i style="height:12px"></i><i style="height:8px"></i><i style="height:12px"></i></button>
 </header>
+<div class="variant-menu" id="login-variant-menu">
+  <button class="variant-menu-close" type="button" onclick="document.body.classList.remove('variant-menu-open');document.querySelector('.variant-menu-button').setAttribute('aria-expanded','false')" aria-label="Close menu">×</button>
+  <div class="variant-menu-inner">
+    <nav data-i18n-aria="site_nav_label" aria-label="Navegación principal">
+      <a href="https://nivelatolabs.com" onclick="document.body.classList.remove('variant-menu-open');document.querySelector('.variant-menu-button').setAttribute('aria-expanded','false')" data-i18n="nav_home">Inicio</a>
+      <a href="./ayuda.html" onclick="document.body.classList.remove('variant-menu-open');document.querySelector('.variant-menu-button').setAttribute('aria-expanded','false')" data-i18n="nav_help">Ayuda</a>
+    </nav>
+  </div>
+</div>
 <main class="card split-card" id="app-card" tabindex="-1">
   <div class="split">
     <div class="brand-panel">
