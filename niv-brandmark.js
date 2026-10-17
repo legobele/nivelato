@@ -4,9 +4,23 @@
 // Nivelato Labs logo as a tiled watermark across the app content
 // area, to deter casual screenshotting and brand any leaked shot.
 // The tile is the FULL lockup — Breakout mark + "Nivelato Labs"
-// wordmark — in the gradient colorway (stops from
-// logo-concepts/concept-3-breakout-gradient.svg), with a
-// "DO NOT SHARE" notice line under the lockup inside each tile.
+// wordmark — with a "DO NOT SHARE" notice line under the lockup
+// inside each tile.
+//
+// Dark-background treatment (Oct 17, 2026, Giulia: "Its not
+// readable on dark BGs"): the first tile filled the wordmark with
+// the raw brand gradient — whose tail is dark purple #8202ff —
+// at 0.07-0.09 overlay opacity, so over the app's dark surfaces
+// (and the flow's dark mountain layer) the text washed out to
+// illegibility. A watermark that cannot be read fails its whole
+// purpose. The tile is now tuned for dark first: the wordmark and
+// notice render in white with a thin dark halo (paint-order
+// stroke, so the same tile also survives the app's light
+// elements), the mark keeps the gradient but with lightened
+// stops, and overlay opacity is 0.15 free / 0.17 dev — present
+// and readable at a glance, still under the content's contrast.
+// The brand assets themselves keep the exact colorway stops; the
+// lightening is a watermark-only legibility adjustment.
 //
 // Honest limit, also in DESIGN_SYSTEM_LABS.md: no web technology
 // can literally prevent screenshots. This deters casual captures
@@ -50,13 +64,23 @@
   var TILE_W = 340;
   var TILE_H = 224;
 
-  // Gradient colorway stops — exact, from the approved colorway:
-  // #fee800 -> #ff0e0e -> #ff0d88 -> #8202ff.
+  // Mark gradient stops for the TILE: the approved colorway
+  // (#fee800 -> #ff0e0e -> #ff0d88 -> #8202ff) with the dark end
+  // lifted so it survives dark backgrounds — same hues, higher
+  // lightness. The yellow start is already at full brightness
+  // and stays exact. (Logo assets keep the exact stops; this is
+  // only the watermark tile.)
   var STOPS =
     '<stop offset="0" stop-color="#fee800"/>' +
-    '<stop offset="0.333" stop-color="#ff0e0e"/>' +
-    '<stop offset="0.667" stop-color="#ff0d88"/>' +
-    '<stop offset="1" stop-color="#8202ff"/>';
+    '<stop offset="0.333" stop-color="#ff3333"/>' +
+    '<stop offset="0.667" stop-color="#ff339e"/>' +
+    '<stop offset="1" stop-color="#a64dff"/>';
+
+  // Halo for tile text: a thin dark stroke painted UNDER the
+  // white fill (paint-order:stroke). On dark surfaces the white
+  // does the work; on the app's light elements (white buttons,
+  // pale chips) the halo keeps the letters outlined and readable.
+  var TEXT_HALO = 'paint-order="stroke" stroke="rgba(8,8,12,0.65)" stroke-linejoin="round"';
 
   // One tile: Breakout mark (paths identical to
   // logo-concepts/concept-3-breakout-gradient.svg) + wordmark +
@@ -71,14 +95,13 @@
       '<svg xmlns="http://www.w3.org/2000/svg" width="' + TILE_W + '" height="' + TILE_H + '" viewBox="0 0 ' + TILE_W + ' ' + TILE_H + '">' +
       '<defs>' +
       '<linearGradient id="bmgMark" gradientUnits="userSpaceOnUse" x1="20" y1="94" x2="74" y2="28">' + STOPS + '</linearGradient>' +
-      '<linearGradient id="bmgText" gradientUnits="userSpaceOnUse" x1="94" y1="0" x2="330" y2="0">' + STOPS + '</linearGradient>' +
       '</defs>' +
       '<g transform="translate(17,32) scale(0.58)" fill="none" stroke="url(#bmgMark)" stroke-width="6.5">' +
       '<path d="M55 20 H20 V84 H84 V43" stroke-linejoin="miter"/>' +
       '<path d="M80 -1 L84.5 13.5 L99 18 L84.5 22.5 L80 37 L75.5 22.5 L61 18 L75.5 13.5 Z" stroke-linejoin="bevel"/>' +
       '</g>' +
-      '<text x="94" y="76" font-family="Archivo, Arial, Helvetica, sans-serif" font-size="29" font-weight="800" fill="url(#bmgText)">Nivelato Labs</text>' +
-      '<text x="19" y="142" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" letter-spacing="5" fill="#ffffff" opacity="0.92">' + notice + '</text>' +
+      '<text x="94" y="76" font-family="Archivo, Arial, Helvetica, sans-serif" font-size="29" font-weight="800" fill="#ffffff" stroke-width="1.6" ' + TEXT_HALO + '>Nivelato Labs</text>' +
+      '<text x="19" y="142" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" letter-spacing="5" fill="#ffffff" stroke-width="1" ' + TEXT_HALO + '>' + notice + '</text>' +
       '</svg>';
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
@@ -86,8 +109,8 @@
   var CSS =
     '#' + OVERLAY_ID + '{position:fixed;inset:0;z-index:800;pointer-events:none;overflow:hidden;}' +
     '#' + OVERLAY_ID + ' .niv-bm-tiles{position:absolute;inset:-55%;background-repeat:repeat;transform:rotate(-22deg);}' +
-    '#' + OVERLAY_ID + '[data-mode="free"] .niv-bm-tiles{opacity:0.07;}' +
-    '#' + OVERLAY_ID + '[data-mode="dev"] .niv-bm-tiles{opacity:0.09;}';
+    '#' + OVERLAY_ID + '[data-mode="free"] .niv-bm-tiles{opacity:0.15;}' +
+    '#' + OVERLAY_ID + '[data-mode="dev"] .niv-bm-tiles{opacity:0.17;}';
 
   function ensureStyle() {
     if (document.getElementById('niv-brandmark-css')) return;

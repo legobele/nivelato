@@ -235,18 +235,49 @@ deterrent and a tracing/branding layer, not DRM, and it should
 never be described to customers as screenshot-proof.
 
 **The tile:** the full lockup — Breakout mark + "Nivelato Labs"
-wordmark — in the gradient colorway (exact stops #fee800, #ff0e0e,
-#ff0d88, #8202ff, from concept-3-breakout-gradient.svg), with a
-"DO NOT SHARE" line in small mono caps under the lockup inside
-each tile. (Giulia's wording preference was DO NOT SHARE;
-CONFIDENTIAL was the fallback floor, not the choice.) Tiles repeat
-on a -22° diagonal at low opacity (0.07 free / 0.09 dev) on a
-fixed, pointer-events-none overlay above the content and below
+wordmark — with a "DO NOT SHARE" line in small mono caps under
+the lockup inside each tile. (Giulia's wording preference was
+DO NOT SHARE; CONFIDENTIAL was the fallback floor, not the
+choice.) Tiles repeat on a -22° diagonal on a fixed,
+pointer-events-none overlay above the content and below
 menus/modals (z-index 800), so it survives scrolling and never
 blocks a click or hurts readability. One tradeoff: the tile is an
 SVG background image, and SVG images cannot load webfonts, so the
 tile wordmark renders in a system bold sans instead of Anybody
-Expanded Black. The mark geometry and gradient are exact.
+Expanded Black. The mark geometry is exact.
+
+**Dark-background treatment (Oct 17, 2026):** the first tile
+filled the wordmark with the raw gradient colorway at 0.07 free /
+0.09 dev overlay opacity. Giulia's verdict on the samples: "Its
+not readable on dark BGs" — the gradient's tail is dark purple
+#8202ff, so over the app's dark surfaces (and doubly over flow's
+dark mountain layer) the right half of every wordmark and the
+whole notice line washed out. A watermark that cannot be read
+fails its purpose, so the tile is now tuned dark-first:
+
+- Wordmark and notice render in **white**, each with a thin dark
+  halo (SVG `paint-order: stroke`, rgba(8,8,12,0.65)) so the
+  same tile also survives light elements instead of vanishing
+  into them.
+- The mark keeps the gradient, but the tile uses **lightened
+  stops** — #fee800 (unchanged, already full brightness) →
+  #ff3333 → #ff339e → #a64dff. Same hues, higher lightness. The
+  brand assets keep the exact stops (#fee800, #ff0e0e, #ff0d88,
+  #8202ff, from concept-3-breakout-gradient.svg); the lift is a
+  watermark-only legibility adjustment.
+- Overlay opacity is **0.15 free / 0.17 dev** — present and
+  readable at a glance, still well under the content's contrast.
+
+Verified in headless Chromium on the real dashboard and flow
+pages at mobile width: every tile's "Nivelato Labs" and
+"DO NOT SHARE" / "DO NOT SHARE · DEV" reads without squinting,
+and app content under the tiles stays perfectly legible. The
+app has no light theme — its lightest real surface is the QGC
+tenant gray (body #2a2a2e, cards #3a3a3e), where the tile also
+reads cleanly. On a hypothetical pure-white page the text would
+sit faint (the colored mark still carries the pattern) — the
+halo keeps it discernible, and no such surface exists in the
+app.
 
 **Three states, in precedence order:**
 1. **Dev** — the signed-in email is legobele@gmail.com: the dev
