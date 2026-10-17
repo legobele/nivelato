@@ -218,3 +218,57 @@ translated, no SwiftUI APIs invented into the web build):
 - Animations: no new motion was invented for this pass. The
   existing entrance animation and hover states carry the glass,
   and everything still honors prefers-reduced-motion.
+
+## Brand watermark: free-tier screenshot deterrent (Oct 17, 2026)
+
+Giulia's spec: on web, free-tier accounts get the logo as a
+watermark across the app content area. Built as `niv-brandmark.js`
+(call `NivBrandmark.apply({ email, tier, orgId })` once a page has
+resolved the signed-in user; wired into dashboard.html and
+flow.html at the points where those pages already resolve tier).
+
+**What it is for, stated honestly:** the watermark deters casual
+screenshotting and makes any leaked screenshot visibly branded and
+marked confidential. No web technology can literally prevent
+screenshots — anyone determined can capture a screen. This is a
+deterrent and a tracing/branding layer, not DRM, and it should
+never be described to customers as screenshot-proof.
+
+**The tile:** the full lockup — Breakout mark + "Nivelato Labs"
+wordmark — in the gradient colorway (exact stops #fee800, #ff0e0e,
+#ff0d88, #8202ff, from concept-3-breakout-gradient.svg), with a
+"DO NOT SHARE" line in small mono caps under the lockup inside
+each tile. (Giulia's wording preference was DO NOT SHARE;
+CONFIDENTIAL was the fallback floor, not the choice.) Tiles repeat
+on a -22° diagonal at low opacity (0.07 free / 0.09 dev) on a
+fixed, pointer-events-none overlay above the content and below
+menus/modals (z-index 800), so it survives scrolling and never
+blocks a click or hurts readability. One tradeoff: the tile is an
+SVG background image, and SVG images cannot load webfonts, so the
+tile wordmark renders in a system bold sans instead of Anybody
+Expanded Black. The mark geometry and gradient are exact.
+
+**Three states, in precedence order:**
+1. **Dev** — the signed-in email is legobele@gmail.com: the dev
+   variant of the same tile system (notice line reads
+   "DO NOT SHARE · DEV", slightly higher opacity). Dev beats tier.
+2. **Paid** — tier is ultra, pro, or qgc, or the org is the
+   exempt full-access org (NJBBG5, mirroring
+   QUOTES_DISABLED_ORGS in permissions.js): no watermark.
+3. **Free** — anything else, including a missing tier (the rest
+   of the app defaults a missing tier to 'free' the same way):
+   the free watermark.
+
+Signals are only what the front end already has: the auth email
+and users/{uid}.tier/orgId, the same doc the dashboard and flow
+already read. No new data is collected, and no billing,
+entitlement, or plan data changes — the component only reads the
+tier string the call site hands it. If a future page has no tier
+signal resolved yet, the activation hook is the single apply()
+call above (plus the script include); wire it where that page
+resolves its user doc. State is mirrored onto
+`<html data-niv-brandmark="dev|free|off">` for testing.
+
+Not to be confused with flow.html's existing loadWatermark():
+that is the testing-channel version stamp ("TEST - v…"), a
+separate system that predates this one.

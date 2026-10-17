@@ -545,6 +545,7 @@
 
 <script src="/niv-settings.js"></script>
 <script src="/niv-envmark.js"></script>
+<script src="/niv-brandmark.js"></script>
 <script src="/adhd.js"></script>
 <script type="module">
 import { auth, db } from '/firebase-config.js';
@@ -1198,6 +1199,8 @@ function applyReferral(projectsById) {
 /* ---------- boot ---------- */
 async function bootDemo() {
   applyReferral(null);
+  // Demo sessions are not paid sessions: free-state brand watermark.
+  if (window.NivBrandmark) window.NivBrandmark.apply({ tier: 'free' });
   showFlow();
   loadWatermark();
 }
@@ -1239,6 +1242,10 @@ async function bootReal() {
       email: user.email || userData.email || '',
       photoURL: user.photoURL || ''
     };
+
+    // Brand watermark (niv-brandmark.js): same three-state gate as
+    // the dashboard, off the tier/email this boot already resolved.
+    if (window.NivBrandmark) window.NivBrandmark.apply({ email: state.user.email, tier: userData.tier, orgId: orgId });
 
     const allowed = DEMO || state.channel === 'beta' || state.channel === 'testing' ||
       state.channel === 'debug' || userData.betaEnrolled === true;
