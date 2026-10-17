@@ -37,6 +37,10 @@
   .settings-sections { flex: 1; min-width: 0; }
   .settings-section { display: none; }
   .settings-section.active { display: block; }
+  /* Motion system (Oct 2026, "zero jump-cuts"): section swaps
+     ease in instead of snapping. The animation restarts on each
+     display flip; keyframes/tokens live in niv-dark.css. */
+  .settings-section.active { animation: niv-mo-view-in var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)); }
   .niv-mobile-nav-toggle { display: none; }
   @media (max-width: 900px) {
     /* M49: compact mobile nav for this settings host too: the static

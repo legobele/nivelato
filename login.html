@@ -133,9 +133,9 @@
     }
     .exclusivity-note {
       font-size: 12px;
-      color: var(--green);
-      background: rgba(105,219,124,.07);
-      border: 1px solid rgba(105,219,124,.32);
+      color: var(--ink);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.28);
       border-radius: 10px;
       padding: 10px 14px;
       margin-bottom: 20px;
@@ -178,7 +178,6 @@
     }
     .tab:hover { color: var(--muted); }
     .tab.active { color: var(--amber); border-bottom-color: var(--amber); }
-    .tab.active.qgi-tab { color: var(--green); border-bottom-color: var(--green); }
     .field { margin-bottom: 16px; }
     .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
     .field input {
@@ -217,9 +216,6 @@
     .btn-primary:hover { background: var(--amber2); }
     .btn-primary:active { transform: translateY(1px); }
     .btn-primary:disabled { background: #3a3a42; color: var(--dim); cursor: not-allowed; }
-    .btn-primary.qgi-btn { background: var(--green-deep); color: #fff; }
-    .btn-primary.qgi-btn:hover { background: #237a36; }
-    .btn-primary.qgi-btn:disabled { background: #3a3a42; color: var(--dim); }
     .forgot-link { font-size: 13px; color: var(--amber2); text-decoration: none; }
     .forgot-link:hover { text-decoration: underline; }
     .error-msg {
@@ -240,7 +236,6 @@
       border-radius: 50%; animation: niv-spin 0.8s linear infinite;
     }
     @keyframes niv-spin { to { transform: rotate(360deg); } }
-    body.qgc-theme .niv-spinner { border-color: #55555c; border-top-color: #b9b9c2; }
     .signup-note {
       font-size: 12px;
       color: var(--dim);
@@ -286,11 +281,8 @@
       .company-details { border: none; }
       .company-details-body { padding: 0; }
     }
-    /* compact: globe icon only on small screens */
-    @media (max-width: 480px) {
-      .lang-toggle { font-size: 0 !important; width: 44px; min-width: 44px; padding: 10px 0; text-align: center; }
-      .lang-toggle::after { content: '\1F310'; font-size: 20px; }
-    }
+    /* The language control is the system's text pill at every width:
+       it always shows its label, never an emoji swap (Oct 17, 2026). */
     /* Header-row pill: the language toggle lives in the panel header
        (accounts title row / company-head), right-aligned in-flow. */
     .accounts-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
@@ -396,97 +388,9 @@
       position: fixed; top: 0; right: 0; width: 64px; height: 64px; z-index: 9000;
       background: transparent; touch-action: none;
     }
-    /* ---- QGC "depressing gray" theme ----
-       Applied to <body> whenever QGI mode is active. Everything goes gray:
-       page, card, tabs, inputs, buttons. The QGC logo is stretched
-       fullscreen behind it all (aspect ratio intentionally distorted). */
-    body.qgc-theme { background: #2a2a2e; }
-    body.qgc-theme::before {
-      content: "";
-      position: fixed;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image: url('./qgc-logo.jpg');
-      background-repeat: no-repeat;
-      background-size: 100% 100%;
-      opacity: 0.12;
-      pointer-events: none;
-      z-index: 0;
-    }
-    body.qgc-theme::after {
-      content: "";
-      position: fixed;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(20, 20, 22, 0.55);
-      pointer-events: none;
-      z-index: 0;
-    }
-    body.qgc-theme .card {
-      background: #3a3a3e;
-      border-color: #55555c;
-      padding: 24px 26px;
-      /* never push a page-level scrollbar: scroll inside the card instead */
-      max-height: calc(100dvh - 32px);
-      overflow-y: auto;
-    }
-    body.qgc-theme .logo { color: #f2f1ec; }
-    body.qgc-theme .logo .adot { color: #8e8e99; }
-    body.qgc-theme .tagline { color: #b9b9c2; margin-bottom: 18px; }
-    body.qgc-theme .tab-row { border-bottom-color: #55555c; margin-bottom: 18px; }
-    body.qgc-theme .tab { color: #8e8e99; }
-    body.qgc-theme .tab:hover { color: #b9b9c2; }
-    body.qgc-theme .tab.active,
-    body.qgc-theme .tab.active.qgi-tab { color: #e8e8ec; border-bottom-color: #8e8e99; }
-    body.qgc-theme .field label { color: #b9b9c2; }
-    body.qgc-theme .field input {
-      background: #2a2a2e;
-      border-color: #55555c;
-      color: #f2f1ec;
-    }
-    body.qgc-theme .field input::placeholder { color: #6d6d78; }
-    body.qgc-theme .field input:focus { border-color: #8e8e99; }
-    body.qgc-theme .field input:-webkit-autofill {
-      -webkit-text-fill-color: #f2f1ec;
-      -webkit-box-shadow: 0 0 0 1000px #2a2a2e inset;
-    }
-    body.qgc-theme .btn-primary,
-    body.qgc-theme .btn-primary.qgi-btn { background: #63636b; color: #f2f1ec; }
-    body.qgc-theme .btn-primary:hover,
-    body.qgc-theme .btn-primary.qgi-btn:hover { background: #75757e; }
-    body.qgc-theme .btn-primary:disabled,
-    body.qgc-theme .btn-primary.qgi-btn:disabled { background: #2a2a2e; color: #6d6d78; }
-    body.qgc-theme .forgot-link { color: #b9b9c2; }
-    body.qgc-theme .exclusivity-note {
-      color: #d8d8de;
-      background: rgba(255,255,255,.05);
-      border-color: #55555c;
-    }
-    body.qgc-theme .geo-note {
-      color: #d8d8de;
-      background: rgba(255,255,255,.05);
-      border-color: #55555c;
-    }
-    body.qgc-theme .geo-note a,
-    body.qgc-theme .geo-note button { color: #e8e8ec; }
-    body.qgc-theme .signup-note { color: #8e8e99; }
-    body.qgc-theme .travel-body { color: #a7a7b3; }
-    body.qgc-theme .lang-toggle { border-color: #55555c; color: #b9b9c2; }
-    body.qgc-theme .lang-toggle:hover { color: #f2f1ec; border-color: #8e8e99; }
-    body.qgc-theme .lang-toggle:focus-visible { outline-color: #8e8e99; }
-    body.qgc-theme .error-msg {
-      background: rgba(255,255,255,.05);
-      border-color: #77777f;
-      color: #f2f1ec;
-    }
+    /* QGC gray tenant theme retired Oct 17, 2026: QGC/PR now uses
+       the main design system with a tenant treatment (see the layout
+       law block at the end of this stylesheet). */
     /* ---- Split layout: brand panel + accounts/form panel (mockup) ---- */
     .card.split-card { max-width: 780px; }
     .split { display: flex; gap: 24px; align-items: stretch; }
@@ -605,13 +509,18 @@
       font-weight: 700;
     }
     .account-avatar-logo { overflow: hidden; background: #fff; }
-    .account-avatar-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .account-avatar-logo img { width: 100%; height: 100%; object-fit: contain; padding: 3px; box-sizing: border-box; display: block; }
     .qgc-only-notice {
-      font-weight: 700;
-      font-size: 15px;
-      line-height: 1.45;
+      font-weight: 600;
+      font-size: 13.5px;
+      line-height: 1.5;
       color: var(--ink);
-      margin: 14px 0 18px;
+      margin: 16px 0 4px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 12px;
+      padding: 12px 14px;
+      text-align: left;
     }
     .account-meta { min-width: 0; display: flex; flex-direction: column; }
     .account-name {
@@ -634,22 +543,6 @@
       .brand-panel { flex: none; }
       .brand-logo-box { aspect-ratio: 16 / 8; }
     }
-    /* QGC gray theme for the split layout */
-    body.qgc-theme .brand-panel { background: #2a2a2e; border-color: #55555c; }
-    body.qgc-theme .brand-logo-box { background: #2a2a2e; border-color: #55555c; }
-    body.qgc-theme .accounts-title { color: #b9b9c2; }
-    body.qgc-theme .account-pill { background: #2a2a2e; border-color: #55555c; }
-    body.qgc-theme .account-pill:hover { border-color: #8e8e99; }
-    body.qgc-theme .account-pill:focus-visible { outline-color: #8e8e99; }
-    body.qgc-theme .account-avatar { background: #55555c; color: #f2f1ec; }
-    body.qgc-theme .account-add { border-color: #55555c; color: #b9b9c2; }
-    body.qgc-theme .account-add:hover { border-color: #8e8e99; color: #f2f1ec; }
-    body.qgc-theme .account-add:focus-visible { outline-color: #8e8e99; }
-    body.qgc-theme .account-add-icon { border-color: #55555c; color: #b9b9c2; }
-    body.qgc-theme .account-add:hover .account-add-icon { border-color: #8e8e99; color: #f2f1ec; }
-    body.qgc-theme .account-name { color: #f2f1ec; }
-    body.qgc-theme .account-kind { color: #b9b9c2; }
-    body.qgc-theme .qgc-only-notice { color: #f2f1ec; }
     /* Company-branded signin view */
     .company-employee-notice {
       margin-top: 16px;
@@ -680,10 +573,6 @@
     .company-head .account-pill .account-meta { min-width: 0; }
     .company-head .account-pill .account-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .company-head .account-pill:hover { border-color: var(--line); }
-    body.qgc-theme .company-head .account-pill:hover { border-color: #55555c; }
-    body.qgc-theme .company-employee-notice { color: #f2f1ec; }
-    body.qgc-theme .company-inquiry { color: #b9b9c2; }
-    body.qgc-theme .company-travel-notice { color: #f5b83d; }
     /* View-transition slide animations (navigation only, never on re-render) */
     @keyframes niv-slide-fwd {
       from { transform: translateX(48px); opacity: 0; }
@@ -693,8 +582,8 @@
       from { transform: translateX(-48px); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
-    .niv-anim-fwd { animation: niv-slide-fwd 280ms ease; }
-    .niv-anim-back { animation: niv-slide-back 280ms ease; }
+    .niv-anim-fwd { animation: niv-slide-fwd var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)); }
+    .niv-anim-back { animation: niv-slide-back var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)); }
     @media (prefers-reduced-motion: reduce) {
       .niv-anim-fwd, .niv-anim-back { animation: none; }
     }
@@ -737,14 +626,6 @@
       .cantadd-row { flex-direction: column; align-items: stretch; text-align: center; }
       .cantadd-row .btn-google { width: 100%; }
     }
-    body.qgc-theme .or-sep { color: #8e8e99; }
-    body.qgc-theme .or-sep::before, body.qgc-theme .or-sep::after { background: #55555c; }
-    body.qgc-theme .btn-google { border-color: #55555c; color: #f2f1ec; }
-    body.qgc-theme .btn-google:hover { border-color: #8e8e99; background: rgba(255,255,255,.04); }
-    body.qgc-theme .back-btn { border-color: #55555c; color: #f2f1ec; }
-    body.qgc-theme .back-btn:hover { border-color: #8e8e99; }
-    body.qgc-theme .cantadd-title { color: #f2f1ec; }
-    body.qgc-theme .cantadd-msg { color: #b9b9c2; }
     @media (max-width: 420px) {
       body { padding: 16px; }
       .card { padding: 32px 22px; }
@@ -770,8 +651,7 @@
       content: ""; position: absolute; inset: 0;
       background: linear-gradient(180deg, rgba(5,5,5,.52), rgba(5,5,5,.30) 42%, rgba(5,5,5,.80));
     }
-    body.qgc-theme .mtn-backdrop { display: none; }
-    body:not(.qgc-theme) .card {
+    .card {
       background: linear-gradient(140deg, rgba(255,255,255,.14), rgba(255,255,255,.05) 52%, rgba(255,255,255,.09));
       -webkit-backdrop-filter: blur(18px) saturate(150%);
       backdrop-filter: blur(18px) saturate(150%);
@@ -779,7 +659,7 @@
       border-radius: 20px;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.38), inset 0 -1px 0 rgba(255,255,255,.05), inset 1px 0 0 rgba(255,255,255,.07), 0 24px 60px rgba(0,0,0,.55);
     }
-    body:not(.qgc-theme) .brand-panel {
+    .brand-panel {
       background: rgba(255,255,255,.055);
       border-color: rgba(255,255,255,.15);
       border-radius: 16px;
@@ -787,14 +667,14 @@
       -webkit-backdrop-filter: blur(8px);
       backdrop-filter: blur(8px);
     }
-    body:not(.qgc-theme) .account-pill {
+    .account-pill {
       background: rgba(255,255,255,.06);
       border-color: rgba(255,255,255,.18);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.14);
       -webkit-backdrop-filter: blur(8px);
       backdrop-filter: blur(8px);
     }
-    body:not(.qgc-theme) .field input { background: rgba(5,5,6,.42); border-color: rgba(255,255,255,.20); }
+    .field input { background: rgba(5,5,6,.42); border-color: rgba(255,255,255,.20); }
     .site-header .site-brand, .site-header nav {
       background: rgba(12,12,14,.34);
       border: 1px solid rgba(255,255,255,.18);
@@ -810,8 +690,8 @@
        group's state changes animate as one material. The header is
        two glass clusters (brand, nav), not one blob, and the fixed
        glass header lets page content scroll underneath it. */
-    body:not(.qgc-theme) .card, body:not(.qgc-theme) .brand-panel,
-    body:not(.qgc-theme) .account-pill,
+    .card, .brand-panel,
+    .account-pill,
     .site-header .site-brand, .site-header nav {
       transition: background-color .3s ease, box-shadow .3s ease, border-color .3s ease;
     }
@@ -826,9 +706,9 @@
     /* Fallback: no backdrop-filter support, the glass goes near-opaque
        so every surface stays fully readable over the photo. */
     @supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
-      body:not(.qgc-theme) .card { background: linear-gradient(140deg, rgba(30,30,34,.97), rgba(14,14,16,.98)); }
-      body:not(.qgc-theme) .brand-panel { background: rgba(20,20,23,.96); }
-      body:not(.qgc-theme) .field input { background: rgba(5,5,6,.9); }
+      .card { background: linear-gradient(140deg, rgba(30,30,34,.97), rgba(14,14,16,.98)); }
+      .brand-panel { background: rgba(20,20,23,.96); }
+      .field input { background: rgba(5,5,6,.9); }
       .site-header .site-brand, .site-header nav { background: rgba(12,12,14,.92); }
     }
 
@@ -848,16 +728,109 @@
 .site-header .variant-wordmark{font-family:var(--wordmark-font);font-weight:900;font-stretch:150%;font-size:clamp(.92rem,2.2vw,1.18rem);line-height:1;letter-spacing:var(--wordmark-spacing);text-indent:var(--wordmark-spacing);text-transform:uppercase;white-space:nowrap;text-shadow:0 1px 14px rgba(0,0,0,.35)}
 .site-header .variant-menu-button{position:absolute;top:24px;right:20px;z-index:2;width:44px;height:44px;padding:0 10px;border:0;background:transparent;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;pointer-events:auto}
 .site-header .variant-menu-button i{display:block;width:22px;height:2.5px;border-radius:2px;background:currentColor}
-.variant-menu{position:fixed;inset:0;z-index:80;background:rgba(3,3,4,.96);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s ease,visibility 0s linear .25s;overflow-y:auto}
-body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .25s ease}
+.variant-menu{position:fixed;inset:0;z-index:80;background:rgba(3,3,4,.96);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)),visibility 0s linear var(--niv-mo-view, 300ms);overflow-y:auto}
+body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events:auto;transition:opacity var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1))}
 .variant-menu-inner{width:min(440px,calc(100vw - 48px));margin:0 auto;padding:126px 0 44px;display:flex;flex-direction:column;gap:2px}
+body.variant-menu-open .variant-menu-inner{animation:niv-mo-menu-in var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1))}
+@keyframes niv-mo-menu-in{from{opacity:0;transform:translateY(10px)}}
 .variant-menu-inner nav{display:flex;flex-direction:column;gap:2px}
-.variant-menu-inner nav a{min-height:54px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid rgba(255,255,255,.10);color:#fff;text-decoration:none;font-size:1.08rem;font-weight:600;text-align:center}
+.variant-menu-inner nav a{min-height:54px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid rgba(255,255,255,.10);color:#fff;text-decoration:none;font-size:1.08rem;font-weight:600;text-align:center;transition:background-color var(--niv-mo-micro, 160ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1))}
 .variant-menu-inner nav a:hover,.variant-menu-inner nav a:focus-visible{background:rgba(255,255,255,.06)}
 .variant-menu-close{position:absolute;top:24px;right:20px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:transparent;color:#fff;font-size:1.35rem;line-height:1;cursor:pointer}
 .entry-claim{top:128px}
 @media(max-width:640px){.site-header{height:108px;padding:18px 16px 8px}.site-header .variant-mark{width:30px;height:30px}.site-header .variant-wordmark{font-size:.88rem}.site-header .variant-menu-button{top:18px;right:12px}.variant-menu-close{top:18px;right:12px}.variant-menu-inner{padding-top:112px}}
 @media(prefers-reduced-motion:reduce){.variant-menu{transition:none}}
+    /* ---- Login layout law + QGC tenant treatment (Oct 17, 2026) ----
+       One contract for EVERY login surface (sign-in, company select,
+       company sign-in, add-account, reauth, cant-add, travel,
+       save-login): the card FITs the dynamic viewport, sized to the
+       space between the fixed Variant B header and the fixed footer
+       HUD labels, so the header can never overlap the card top and
+       the footer labels can never collide with card content. Inside
+       the card, the branding/header zone and pinned actions stay
+       put and the middle content scrolls internally (.main-panel /
+       .card-scrollzone / the company-select list region). There is
+       no page-level scroll on the login screen.
+       QGC/PR is a TENANT treatment inside this same system: same
+       mountain, same glass, same Breakout lockup. The tenant shows
+       as a contained logo tile + name block (.tenant-block); the PR
+       restriction and exclusivity info render as glass notice rows
+       (.qgc-only-notice / .exclusivity-note / .geo-note / #pr-note),
+       never as gray slabs. The old gray tenant theme has no rules
+       left in this file; the body.qgc-theme class survives only as
+       a JS mode flag. */
+    :root { --login-top-clear: 152px; --login-bottom-clear: 64px; }
+    @media (max-width: 640px) { :root { --login-top-clear: 122px; --login-bottom-clear: 42px; } }
+    body { padding-top: var(--login-top-clear); padding-bottom: var(--login-bottom-clear); }
+    .card {
+      display: flex; flex-direction: column;
+      max-height: calc(100dvh - var(--login-top-clear) - var(--login-bottom-clear));
+      overflow: hidden;
+    }
+    .split { flex: 1 1 auto; min-height: 0; }
+    .brand-panel { overflow: hidden; }
+    .main-panel { overflow-y: auto; min-height: 0; overscroll-behavior: contain; scrollbar-width: thin; }
+    .main-panel.pinned-panel { overflow: hidden; }
+    .card-scrollzone { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; width: 100%; }
+    .company-single { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; width: 100%; }
+    .company-single .company-head { flex: none; }
+    .main-panel::-webkit-scrollbar, .card-scrollzone::-webkit-scrollbar, #company-select-list::-webkit-scrollbar { width: 6px; }
+    .main-panel::-webkit-scrollbar-thumb, .card-scrollzone::-webkit-scrollbar-thumb, #company-select-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.22); border-radius: 3px; }
+    #pr-note a { color: #fff; font-weight: 700; text-decoration: underline; }
+    /* Tenant block: the tenant logo contained on a light tile (tenant
+       logos are never cropped or stretched), name + HUD tag beside it. */
+    .tenant-block {
+      margin-top: 24px; display: flex; align-items: center; gap: 14px;
+      border: 1px solid rgba(255,255,255,.16); border-radius: 14px;
+      background: rgba(255,255,255,.055); padding: 12px 14px; text-align: left;
+    }
+    .tenant-logo {
+      flex: 0 0 64px; width: 64px; height: 64px; border-radius: 10px;
+      background: #f4f4f2; display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    .tenant-logo img { width: 100%; height: 100%; object-fit: contain; padding: 5px; box-sizing: border-box; display: block; }
+    .tenant-meta { min-width: 0; }
+    .tenant-name { font-size: 15px; font-weight: 700; color: var(--ink); line-height: 1.3; }
+    .tenant-tag { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: .18em; color: var(--muted); margin-top: 5px; text-transform: uppercase; }
+    .tenant-block.center { flex-direction: column; text-align: center; }
+    .tenant-block.center .tenant-meta { text-align: center; }
+    @media (max-width: 680px) {
+      .brand-panel { padding: 20px 20px 16px; }
+      .brand-logo-box { aspect-ratio: auto; height: 104px; margin-top: 16px; }
+      .tenant-block { margin-top: 16px; }
+      .tenant-logo { flex-basis: 52px; width: 52px; height: 52px; }
+    }
+    /* Short viewports: the pinned brand zone compacts so the scroll
+       zone keeps room for the actual controls (a full company pill
+       plus the pinned action) instead of being clipped by it. The
+       brand panel goes horizontal: wordmark and tenant/logo block
+       share a row, the tagline yields, notices take the full row
+       underneath. Nothing functional is hidden; only brand copy
+       (the tagline) steps aside at these heights. */
+    @media (max-width: 680px) and (max-height: 760px) {
+      .card { padding-top: 22px; padding-bottom: 16px; }
+      .split { gap: 10px; }
+      .brand-panel { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 14px; padding: 12px 16px 10px; }
+      .tenant-tag { display: none; }
+      .brand-panel .logo { font-size: 25px; }
+      .brand-panel .tagline { display: none; }
+      .brand-logo-box { height: 64px; width: 104px; flex: none; margin-top: 0; margin-left: auto; }
+      .tenant-block, .tenant-block.center { flex-direction: row; text-align: left; margin-top: 0; margin-left: auto; padding: 8px 10px; }
+      .tenant-block.center .tenant-meta { text-align: left; }
+      .tenant-logo { flex-basis: 44px; width: 44px; height: 44px; }
+      .qgc-only-notice { order: 3; width: 100%; margin-top: 10px; padding: 9px 11px; font-size: 12.5px; }
+      /* At these heights the pinned-panel pattern (list scrolls,
+         action pinned) runs out of room once the PR banner is in
+         the panel: the panel becomes one scroll zone instead, so
+         banner, list and the personal-account action are all
+         reachable by scrolling inside the card. Taller viewports
+         keep the pinned pattern. */
+      .main-panel.pinned-panel { overflow-y: auto; }
+      .main-panel.pinned-panel #company-select-list.scroll-region { flex: none; overflow-y: visible; }
+      .accounts-title { margin-bottom: 8px; }
+      .geo-note { padding: 8px 11px; }
+      .pinned-action { margin-top: 10px; }
+    }
 </style>
   <!-- dear source-viewer: the measurements are leveled. the whimsy is load-bearing. 🦀 -->
   <script type="module" src="crab.js"></script>
@@ -1699,7 +1672,7 @@ body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events
         <div class="qgc-only-notice" data-i18n="qgc_only_msg"></div>`
           : `<h1 class="logo">Nivelato<span class="adot">.</span></h1>
         <div class="tagline" data-i18n="tagline"></div>`}
-        <div class="brand-logo-box"><img src="${logoSrc}" alt="${logoAlt}" /></div>
+        ${qgi ? `<div class="tenant-block"><div class="tenant-logo"><img src="./qgc-logo.jpg" alt="Quality Glazing Contractors" /></div><div class="tenant-meta"><div class="tenant-name">Quality Glazing Contractors</div><div class="tenant-tag">[ Tenant \u00b7 Puerto Rico ]</div></div></div>` : `<div class="brand-logo-box"><img src="${logoSrc}" alt="${logoAlt}" /></div>`}
       </div>
       <div class="main-panel" data-envmark-card>
         ${accountsSectionHTML() || '<div class="accounts-head"><button type="button" id="lang-toggle" class="lang-toggle"></button></div>'}
@@ -1728,7 +1701,7 @@ body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events
     QGI = (mode === 'qgi');
     document.body.classList.toggle('qgc-theme', QGI);
     const _tc = document.querySelector('meta[name="theme-color"]');
-    if (_tc) _tc.setAttribute('content', QGI ? '#2a2a2e' : '#0b0b0e');
+    if (_tc) _tc.setAttribute('content', '#0b0b0e');
     document.getElementById('app-card').innerHTML = formHTML(QGI);
     for (const id of Object.keys(prev)) {
       const el = document.getElementById(id);
@@ -1743,6 +1716,12 @@ body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events
     window.nivApplyLang();
   }
 
+  // Notices live inside the card's scroll zone, never at the card's
+  // top edge where the back chevron and view chrome sit.
+  function noticeHost(card) {
+    return card.querySelector('.card-scrollzone, .main-panel') || card;
+  }
+
   function showGeoNotice() {
     geoNoticeOn = true;
     const card = document.getElementById('app-card');
@@ -1751,10 +1730,10 @@ body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events
     note.id = 'geo-note';
     note.className = 'geo-note';
     note.textContent = window.nivT('geo_note');
-    card.prepend(note);
+    noticeHost(card).prepend(note);
   }
 
-  // PR company-use notice: QGC gray theme. In Puerto Rico only QGC employees
+  // PR company-use notice. In Puerto Rico only QGC employees
   // may use Nivelato as a company; everyone else gets the free Play Store app.
   function showPrNotice() {
     prNoticeOn = true;
@@ -1764,11 +1743,11 @@ body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events
     const note = document.createElement('div');
     note.id = 'pr-note';
     note.setAttribute('role', 'alert');
-    note.style.cssText = 'background:#3a3a3e;border:1px solid #55555c;border-radius:12px;padding:10px 12px;margin-bottom:14px;color:#f2f1ec;font-size:12px;line-height:1.55';
+    note.className = 'geo-note';
     note.innerHTML = t('pr_note_1')
       + t('pr_note_2')
-      + '<a href="https://play.google.com/store/apps/details?id=com.nivelato.app" style="font-weight:700;color:#ffffff;text-decoration:underline">' + t('pr_note_link') + '</a>.';
-    card.prepend(note);
+      + '<a href="https://play.google.com/store/apps/details?id=com.nivelato.app">' + t('pr_note_link') + '</a>.';
+    noticeHost(card).prepend(note);
   }
 
   // settings.html redirects here with ?missingProfile=1 when the signed-in
@@ -1782,7 +1761,7 @@ body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events
     note.className = 'geo-note';
     note.setAttribute('role', 'alert');
     note.textContent = window.nivT('profile_note');
-    card.prepend(note);
+    noticeHost(card).prepend(note);
   }
 
   // Re-render the visible notices in the new language (renderForm wipes them).
@@ -2495,10 +2474,12 @@ body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events
     card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
       + '<h1 class="logo">Nivelato<span class="adot">.</span></h1>'
       + '<div class="tagline">' + t('save_title') + '</div>'
+      + '<div class="card-scrollzone">'
       + '<p style="color:#a7a7b3;font-size:14px;line-height:1.6;margin:0 0 24px">' + t('save_q') + '</p>'
       + '<button class="btn-primary" id="btn-save-yes" type="button">' + t('save_yes') + '</button>'
       + '<button class="btn-primary" id="btn-save-no" type="button" style="background:transparent;border:1px solid #2c2c31;color:#f2f1ec;margin-top:10px">' + t('save_no') + '</button>'
-      + '<div class="error-msg" id="login-error" role="alert"></div>';
+      + '<div class="error-msg" id="login-error" role="alert"></div>'
+      + '</div>';
     window.nivApplyLang();
     document.getElementById('btn-save-yes').addEventListener('click', () => finishPersistenceChoice(browserLocalPersistence));
     document.getElementById('btn-save-no').addEventListener('click', () => finishPersistenceChoice(browserSessionPersistence));
@@ -3130,10 +3111,10 @@ body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events
       card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
         + '<div class="split">'
         + '<div class="brand-panel" style="text-align:center">'
-        + '<h1 class="logo qgi">Nivelato</h1>'
+        + '<h1 class="logo">Nivelato<span class="adot">.</span></h1>'
         + '<div class="tagline">' + t('tagline_qgc_brand') + '</div>'
         + '<div class="qgc-only-notice">' + t('qgc_only_msg') + '</div>'
-        + '<div class="brand-logo-box"><img src="./qgc-logo.jpg" alt="QGC" /></div>'
+        + '<div class="tenant-block center"><div class="tenant-logo"><img src="./qgc-logo.jpg" alt="Quality Glazing Contractors" /></div><div class="tenant-meta"><div class="tenant-name">Quality Glazing Contractors</div><div class="tenant-tag">[ Tenant \u00b7 Puerto Rico ]</div></div></div>'
         + '</div>'
         + '<div class="main-panel pinned-panel" data-envmark-card>'
         + '<div class="accounts-title">' + t('signin_with') + '</div>'
@@ -3373,6 +3354,7 @@ body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events
       + '</div>'
       + '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
       + '</div>'
+      + '<div class="card-scrollzone">'
       + '<h1 class="logo company-title' + (qgi ? ' qgi' : '') + '">' + escapeHtml(company.name) + '</h1>'
       + '<details class="company-details" id="company-details">'
       + '<summary class="company-details-summary">' + t('company_details') + '</summary>'
@@ -3384,6 +3366,7 @@ body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events
       + '</div>'
       + '</details>'
       + '<div id="company-form-area"></div>'
+      + '</div>'
       + '</div>';
     window.nivApplyLang();
     document.getElementById('company-back').addEventListener('click', goBackView);
@@ -3605,7 +3588,7 @@ body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events
     travelShown = true;
     document.body.classList.add('qgc-theme');
     const _tc = document.querySelector('meta[name="theme-color"]');
-    if (_tc) _tc.setAttribute('content', '#2a2a2e');
+    if (_tc) _tc.setAttribute('content', '#0b0b0e');
     renderTravelUI();
   }
 
@@ -3638,8 +3621,10 @@ body.variant-menu-open .variant-menu{opacity:1;visibility:visible;pointer-events
     card.innerHTML = '<button type="button" id="lang-toggle" class="lang-toggle"></button>'
       + '<h1 class="logo qgi">Quality Glass</h1>'
       + '<div class="tagline">' + t('travel_title') + '</div>'
+      + '<div class="card-scrollzone">'
       + bodyHtml
-      + '<div style="text-align:center;margin-top:16px"><a href="#" id="travel-back" class="forgot-link">' + t('travel_back') + '</a></div>';
+      + '<div style="text-align:center;margin-top:16px"><a href="#" id="travel-back" class="forgot-link">' + t('travel_back') + '</a></div>'
+      + '</div>';
     if (travelLinkError && !travelSent) {
       const errEl = document.getElementById('travel-error');
       if (errEl) { errEl.textContent = t('travel_err_link'); errEl.classList.add('visible'); }

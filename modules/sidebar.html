@@ -59,7 +59,7 @@
   }
   .mod-ico svg { width: 24px; height: 24px; display: block; }
   .mod-ico .tile { fill: currentColor; }
-  .mod-ico .glyph { fill: var(--niv-text-dim); transition: fill 0.15s; }
+  .mod-ico .glyph { fill: var(--niv-text-dim); transition: fill var(--niv-mo-micro, 160ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)); }
   .niv-nav-btn:hover .mod-ico { color: var(--niv-surface); }
   .niv-nav-btn.active .mod-ico { color: var(--niv-accent); }
   .niv-nav-btn.active .mod-ico .glyph { fill: #fff; }
@@ -79,7 +79,7 @@
     background: transparent; color: var(--niv-text-dim);
     font-size: 12px; line-height: 1; cursor: pointer; font-family: inherit;
     display: inline-flex; align-items: center; justify-content: center; flex: none;
-    transition: transform 0.18s;
+    transition: transform var(--niv-mo-micro, 160ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1));
   }
   .niv-sec-chev:hover { color: var(--niv-text); }
   .niv-panel-sec.sec-collapsed .niv-sec-chev { transform: rotate(-90deg); }
@@ -181,7 +181,7 @@
     background: var(--niv-surface-2, #1e1e22); color: var(--niv-text, #f5f5f7);
     border: 1px solid var(--niv-border, rgba(255,255,255,0.28));
     padding: 10px 16px; border-radius: 999px; font-size: 13px; font-weight: 600;
-    opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s;
+    opacity: 0; pointer-events: none; transition: opacity var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)), transform var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1));
     z-index: 1100; max-width: 86vw; text-align: center;
   }
   .mod-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }

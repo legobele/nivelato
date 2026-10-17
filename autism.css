@@ -72,7 +72,7 @@ html, body {
 #progress-bar {
   height: 100%;
   background: var(--accent);
-  transition: width 0.4s ease;
+  transition: width var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1));
   width: 0%;
 }
 
@@ -130,7 +130,7 @@ html, body {
 .step-panel {
   display: none;
   padding: 16px 20px 16px;
-  animation: fadeUp 0.25s ease;
+  animation: fadeUp var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1));
 }
 
 .step-panel.active {
@@ -665,3 +665,23 @@ body { counter-reset: niv-step; }
   color: var(--grey-500);
   vertical-align: 0.18em;
 }
+
+/* ─── MOTION SYSTEM retime (Oct 2026, "zero jump-cuts") ─────────────────────
+   Token definitions live in niv-dark.css (loaded alongside this sheet on
+   every page that uses it); fallbacks keep the timing if it ever loads
+   alone. Full system: DESIGN_SYSTEM_LABS.md. The warn-pulse above is a
+   semantic signal, not decoration: it keeps its timing, and the shared
+   reduced-motion collapse in niv-dark.css stills it. */
+.btn-primary {
+  transition: background-color var(--niv-mo-micro, 160ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)),
+              transform var(--niv-mo-micro, 160ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1));
+}
+.btn-secondary {
+  transition: background-color var(--niv-mo-micro, 160ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)),
+              color var(--niv-mo-micro, 160ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1));
+}
+#reset-zoom-btn {
+  transition: background-color var(--niv-mo-micro, 160ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)),
+              transform var(--niv-mo-micro, 160ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1));
+}
+#reset-zoom-btn:active { transform: scale(.97); }
