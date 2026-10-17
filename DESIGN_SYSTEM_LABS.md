@@ -101,3 +101,30 @@ with no usable element breakdown, so no specific technique is
 borrowed or asserted from it. It changes nothing in this system:
 the earlier explicit directives win in any conflict (monochrome,
 futuristic, functional app screens first).
+
+## Primary app reference: Aevion (LiDAR drone scanning)
+
+Autonomous LiDAR inspection drone site (drone.riotters.com).
+Closest functional cousin to Nivelato: it is also a measuring
+product. Now a primary reference for the APP UI specifically,
+alongside Belgrade Arbor and Heron AI.
+
+Translated into the pass:
+- Measurement data presented like a precision instrument HUD:
+  key dimensions and readouts get small bracketed mono labels in
+  the style of [ MAX RANGE ] and [ Detection Accuracy ], values
+  set in mono with tabular numerals, spec-sheet styling for
+  measurement summaries.
+- Numbered sections in working flows: step titles gain a bracketed
+  mono index [ 01 ], [ 02 ] via CSS counters. Decoration only;
+  the underlying titles and flow are untouched.
+- In the app: autism.css carries an "AEVION HUD" section making
+  .summary-label a mono spec label and .summary-val a mono
+  readout, plus the step numbering above.
+- In the sample (login): the pane motif's dimension lines are
+  labeled [ WIDTH ] and [ HEIGHT ] in the SVG itself, and the
+  corner labels are bracketed, e.g. [ OFFSET MEASURING SOFTWARE ].
+- Taste limit, binding: HUD labels belong on readouts, summaries,
+  and entry surfaces. They are not pasted over dense workflows,
+  and no spec values are invented: labels name the measurement,
+  the product's own numbers supply the value.

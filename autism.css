@@ -640,3 +640,28 @@ html, body {
 .estradiol-mode #estradiol-indicator {
   display: inline-block;
 }
+
+/* ─── AEVION HUD (UI redesign draft, Oct 2026) ───────────────────
+   Precision-instrument presentation for measurement data, from the
+   Aevion LiDAR drone reference: spec-sheet mono labels, mono
+   numeral readouts, numbered sections. Presentational only. */
+.summary-label {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+}
+.summary-val {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+body { counter-reset: niv-step; }
+.step-panel { counter-increment: niv-step; }
+.step-title::before {
+  content: "[ " counter(niv-step, decimal-leading-zero) " ]  ";
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--grey-500);
+  vertical-align: 0.18em;
+}
