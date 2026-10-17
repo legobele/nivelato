@@ -159,9 +159,8 @@ release that bumps the friendly version edits that one file.
 ### 3.3 Stamping: a commit cannot ship unstamped
 
 Tool: `tools/stamp-backend-version.js` (Node, no firebase-admin
-dependency; Firestore REST with the firebase CLI token, the same
-pattern as `tools/seed-app-updates.js`; run on the laptop that has the
-CLI logged in).
+dependency; Firestore REST with the firebase CLI token; run on the
+laptop that has the CLI logged in).
 
 - Web stamp (run as the LAST step of every web deploy, after the push):
   `node tools/stamp-backend-version.js --platform web
