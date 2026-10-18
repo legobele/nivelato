@@ -897,6 +897,7 @@
         company_domain_ph: 'empresa.com',
         find_company: 'Buscar empresa',
         nearby: 'Cercanas',
+        all_companies: 'Todas las empresas',
         field_required: 'Este campo es obligatorio.',
         outside_pr_notice: 'No se te ha detectado dentro de PR, puedes iniciar sesión para recibir un enlace y usar Nivelato hasta 30 días fuera de PR.',
         label_email: 'Correo electrónico',
@@ -1052,6 +1053,7 @@
         company_domain_ph: 'company.com',
         find_company: 'Find company',
         nearby: 'Nearby',
+        all_companies: 'All companies',
         field_required: 'This field is required.',
         outside_pr_notice: 'You have not been detected within PR, you may sign in to receive a link to use Nivelato for up to 30 days outside PR',
         label_email: 'Email',
@@ -3093,13 +3095,32 @@
     // QGC mode entry: the selector is titled "Entrar con..." and shows only
     // the approved pills (clean, per the QGC mockup). Outside QGC mode it is
     // the "Join a company" flow with Nearby header + manual domain entry.
-    const pills = sortedCompanies().map(function (c) {
+    function pillHTML(c) {
       const loc = c.location && c.location.label
         ? '<span class="account-kind">' + escapeHtml(c.location.label) + '</span>' : '';
       return '<button type="button" class="account-pill" data-select-company="' + escapeHtml(c.id) + '">'
         + '<span class="account-avatar account-avatar-logo"><img src="' + escapeHtml(c.logo) + '" alt="' + escapeHtml(c.name) + '" /></span>'
         + '<span class="account-meta"><span class="account-name">' + escapeHtml(c.name) + '</span>' + loc + '</span></button>';
-    }).join('');
+    }
+    const sorted = sortedCompanies();
+    const pills = sorted.map(pillHTML).join('');
+    // Nearby separation (Oct 18): with the visitor's coords known, the
+    // companies within 50 km get their own Nearby group and the rest sit
+    // under All companies, instead of every company wearing the Nearby
+    // label. No coords (or only one group) keeps the single list.
+    let groupedPills = null;
+    if (!qgi && userCoords) {
+      const near = [], far = [];
+      sorted.forEach(function (c) {
+        if (c.location && haversineKm(userCoords, c.location) <= 50) near.push(c); else far.push(c);
+      });
+      if (near.length && far.length) {
+        groupedPills = '<div class="accounts-title" style="margin:2px 0 8px">' + t('nearby') + '</div>'
+          + near.map(pillHTML).join('')
+          + '<div class="accounts-title" style="margin:16px 0 8px">' + t('all_companies') + '</div>'
+          + far.map(pillHTML).join('');
+      }
+    }
     if (qgi) {
       // QGC mockup layout: left = Nivelato branding + PR-only notice + logo,
       // right = "Entrar con..." label + company pills. No back button (root view).
@@ -3108,7 +3129,6 @@
         + '<div class="brand-panel" style="text-align:center">'
         + '<h1 class="logo">Nivelato<span class="adot">.</span></h1>'
         + '<div class="tagline">' + t('tagline_qgc_brand') + '</div>'
-        + '<div class="tenant-block center"><div class="tenant-logo"><img src="./qgc-logo.jpg" alt="Quality Glazing Contractors" /></div><div class="tenant-meta"><div class="tenant-name">Quality Glazing Contractors</div><div class="tenant-tag">[ Tenant \u00b7 Puerto Rico ]</div></div></div>'
         + '</div>'
         + '<div class="main-panel pinned-panel" data-envmark-card>'
         + '<div class="accounts-title">' + t('signin_with') + '</div>'
@@ -3128,8 +3148,8 @@
         + '<h1 class="logo" style="font-size:32px">' + selTitle + '</h1>'
         + '</div>'
         + '<div class="main-panel" data-envmark-card>'
-        + '<div class="accounts-title">' + t('nearby') + '</div>'
-        + '<div id="company-select-list" class="scroll-region">' + pills + '</div>'
+        + (groupedPills ? '' : '<div class="accounts-title">' + t('nearby') + '</div>')
+        + '<div id="company-select-list" class="scroll-region">' + (groupedPills || pills) + '</div>'
         + '<button type="button" class="btn-google" id="btn-another-company" style="margin-top:16px"><span>' + t('or_signin_another') + '</span></button>'
         + '<form id="company-domain-form" style="display:none;margin-top:12px" onsubmit="return false">'
         + '<div class="field">'
