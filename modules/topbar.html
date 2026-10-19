@@ -111,6 +111,7 @@
   <nav class="niv-topbar-tabs" aria-label="Dashboard">
     <a class="niv-tab" href="/dashboard.html?view=home" target="_top" data-nav-key="home"><span data-i18n="home">Panel</span></a>
     <a class="niv-tab" href="/dashboard.html?view=projects" target="_top" data-nav-key="projects"><span data-i18n="projects">Proyectos</span></a>
+    <a class="niv-tab" href="/dashboard.html?view=measures" target="_top" data-nav-key="measures"><span data-i18n="measures">Medidas</span></a>
     <a class="niv-tab" href="/dashboard.html?view=notifications" target="_top" data-nav-key="notifications"><span data-i18n="notifications">Notificaciones</span></a>
     <a class="niv-tab" href="/dashboard.html?view=users" target="_top" data-nav-key="users"><span data-i18n="users">Usuarios</span></a>
   </nav>
@@ -149,8 +150,8 @@ function applySettingsHide() {
 applySettingsHide();
 
 const STRINGS = {
-  es: { title: 'Nivelato', home: 'Panel', projects: 'Proyectos', notifications: 'Notificaciones', users: 'Usuarios' },
-  en: { title: 'Nivelato', home: 'Dashboard', projects: 'Projects', notifications: 'Notifications', users: 'Users' }
+  es: { title: 'Nivelato', home: 'Panel', projects: 'Proyectos', measures: 'Medidas', notifications: 'Notificaciones', users: 'Usuarios' },
+  en: { title: 'Nivelato', home: 'Dashboard', projects: 'Projects', measures: 'Measurements', notifications: 'Notifications', users: 'Users' }
 };
 function readKey(name) {
   try {
@@ -176,7 +177,7 @@ function applyLang() {
   if (nav) nav.setAttribute('aria-label', L('home'));
 }
 
-const ACTIVE_KEYS = ['home', 'projects', 'notifications', 'users'];
+const ACTIVE_KEYS = ['home', 'projects', 'measures', 'notifications', 'users'];
 function setActive(key) {
   if (CTX === 'settings') return; /* no dashboard tab is "current" inside settings */
   if (!ACTIVE_KEYS.includes(key)) return;

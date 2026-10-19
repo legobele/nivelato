@@ -1153,6 +1153,96 @@ body.has-sidebar main h1 {
 .stat-label::before { content: "[ "; }
 .stat-label::after { content: " ]"; }
 
+/* ---- Medidas = Ledger (A) + Timeline (C), call de Giulia Oct 19 ----
+   Una sola franja HUD con los conteos de siempre (mismos ids y la
+   misma computacion de renderJobs) sobre la lista agrupada por dia
+   en un riel (Hoy / Ayer / fecha). Filas densas tipo Ledger pero con
+   altura comoda para tocar con guantes (min 54px). */
+.niv-hudstrip {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+  border-radius: 6px; background: var(--niv-surface, #0e0e10);
+  overflow: hidden; margin-bottom: 16px;
+}
+.niv-hudcell { padding: 12px 16px 11px; border-left: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); min-width: 0; }
+.niv-hudcell:first-child { border-left: 0; }
+.niv-hud-label {
+  display: block; font-family: var(--niv-font-mono); font-size: 0.68rem; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.18em; color: var(--niv-text-dim, #a8a8b0);
+  margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.niv-hud-label::before { content: "[ "; }
+.niv-hud-label::after { content: " ]"; }
+.niv-hud-num { font-size: 26px; line-height: 1; }
+.niv-hudcell.warncell .niv-hud-num { color: #fbbf24; }
+#view-measures #job-list { gap: 0; }
+.niv-tl-group { display: grid; grid-template-columns: 104px 1fr; margin-top: 26px; }
+.niv-tl-group:first-child { margin-top: 4px; }
+.niv-tl-rail { padding-right: 18px; text-align: right; min-width: 0; }
+.niv-tl-glabel {
+  font-family: var(--niv-font-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.26em; text-transform: uppercase; color: var(--niv-text, #fafafa);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.niv-tl-daynum {
+  font-family: var(--niv-font-display); font-weight: 700; font-size: 40px;
+  line-height: 1; margin-top: 5px; font-variant-numeric: tabular-nums;
+}
+.niv-tl-dow {
+  font-family: var(--niv-font-mono); font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--niv-text-dim, #a8a8b0); margin-top: 5px;
+}
+.niv-tl-cnt {
+  font-family: var(--niv-font-mono); font-size: 10px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--niv-text-dim, #a8a8b0); margin-top: 9px;
+}
+.niv-tl-items { border-left: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); padding-left: 22px; min-width: 0; }
+.niv-tl-row {
+  position: relative; display: grid; grid-template-columns: 84px 1fr auto;
+  gap: 2px 14px; align-items: center; min-height: 54px;
+  padding: 8px 8px 8px 2px; border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+  cursor: pointer; border-radius: 0 6px 6px 0;
+}
+.niv-tl-row:last-child { border-bottom: 0; }
+.niv-tl-row:hover { background: var(--niv-surface-2, #16161a); }
+.niv-tl-row:focus-visible { outline: 2px solid var(--niv-accent, #fafafa); outline-offset: -2px; }
+.niv-tl-row::before {
+  content: ''; position: absolute; left: -27.5px; top: 50%; transform: translateY(-50%);
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--niv-bg, #050505); border: 2px solid var(--niv-text-dim, #a8a8b0);
+}
+.niv-tl-row.warn::before { border-color: #fbbf24; }
+.niv-tl-time { font-family: var(--niv-font-mono); font-size: 11.5px; color: var(--niv-text-dim, #a8a8b0); white-space: nowrap; }
+.niv-tl-title { font-weight: 600; font-size: 14.5px; min-width: 0; }
+.niv-tl-sub { display: flex; gap: 6px 14px; flex-wrap: wrap; color: var(--niv-text-dim, #a8a8b0); font-size: 12.5px; margin-top: 2px; }
+.niv-tl-dims { font-family: var(--niv-font-mono); font-size: 12.5px; color: var(--niv-text, #fafafa); white-space: nowrap; }
+.niv-tl-chev { color: var(--niv-text-dim, #a8a8b0); font-size: 18px; }
+@media (max-width: 720px) {
+  .niv-hudstrip { grid-template-columns: 1fr 1fr; }
+  .niv-hudcell { padding: 11px 13px 10px; }
+  .niv-hudcell.warncell { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); }
+  .niv-hud-num { font-size: 22px; }
+  .niv-tl-group { grid-template-columns: 60px 1fr; margin-top: 22px; }
+  .niv-tl-rail { padding-right: 11px; }
+  .niv-tl-glabel { font-size: 9px; letter-spacing: 0.16em; }
+  .niv-tl-daynum { font-size: 28px; }
+  .niv-tl-cnt { display: none; }
+  .niv-tl-items { padding-left: 15px; }
+  .niv-tl-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "time chev" "main main";
+    row-gap: 3px; min-height: 56px; padding: 9px 4px 9px 0;
+  }
+  .niv-tl-time { grid-area: time; }
+  .niv-tl-main { grid-area: main; min-width: 0; }
+  .niv-tl-chev { grid-area: chev; }
+  .niv-tl-row::before { left: -20.5px; top: 15px; transform: none; }
+}
+
+/* ---- Panel (home): acciones rapidas a cada modulo ---- */
+.niv-home-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.niv-home-actions .niv-btn-pill { text-decoration: none; display: inline-flex; align-items: center; }
+
 /* ---- mobile: the drawer is the full sidebar ----
    The collapsed-rail content rules in this block (centered
    40px icon buttons, hidden labels and plus, dot badge) are
@@ -1204,6 +1294,7 @@ body.has-sidebar main h1 {
   <button class="niv-hamburger" id="niv-hamburger" onclick="document.body.classList.toggle('nav-open');this.setAttribute('aria-expanded', document.body.classList.contains('nav-open') ? 'true' : 'false')" aria-label="Menú" aria-expanded="false" aria-controls="niv-panel">☰</button>
   <nav class="niv-topbar-tabs" aria-label="Vistas">
     <button class="niv-tab" id="tab-home" onclick="window.showDashView('home')"><span class="niv-tab-label">Panel</span></button>
+    <button class="niv-tab" id="tab-measures" onclick="window.showDashView('measures')"><span class="niv-tab-label">Medidas</span></button>
     <button class="niv-tab" id="tab-projects" onclick="window.openProjectTab()"><span class="niv-tab-label">Proyectos</span></button>
     <button class="niv-tab" id="tab-notifications" onclick="window.showDashView('notifications')"><span class="niv-tab-label">Notificaciones</span><span class="niv-notif-badge" id="niv-notif-badge">0</span></button>
     <button class="niv-tab" id="tab-users" onclick="window.showDashView('users')"><span class="niv-tab-label">Usuarios</span></button>
@@ -1243,6 +1334,12 @@ body.has-sidebar main h1 {
         </button>
         <button class="niv-plus-btn niv-snav-plus" onclick="openNewProject()" title="Nuevo proyecto" aria-label="Nuevo proyecto">+</button>
       </div>
+    </div>
+    <div class="niv-navunit" data-navunit="measures">
+      <button class="niv-snav" id="snav-measures" title="Medidas" onclick="window._sideNavGo('measures')">
+        <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="currentColor"/><path fill-rule="evenodd" d="M3.5 9.5h17V15h-17zM7 9.5h1.3v2.6H7zM11.35 9.5h1.3v2.6h-1.3zM15.7 9.5H17v2.6h-1.3z" fill="#fff"/></svg></span>
+        <span class="niv-snav-label" id="snav-measures-label">Medidas</span>
+      </button>
     </div>
     <div class="niv-navunit" data-navunit="notifications">
       <button class="niv-snav" id="snav-notifications" title="Notificaciones" onclick="window._sideNavGo('notifications')">
@@ -1327,7 +1424,7 @@ try {
 </script>
 
 <main>
- <div id="view-home" style="display:none">
+ <div id="view-home">
   <div style="display:flex; align-items:center; gap:12px;">
     <h1 style="margin:0;" id="home-title">Panel</h1>
   </div>
@@ -1337,6 +1434,16 @@ try {
     <div class="stat-card"><div class="stat-num" id="home-stat-total"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-total-label">Medidas totales</div></div>
     <div class="stat-card"><div class="stat-num" id="home-stat-today"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-today-label">Hoy</div></div>
     <div class="stat-card"><div class="stat-num" id="home-stat-members"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-members-label">Miembros</div></div>
+    <div class="stat-card"><div class="stat-num" id="home-stat-customers"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-customers-label">Clientes</div></div>
+    <div class="stat-card"><div class="stat-num" id="home-stat-notif"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-notif-label">Sin leer</div></div>
+  </div>
+  <div class="niv-home-actions" id="home-actions" role="group" aria-label="Acciones rápidas">
+    <a class="niv-btn-pill niv-btn-primary" id="home-act-new-measure" href="https://app.nivelatolabs.com/">+ Nueva medida</a>
+    <button type="button" class="niv-btn-pill" id="home-act-new-project" onclick="openNewProject()">+ Nuevo proyecto</button>
+    <button type="button" class="niv-btn-pill" id="home-act-new-customer" onclick="window._panelNewCustomer()">+ Nuevo cliente</button>
+    <button type="button" class="niv-btn-pill" id="home-act-measures" onclick="window.showDashView('measures')">Medidas</button>
+    <button type="button" class="niv-btn-pill" id="home-act-notifications" onclick="window.showDashView('notifications')">Notificaciones</button>
+    <button type="button" class="niv-btn-pill" id="home-act-quotes" style="display:none" onclick="window.showDashView('quotes')">Cotizaciones</button>
   </div>
   <div class="niv-home-grid">
     <div class="niv-card">
@@ -1346,6 +1453,14 @@ try {
     <div class="niv-card">
       <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="home-recent-measures-title">Medidas recientes</div>
       <div id="home-measures"><div class="niv-panel-empty">Cargando…</div></div>
+    </div>
+    <div class="niv-card">
+      <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="home-recent-customers-title">Clientes recientes</div>
+      <div id="home-customers"><div class="niv-panel-empty">Cargando…</div></div>
+    </div>
+    <div class="niv-card">
+      <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="home-recent-notifications-title">Notificaciones recientes</div>
+      <div id="home-notifications"><div class="niv-panel-empty">Cargando…</div></div>
     </div>
   </div>
  </div><!-- /view-home -->
@@ -1365,7 +1480,7 @@ try {
   <iframe id="users-embed-frame" title="Usuarios" loading="lazy"></iframe>
   <div id="users-embed-fallback" style="display:none"><span id="users-fallback-text">No se pudo cargar la vista de usuarios.</span> <a id="users-fallback-link" href="/users" target="_top">Abrir la página completa</a></div>
  </div><!-- /view-users -->
- <div id="view-measures">
+ <div id="view-measures" style="display:none">
   <div class="measures-head" style="display:flex; align-items:center; gap:12px; min-width:0;">
     <h1 id="measures-title" style="margin:0; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Historial de medidas</h1>
     <button id="btn-new-measure" onclick="window.location.href='https://app.nivelatolabs.com/'" style="display:none; margin-left:auto; flex-shrink:0; background:var(--niv-accent,#fafafa); color:#000; border:none; border-radius:6px; padding:10px 20px; font-size:15px; font-weight:600; cursor:pointer; font-family:'Inter',system-ui,sans-serif;">+ Nueva medida</button>
@@ -1397,10 +1512,10 @@ try {
     <span id="join-code-hint" style="font-size:11px; color:#888; width:100%; margin-top:2px;">Dáselo a tus empleados para que se registren en Nivelato</span>
   </div>
 
-  <div class="stats-row">
-    <div class="stat-card"><div class="stat-num" id="stat-total"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="stat-total-label">Medidas totales</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-today"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="stat-today-label">Hoy</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-warn"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="stat-warn-label">Con advertencias</div></div>
+  <div class="niv-hudstrip" id="measures-hudstrip" role="group" aria-label="Resumen">
+    <div class="niv-hudcell"><span class="niv-hud-label" id="stat-total-label">Medidas totales</span><span class="stat-num niv-hud-num" id="stat-total"><span class="niv-skel" aria-hidden="true"></span></span></div>
+    <div class="niv-hudcell"><span class="niv-hud-label" id="stat-today-label">Hoy</span><span class="stat-num niv-hud-num" id="stat-today"><span class="niv-skel" aria-hidden="true"></span></span></div>
+    <div class="niv-hudcell warncell"><span class="niv-hud-label" id="stat-warn-label">Con advertencias</span><span class="stat-num niv-hud-num" id="stat-warn"><span class="niv-skel" aria-hidden="true"></span></span></div>
   </div>
 
   <div class="filter-row">
@@ -2539,10 +2654,35 @@ let currentUser;
     // m40: render in pages of 50 cards with a load-more control instead
     // of dumping the entire org history into the DOM at once. Stats and
     // filters above still run over the full set; only the DOM is paged.
+    // m46 (call de Giulia, Oct 19): la pagina se agrupa por dia en un
+    // riel (Timeline C) con filas densas tipo Ledger (A): Hoy / Ayer /
+    // dia de semana, numero grande del dia y conteo por grupo. El
+    // indice global i NO cambia: openJob(i) sigue resolviendo contra
+    // window._jobs = _page, igual que con las tarjetas.
     const _limit = window._jobsLimit || 50;
     const _page = jobs.slice(0, _limit);
-    list.innerHTML = _page.map((job, i) => {
-      const dateStr = _fmtJobDateTime(job.createdAt);
+    const _loc = NIV_LANG === 'en' ? 'en-US' : 'es-PR';
+    const _dayOf = (j) => _anyDate(j.createdAt) || new Date();
+    const _counts = {};
+    _page.forEach((j) => { const k = prDay(_dayOf(j)); _counts[k] = (_counts[k] || 0) + 1; });
+    const _todayK = prDay(new Date());
+    const _yestK = prDay(new Date(Date.now() - 864e5));
+    let _lastK = null;
+    let _html = '';
+    _page.forEach((job, i) => {
+      const d = _dayOf(job);
+      const k = prDay(d);
+      if (k !== _lastK) {
+        if (_lastK !== null) _html += '</div></div>';
+        _lastK = k;
+        const parts = {};
+        new Intl.DateTimeFormat(_loc, { timeZone: 'America/Puerto_Rico', weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }).formatToParts(d).forEach((p) => { parts[p.type] = p.value; });
+        const wdShort = new Intl.DateTimeFormat(_loc, { timeZone: 'America/Puerto_Rico', weekday: 'short' }).format(d);
+        const gLabel = k === _todayK ? L('Hoy', 'Today') : (k === _yestK ? L('Ayer', 'Yesterday') : (parts.weekday || ''));
+        const cnt = _counts[k] || 0;
+        _html += `<div class="niv-tl-group"><div class="niv-tl-rail"><div class="niv-tl-glabel">${escapeHtml(gLabel)}</div><div class="niv-tl-daynum">${escapeHtml(parts.day || '')}</div><div class="niv-tl-dow">${escapeHtml(wdShort)} · ${escapeHtml(parts.month || '')} ${escapeHtml(parts.year || '')}</div><div class="niv-tl-cnt">${cnt} ${cnt === 1 ? L('medida', 'measurement') : L('medidas', 'measurements')}</div></div><div class="niv-tl-items">`;
+      }
+      const timeStr = d.toLocaleTimeString(_loc, { timeZone: 'America/Puerto_Rico', hour: '2-digit', minute: '2-digit', hour12: true });
       const hasWarn = job.warnings && job.warnings.length > 0;
       const tag = hasWarn
         ? `<span class="job-tag tag-warn">⚠ Advertencias</span>`
@@ -2559,21 +2699,23 @@ let currentUser;
       const hasAreaLoc = !!(job.area || job.location);
       const displayTitleHtml = hasAreaLoc ? escapeHtml(window.nivJobTitle(job)) : titleHtml;
       const displayAriaTitle = hasAreaLoc ? window.nivJobTitle(job) : titleCustomer;
-      return `
-        <div class="job-card" tabindex="0" role="button" aria-label="Abrir detalle de la medida de ${escapeHtml(displayAriaTitle)}"
+      // Con area/ubicacion el titulo visible es esa area; el cliente y el
+      // proyecto bajan a la sub-linea para no perderlos en la fila densa.
+      const subContext = hasAreaLoc ? [job.customer, job.project].filter(Boolean).map(escapeHtml).join(' - ') : '';
+      _html += `
+        <div class="niv-tl-row${hasWarn ? ' warn' : ''}" tabindex="0" role="button" aria-label="Abrir detalle de la medida de ${escapeHtml(displayAriaTitle)}"
              onclick="openJob(${i})"
              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openJob(${i});}">
-          <div class="job-card-top">
-            <div class="job-title">${displayTitleHtml} ${tag}</div>
-            <div class="job-date">${escapeHtml(dateStr)}</div>
+          <span class="niv-tl-time">${escapeHtml(timeStr)}</span>
+          <div class="niv-tl-main">
+            <div class="niv-tl-title">${displayTitleHtml} ${tag}</div>
+            <div class="niv-tl-sub">${subContext ? `<span>${subContext}</span>` : ''}<span class="niv-tl-dims">📐 ${escapeHtml(hueco)}</span><span>👤 ${escapeHtml(job.installerName) || '-'}</span>${notasPreview ? `<span>📝 ${escapeHtml(notasPreview)}</span>` : ''}</div>
           </div>
-          <div class="job-meta">
-            <span>📐 ${escapeHtml(hueco)}</span>
-            <span>👤 ${escapeHtml(job.installerName) || '-'}</span>
-            ${notasPreview ? `<span>📝 ${escapeHtml(notasPreview)}</span>` : ''}
-          </div>
+          <span class="niv-tl-chev" aria-hidden="true">›</span>
         </div>`;
-    }).join('') + (jobs.length > _page.length
+    });
+    if (_lastK !== null) _html += '</div></div>';
+    list.innerHTML = _html + (jobs.length > _page.length
       ? `<button type="button" class="btn-cancel" style="margin-top:4px" onclick="window._loadMoreJobs()">${escapeHtml(L('Cargar más', 'Load more'))} (${_page.length} / ${jobs.length})</button>`
       : '');
     window._jobs = _page;
@@ -4776,22 +4918,38 @@ let currentUser;
     const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
     const setTab = (id, txt) => { const el = document.querySelector('#' + id + ' .niv-tab-label'); if (el) el.textContent = txt; };
     setTab('tab-home', L('Panel', 'Dashboard'));
+    setTab('tab-measures', L('Medidas', 'Measurements'));
     setTab('tab-projects', L('Proyectos', 'Projects'));
     setTab('tab-notifications', L('Notificaciones', 'Notifications'));
     setTab('tab-users', L('Usuarios', 'Users'));
     setText('snav-home-label', L('Panel', 'Dashboard'));
+    setText('snav-measures-label', L('Medidas', 'Measurements'));
     setText('snav-projects-label', L('Proyectos', 'Projects'));
     setText('snav-notifications-label', L('Notificaciones', 'Notifications'));
     setText('snav-users-label', L('Usuarios', 'Users'));
     // m20: rail icon tooltips mirror the (localized) labels
-    [['snav-home','snav-home-label'],['snav-projects','snav-projects-label'],['snav-notifications','snav-notifications-label'],['snav-users','snav-users-label']].forEach(([b, l]) => { const btn = document.getElementById(b), lab = document.getElementById(l); if (btn && lab) btn.title = lab.textContent; });
+    [['snav-home','snav-home-label'],['snav-measures','snav-measures-label'],['snav-projects','snav-projects-label'],['snav-notifications','snav-notifications-label'],['snav-users','snav-users-label']].forEach(([b, l]) => { const btn = document.getElementById(b), lab = document.getElementById(l); if (btn && lab) btn.title = lab.textContent; });
     setText('home-title', L('Panel', 'Dashboard'));
     setText('home-stat-projects-label', L('Proyectos', 'Projects'));
     setText('home-stat-total-label', L('Medidas totales', 'Total measurements'));
     setText('home-stat-today-label', L('Hoy', 'Today'));
     setText('home-stat-members-label', L('Miembros', 'Members'));
+    setText('home-stat-customers-label', L('Clientes', 'Customers'));
+    setText('home-stat-notif-label', L('Sin leer', 'Unread'));
     setText('home-recent-projects-title', L('Proyectos recientes', 'Recent projects'));
     setText('home-recent-measures-title', L('Medidas recientes', 'Recent measurements'));
+    setText('home-recent-customers-title', L('Clientes recientes', 'Recent customers'));
+    setText('home-recent-notifications-title', L('Notificaciones recientes', 'Recent notifications'));
+    setText('home-act-new-measure', L('+ Nueva medida', '+ New measurement'));
+    setText('home-act-new-project', L('+ Nuevo proyecto', '+ New project'));
+    setText('home-act-new-customer', L('+ Nuevo cliente', '+ New customer'));
+    setText('home-act-measures', L('Medidas', 'Measurements'));
+    setText('home-act-notifications', L('Notificaciones', 'Notifications'));
+    setText('home-act-quotes', L('Cotizaciones', 'Quotes'));
+    const _homeActs = document.getElementById('home-actions');
+    if (_homeActs) _homeActs.setAttribute('aria-label', L('Acciones rápidas', 'Quick actions'));
+    const _hud = document.getElementById('measures-hudstrip');
+    if (_hud) _hud.setAttribute('aria-label', L('Resumen', 'Summary'));
     setText('notif-title', L('Notificaciones', 'Notifications'));
     setText('notif-mark-all', L('Marcar todas como leídas', 'Mark all as read'));
     setText('company-menu-settings-label', L('Ajustes de la empresa', 'Company settings'));
@@ -5223,8 +5381,8 @@ let currentUser;
 
   // ---- barra superior: pestaña activa según la vista ----
   window._onDashViewChange = (name) => {
-    const map = { home: 'tab-home', project: 'tab-projects', notifications: 'tab-notifications', users: 'tab-users' };
-    ['tab-home', 'tab-projects', 'tab-notifications', 'tab-users'].forEach((id) => {
+    const map = { home: 'tab-home', measures: 'tab-measures', project: 'tab-projects', notifications: 'tab-notifications', users: 'tab-users' };
+    ['tab-home', 'tab-measures', 'tab-projects', 'tab-notifications', 'tab-users'].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.classList.toggle('active', map[name] === id);
     });
@@ -5289,6 +5447,7 @@ let currentUser;
     window._sideNavGo = (key) => {
       document.body.classList.remove('nav-open');
       if (key === 'home') { expandOnly(null); window.showDashView('home'); return; }
+      if (key === 'measures') { expandOnly(null); window.showDashView('measures'); return; }
       if (key === 'notifications') { expandOnly(null); window.showDashView('notifications'); return; }
       if (key === 'users') { expandOnly(null); window.showDashView('users'); return; }
       if (key === 'projects') {
@@ -5302,9 +5461,11 @@ let currentUser;
     window._syncSideNav = (name) => {
       let key = null;
       if (name === 'home') key = 'home';
+      else if (name === 'measures') key = 'measures';
       else if (name === 'notifications') key = 'notifications';
       else if (name === 'users') key = 'users';
       else if (name === 'project') key = 'projects';
+      else if (name === 'measure' && typeof _measureReturnView !== 'undefined' && _measureReturnView === 'measures') key = 'measures';
       else if (name === 'measure' && typeof _measureReturnView !== 'undefined' && _measureReturnView === 'project') key = 'projects';
       Object.keys(units).forEach((k) => units[k].classList.toggle('active', k === key));
       if (key === 'projects') expandOnly('projects');
@@ -5456,6 +5617,7 @@ let currentUser;
   })();
 
   // ---- vista Panel (home): resumen con los datos que el dashboard ya carga ----
+  let _homeNotifFetchedAt = 0;
   window.renderHomeOverview = () => {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     set('home-stat-projects', String(_projects.length));
@@ -5484,11 +5646,69 @@ let currentUser;
         ? allJobs.slice(0, 6).map((j) => `<div class="niv-home-row" onclick="openMeasure('${j.id}', 'home')"><span>${escapeHtml(window.nivJobTitle(j))}${j.annotatedPhoto ? '<span class="niv-photo-badge">📷</span>' : ''}</span>${dashDotsBtn('measure', j.id, window.nivJobTitle(j))}</div>`).join('')
         : '<div class="niv-panel-empty">' + L('Sin medidas', 'No measurements') + '</div>';
     }
+    // clientes: conteo derivado de las medidas (misma derivacion que el
+    // panel lateral) + actividad reciente por cliente
+    const _custNames = [...new Set(allJobs.map((j) => j.customer).filter(Boolean))];
+    set('home-stat-customers', String(_custNames.length));
+    const hc = document.getElementById('home-customers');
+    if (hc) {
+      // allJobs viene ordenado por createdAt descendente: la primera
+      // aparicion de cada cliente es su medida mas reciente
+      const _lastByCust = new Map();
+      allJobs.forEach((j) => { if (j.customer && !_lastByCust.has(j.customer)) _lastByCust.set(j.customer, j); });
+      const _recents = [..._lastByCust.entries()].slice(0, 5);
+      hc.innerHTML = _recents.length
+        ? _recents.map(([name, j]) => {
+            const n = allJobs.filter((x) => x.customer === name).length;
+            return `<div class="niv-home-row" onclick="window.openCustomer(decodeURIComponent('${custEnc(name)}'))"><span>${escapeHtml(name)}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')} · ${_fmtJobDate(j.createdAt)}</span></div>`;
+          }).join('')
+        : '<div class="niv-panel-empty">' + L('Sin clientes', 'No customers') + '</div>';
+    }
+    // acciones rapidas: heredan la visibilidad de los controles que ya
+    // gobiernan cada modulo (Nueva medida por permiso de crear;
+    // Cotizaciones por userCanQuote, reflejado en btn-quotes)
+    const _anm = document.getElementById('home-act-new-measure');
+    if (_anm) { const bnm = document.getElementById('btn-new-measure'); _anm.style.display = (bnm && bnm.style.display !== 'none') ? '' : 'none'; }
+    const _aq = document.getElementById('home-act-quotes');
+    if (_aq) { const bq = document.getElementById('btn-quotes'); _aq.style.display = (bq && bq.style.display !== 'none') ? '' : 'none'; }
+    // notificaciones recientes: misma fuente que la vista de
+    // notificaciones; con freno de 30s para no llamar al backend en
+    // cada snapshot de medidas
+    if (Date.now() - _homeNotifFetchedAt > 30000) {
+      _homeNotifFetchedAt = Date.now();
+      if (window.renderHomeNotifications) window.renderHomeNotifications();
+    }
+  };
+
+  // notificaciones recientes del Panel: lista corta desde la misma
+  // listNotifications que alimenta la vista completa y el badge
+  window.renderHomeNotifications = async () => {
+    const el = document.getElementById('home-notifications');
+    if (!el) return;
+    try {
+      const { data } = await _callable('listNotifications')({});
+      const items = (data && data.items) || [];
+      _setNotifBadge((data && data.unreadCount) || 0);
+      el.innerHTML = items.length
+        ? items.slice(0, 4).map((n) => `
+          <div class="niv-home-row" onclick="window.showDashView('notifications')">
+            <span>${n.read ? '' : `<span class="niv-notif-dot" style="background:${_notifDotColor(n.type)};display:inline-block;margin:0 8px 0 0;vertical-align:middle"></span>`}${escapeHtml(n.title || '')}</span>
+            <span class="niv-home-count">${escapeHtml(_fmtDateTime(n.createdAt))}</span>
+          </div>`).join('')
+        : '<div class="niv-panel-empty">' + L('No tienes notificaciones.', 'No notifications yet.') + '</div>';
+    } catch (e) {
+      el.innerHTML = '<div class="niv-panel-empty">' + L('No se pudieron cargar las notificaciones.', 'Could not load notifications.') + '</div>';
+    }
   };
 
   // ---- notificaciones (data layer: listNotifications / markNotificationRead) ----
   let _notifItems = [];
   const _setNotifBadge = (n) => {
+    window._notifUnread = n;
+    // el contador "sin leer" del Panel lee el mismo valor en cuanto se
+    // conoce; antes de la primera respuesta el slot queda en neutro
+    const _hsn = document.getElementById('home-stat-notif');
+    if (_hsn) _hsn.textContent = String(n);
     // el mismo contador vive en la barra superior y en la navegacion lateral
     document.querySelectorAll('.niv-notif-badge').forEach((badge) => {
       badge.textContent = n > 99 ? '99+' : String(n);
@@ -5735,6 +5955,9 @@ let currentUser;
         if (cust && window.openCustomer) { _customerReturnView = 'measures'; window.openCustomer(cust); }
         else window.showDashView('measures');
       }
+      // sin parametro (o desconocido): el Panel es la vista inicial,
+      // el resumen de todo (call de Giulia, Oct 19)
+      else window.showDashView('home');
     };
     if (auth.currentUser) { apply(); return; }
     const un = onAuthStateChanged(auth, (u) => { if (u) { try { un(); } catch (_) {} setTimeout(apply, 400); } });

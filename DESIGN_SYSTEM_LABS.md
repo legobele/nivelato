@@ -499,3 +499,47 @@ or routing changes):
   the views, which is a content change, not a styling pass.
   The live home keeps its stats + recent lists under the
   Neue shell. Follow-up if Giulia wants the band.
+
+## Dashboard IA: Measurements tab + everything Panel (Oct 19, 2026)
+
+Giulia's call on the Oct 17 records-list samples: none of the
+four standalone. A (Ledger) and C (Timeline) merge into a
+dedicated Measurements tab, and the post-signin landing
+becomes a dashboard for everything. B (Big Numbers) and D
+(Split) are dead.
+
+- **Measurements tab.** The measures view is a first-class
+  tab now: topbar tab, side-nav unit, and links in the shell
+  modules (sidebar + topbar) all land on
+  /dashboard.html?view=measures. Inside, the old 3 stat
+  cards became ONE Ledger HUD strip (bracketed mono labels,
+  tabular Space Grotesk numbers, same stat ids and the same
+  computation in renderJobs; the sample's fourth cell,
+  drafts, has no data source in the app and was not shipped:
+  the only status:'draft' jobs are internal share-flow temps
+  the list deliberately never shows). Under the strip, the
+  list renders as Timeline day groups (Hoy / Ayer / weekday,
+  big day number and per-group count on a left rail, dots on
+  the rail line, warn dot in the warn signal color) with
+  Ledger-density rows inside. Rows keep a 54px minimum
+  height so the density stays glove-tappable, keep the exact
+  values the cards showed, and keep the global page index:
+  openJob(i) still resolves against window._jobs.
+- **Panel = everything overview.** Home is the default view
+  after sign-in (markup default and the router's no-param
+  case agree). The stat row spans projects, total measures,
+  today, members, customers (derived from the jobs, same set
+  the side panel derives) and unread notifications (the
+  listNotifications unread count, owned by the badge path;
+  before the first response the slot stays neutral, never a
+  fake zero). Recent lists: projects, measures, customers
+  (most recent measure per customer, click opens the
+  customer) and notifications (top 4 from the same
+  listNotifications the notifications view uses, click goes
+  to the full view). Quick actions row: new measurement, new
+  project, new customer, Measurements, Notifications, and
+  Quotes only where the existing controls already allow it
+  (the row mirrors btn-new-measure and btn-quotes
+  visibility, so permission logic stays single-sourced).
+  All new copy is EN/ES through the existing L() chrome
+  function and the modules' dictionaries. CACHE v64.
