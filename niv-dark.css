@@ -17,6 +17,14 @@
   --niv-radius: 6px;
   --niv-pill: 999px;
   --niv-inset: 30px;
+  /* Nivelato Neue (Oct 2026): display + mono faces and the Liquid
+     Glass shell treatment. Loaded via each page's Google Fonts link;
+     the stacks fall back cleanly when a face is unavailable. */
+  --niv-font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --niv-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --niv-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.045));
+  --niv-glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --niv-glass-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
 }
 
 /* ---- app shell: sidebar + main ---- */
@@ -103,6 +111,7 @@
   background: linear-gradient(135deg, #fafafa, #c9c9ce);
   border-color: transparent;
   font-weight: 700;
+  color: #050505;
 }
 .niv-nav-btn.linklike { text-decoration: underline; }
 
@@ -173,12 +182,14 @@
   outline-offset: 1px;
 }
 
-/* ---- toggle switches (iOS style, green) ---- */
+/* ---- toggle switches (Neue: monochrome; white track + dark knob
+   when on, per the Neue samples. Color is never the on/off signal
+   here: position carries it.) ---- */
 .niv-switch { position: relative; width: 52px; height: 30px; flex: none; cursor: pointer; }
 .niv-switch input { opacity: 0; width: 0; height: 0; }
 .niv-switch .track {
   position: absolute; inset: 0;
-  background: #3a3a3e;
+  background: rgba(255, 255, 255, 0.18);
   border-radius: var(--niv-pill);
   transition: background 0.2s;
 }
@@ -188,8 +199,8 @@
   background: #fff; border-radius: 50%;
   transition: transform 0.2s;
 }
-.niv-switch input:checked + .track { background: var(--niv-green); }
-.niv-switch input:checked + .track::after { transform: translateX(22px); }
+.niv-switch input:checked + .track { background: var(--niv-accent); }
+.niv-switch input:checked + .track::after { transform: translateX(22px); background: var(--niv-bg); }
 
 /* ---- user list rows ---- */
 .niv-user-row {
@@ -206,6 +217,7 @@
 .niv-user-row.selected {
   background: linear-gradient(135deg, #fafafa, #c9c9ce);
   border-color: transparent;
+  color: #050505;
 }
 .niv-user-avatar {
   width: 40px; height: 40px;
@@ -218,7 +230,7 @@
 .niv-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .niv-user-name { font-weight: 600; font-size: 14px; }
 .niv-user-email { font-size: 12px; color: var(--niv-text-dim); }
-.niv-user-row.selected .niv-user-email { color: rgba(255,255,255,0.85); }
+.niv-user-row.selected .niv-user-email { color: rgba(5,5,5,0.65); }
 
 /* ---- misc ---- */
 .niv-page-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
@@ -281,7 +293,7 @@ body:not(.has-sidebar) .niv-shell {
   color: var(--niv-text-dim);
   margin-top: 3px;
 }
-.niv-nav-btn.active .nav-sub { color: rgba(255, 255, 255, 0.85); }
+.niv-nav-btn.active .nav-sub { color: rgba(5, 5, 5, 0.65); }
 .niv-nav-btn .dot {
   position: absolute;
   right: 14px;
@@ -549,7 +561,16 @@ body.has-sidebar .niv-float-panel.collapsed .niv-snav-label {
     order: 0;
   }
   body.nav-open .niv-float-panel { transform: translateX(0); }
-  .niv-float-panel.collapsed { width: 300px; min-width: 300px; max-width: 85vw; }
+  /* Neue mobile rule (Oct 2026): the drawer is always the FULL
+     sidebar. The old rule kept the collapsed rail's 300px-class
+     width while the rail content rules hid every label, which
+     rendered as a giant mostly-empty panel of centered icons.
+     The collapsed class is a desktop-only state; the content
+     restores live in the NIVELATO NEUE section at the end of
+     this sheet. (This plain rule loses to the dashboard's
+     ID-carrying desktop collapse width; the binding width is
+     the ID rule in the NEUE section below.) */
+  .niv-float-panel.collapsed { width: min(86vw, 340px); min-width: 0; max-width: 86vw; }
   /* B3: the dashboard's inline shell CSS sets #niv-panel{position:relative}
      (ID specificity) for its collapse feature, which outranked the
      .niv-float-panel{position:fixed} rule above: on phones the closed
@@ -639,11 +660,11 @@ body .date-input-wrap input[type="date"]:focus-visible {
    them unreadable. The whole flow now rides the tokens; the per-element
    layout stays inline in dashboard.html, only colors live here. */
 .btn-share-modal {
-  background: rgba(25, 113, 194, 0.12);
+  background: rgba(255, 255, 255, 0.07);
   color: #fafafa;
   border: 1px solid var(--niv-accent);
 }
-.btn-share-modal:hover { background: rgba(25, 113, 194, 0.22); }
+.btn-share-modal:hover { background: rgba(255, 255, 255, 0.12); }
 .niv-share-panel {
   background: var(--niv-surface-2);
   border: 1px solid var(--niv-border-soft);
@@ -716,7 +737,7 @@ body .date-input-wrap input[type="date"]:focus-visible {
 .niv-select-btn:focus-visible,
 .niv-select.open .niv-select-btn {
   border-color: var(--niv-accent);
-  box-shadow: 0 0 0 3px rgba(25, 113, 194, 0.25);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
   outline: none;
 }
 .niv-select-btn:disabled {
@@ -773,10 +794,10 @@ body .date-input-wrap input[type="date"]:focus-visible {
 }
 .niv-select-option.active { background: rgba(255, 255, 255, 0.07); }
 .niv-select-option.selected {
-  background: rgba(25, 113, 194, 0.18);
+  background: rgba(255, 255, 255, 0.10);
   font-weight: 600;
 }
-.niv-select-option.selected.active { background: rgba(25, 113, 194, 0.28); }
+.niv-select-option.selected.active { background: rgba(255, 255, 255, 0.16); }
 @media (max-width: 600px) {
   .filter-row .niv-select,
   .filter-row .niv-select-btn { width: 100%; }
@@ -1048,8 +1069,8 @@ html::-webkit-scrollbar-thumb:hover {
 }
 .niv-tab-btn:hover { color: var(--niv-text); }
 .niv-tab-btn.active {
-  background: rgba(25, 113, 194, 0.22);
-  color: var(--niv-text);
+  background: linear-gradient(135deg, #fafafa, #c9c9ce);
+  color: #050505;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 .niv-tab-btn:focus-visible {
@@ -1114,7 +1135,7 @@ html::-webkit-scrollbar-thumb:hover {
   border: 1px solid var(--niv-border-soft);
 }
 .niv-perm-grid label:has(input:checked) {
-  background: rgba(25, 113, 194, 0.18);
+  background: rgba(255, 255, 255, 0.10);
   border-color: var(--niv-accent);
   color: var(--niv-text);
 }
@@ -1439,4 +1460,151 @@ body { animation: niv-mo-page-in var(--niv-mo-view) var(--niv-mo-ease); }
     transition-duration: .01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ============================================================
+   NIVELATO NEUE (Oct 2026) — the Labs design language carried
+   into the working app, following the Neue samples (Variant A
+   "Command Deck" shell). What changes here, system-wide:
+   - Type: Space Grotesk for display/headings, JetBrains Mono
+     for HUD labels and readout values. Inter stays the UI face.
+   - Geometry: sharp. Content cards 6px (already the token),
+     nav rows 6px, fields 6px, shell avatars 10px tiles. Pills
+     survive only where the component IS a pill (tabs, chips,
+     switches, badges).
+   - Glass: Liquid Glass on the shell layers only (settings
+     sidebar, shared .niv-side card, dashboard float panel):
+     translucent fill, top edge light, backdrop blur. Never
+     over body text.
+   - Accent: white only. The remaining pre-Labs blue/amber
+     tints in shared components were retired above; semantic
+     status colors (ok/warn/err) stay functional, per the
+     design system note.
+   - Mobile: the sidebar drawer always renders in full form
+     (see the drawer restore block below); the collapsed rail
+     is a desktop state only.
+   This section sits at the end of the sheet so its rules win
+   by order where specificity ties with the sections above.
+   ============================================================ */
+
+/* ---- type: display face on headings and names ---- */
+.niv-page-title,
+.niv-card-title,
+.niv-company-name {
+  font-family: var(--niv-font-display);
+  letter-spacing: -0.01em;
+}
+.niv-page-title { font-weight: 600; }
+
+/* ---- type: HUD labels (mono, tracked, uppercase) ---- */
+.niv-nav-group-title,
+.niv-panel-sec-title,
+.niv-info-label,
+.stat-label {
+  font-family: var(--niv-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+.niv-nav-group-title { font-size: 0.68rem; font-weight: 500; }
+.niv-panel-sec-title { font-size: 0.72rem; font-weight: 500; }
+.niv-info-label { font-size: 0.78rem; }
+.stat-label { font-size: 0.68rem; font-weight: 500; }
+
+/* ---- readout values: tabular mono ---- */
+.stat-num {
+  font-family: var(--niv-font-mono);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- geometry: sharp corners on shared components ---- */
+.niv-nav-btn { border-radius: 6px; }
+.niv-user-row { border-radius: 6px; }
+.niv-request-card { border-radius: 6px; }
+.niv-tabs { border-radius: 6px; }
+.niv-tab-btn { border-radius: 4px; }
+.niv-field input, .niv-field select, .niv-field textarea { border-radius: 6px; }
+.niv-btn-secondary { border-radius: 6px; }
+.niv-btn-sm { border-radius: 6px; }
+.niv-status, .niv-status-line { border-radius: 6px; }
+.niv-select-btn { border-radius: 6px; }
+.niv-select-list { border-radius: 8px; }
+.niv-lang-list { border-radius: 8px; }
+.niv-account-card { border-radius: 10px; }
+.niv-company-avatar,
+.niv-account-avatar,
+.niv-user-avatar { border-radius: 10px; }
+.niv-float-panel.collapsed .niv-panel-head .niv-company-avatar,
+.niv-float-panel.collapsed .niv-account-card,
+.niv-float-panel.collapsed .niv-account-avatar { border-radius: 10px; }
+
+/* ---- glass shell layers ---- */
+.niv-sidebar,
+.niv-side,
+.niv-float-panel {
+  background: var(--niv-glass);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
+  box-shadow: var(--niv-glass-edge), var(--niv-glass-shadow);
+  border-color: var(--niv-border-soft);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .niv-sidebar, .niv-side, .niv-float-panel { background: #0b0b0d; }
+}
+
+/* ---- mobile drawer restore (Neue): at phone widths the
+   dashboard panel is a drawer, and a drawer is the FULL
+   sidebar. Every collapsed-rail content rule above (hidden
+   panel body, clipped names, dissolved account card, hidden
+   org badge) is a desktop rail treatment; here they are all
+   restored so the open drawer shows the org head, the labeled
+   nav, the lists and the account card, whatever state the
+   desktop rail was left in. Selectors carry the panel ID so
+   they outrank both this sheet's rail rules and the
+   dashboard's inline rail rules. ---- */
+@media (max-width: 900px) {
+  /* the drawer width itself: outranks the dashboard's desktop
+     collapse width (an ID rule with no media query) */
+  body.has-sidebar #niv-panel.niv-float-panel.collapsed {
+    width: min(86vw, 340px); min-width: 0; max-width: 86vw;
+  }
+  body.has-sidebar #niv-panel.niv-float-panel.collapsed .niv-panel-head {
+    flex-direction: row; align-items: center; justify-content: flex-start;
+    gap: 12px; padding: 4px 2px 12px;
+  }
+  body.has-sidebar #niv-panel.niv-float-panel.collapsed .niv-panel-head .niv-company-avatar {
+    width: 44px; height: 44px; font-size: 15px;
+  }
+  body.has-sidebar #niv-panel.niv-float-panel.collapsed .niv-company-name,
+  body.has-sidebar #niv-panel.niv-float-panel.collapsed .niv-account-meta,
+  body.has-sidebar #niv-panel.niv-float-panel.collapsed .niv-snav-label {
+    position: static; width: auto; height: auto;
+    margin: 0; padding: 0; overflow: visible;
+    clip: auto; clip-path: none; white-space: normal; border: 0;
+  }
+  body.has-sidebar #niv-panel.niv-float-panel.collapsed .niv-snav-label {
+    display: block; flex: 1; min-width: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  body.has-sidebar #niv-panel.niv-float-panel.collapsed .niv-panel-body { display: block; }
+  body.has-sidebar #niv-panel.niv-float-panel.collapsed .org-badge { display: block; }
+  body.has-sidebar #niv-panel.niv-float-panel.collapsed .niv-panel-bottom {
+    margin-top: auto; display: block; justify-content: initial;
+    padding: 12px 0 0;
+  }
+  body.has-sidebar #niv-panel.niv-float-panel.collapsed .niv-account-card {
+    width: 100%; height: auto; flex: none;
+    padding: 12px; margin: 0;
+    border: 1px solid var(--niv-border); border-radius: 10px;
+    background: transparent; justify-content: flex-start;
+  }
+  body.has-sidebar #niv-panel.niv-float-panel.collapsed .niv-account-avatar {
+    width: 40px; height: 40px;
+  }
+  body.has-sidebar #niv-panel.niv-float-panel.collapsed .niv-account-popup {
+    left: 12px; right: 12px; width: auto; bottom: 90px;
+  }
+  /* the rail's drag-to-expand strip is meaningless in a drawer */
+  body.has-sidebar #niv-panel.niv-float-panel.collapsed #niv-panel-expand-handle { display: none; }
 }

@@ -2,16 +2,14 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<script src="/company-theme.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0e0e10" />
 <link rel="manifest" href="/manifest.json" />
 <title>Nivelato - Usuarios</title>
 <meta name="description" content="Usuarios de tu compañía en Nivelato: invita miembros, asigna roles y controla quién puede medir, cotizar y administrar.">
 <meta name="robots" content="noindex, nofollow">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/niv-dark.css" />
-<link rel="stylesheet" href="/qgc-theme.css" />
 <style>
   * { box-sizing: border-box; }
   body {
@@ -45,7 +43,7 @@
     background: var(--niv-surface); padding: 18px 14px;
   }
   .ov-list-title {
-    font-size: 13px; font-weight: 600; color: var(--niv-text-dim);
+    font-family: var(--niv-font-mono); font-size: 0.72rem; font-weight: 500; color: var(--niv-text-dim);
     text-transform: uppercase; letter-spacing: .12em; padding: 2px 6px 12px;
   }
   .ov-list-col .niv-user-row { width: 100%; font-family: inherit; text-align: left; color: var(--niv-text); padding-top: 18px; padding-bottom: 18px; }
@@ -67,7 +65,7 @@
   }
   .ov-chip.pending { color: #fbbf24; border-color: rgba(230, 119, 0, 0.6); background: rgba(230, 119, 0, 0.15); }
   .ov-chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 5px; }
-  .niv-user-row.selected .ov-chip { color: #06281f; border-color: transparent; background: rgba(255, 255, 255, 0.25); }
+  .niv-user-row.selected .ov-chip { color: #050505; border-color: transparent; background: rgba(255, 255, 255, 0.25); }
 
   /* ---------- detail panel ---------- */
   .ov-detail {
@@ -143,7 +141,7 @@
   .ov-perm-row span { font-size: 14px; }
   .ov-toggle { width: 46px; height: 26px; flex: none; border-radius: 999px; border: 1px solid var(--niv-border); background: var(--niv-surface); position: relative; cursor: pointer; padding: 0; }
   .ov-toggle .knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--niv-text-dim); transition: left .15s ease, background .15s ease; }
-  .ov-toggle.on { background: var(--niv-accent, #1e9df0); border-color: transparent; }
+  .ov-toggle.on { background: var(--niv-accent, #fafafa); border-color: transparent; }
   .ov-toggle.on .knob { left: 22px; background: #fff; }
   .ov-edit-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 </style>
@@ -307,7 +305,7 @@ const roleLabel = (m) => {
   return (STR[LANG].roles && STR[LANG].roles[r]) || r || t('noRole');
 };
 
-const AVATAR_COLORS = ['#e64980', '#1e9df0', '#51cf66', '#9775fa', '#f06595', '#ffa94d', '#3bc9db', '#748ffc'];
+const AVATAR_COLORS = ['#3a3a40', '#2e2e33', '#45454c', '#26262b', '#52525a', '#1f1f23', '#63636c', '#333338'];
 function avatarColor(uid) {
   let h = 0;
   for (const c of String(uid)) h = (h * 31 + c.charCodeAt(0)) >>> 0;

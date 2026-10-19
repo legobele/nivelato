@@ -7,7 +7,7 @@
 <link rel="icon" href="/icon-192.png" />
 <title>Nivelato - Sidebar</title>
 <meta name="robots" content="noindex, nofollow">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/niv-dark.css" />
 <style>
   /* Module chrome: the iframe document is exactly one floating card.
@@ -62,7 +62,7 @@
   .mod-ico .glyph { fill: var(--niv-text-dim); transition: fill var(--niv-mo-micro, 160ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)); }
   .niv-nav-btn:hover .mod-ico { color: var(--niv-surface); }
   .niv-nav-btn.active .mod-ico { color: var(--niv-accent); }
-  .niv-nav-btn.active .mod-ico .glyph { fill: #fff; }
+  .niv-nav-btn.active .mod-ico .glyph { fill: #050505; }
   .mod-nav-label { display: inline; }
 
   /* Panel list sections (Proyectos, Clientes, Medidas): same component
@@ -169,10 +169,10 @@
     cursor: pointer;
   }
   .row-menu-item:hover { background: var(--niv-surface-2, #1e1e22); }
-  .row-menu-item:focus-visible { outline: 2px solid var(--niv-accent, #f5a524); outline-offset: -2px; }
+  .row-menu-item:focus-visible { outline: 2px solid var(--niv-accent, #fafafa); outline-offset: -2px; }
   .row-menu-item.danger { color: #f87171; }
   .row-menu-item.danger:hover { background: rgba(229,72,77,0.12); }
-  .dots:focus-visible { outline: 2px solid var(--niv-accent, #f5a524); outline-offset: 1px; }
+  .dots:focus-visible { outline: 2px solid var(--niv-accent, #fafafa); outline-offset: 1px; }
 
   /* Visible feedback toast (demo mode actions, menu failures that are
      not tied to a single field). */

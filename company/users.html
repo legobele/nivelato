@@ -3,16 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <base href="/" />
-<script src="/company-theme.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0d0d0f" />
 <link rel="manifest" href="/manifest.json" />
 <title>Nivelato - Usuarios de la compañía</title>
 <meta name="description" content="Usuarios de la compañía en Nivelato: administra los miembros de tu taller, sus roles y sus permisos de acceso.">
 <meta name="robots" content="noindex, nofollow">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/niv-dark.css" />
-<link rel="stylesheet" href="/qgc-theme.css" />
 <style>
   :root {
     --bg: #0d0d0f;
@@ -22,15 +20,12 @@
     --text: #f1f1f2;
     --muted: #9a9aa0;
     --faint: #6d6d74;
-    --blue: #1e9df0;
-    --teal1: #2dd4bf;
-    --teal2: #1e9df0;
     --red: #e03131;
     --red-dark: #b3271e;
     --green: #51cf66;
-    --radius-lg: 28px;
-    --radius-md: 18px;
-    --radius-sm: 12px;
+    --radius-lg: 14px;
+    --radius-md: 6px;
+    --radius-sm: 6px;
   }
   * { box-sizing: border-box; }
   body {
@@ -68,7 +63,7 @@
     overflow-y: auto;
     max-height: none;
   }
-  .users-title { font-size: 13px; font-weight: 600; color: var(--faint); text-transform: uppercase; letter-spacing: .12em; padding: 4px 6px 0; }
+  .users-title { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.72rem; font-weight: 500; color: var(--faint); text-transform: uppercase; letter-spacing: .18em; padding: 4px 6px 0; }
   .user-card {
     display: flex;
     align-items: center;
@@ -85,15 +80,15 @@
   }
   .user-card:hover { border-color: var(--faint); }
   .user-card.selected {
-    background: linear-gradient(135deg, var(--teal1), var(--teal2));
+    background: linear-gradient(135deg, #fafafa, #c9c9ce);
     border-color: transparent;
   }
-  .user-card.selected .u-name, .user-card.selected .u-email { color: #06281f; }
+  .user-card.selected .u-name, .user-card.selected .u-email { color: #050505; }
   .u-avatar {
     width: 44px;
     height: 44px;
     flex: none;
-    border-radius: 50%;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -143,7 +138,7 @@
     overflow-y: auto;
   }
   .detail-head { text-align: center; margin-bottom: 28px; }
-  .detail-name { font-size: 20px; font-weight: 700; }
+  .detail-name { font-family: 'Space Grotesk', 'Inter', sans-serif; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
   .detail-email { font-size: 14px; color: var(--muted); margin-top: 4px; word-break: break-all; }
   .detail-grid {
     display: grid;
@@ -218,7 +213,8 @@
     background: #fff;
     transition: left .15s;
   }
-  .toggle.on { background: var(--green); }
+  .toggle.on { background: #fafafa; }
+  .toggle.on .knob { background: #050505; }
   .toggle.on .knob { left: 25px; }
   .toggle:disabled { opacity: .55; cursor: default; }
 
@@ -226,7 +222,7 @@
     display: block;
     width: 100%;
     padding: 13px 16px;
-    border-radius: 9999px;
+    border-radius: 6px;
     border: 1.5px solid var(--line);
     background: transparent;
     color: var(--text);
@@ -262,7 +258,7 @@
     margin: 60px auto;
   }
   .perm-note { font-size: 12px; color: var(--faint); text-align: center; margin-top: 10px; }
-  .btn-retry { display: inline-block; margin-top: 12px; padding: 9px 22px; border-radius: 9999px; border: 1.5px solid var(--line); background: transparent; color: var(--text); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .btn-retry { display: inline-block; margin-top: 12px; padding: 9px 22px; border-radius: 6px; border: 1.5px solid var(--line); background: transparent; color: var(--text); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
   .btn-retry:hover { border-color: var(--faint); }
 
   /* detail header: name with the email in parens on the same line */
@@ -535,7 +531,7 @@ const PERM_KEYS = PERM_DEFS.map(d => d.key);
 const QUOTE_KEYS = ['managePriceList', 'createQuotes', 'approveQuotes'];
 const PERMS_PREVIEW = 3;
 
-const AVATAR_COLORS = ['#e64980', '#1e9df0', '#51cf66', '#9775fa', '#f06595', '#ffa94d', '#3bc9db', '#748ffc'];
+const AVATAR_COLORS = ['#3a3a40', '#2e2e33', '#45454c', '#26262b', '#52525a', '#1f1f23', '#63636c', '#333338'];
 function avatarColor(uid) {
   let h = 0;
   for (const c of String(uid)) h = (h * 31 + c.charCodeAt(0)) >>> 0;

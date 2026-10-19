@@ -7,7 +7,7 @@
 <link rel="icon" href="/icon-192.png" />
 <title>Nivelato - Topbar</title>
 <meta name="robots" content="noindex, nofollow">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/niv-dark.css" />
 <style>
   /* Static top bar module. The sliding detent indicator belongs to the
@@ -41,7 +41,9 @@
     min-height: var(--niv-topbar-h);
     padding: 10px 32px;
     box-sizing: border-box;
-    background: var(--niv-bg, #0e0e10);
+    background: var(--niv-glass, linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.045)));
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    backdrop-filter: blur(16px) saturate(150%);
     border-bottom: 1px solid var(--niv-border-soft, rgba(255, 255, 255, 0.14));
     font-family: 'Inter', system-ui, sans-serif;
   }
@@ -77,11 +79,12 @@
   }
   a.niv-tab:hover { color: var(--niv-text, #f5f5f7); }
   .niv-tab.active {
-    background: linear-gradient(135deg, #0ea5a5, #1971c2);
-    color: #fff;
+    background: linear-gradient(135deg, #fafafa, #c9c9ce);
+    color: #050505;
     cursor: default;
   }
   .niv-topbar-project {
+    font-family: var(--niv-font-display, 'Space Grotesk', 'Inter', sans-serif);
     position: absolute;
     right: 32px;
     top: 50%;

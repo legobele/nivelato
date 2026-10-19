@@ -12,4 +12,13 @@
  * The file stays as an empty stub because 13 pages still link it;
  * company-theme.js still sets the body.qgc-theme mode flag, but no
  * stylesheet keys off it anymore. Do not re-add tenant rules here.
+ *
+ * Oct 18, 2026 (Nivelato Neue): the logged-in app pages
+ * (dashboard, account settings, users, company settings, company
+ * users, flow) no longer load company-theme.js or link this file
+ * at all: the tenant-theme decision itself is retired from the
+ * app, not just its styles. Tenant DETECTION is untouched (auth,
+ * claims and the guarded applyCompanyTheme call sites simply
+ * no-op without the script). The remaining links live on static
+ * and support surfaces, and login keeps its own QGI mode logic.
  */

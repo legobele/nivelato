@@ -432,3 +432,70 @@ untouched:
   and geo-blocked.html already fit it (short centered cards); the
   PR company application page (apply-pr-company.html) was retokened
   from the retired amber brand to monochrome with the Breakout mark.
+
+## Nivelato Neue: the design language in the working app (Oct 18, 2026)
+
+Giulia's call: the whole logged-in app gets the Nivelato Neue
+treatment (samples: `nivelato-neue-samples/`, Variant A "Command
+Deck" shell) and the QGI tenant theme is killed outright. What
+shipped, presentation only (no JS logic, auth, tenant detection
+or routing changes):
+
+- **The tenant theme is out of the app.** The gray reskin CSS
+  already died Oct 17; now the plumbing follows: dashboard,
+  account settings, users, company settings, company users and
+  flow no longer load `company-theme.js` or link
+  `qgc-theme.css`. Every tenant renders the standard Neue.
+  Detection is untouched: the guarded `applyCompanyTheme(...)`
+  call sites remain and simply no-op. Login keeps its QGI mode
+  logic and tenant treatment; `company-theme.js` and the stub
+  stay in the repo for the static/support surfaces that still
+  reference them.
+- **Type.** Space Grotesk is the display face (page titles,
+  card titles, company names, view titles); JetBrains Mono
+  carries HUD labels (nav group titles, panel section titles,
+  stat labels, list titles) and tabular readout values (stat
+  numbers). Inter stays the UI face. Home/customer stat labels
+  render bracketed via CSS generated content; the dictionary
+  strings are untouched.
+- **Geometry.** Sharp scale: content cards 6px, nav rows 6px,
+  fields 6px, shell cards (dashboard panel + main frame) 14px,
+  avatars 10px tiles instead of circles. Pills survive only
+  where the component is a pill (tabs, chips, switches,
+  badges). The company users page's local radius tokens were
+  retokened to the same scale (28/18/12 -> 14/6/6).
+- **Glass.** Liquid Glass on the shell layers only: the
+  settings sidebar, the shared `.niv-side` card (chrome
+  sidebar module), the dashboard float panel and the top bars
+  (dashboard + topbar module) take the translucent fill, top
+  edge light and backdrop blur, with the near-opaque fallback
+  where backdrop-filter is unsupported. Never over body text.
+- **Accent.** White only. The surviving pre-Labs brand colors
+  were retired wherever they still painted UI: the amber
+  #f5a524 (dashboard buttons, focus rings, badges, join code,
+  the two full-page takeover screens, which also had dark text
+  on the dark body) and the blues (#1971c2 / #1864ab / the
+  teal-blue gradients on the topbar module's active tab and
+  the company users selected card). Switches are monochrome
+  (white track, dark knob when on; position, not color,
+  carries state). Notification category dots and the quote
+  "sent" state use the sample signal palette. The per-user
+  avatar color arrays on the two users pages are now a
+  monochrome ramp. Still colored on purpose: semantic status
+  (ok / warn / err), presence dots, and the quote PDF print
+  styles (a customer document, not app chrome).
+- **Mobile shell.** The collapsed rail is a desktop state
+  only. At phone widths the dashboard drawer always renders
+  the full sidebar (org head with name, labeled nav, lists,
+  account card) at min(86vw, 340px): the old rule kept a
+  300px-class width on rail content and rendered the giant
+  mostly-empty icon panel. The settings pages keep their
+  established hamburger-bar pattern, restyled by the same
+  tokens.
+- **Not ported from the samples, deliberately.** The home
+  hero band (mountain photo + display headline) and the
+  sample quick-actions sheet have no counterpart markup in
+  the live views; adding them means new localizable copy in
+  the views, which is a content change, not a styling pass.
+  The live home keeps its stats + recent lists under the
+  Neue shell. Follow-up if Giulia wants the band.

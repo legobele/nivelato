@@ -6,16 +6,15 @@
 <meta name="robots" content="noindex, nofollow">
 <base href="/">
 <meta charset="UTF-8" />
-<script src="./company-theme.js"></script>
 <script src="./niv-settings.js"></script>
 <script src="./modules/shell-bridge.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="theme-color" content="#121212" />
+<meta name="theme-color" content="#050505" />
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="/favicon.ico" sizes="48x48" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <title data-i18n="docTitle">Nivelato - Ajustes</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="autism.css" />
 <link rel="stylesheet" href="niv-dark.css" />
 
@@ -23,11 +22,11 @@
   .settings-shell { max-width: 640px; margin: 0 auto; padding: 24px 20px; }
   h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
   .sub { font-size: 14px; color: #868e96; margin-bottom: 24px; }
-  .btn-delete-account { width: 100%; margin-top: 16px; padding: 12px 16px; min-height: 44px; background: #fff; border: 1.5px solid #ffc9c9; border-radius: 12px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; color: #c92a2a; transition: background 0.15s; }
+  .btn-delete-account { width: 100%; margin-top: 16px; padding: 12px 16px; min-height: 44px; background: #fff; border: 1.5px solid #ffc9c9; border-radius: 6px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; color: #c92a2a; transition: background 0.15s; }
   .btn-delete-account:hover { background: #fff5f5; }
   .btn-delete-account:disabled { opacity: 0.5; cursor: default; }
-  .btn-primary { width: 100%; padding: 12px 16px; min-height: 48px; background: #fafafa; color: #050505; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
-  .btn-primary:active { transform: scale(0.98); background: #1864ab; }
+  .btn-primary { width: 100%; padding: 12px 16px; min-height: 48px; background: #fafafa; color: #050505; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .btn-primary:active { transform: scale(0.98); background: #dcdce0; }
   .btn-primary:disabled { opacity: 0.6; cursor: default; }
   /* second sidebar layout: company sidebar stays in .niv-shell, the
      module sidebar (target=user) sits inside the main column next to
@@ -82,7 +81,6 @@ html, body { overflow-y: auto !important; }
   .btn-delete-account:hover { background: rgba(229,72,77,0.1); }
   #delete-request-status { background: rgba(230,119,0,0.15) !important; color: #fbbf24 !important; }
   </style>
-<link rel="stylesheet" href="/qgc-theme.css?v=2" />
 </head>
 <body>
 <button type="button" class="niv-mobile-nav-toggle" id="niv-mobile-nav-toggle" aria-expanded="false" aria-controls="settings-sidebar"><span aria-hidden="true">&#9776;</span><span data-i18n="mobileNav">Navegación</span></button>
@@ -133,8 +131,8 @@ html, body { overflow-y: auto !important; }
       <div class="niv-card-title" data-i18n="accountInfo">Información de la cuenta</div>
       <div class="niv-card-desc" data-i18n="accountInfoDesc">Datos de tu perfil en Nivelato.</div>
       <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
-        <img id="profile-pic" alt="Foto de perfil" style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:#e9ecef;display:none;" />
-        <div id="profile-pic-fallback" style="width:64px;height:64px;border-radius:50%;background:#26262b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;"></div>
+        <img id="profile-pic" alt="Foto de perfil" style="width:64px;height:64px;border-radius:10px;object-fit:cover;background:#e9ecef;display:none;" />
+        <div id="profile-pic-fallback" style="width:64px;height:64px;border-radius:10px;background:#26262b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;"></div>
         <div>
           <input type="file" id="profile-pic-input" accept="image/*" style="display:none;" />
           <button class="niv-btn-secondary" id="btn-change-pic" style="padding:8px 16px;font-size:13px;width:auto;margin-top:0;" data-i18n="changePhoto">Cambiar foto</button>
@@ -241,8 +239,8 @@ html, body { overflow-y: auto !important; }
     <div class="niv-settings-card">
       <div class="niv-card-title" data-i18n="dataTitle">Datos y privacidad</div>
       <div class="niv-card-desc" data-i18n="dataDesc">Tus datos de cuenta y la política de privacidad de Nivelato.</div>
-      <div style="margin-bottom:8px;"><a href="https://legobele.github.io/nivelato/privacy.html" style="font-size:13px;color:#60a5fa;" data-i18n="privacyPolicy">Política de privacidad</a></div>
-      <div id="delete-request-status" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:12px;font-size:13px;color:#e67700;display:none;" data-i18n="deletePending">⏳ Tu solicitud de eliminación está pendiente.</div>
+      <div style="margin-bottom:8px;"><a href="https://legobele.github.io/nivelato/privacy.html" style="font-size:13px;color:#fafafa;text-decoration:underline;" data-i18n="privacyPolicy">Política de privacidad</a></div>
+      <div id="delete-request-status" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:6px;font-size:13px;color:#e67700;display:none;" data-i18n="deletePending">⏳ Tu solicitud de eliminación está pendiente.</div>
       <button class="btn-delete-account" id="btn-delete-account" onclick="requestDeleteAccount()" data-i18n="deleteBtn">Solicitar eliminación de cuenta</button>
     </div>
   </section>
