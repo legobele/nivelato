@@ -2586,8 +2586,8 @@
       },
       employeeNoticeKey: 'employee_notice_qgc',
       inquiryText: {
-        es: 'Si eres una empresa y quieres usar Nivelato en PR, contáctanos por el correo en nivelatolabs.com > Contacto. Recibirás una respuesta dentro de 1 semana. Ten en cuenta que este acceso se otorga después de una reunión para asegurarnos de que obtengas las funciones adecuadas para tu empresa.',
-        en: 'If you are a company wanting to use Nivelato in PR. Please contact using the email at nivelatolabs.com > Contact. You will get a response within 1 week. Please note that this access will be given after a meeting and contacting to make sure you get the right features for your company.'
+        es: 'Si eres una empresa y quieres usar Nivelato en PR, contáctanos por el correo en nivelatolabs.com > Contacto, o llámanos al número de abajo. Recibirás una respuesta dentro de 1 semana. Ten en cuenta que este acceso se otorga después de una reunión para asegurarnos de que obtengas las funciones adecuadas para tu empresa.',
+        en: 'If you are a company wanting to use Nivelato in PR. Please contact using the email at nivelatolabs.com > Contact, or call us at the number below. You will get a response within 1 week. Please note that this access will be given after a meeting and contacting to make sure you get the right features for your company.'
       },
       signinButton: {
         es: 'Iniciar sesión en Quality Glazing Contractors',
@@ -3417,6 +3417,7 @@
       + '<div class="tagline">' + escapeHtml(companyText(company, 'signinText')) + '</div>'
       + '<div class="company-employee-notice">' + escapeHtml(company.employeeNoticeKey ? t(company.employeeNoticeKey) : (company.employeeNotice || '')) + '</div>'
       + '<div class="company-inquiry">' + escapeHtml(companyText(company, 'inquiryText')) + '</div>'
+      + '<div class="company-inquiry"><a href="tel:+17875926353">(787) 592-6353</a></div>'
       + '<div class="company-travel-notice" id="company-travel-notice" style="display:none">' + t('outside_pr_notice') + '</div>'
       + '</div>'
       + '</div>';
