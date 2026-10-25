@@ -1639,6 +1639,79 @@ body { animation: niv-mo-page-in var(--niv-mo-view) var(--niv-mo-ease); }
     padding-bottom: 10px;
     overscroll-behavior: contain;
   }
+  /* one scroller (Giulia, Oct 25): the panel itself was a second
+     scroll container stacked over the data zone (base rule carries
+     overflow-y: auto), which ate the touch gesture at phone widths
+     and left the drawer effectively unscrollable. The panel now
+     clips, the data zone is the only scroller, and the header and
+     the account card stay pinned at the two ends. */
+  body.has-sidebar #niv-panel.niv-float-panel { overflow: hidden; }
+  body.has-sidebar #niv-panel .niv-panel-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    touch-action: pan-y;
+  }
+  /* nav minified on scroll (Giulia, Oct 25): once the data zone
+     leaves the top, the nav above it folds into a horizontal row of
+     icons alone (the niv-nav-min class is toggled by the drawer's
+     scroll listener in dashboard.html) so the lists get the vertical
+     room; back at the top it expands to the labeled list again. The
+     height transition runs on the nav box; the labels fold away with
+     the same visual-only hide the collapsed rail uses, so every
+     button keeps its accessible name. Desktop rail state excluded:
+     collapsed has no data zone to scroll. */
+  body.has-sidebar #niv-panel:not(.collapsed) .niv-side-nav {
+    max-height: 360px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  body.has-sidebar #niv-panel:not(.collapsed).niv-nav-min .niv-side-nav {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 4px;
+    max-height: 64px;
+    padding: 6px 0 8px;
+  }
+  body.has-sidebar #niv-panel:not(.collapsed).niv-nav-min .niv-navunit {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+  }
+  body.has-sidebar #niv-panel:not(.collapsed).niv-nav-min .niv-navunit.active {
+    border-color: var(--niv-border-soft);
+    background: rgba(255, 255, 255, 0.03);
+  }
+  body.has-sidebar #niv-panel:not(.collapsed).niv-nav-min .niv-snav-row { height: 100%; }
+  body.has-sidebar #niv-panel:not(.collapsed).niv-nav-min .niv-snav {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 44px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+  }
+  body.has-sidebar #niv-panel:not(.collapsed).niv-nav-min .niv-snav-label {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: -1px; padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%);
+    white-space: nowrap; border: 0;
+  }
+  body.has-sidebar #niv-panel:not(.collapsed).niv-nav-min .niv-snav-plus { display: none; }
+  /* the unread badge folds to a dot over the icon, like the rail */
+  body.has-sidebar #niv-panel:not(.collapsed).niv-nav-min .niv-snav .niv-notif-badge { display: none; }
+  body.has-sidebar #niv-panel:not(.collapsed).niv-nav-min .niv-snav .niv-notif-badge.on {
+    display: block;
+    position: absolute; top: 6px; left: calc(50% + 4px);
+    width: 9px; height: 9px; min-width: 0; padding: 0;
+    border-radius: 50%; overflow: hidden;
+    color: transparent; font-size: 0; line-height: 0;
+  }
   /* no collapse button on phones (Giulia, Oct 25): collapsing to a
      rail is a desktop concept, so the toggle is removed entirely at
      phone widths instead of sized up. The drawer still closes via

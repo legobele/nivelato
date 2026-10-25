@@ -46,9 +46,10 @@
   body[data-target="user"] .niv-mod-scroll { overflow-y: visible; }
 
   /* Nav icons: the dashboard panel treatment. The tile takes a theme
-     token (currentColor on the wrapper), the glyph sits dim on it, and
-     the active item flips the tile to the accent token with a white
-     glyph. No per item hardcoded colors. */
+     token (currentColor on the wrapper), the glyph sits at full text
+     brightness on it, and the active item flips the tile to the accent
+     token with a near-black glyph, so tile and glyph invert together.
+     No per item hardcoded colors. */
   .mod-ico {
     display: inline-flex;
     width: 24px; height: 24px;
@@ -59,7 +60,7 @@
   }
   .mod-ico svg { width: 24px; height: 24px; display: block; }
   .mod-ico .tile { fill: currentColor; }
-  .mod-ico .glyph { fill: var(--niv-text-dim); transition: fill var(--niv-mo-micro, 160ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)); }
+  .mod-ico .glyph { fill: var(--niv-text); transition: fill var(--niv-mo-micro, 160ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)); }
   .niv-nav-btn:hover .mod-ico { color: var(--niv-surface); }
   .niv-nav-btn.active .mod-ico { color: var(--niv-accent); }
   .niv-nav-btn.active .mod-ico .glyph { fill: #050505; }

@@ -1014,14 +1014,18 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 .niv-projlist-title { font-size: 13px; color: var(--niv-text-dim, #a7a7ad); margin-bottom: 8px; padding-left: 4px; }
 
 /* iconos por token: la baldosa hereda currentColor del span y el glifo va
-   atenuado; en el item activo la baldosa toma el acento (el mismo token que
-   honra la interfaz) y el glifo pasa a blanco. El punto de notificaciones ya
-   usaba el token de peligro (--niv-red en .niv-notif-badge) y se queda asi. */
+   en el token de texto pleno, legible sobre la baldosa oscura incluso en
+   glifos finos (la regla de Medidas con --niv-text-dim casi desaparecia);
+   en el item activo la baldosa toma el acento (el mismo token que honra
+   la interfaz) y el glifo se invierte a casi negro, baldosa y glifo
+   invierten juntos, igual que en el modulo lateral compartido. El punto
+   de notificaciones ya usaba el token de peligro (--niv-red en
+   .niv-notif-badge) y se queda asi. */
 .niv-snav-ico { color: var(--niv-surface-2, #1e1e22); }
-.niv-snav-ico svg path { fill: var(--niv-text-dim, #a7a7ad); transition: fill 0.15s; }
+.niv-snav-ico svg path { fill: var(--niv-text, #fafafa); transition: fill 0.15s; }
 .niv-snav:hover .niv-snav-ico { color: var(--niv-surface, #17171a); }
 .niv-navunit.active .niv-snav-ico { color: var(--niv-accent, #fafafa); }
-.niv-navunit.active .niv-snav-ico svg path { fill: #fff; }
+.niv-navunit.active .niv-snav-ico svg path { fill: #050505; }
 
 /* vista Usuarios incrustada: el iframe llena la tarjeta y la pagina
    incrustada desplaza por dentro, sin doble barra de desplazamiento */
@@ -1066,7 +1070,7 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 }
 .niv-company-pop-item:hover { background: var(--niv-surface-2, #1e1e22); }
 .niv-company-pop-item:focus-visible { outline: 2px solid var(--niv-accent, #fafafa); outline-offset: -2px; }
-.niv-company-pop-item svg { width: 20px; height: 20px; flex: none; color: var(--niv-text-dim, #a7a7ad); }
+.niv-company-pop-item svg { width: 20px; height: 20px; flex: none; color: var(--niv-surface-2, #1e1e22); }
 .niv-float-panel.collapsed .niv-company-pop { left: calc(100% + 10px); top: 0; transform-origin: top left; }
 
 /* barra superior: centrado + indicador deslizante con topes. La pastilla
@@ -1455,6 +1459,31 @@ try {
     }
   }
 } catch (_) {}
+</script>
+<script>
+/* Cajon movil: la zona de datos (.niv-panel-body) es la unica region que
+   scrollea dentro del cajon. Cuando esa zona sale del tope, la navegacion
+   de arriba se minimiza a una fila horizontal de iconos (clase
+   niv-nav-min) para ceder el alto a las listas; al volver al tope se
+   expande. Solo comportamiento de presentacion: la clase se estila
+   unicamente bajo el media query de telefono en niv-dark.css, el
+   escritorio nunca ve un cambio. Histeresis amplia para que el cambio
+   de alto de la propia navegacion no haga parpadear el estado. */
+(function () {
+  var body = document.getElementById('niv-panel-body');
+  var panel = document.getElementById('niv-panel');
+  if (!body || !panel) return;
+  var ticking = false;
+  function apply() {
+    ticking = false;
+    var y = body.scrollTop;
+    if (y > 32) panel.classList.add('niv-nav-min');
+    else if (y < 8) panel.classList.remove('niv-nav-min');
+  }
+  body.addEventListener('scroll', function () {
+    if (!ticking) { ticking = true; requestAnimationFrame(apply); }
+  }, { passive: true });
+})();
 </script>
 
 <main>
