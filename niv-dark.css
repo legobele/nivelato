@@ -1639,10 +1639,13 @@ body { animation: niv-mo-page-in var(--niv-mo-view) var(--niv-mo-ease); }
     padding-bottom: 10px;
     overscroll-behavior: contain;
   }
-  /* close control, nav rows and section chevrons at phone tap sizes */
-  body.has-sidebar #niv-panel .niv-panel-collapse {
-    width: 40px; height: 40px; font-size: 19px;
-  }
+  /* no collapse button on phones (Giulia, Oct 25): collapsing to a
+     rail is a desktop concept, so the toggle is removed entirely at
+     phone widths instead of sized up. The drawer still closes via
+     the topbar hamburger and the scrim, which toggle nav-open and
+     never depended on this button. */
+  body.has-sidebar #niv-panel .niv-panel-collapse { display: none; }
+  /* nav rows and section chevrons at phone tap sizes */
   body.has-sidebar #niv-panel .niv-snav { min-height: 44px; }
   body.has-sidebar #niv-panel .niv-sec-chev { width: 32px; height: 32px; }
   /* list rows cannot clip: the label shrinks and ellipsizes and
