@@ -1608,3 +1608,45 @@ body { animation: niv-mo-page-in var(--niv-mo-view) var(--niv-mo-ease); }
   /* the rail's drag-to-expand strip is meaningless in a drawer */
   body.has-sidebar #niv-panel.niv-float-panel.collapsed #niv-panel-expand-handle { display: none; }
 }
+
+/* ============================================================
+   PHONE PASS (Oct 25, 2026) — the sidebar drawer at phone widths
+   Giulia's report: the drawer was not mobile-optimized. Its width
+   depended on the desktop state the rail was left in (300px
+   expanded vs min(86vw, 340px) collapsed), the anchored account
+   card crowded the screen edge, the last list rows sat flush
+   against the bottom divider, and the close control and section
+   chevrons were desktop-sized targets. One deliberate drawer at
+   <=900px, whatever state the rail was left in. Desktop rules
+   above are untouched: this whole section is max-width 900px.
+   ============================================================ */
+@media (max-width: 900px) {
+  /* one width in both states, never wider than the phone allows */
+  body.has-sidebar #niv-panel.niv-float-panel,
+  body.has-sidebar #niv-panel.niv-float-panel.collapsed {
+    width: min(86vw, 340px);
+    min-width: 0;
+    max-width: 86vw;
+    /* the floating card keeps its inset and adds the phone's
+       safe area, so the account card never crowds the edge the
+       browser chrome overlays */
+    bottom: calc(var(--niv-inset, 12px) + env(safe-area-inset-bottom));
+  }
+  /* the scrolling middle zone: the last row clears the bottom
+     divider instead of sitting flush against it, and the scroll
+     gesture stays inside the drawer */
+  body.has-sidebar #niv-panel .niv-panel-body {
+    padding-bottom: 10px;
+    overscroll-behavior: contain;
+  }
+  /* close control, nav rows and section chevrons at phone tap sizes */
+  body.has-sidebar #niv-panel .niv-panel-collapse {
+    width: 40px; height: 40px; font-size: 19px;
+  }
+  body.has-sidebar #niv-panel .niv-snav { min-height: 44px; }
+  body.has-sidebar #niv-panel .niv-sec-chev { width: 32px; height: 32px; }
+  /* list rows cannot clip: the label shrinks and ellipsizes and
+     the row's menu button keeps its full hitbox inside the card */
+  body.has-sidebar #niv-panel .niv-panel-item { min-width: 0; }
+  body.has-sidebar #niv-panel .niv-panel-item .dots { flex: none; }
+}

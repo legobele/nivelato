@@ -1284,6 +1284,40 @@ body.has-sidebar main h1 {
     width: 34px; height: 34px; font-size: 18px;
   }
 }
+
+/* ---- PHONE PASS (Oct 25, 2026): everything deliberate at phone widths ----
+   Giulia's directive: the whole app is mobile-optimized when the
+   device is a phone. This block owns the dashboard-local pieces:
+   the home quick actions become an even grid instead of the ragged
+   flex wrap (each pill sized by its own label, rows breaking
+   wherever the text ran out), and the small controls in the
+   project / customer / builder views reach comfortable tap
+   heights. Desktop rules above are untouched: everything here is
+   max-width 900px, the shell's own mobile breakpoint. */
+@media (max-width: 900px) {
+  /* quick actions: the primary spans the row, the rest form an
+     even two-column grid of full-width, equal-height pills */
+  .niv-home-actions {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .niv-home-actions .niv-btn-pill {
+    width: 100%; min-height: 48px;
+    justify-content: center; text-align: center;
+    /* the desktop pill padding (12px 28px) leaves ~105px of text
+       room in a phone column and the long labels wrap to two
+       lines, which is what made the rows uneven */
+    padding: 10px 12px; white-space: nowrap;
+  }
+  .niv-home-actions #home-act-new-measure { grid-column: 1 / -1; }
+  /* back buttons and builder controls: phone tap heights */
+  .btn-cancel { min-height: 44px; }
+  .pl-btn { min-height: 40px; padding: 9px 12px; }
+  .modal-edit-input { min-height: 44px; }
+}
+@media (max-width: 480px) {
+  /* the measures HUD labels stop truncating ("MEDIDAS TOTAL...") */
+  .niv-hud-label { font-size: 0.62rem; letter-spacing: 0.1em; }
+}
 </style>
 </head>
 <body class="has-sidebar" data-envmark-interstitial>
