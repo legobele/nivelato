@@ -1191,6 +1191,23 @@ body.has-sidebar .niv-float-panel {
   border-radius: 14px;
   box-shadow: var(--niv-glass-edge), 0 10px 34px rgba(0, 0, 0, 0.38);
 }
+/* Giulia, Oct 29 (sidebar bundle, defect 2): the collapsed rail was
+   undistinguishable from the page. It had no surface of its own: the
+   shared translucent glass (white 7.5% to 4.5%) composites over the
+   #050505 page to within a few luminance points of the page itself,
+   and its only edge cues were the shared 1px border at 14% white and
+   a black shadow on a black page. The expanded card escapes that
+   through width and content; the empty 76px rail cannot. The rail now
+   stacks the same glass over the opaque house surface (the content
+   card's own background token) and restates the full card border and
+   edge shadow for the collapsed state, so the rail reads as its own
+   area at a glance. Rail width and icon layout are untouched; the
+   phone drawer keeps its own rules (niv-dark.css, max-width 900px). */
+body.has-sidebar .niv-float-panel.collapsed {
+  background: var(--niv-glass), var(--niv-surface, #0e0e10);
+  border: 1px solid var(--niv-border-soft, rgba(255, 255, 255, 0.14));
+  box-shadow: var(--niv-glass-edge), 0 10px 34px rgba(0, 0, 0, 0.38);
+}
 body.has-sidebar .niv-shell > main { border-radius: 14px; }
 /* content geometry: sharp */
 .stat-card, .job-card, #join-code-section, .join-code-card, .niv-notif-item,
@@ -1486,11 +1503,15 @@ body.has-sidebar main h1 {
       </div>
     </div>
     <div class="niv-panel-sec" data-seckey="customers">
-      <div class="niv-panel-sec-title" id="panel-customers-title">Clientes</div>
+      <!-- the title text lives in a span, same as Proyectos: the
+           language pass and the customer-count writer set textContent
+           on that id, and on the title div itself that swept the
+           section chevron away (Giulia, Oct 29 sidebar bundle) -->
+      <div class="niv-panel-sec-title"><span id="panel-customers-title">Clientes</span></div>
       <div class="niv-sec-body" id="niv-panel-customers"><div class="niv-panel-empty" id="panel-empty-customers">Sin clientes</div></div>
     </div>
     <div class="niv-panel-sec" data-seckey="measures">
-      <div class="niv-panel-sec-title" id="panel-measures-title">Medidas</div>
+      <div class="niv-panel-sec-title"><span id="panel-measures-title">Medidas</span></div>
       <div class="niv-sec-body" id="niv-panel-measures"><div class="niv-panel-empty" id="panel-empty-measures">Sin medidas</div></div>
     </div>
     <div class="niv-panel-actions">
@@ -5091,7 +5112,11 @@ let currentUser;
   // needs explicit pixel endpoints (auto does not interpolate), so the
   // current width is pinned inline, a reflow is forced, then the target
   // state is applied.
-  window._nivSetPanelCollapsed = function (on) {
+  // widthOverride (optional): when a drag out of the collapsed rail
+  // expands the panel, it must land on the pointer's width, not the
+  // stored one. Callers that do not pass it get the stored width,
+  // exactly as before.
+  window._nivSetPanelCollapsed = function (on, widthOverride) {
     const panel = document.getElementById('niv-panel');
     const collapseBtn = document.getElementById('niv-panel-collapse');
     if (!panel) return;
@@ -5104,10 +5129,14 @@ let currentUser;
       panel.style.width = ''; // the .collapsed CSS rail width (76px) takes over
     } else {
       let w = null;
-      try {
-        const sw = parseInt((typeof _nivGetSetting === 'function' ? _nivGetSetting('niv-panel-width') : localStorage.getItem('niv-panel-width')) || '', 10);
-        if (sw >= 220 && sw <= 520) w = sw;
-      } catch (_) {}
+      if (typeof widthOverride === 'number' && widthOverride >= 220 && widthOverride <= 520) {
+        w = widthOverride;
+      } else {
+        try {
+          const sw = parseInt((typeof _nivGetSetting === 'function' ? _nivGetSetting('niv-panel-width') : localStorage.getItem('niv-panel-width')) || '', 10);
+          if (sw >= 220 && sw <= 520) w = sw;
+        } catch (_) {}
+      }
       panel.style.width = w ? w + 'px' : '';
     }
     if (collapseBtn) {
@@ -5144,47 +5173,100 @@ let currentUser;
     });
   })();
 
-  // ---- sidebar: drag out of collapsed state (v1.1) ----
-  // In the collapsed icon-rail state, dragging the rail's right edge
-  // rightward expands the panel back to full. Pointer Events cover
-  // mouse + touch. A tap (no drag) is ignored so icon clicks still work.
+  // ---- sidebar: drag out of collapsed state ----
+  // Dragging the collapsed rail's right edge enters the SAME continuous
+  // resize as the expanded state's handle (Giulia, Oct 29 sidebar
+  // bundle, defect 1). The old gesture was a 28px trigger: short of it,
+  // an inline width was written onto the still-collapsed panel under
+  // its 300ms width transition, so the panel chased the pointer and
+  // read as a ghost card floating over the content; past it, the panel
+  // snapped to the stored width, so no in-between size was reachable.
+  // Now the pointer position IS the width, exactly like the expanded
+  // drag: the same 220..520 clamp, the same 200px snap threshold
+  // deciding collapse vs expand, rAF-coalesced moves, and
+  // body.niv-resizing killing the width transition for the whole
+  // gesture so the shell reflows live around the real panel. Release
+  // persists the final width the same way. A tap (never crossing the
+  // snap threshold) changes nothing, so rail icon clicks still work.
+  // Move/up listen on the document, not the handle: the handle is
+  // display:none the moment the panel expands, and a hidden element
+  // cannot hold a pointer capture or keep receiving the gesture. The
+  // handle's hitbox, cursor and grab-segment paint (v1.2.12) are
+  // untouched; the .dragging class still drives its paint.
   (() => {
     const panel = document.getElementById('niv-panel');
     const handle = document.getElementById('niv-panel-expand-handle');
     if (!panel || !handle) return;
-    const DRAG_THRESHOLD = 28; // px rightward to trigger expand
+    const MIN_W = 220, MAX_W = 520, SNAP_W = 200; // same bounds as the expanded drag
     handle.addEventListener('pointerdown', (e) => {
       if (!panel.classList.contains('collapsed')) return;
       e.preventDefault();
       handle.classList.add('dragging');
-      const startX = e.clientX;
-      let expanded = false;
-      try { handle.setPointerCapture(e.pointerId); } catch (_) {}
+      // El panel flota con margen (--niv-inset): el ancho es clientX
+      // menos el borde izquierdo del panel, que no se mueve durante
+      // el arrastre (la misma conversion que el asa expandida).
+      const startLeft = panel.getBoundingClientRect().left;
+      let active = false;   // the gesture has entered expanded resize
+      let snapped = false;  // dragged back under SNAP_W after activating: re-collapsed, gesture over
+      // Ultimo ancho expandido valido de ESTE arrastre: si hay snap es
+      // el que se recuerda, nunca el umbral. Antes de activar, el
+      // ancho recordado o el default de la carcasa.
+      let lastGoodW = 300;
+      try { const sw = parseInt(_nivGetSetting('niv-panel-width') || '', 10); if (sw >= MIN_W && sw <= MAX_W) lastGoodW = sw; } catch (_) {}
+      let rafId = 0;
+      let lastX = null;
+      const endDrag = () => {
+        if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+        handle.classList.remove('dragging');
+        document.body.classList.remove('niv-resizing');
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', up);
+        document.removeEventListener('pointercancel', up);
+      };
+      const applyMove = () => {
+        rafId = 0;
+        if (snapped || lastX === null) return;
+        const rawW = lastX - startLeft;
+        if (rawW < SNAP_W) {
+          if (active) {
+            // Arrastrado de vuelta al riel: colapsa con la misma
+            // maquinaria que el snap del asa expandida.
+            snapped = true;
+            _nivSetSetting('niv-panel-width', String(lastGoodW));
+            window._nivSetPanelCollapsed(true);
+            endDrag();
+          }
+          return; // short of the threshold the rail simply stays the rail
+        }
+        const w = Math.min(MAX_W, Math.max(MIN_W, rawW));
+        lastGoodW = w;
+        if (!active) {
+          active = true;
+          // niv-resizing ANTES de descolapsar: sin transicion de
+          // ancho, el panel cae exactamente en el ancho del puntero
+          // y la carcasa reordena en vivo desde el primer frame.
+          document.body.classList.add('niv-resizing');
+          window._nivSetPanelCollapsed(false, w);
+        } else {
+          panel.style.width = w + 'px';
+        }
+      };
       const move = (ev) => {
-        if (expanded) return;
-        const dx = ev.clientX - startX;
-        if (dx > 0) {
-          // m16: live width feedback short of the expand threshold
-          let target = 300;
-          try { const sw = parseInt(localStorage.getItem('niv-panel-width') || '', 10); if (sw >= 220 && sw <= 520) target = sw; } catch (_) {}
-          panel.style.width = Math.min(target, 76 + dx) + 'px';
-        }
-        if (dx > DRAG_THRESHOLD) {
-          expanded = true;
-          handle.classList.remove('dragging');
-          window._nivSetPanelCollapsed(false);
-          cleanup();
-        }
+        if (snapped) return;
+        lastX = ev.clientX;
+        if (!rafId) rafId = requestAnimationFrame(applyMove);
       };
-      const up = () => { handle.classList.remove('dragging'); if (!expanded) panel.style.width = ''; cleanup(); };
-      const cleanup = () => {
-        handle.removeEventListener('pointermove', move);
-        handle.removeEventListener('pointerup', up);
-        handle.removeEventListener('pointercancel', up);
+      const up = () => {
+        if (rafId && !snapped) { cancelAnimationFrame(rafId); rafId = 0; applyMove(); }
+        const wasActive = active;
+        endDrag();
+        if (snapped || !wasActive) return;
+        const w = parseInt(panel.style.width, 10);
+        if (w) { _nivSetSetting('niv-panel-width', String(w)); }
       };
-      handle.addEventListener('pointermove', move);
-      handle.addEventListener('pointerup', up);
-      handle.addEventListener('pointercancel', up);
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+      document.addEventListener('pointercancel', up);
     });
   })();
 
