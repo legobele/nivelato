@@ -15,7 +15,7 @@
 // firestore.rules / storage.rules enforce org data access off these claims —
 // the client can lie, the token can't.
 
-const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
@@ -1474,6 +1474,113 @@ exports.mintSsoToken = onCall(
 );
 
 // ---------------------------------------------------------------------------
+// Shared session cookie — cross-subdomain sessions (DESIGN: nivelato-session).
+//
+// Firebase Auth sessions are origin-scoped; the surfaces (login/app/
+// dashboard subdomains) share ONE session through an HttpOnly cookie on
+// .nivelatolabs.com holding a Firebase session cookie. The cookie is set,
+// read and cleared only by each origin's worker (POST /__session/*); these
+// three HTTPS functions are the trust core the workers pipe to. They are
+// onRequest, not onCall: two of the callers are workers (server-to-server),
+// and the third follows the codebase's raw-fetch-with-Bearer pattern.
+// mintSsoToken's ssoGrants budget is deliberately NOT reused: exchanges
+// get their own counters (sessionExchanges / sessionExchangeIp).
+// ---------------------------------------------------------------------------
+const SESSION_COOKIE_MAX_MS = 14 * 24 * 60 * 60 * 1000; // Firebase max: 14 days
+const SESSION_EXCHANGE_DAILY_CAP = 200;   // per uid — a heavy day of tab-opening is a dozen
+const SESSION_EXCHANGE_IP_HOURLY_CAP = 300;
+
+function bearerToken(req) {
+  const h = req.get('Authorization') || '';
+  return h.indexOf('Bearer ') === 0 ? h.slice(7) : null;
+}
+
+// issueSessionCookie — Bearer ID token → Firebase session cookie value.
+// Presenting your own ID token can only ever mint your own session.
+exports.issueSessionCookie = onRequest(
+  { region: 'us-central1', memory: '256MiB' },
+  async (req, res) => {
+    if (req.method !== 'POST') { res.status(405).json({ error: 'method' }); return; }
+    const idToken = bearerToken(req);
+    if (!idToken) { res.status(401).json({ error: 'no-token' }); return; }
+    try {
+      await admin.auth().verifyIdToken(idToken);
+      const sessionCookie = await admin.auth().createSessionCookie(idToken, { expiresIn: SESSION_COOKIE_MAX_MS });
+      res.json({ sessionCookie, maxAgeSec: Math.floor(SESSION_COOKIE_MAX_MS / 1000) });
+    } catch (e) {
+      res.status(401).json({ error: 'invalid-token' });
+    }
+  }
+);
+
+// exchangeSessionCookie — { sessionCookie } → { customToken }.
+// Called ONLY by the product workers (server-to-server), presenting the
+// cookie value read off the inbound request. checkRevoked=true: a
+// sign-out anywhere (revokeRefreshTokens) kills exchanges everywhere.
+exports.exchangeSessionCookie = onRequest(
+  { region: 'us-central1', memory: '256MiB' },
+  async (req, res) => {
+    if (req.method !== 'POST') { res.status(405).json({ error: 'method' }); return; }
+    const sessionCookie = req.body && req.body.sessionCookie;
+    if (!sessionCookie || typeof sessionCookie !== 'string') { res.status(401).json({ error: 'no-cookie' }); return; }
+    // Per-IP hourly cap, checked before any verification work.
+    const ipHash = crypto.createHash('sha256').update(String(req.ip || 'unknown')).digest('hex').slice(0, 32);
+    const hour = new Date().toISOString().slice(0, 13);
+    const ipRef = db.doc(`sessionExchangeIp/${ipHash}`);
+    const ipOk = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ipRef);
+      const dd = snap.exists ? snap.data() : {};
+      if (dd.hour === hour && (dd.count || 0) >= SESSION_EXCHANGE_IP_HOURLY_CAP) return false;
+      tx.set(ipRef, { hour, count: dd.hour === hour ? (dd.count || 0) + 1 : 1, lastAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      return true;
+    });
+    if (!ipOk) { res.status(429).json({ error: 'rate-limited' }); return; }
+    let claims;
+    try {
+      claims = await admin.auth().verifySessionCookie(sessionCookie, true);
+    } catch (e) {
+      res.status(401).json({ error: 'invalid-cookie' });
+      return;
+    }
+    const uid = claims.uid;
+    // Per-uid daily cap, same transaction shape as mintSsoToken.
+    const today = new Date().toISOString().slice(0, 10);
+    const ref = db.doc(`sessionExchanges/${uid}`);
+    const granted = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const dd = snap.exists ? snap.data() : {};
+      if (dd.date === today && (dd.count || 0) >= SESSION_EXCHANGE_DAILY_CAP) return false;
+      tx.set(ref, { date: today, count: dd.date === today ? (dd.count || 0) + 1 : 1, lastExchangeAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      return true;
+    });
+    if (!granted) { res.status(429).json({ error: 'rate-limited' }); return; }
+    const customToken = await admin.auth().createCustomToken(uid);
+    console.log('[Nivelato] session exchange ok uid=' + uid + ' origin=' + (req.get('Origin') || '-'));
+    res.json({ customToken });
+  }
+);
+
+// revokeUserSessions — Bearer ID token → revoke that user's refresh
+// tokens. Called by session-bridge.js during sign-out, BEFORE the local
+// signOut makes the token unrecoverable. cors:true because the caller is
+// page JS on the product origins (the other two are worker-proxied).
+exports.revokeUserSessions = onRequest(
+  { region: 'us-central1', memory: '256MiB', cors: true },
+  async (req, res) => {
+    if (req.method !== 'POST') { res.status(405).json({ error: 'method' }); return; }
+    const idToken = bearerToken(req);
+    if (!idToken) { res.status(401).json({ error: 'no-token' }); return; }
+    try {
+      const decoded = await admin.auth().verifyIdToken(idToken);
+      await admin.auth().revokeRefreshTokens(decoded.uid);
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(401).json({ error: 'invalid-token' });
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
 // devPing — backend status for the dev options panel (login page).
 // Restricted to the closed-testing allowlist (same gate as the panel).
 // Returns server time + the deployed function inventory so the panel's
@@ -1482,6 +1589,9 @@ exports.mintSsoToken = onCall(
 // Yes, this comment is load-bearing.
 const DEV_FUNCTION_INVENTORY = [
   { name: 'mintSsoToken', type: 'callable', region: 'us-central1' },
+  { name: 'issueSessionCookie', type: 'https', region: 'us-central1' },
+  { name: 'exchangeSessionCookie', type: 'https', region: 'us-central1' },
+  { name: 'revokeUserSessions', type: 'https', region: 'us-central1' },
   { name: 'flowGate', type: 'callable', region: 'us-central1' },
   { name: 'qgcLogin', type: 'callable', region: 'us-central1' },
   { name: 'requestWelcomeEmail', type: 'callable', region: 'us-central1' },

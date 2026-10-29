@@ -2090,11 +2090,27 @@ const syncDatePlaceholder = () => {
 // Pantalla de "cuenta pendiente": se muestra al entrar si la cuenta está
 // desactivada, y también si un admin la desactiva mid-session (el re-read
 // periódico de abajo) - en vez de confusos errores de permiso.
+// Shared session cookie (session-bridge.js): every dashboard sign-out
+// path clears the cross-origin session (shared cookie + server-side
+// revocation) BEFORE the local signOut, while the ID token still
+// exists. Raced so it can never wedge a logout. The guard helpers do
+// the inverse: silently restore a session from the shared cookie, and
+// honor a sign-out tombstone from a sibling origin.
+const _clearSharedSession = () => import('./session-bridge.js')
+  .then((m) => Promise.race([m.clearSessionEverywhere(), new Promise((r) => setTimeout(r, 3500))]))
+  .catch(() => {});
+const _bridgeRestore = () => import('./session-bridge.js')
+  .then((m) => m.restoreSession())
+  .catch(() => 'bounce');
+const _bridgeHeal = (user) => import('./session-bridge.js')
+  .then((m) => m.healLocalSession(user))
+  .catch(() => 'proceed');
+
 const showPendingScreen = () => {
   if (window._pendingShown) return;
   window._pendingShown = true;
-  window._pendingSignOut = async () => { await signOut(auth); window.location.href = 'https://login.nivelatolabs.com/'; };
-  window._popupSignOut = async () => { await signOut(auth); window.location.href = 'https://login.nivelatolabs.com/'; };
+  window._pendingSignOut = async () => { await _clearSharedSession(); await signOut(auth); window.location.href = 'https://login.nivelatolabs.com/'; };
+  window._popupSignOut = async () => { await _clearSharedSession(); await signOut(auth); window.location.href = 'https://login.nivelatolabs.com/'; };
   document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2 style="color:#fafafa">Cuenta pendiente de aprobación</h2><p style="color:#a8a8b0;max-width:320px">Tu cuenta está siendo revisada. El administrador del taller te dará acceso en breve.</p><button onclick="window._pendingSignOut()" style="padding:12px 28px;background:#fafafa;color:#050505;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div>';
 };
 
@@ -2105,7 +2121,7 @@ const showMissingProfileScreen = () => {
   if (window._pendingShown) return;
   window._pendingShown = true;
   window._missingRetry = () => window.location.reload();
-  window._missingSignOut = async () => { await signOut(auth); window.location.href = 'https://login.nivelatolabs.com/'; };
+  window._missingSignOut = async () => { await _clearSharedSession(); await signOut(auth); window.location.href = 'https://login.nivelatolabs.com/'; };
   document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⚠️</div><h2 style="color:#fafafa">No se encontró tu perfil</h2><p style="color:#a8a8b0;max-width:340px">Tu sesión es válida pero no hay un perfil de usuario asociado. Si acabas de registrarte, espera unos segundos y reintenta; si no, cierra sesión y pide a tu administrador un enlace de registro nuevo.</p><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button onclick="window._missingRetry()" style="padding:12px 28px;background:#fafafa;color:#050505;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer">Reintentar</button><button onclick="window._missingSignOut()" style="padding:12px 28px;background:rgba(255,255,255,.08);color:#fafafa;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div></div>';
 };
 
@@ -2387,6 +2403,7 @@ async function initCompanyView(user) {
   // a back control to the dashboard plus sign-out (the shell sidebar
   // cannot be remounted here without the dashboard's boot sequence).
   window._coSignOut = async () => {
+    await _clearSharedSession();
     try { await signOut(auth); } catch (_) {}
     window.location.href = 'https://login.nivelatolabs.com/';
   };
@@ -2424,8 +2441,19 @@ async function initCompanyView(user) {
 
 // La ruta /company usa su propio init; el callback del dashboard normal se salta abajo.
 if (NIV_ROUTE === 'company') {
-  onAuthStateChanged(auth, (user) => {
-    if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      // Shared session cookie: silently restore from a sibling origin's
+      // session when one exists; only a failed exchange bounces.
+      if (await _bridgeRestore() === 'exchanged') return; // callback refires with the user
+      window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href);
+      return;
+    }
+    if (await _bridgeHeal(user) === 'sign-out-local') {
+      try { await signOut(auth); } catch (_) {}
+      window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href);
+      return;
+    }
     initCompanyView(user);
   });
 }
@@ -2435,7 +2463,20 @@ let currentUser;
 
   onAuthStateChanged(auth, async (user) => {
     if (NIV_ROUTE === 'company') return; // la ruta /company usa initCompanyView (arriba)
-    if (!user) { window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href); return; }
+    if (!user) {
+      // Shared session cookie: silently restore from a sibling origin's
+      // session when one exists; only a failed exchange bounces.
+      if (await _bridgeRestore() === 'exchanged') return; // callback refires with the user
+      window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href);
+      return;
+    }
+    // Sign-out symmetry: a tombstone from a sibling origin that postdates
+    // this sign-in kills this local session too.
+    if (await _bridgeHeal(user) === 'sign-out-local') {
+      try { await signOut(auth); } catch (_) {}
+      window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href);
+      return;
+    }
     // Alerta de inicio de sesion (niv-user.js): disparo sin bloqueo en el
     // aterrizaje autenticado; nunca debe romper el inicio de sesion.
     import('./niv-user.js').then(m => m.maybeSendLoginAlert(user)).catch(() => {});

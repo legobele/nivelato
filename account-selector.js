@@ -4,6 +4,7 @@
 import { signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { auth } from "./firebase-config.js";
 import { handoffTo } from "./sso-handoff.js";
+import { clearSessionEverywhere } from "./session-bridge.js";
 import { makePermChecker } from "./permissions.js";
 
 let _menuOpen = false;
@@ -38,6 +39,15 @@ function purgeAuthRemnants() {
 // Sign out BEFORE navigating. The timeout race guarantees a hanging signOut()
 // can never wedge the logout flow; remnants are purged regardless.
 async function hardSignOut() {
+  // Shared session first, while the ID token still exists: expire the
+  // cookie on every origin at once and revoke refresh tokens server-side
+  // (session-bridge.js). Raced so it can never wedge the logout.
+  try {
+    await Promise.race([
+      clearSessionEverywhere(),
+      new Promise((res) => setTimeout(res, 3500)),
+    ]);
+  } catch (_) { /* best-effort; local sign-out below still applies */ }
   try {
     await Promise.race([
       signOut(auth),

@@ -5,6 +5,7 @@ import { doc, getDoc, collection, addDoc, setDoc, updateDoc, deleteDoc, deleteFi
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
 import { makePermChecker } from './permissions.js';
 import { ensureFlowClaims, routeAfterGate } from './geo.js';
+import { restoreSession, healLocalSession, clearSessionEverywhere } from './session-bridge.js';
 
 let currentUser = null;
 let currentUserData = null;
@@ -59,6 +60,11 @@ function purgeAuthRemnants() {
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
+    // Shared session cookie (session-bridge.js): a sibling origin may
+    // hold a live session this origin can silently adopt via its own
+    // worker. Only a failed or absent exchange falls through to the
+    // login bounce below — the pre-bridge behavior.
+    if (await restoreSession() === 'exchanged') return; // callback refires with the user
     window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href);
     return;
   }
@@ -67,6 +73,15 @@ onAuthStateChanged(auth, async (user) => {
     showIdentityChangedBanner(user.email);
   }
   _prevUid = user.uid;
+  // Sign-out symmetry: if another origin signed out after this session
+  // began, the tombstone kills this local session too. Otherwise the
+  // bridge heals/re-issues the shared cookie from this session.
+  if (await healLocalSession(user) === 'sign-out-local') {
+    try { await signOut(auth); } catch (_) { /* purge below regardless */ }
+    purgeAuthRemnants();
+    window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href);
+    return;
+  }
   currentUser = user;
   // QGC gray theme fallback via ID-token claims (claims.flow === 'qgi')
   if (typeof window.applyCompanyThemeFromAuth === 'function') {
@@ -135,6 +150,15 @@ onAuthStateChanged(auth, async (user) => {
 window.addEventListener('pagehide', () => { if (window._userRefreshTimer) clearInterval(window._userRefreshTimer); });
 
 window._doLogout = async () => {
+  // Shared session first, while the ID token still exists: expire the
+  // cookie on every origin at once and revoke refresh tokens server-side
+  // (session-bridge.js). Raced so it can never wedge the logout.
+  try {
+    await Promise.race([
+      clearSessionEverywhere(),
+      new Promise((res) => setTimeout(res, 3500)),
+    ]);
+  } catch (_) { /* best-effort; local sign-out below still applies */ }
   // Sign out BEFORE navigating. The timeout race guarantees a hanging
   // signOut() can never wedge the logout flow; remnants are purged anyway.
   try {
@@ -144,7 +168,7 @@ window._doLogout = async () => {
     ]);
   } catch (_) { /* fall through to purge + navigate */ }
   purgeAuthRemnants();
-  window.location.href = 'https://login.nivelatolabs.com/';
+  window.location.href = 'https://login.nivelatolabs.com/?signout=1';
 };
 
 // data URL → Blob: evita el ~33% de sobrecarga base64 de uploadString en

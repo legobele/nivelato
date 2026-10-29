@@ -2405,6 +2405,20 @@
     const dest = isQgc
       ? ((role === 'owner' || role === 'cotizador') ? 'https://dashboard.nivelatolabs.com/' : 'https://app.nivelatolabs.com/')
       : 'https://dashboard.nivelatolabs.com/';
+    // Shared session cookie (session-bridge.js): establish it from this
+    // origin's fresh session BEFORE handing off, so later crossings
+    // between the app and the dashboard restore silently from the cookie
+    // instead of bouncing back to this form. Best-effort with a hard cap;
+    // a cookie failure never blocks the handoff. This page's Oct 6 rule
+    // is untouched: nothing here adopts or redirects on an existing
+    // session — this runs only inside the post-sign-in redirect.
+    try {
+      const _bridge = await import('./session-bridge.js');
+      await Promise.race([
+        _bridge.establishSessionCookie(),
+        new Promise((res) => setTimeout(res, 2500)),
+      ]);
+    } catch (_) { /* cookie is an enhancement, not a gate */ }
     if (await ssoHandoff(dest)) return;
     // Token mint failed (e.g. functions not deployed yet): stay on the form.
     ssoFailed(document.getElementById('login-error'));
