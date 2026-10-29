@@ -2297,74 +2297,6 @@
     errEl.classList.add('visible');
   }
 
-  // Beta cascade (env-mark system, Oct 12 2026): a DEV mark set on the
-  // sign-in page enrolls THIS account in the beta update channel; on
-  // company sign-in the user may also have opted the whole company in.
-  // The chord fires pre-auth, so the intent is pending until here. Runs
-  // best-effort: a failure changes nothing and never blocks sign-in. The
-  // email must match the signed-in account or the intent is dropped
-  // (ambiguity = no write). The mark itself stays an alarm, never a gate.
-  async function applyPendingBetaCascade() {
-    // Terminal-path rule (m26): a completed attempt and an email MISMATCH
-    // both drop the intent via clearPendingBeta(). A missing signed-in
-    // user is not terminal (no auth to apply against yet), so the intent
-    // is kept in that case only.
-    let dropIntent = false;
-    try {
-      if (!window.NivEnvMark || !window.NivEnvMark.getPendingBeta) return;
-      const p = window.NivEnvMark.getPendingBeta();
-      if (!p) return;
-      const user = auth.currentUser;
-      if (!user || !user.email) return;
-      // M35: refresh the intent email from the actual sign-in email at
-      // apply time. The snapshot captured at mark-set time is stale when
-      // the natural order was used (mark first, type the email second),
-      // which left it empty and skipped enrollment entirely.
-      if (!p.email) p.email = user.email;
-      if (user.email.toLowerCase() !== String(p.email).toLowerCase()) { dropIntent = true; return; }
-      dropIntent = true;
-      await updateDoc(doc(db, 'users', user.uid), {
-        betaEnrolled: true, betaEnrolledAt: serverTimestamp(), betaChannel: 'beta'
-      });
-      if (p.companyBetaYes === true && p.companyId) {
-        // M36: p.companyId is the UI slug (e.g. "qgc"), not an org doc id.
-        // Resolve the real org from the signed-in user's own doc: its
-        // orgId is the canonical org identifier this same file already
-        // trusts in postAuthRedirect (orgId === 'NJBBG5' for QGC). Never
-        // write to orgs/<slug>. No orgId on the user doc means no company
-        // write at all.
-        let realOrgId = '';
-        try {
-          const userSnap = await getDoc(doc(db, 'users', user.uid));
-          const userData2 = (userSnap && userSnap.exists()) ? (userSnap.data() || {}) : {};
-          realOrgId = String(userData2.orgId || '');
-        } catch (_) { realOrgId = ''; }
-        if (!realOrgId) return;
-        // Company opt-in: enroll the org in beta (mirrors
-        // beta/enroll-company.html), then adopt the beta channel via the
-        // owner-only callable. Direct endpoint call with an explicit ID
-        // token, same pattern as mintSsoToken above (centralFunctions is
-        // bound to a separate app instance and can't attach auth).
-        await updateDoc(doc(db, 'orgs', realOrgId), {
-          betaEnrolled: true, beta: { enrolledAt: serverTimestamp(), enrolledBy: user.uid }
-        });
-        const idToken = await user.getIdToken(true);
-        const resp = await fetch('https://us-central1-nivelato-app.cloudfunctions.net/setOrgUpdateChannel', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
-          body: JSON.stringify({ data: { channel: 'beta' } })
-        });
-        if (!resp.ok) throw new Error('setOrgUpdateChannel s' + resp.status);
-      }
-    } catch (_) { /* best effort: the mark stays an alarm, never a gate */ }
-    finally {
-      /* finally, not code after the catch: early returns inside the try
-       * (mismatch, missing org) must still drop the intent (m26). */
-      if (dropIntent) {
-        try { if (window.NivEnvMark && window.NivEnvMark.clearPendingBeta) window.NivEnvMark.clearPendingBeta(); } catch (_) {}
-      }
-    }
-  }
   async function postAuthRedirect() {
     // Loop breaker: if we just did an SSO handoff within the last 60s, don't
     // mint another token — something downstream is bouncing us back.
@@ -2378,9 +2310,6 @@
       }
     } catch (_) {}
     // flowGate → claims → verdict routing, then SSO handoff to the app.
-    // Beta cascade first: the dev mark's pending beta intent applies here,
-    // post-auth, before any routing decision reads the channel.
-    await applyPendingBetaCascade();
     const gate = await ensureFlowClaims();
     if (gate.ok && !gate.cached && routeAfterGate(gate.verdict, gate.reason)) return;
     const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));

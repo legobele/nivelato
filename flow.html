@@ -107,6 +107,17 @@
   .flow-ring[data-state="error"] { border-color: var(--flow-error); }
   .flow-hint { font-size: 13px; color: var(--flow-doing); min-height: 18px; margin: 4px 2px 0; }
 
+  /* ---------- free plan rail card (sidebar banner zone) ---------- */
+  .flow-plan-card {
+    display: none;
+    background: var(--niv-surface-2); color: var(--niv-text);
+    border: 1px solid var(--niv-border-soft); border-radius: 12px;
+    padding: 14px; margin: 0 0 10px; font-size: 13.5px; line-height: 1.55;
+  }
+  .flow-plan-card.on { display: block; }
+  .flow-plan-card strong { display: block; font-size: 14.5px; margin-bottom: 4px; }
+  .flow-plan-card .plan { color: var(--niv-text-dim); font-size: 12.5px; }
+
   .flow-rail-spacer { flex: 1; }
 
   /* ---------- user chip + menu ---------- */
@@ -485,6 +496,7 @@
     <div class="flow-rail-spacer"></div>
 
     <div id="flow-env-cards" aria-live="polite"></div>
+    <div class="flow-plan-card" id="flow-plan-card" aria-live="polite"></div>
 
     <div class="flow-user">
       <div class="flow-menu" id="flow-menu">
@@ -572,12 +584,12 @@
     </div>
   </main>
 
-  <!-- ======== gate (stable channel / signed out) ======== -->
+  <!-- ======== gate (signed out) ======== -->
   <div class="flow-gate" id="flow-gate">
     <div class="flow-gate-card">
-      <h1 id="flow-gate-title">El flujo nuevo está en beta</h1>
-      <p id="flow-gate-text">Tu empresa está en el canal estable, así que el flujo nuevo de medidas todavía no está disponible. Llega primero por el canal beta.</p>
-      <a class="niv-btn-pill niv-btn-primary" href="/dashboard.html" id="flow-gate-btn">Ir al panel</a>
+      <h1 id="flow-gate-title">Inicia sesión para continuar</h1>
+      <p id="flow-gate-text">El flujo de medidas necesita tu cuenta de Nivelato.</p>
+      <a class="niv-btn-pill niv-btn-primary" href="/login.html" id="flow-gate-btn">Iniciar sesión</a>
     </div>
   </div>
 </div>
@@ -621,22 +633,21 @@ import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.11.0/f
 import { getDoc, getDocs, doc, collection } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
 import { resolveLang } from '/niv-user.js';
 
-/* New measurement flow, step 1 (Giulia's boards, Oct 12 2026).
-   Additive page: the existing wizard (index.html) is untouched.
-   Entry is gated to the beta/testing/debug channels and hosts; the
-   stable channel sees the gate card, never the flow.
+/* New measurement flow (Giulia's boards, Oct 12 2026). Since Oct 29
+   2026 this is THE measurement flow: the beta system was killed, all
+   beta content was promoted to main, and the channel gate that used
+   to hide this page from stable orgs is gone. Any signed-in user
+   gets the flow; signed-out visitors get the sign-in gate card.
+   (The legacy wizard in index.html still exists as a separate page;
+   this flow does not depend on it.)
 
-   Channel resolution:
-     1. host surface (testing./debug./beta.nivelatolabs.com)
-     2. orgs/{orgId}.updateChannel === 'beta'
-     3. users/{uid}.betaEnrolled or betaChannel === 'beta'
-     4. 'stable'
-   The TEST watermark renders only when the channel resolves to
-   'testing', with version + commit read live from app_updates/backend.
-   Dev mode (ids beside context names) = debug surface/host, a local
-   host, or demo with dev=1.
+   Host surfaces still exist for Labs' own work:
+     - testing.nivelatolabs.com: the TEST watermark renders, with
+       version + commit read live from app_updates/backend.
+     - debug.nivelatolabs.com / local hosts: dev mode (ids beside
+       context names); demo honors dev=1 for the same.
    Demo mode (?demo=1, the modules' own convention) skips auth and
-   feeds demo data; ?channel= is honored only inside demo. */
+   feeds demo data. */
 
 const STR = {
   es: {
@@ -677,11 +688,11 @@ const STR = {
     guardHtml: 'Tienes una medición en curso que <strong>será descartada</strong>. ¿Ir al panel?',
     goAnyway: 'Ir de todos modos', cancel: 'Cancelar',
     menuDashboard: 'Panel', menuSettings: 'Ajustes',
-    gateBetaTitle: 'El flujo nuevo está en beta',
-    gateBetaText: 'Tu empresa está en el canal estable, así que el flujo nuevo de medidas todavía no está disponible. Llega primero por el canal beta.',
+    freeTitle: 'Esta es una versión gratuita limitada de Nivelato',
+    freePlan: 'Nivelato (Gratis)',
     gateSigninTitle: 'Inicia sesión para continuar',
-    gateSigninText: 'El flujo nuevo de medidas necesita tu cuenta de Nivelato.',
-    gateDashboard: 'Ir al panel', gateSignin: 'Iniciar sesión',
+    gateSigninText: 'El flujo de medidas necesita tu cuenta de Nivelato.',
+    gateSignin: 'Iniciar sesión',
     loading: 'Cargando...'
   },
   en: {
@@ -722,11 +733,11 @@ const STR = {
     guardHtml: 'You have a measurement in progress which will be <strong>discarded</strong>. Go to dashboard?',
     goAnyway: 'Go anyway', cancel: 'Cancel',
     menuDashboard: 'Dashboard', menuSettings: 'Settings',
-    gateBetaTitle: 'The new flow is in beta',
-    gateBetaText: 'Your company is on the stable channel, so the new measurement flow is not available yet. It rolls out through the beta channel first.',
+    freeTitle: 'This is a limited free version of Nivelato',
+    freePlan: 'Nivelato (Free)',
     gateSigninTitle: 'Sign in to continue',
-    gateSigninText: 'The new measurement flow needs your Nivelato account.',
-    gateDashboard: 'Go to dashboard', gateSignin: 'Sign in',
+    gateSigninText: 'The measurement flow needs your Nivelato account.',
+    gateSignin: 'Sign in',
     loading: 'Loading...'
   }
 };
@@ -736,8 +747,7 @@ const DEMO = params.get('demo') === '1';
 const HOST = location.hostname;
 const HOST_SURFACE =
   HOST === 'testing.nivelatolabs.com' ? 'testing' :
-  HOST === 'debug.nivelatolabs.com' ? 'debug' :
-  HOST === 'beta.nivelatolabs.com' ? 'beta' : null;
+  HOST === 'debug.nivelatolabs.com' ? 'debug' : null;
 const LOCAL_HOST = HOST === 'localhost' || HOST === '127.0.0.1' || HOST === '';
 
 let LANG = 'es';
@@ -767,12 +777,12 @@ const state = {
   projects: [],            // org projects for the existing picker
   projectsLoaded: false,
   user: null,              // { name, email, photoURL }
-  channel: HOST_SURFACE || 'stable',
+  surface: HOST_SURFACE,
+  planState: null,         // 'free' | 'dev' | null(paid), from niv-brandmark at boot
   devMode: HOST_SURFACE === 'debug' || LOCAL_HOST || (DEMO && params.get('dev') === '1')
 };
 
 if (DEMO) {
-  state.channel = params.get('channel') || HOST_SURFACE || 'beta';
   state.user = { name: 'Demo User', email: 'demo@nivelato.app', photoURL: '' };
   state.projects = [
     { id: 'demo-project-1', name: 'Test project' },
@@ -979,8 +989,28 @@ function renderUser() {
   }
 }
 
+/* Free plan rail card (Giulia's boards): the banner zone shows the
+   free-version notice on every step for Free plan accounts. The dev
+   environment card (niv-envmark) takes the zone instead while a dev
+   mark is active: one banner at a time. planState comes from
+   niv-brandmark's three-state resolution at boot ('free' shows the
+   card; 'dev' and null/paid do not). */
+function renderPlanCard() {
+  const el = $('flow-plan-card');
+  if (!el) return;
+  const devMark = !!(window.NivEnvMark && window.NivEnvMark.isDev && window.NivEnvMark.isDev());
+  const show = state.planState === 'free' && !devMark;
+  el.classList.toggle('on', show);
+  if (show) {
+    el.innerHTML = '<strong>' + esc(S().freeTitle) + '</strong><span class="plan">' + esc(S().freePlan) + '</span>';
+  } else {
+    el.innerHTML = '';
+  }
+}
+
 function render() {
   applyLang();
+  renderPlanCard();
   renderContext();
   renderProgress();
   renderWho();
@@ -1024,9 +1054,9 @@ window.addEventListener('resize', () => {
   resizeTimer = setTimeout(mountGraph, 250);
 });
 
-/* ---------- watermark (testing channel only) ---------- */
+/* ---------- watermark (testing surface only) ---------- */
 async function loadWatermark() {
-  if (state.channel !== 'testing') return;
+  if (state.surface !== 'testing') return;
   try {
     const snap = await getDoc(doc(db, 'app_updates', 'backend'));
     if (!snap.exists()) return;
@@ -1224,12 +1254,12 @@ function showFlow() {
   $('flow-main').style.display = '';
   document.querySelector('.flow-rail').style.display = '';
   render();
-  /* environment warning cards (niv-envmark.js): beta card when the
-   * channel is beta, dev card while a dev mark is active */
+  /* environment warning cards (niv-envmark.js): dev card while a dev
+   * mark is active, prod card while a prod mark is active */
   try { if (window.NivEnvMark) window.NivEnvMark.renderRailCards(); } catch (_) { /* ignore */ }
   requestAnimationFrame(mountGraph);
 }
-function showGate(kind) {
+function showGate() {
   $('flow-loading').style.display = 'none';
   $('flow-shell').style.display = '';
   $('flow-main').style.display = 'none';
@@ -1237,17 +1267,10 @@ function showGate(kind) {
   const gate = $('flow-gate');
   gate.classList.add('on');
   const btn = $('flow-gate-btn');
-  if (kind === 'signin') {
-    $('flow-gate-title').textContent = S().gateSigninTitle;
-    $('flow-gate-text').textContent = S().gateSigninText;
-    btn.textContent = S().gateSignin;
-    btn.setAttribute('href', '/login.html');
-  } else {
-    $('flow-gate-title').textContent = S().gateBetaTitle;
-    $('flow-gate-text').textContent = S().gateBetaText;
-    btn.textContent = S().gateDashboard;
-    btn.setAttribute('href', '/dashboard.html');
-  }
+  $('flow-gate-title').textContent = S().gateSigninTitle;
+  $('flow-gate-text').textContent = S().gateSigninText;
+  btn.textContent = S().gateSignin;
+  btn.setAttribute('href', '/login.html');
   applyLang();
 }
 
@@ -1267,38 +1290,28 @@ function applyReferral(projectsById) {
 /* ---------- boot ---------- */
 async function bootDemo() {
   applyReferral(null);
-  // Demo sessions are not paid sessions: free-state brand watermark.
-  if (window.NivBrandmark) window.NivBrandmark.apply({ tier: 'free' });
+  // Demo sessions are not paid sessions: free-state brand watermark,
+  // and the rail shows the free-version card.
+  state.planState = window.NivBrandmark ? window.NivBrandmark.apply({ tier: 'free' }) : 'free';
   showFlow();
   loadWatermark();
 }
 
 async function bootReal() {
   onAuthStateChanged(auth, async (user) => {
-    if (!user) { showGate('signin'); return; }
+    if (!user) { showGate(); return; }
     let userData = {};
-    let orgData = {};
     try {
       const us = await getDoc(doc(db, 'users', user.uid));
       if (us.exists()) userData = us.data() || {};
-    } catch (e) { /* fail soft: channel falls back below */ }
+    } catch (e) { /* fail soft: empty user doc, defaults apply */ }
     const orgId = userData.orgId || null;
     if (orgId) {
-      try {
-        const os = await getDoc(doc(db, 'orgs', orgId));
-        if (os.exists()) orgData = os.data() || {};
-      } catch (e) { /* fail soft */ }
       try {
         const ps = await getDocs(collection(db, 'orgs', orgId, 'projects'));
         state.projects = ps.docs.map((d) => ({ id: d.id, name: (d.data() && d.data().name) || d.id }));
       } catch (e) { state.projects = []; }
       state.projectsLoaded = true;
-    }
-    /* channel: host surface > org channel > personal beta enrollment */
-    if (!HOST_SURFACE) {
-      if (orgData.updateChannel === 'beta') state.channel = 'beta';
-      else if (userData.betaEnrolled === true || userData.betaChannel === 'beta') state.channel = 'beta';
-      else state.channel = 'stable';
     }
     try {
       const l = await resolveLang(user.uid);
@@ -1313,24 +1326,25 @@ async function bootReal() {
 
     // Brand watermark (niv-brandmark.js): same three-state gate as
     // the dashboard, off the tier/email this boot already resolved.
-    if (window.NivBrandmark) window.NivBrandmark.apply({ email: state.user.email, tier: userData.tier, orgId: orgId });
+    // Its return also drives the rail's free-version card.
+    state.planState = window.NivBrandmark
+      ? window.NivBrandmark.apply({ email: state.user.email, tier: userData.tier, orgId: orgId })
+      : (['ultra', 'pro', 'qgc'].includes(String(userData.tier || '').toLowerCase()) ? null : 'free');
 
-    const allowed = DEMO || state.channel === 'beta' || state.channel === 'testing' ||
-      state.channel === 'debug' || userData.betaEnrolled === true;
-    if (!allowed) { showGate('beta'); return; }
-
+    // No channel gate anymore (beta system killed Oct 29 2026): every
+    // signed-in user gets the flow.
     applyReferral(new Map(state.projects.map((p) => [p.id, p.name])));
     showFlow();
     loadWatermark();
   });
 }
 
-/* ---------- environment marks: channel provider + live re-render ---------- */
+/* ---------- environment marks: live re-render ---------- */
 try {
   if (window.NivEnvMark) {
-    window.NivEnvMark.setChannelProvider(function () { return state.channel; });
     document.addEventListener('niv-envmark-change', function () {
       try { window.NivEnvMark.renderRailCards(); } catch (_) { /* ignore */ }
+      renderPlanCard();
     });
   }
 } catch (_) { /* env marks unavailable: the flow runs without warning cards */ }

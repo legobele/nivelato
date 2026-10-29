@@ -33,7 +33,6 @@
   .kv .v{font-size:13.5px;text-align:right}
   .pill{display:inline-block;border-radius:var(--niv-pill);padding:3px 11px;font-size:12px;font-weight:600}
   .pill.on{background:rgba(34,197,94,.15);color:var(--niv-green)}
-  .pill.beta{background:rgba(245,165,36,.15);color:var(--niv-amber)}
   .pill.off{background:var(--niv-surface-2);color:var(--niv-text-dim)}
   a{color:var(--niv-amber)}
   footer{color:var(--niv-text-dim);font-size:12.5px;text-align:center;margin-top:30px;line-height:1.7}
@@ -53,11 +52,6 @@
   </div>
 
   <div class="card">
-    <h2 data-t="betaTitle">Canal beta</h2>
-    <div id="betaBox"><p data-t="loading">Cargando...</p></div>
-  </div>
-
-  <div class="card">
     <h2 data-t="tracksTitle">Pistas de Google Play</h2>
     <div class="kv"><span class="k" data-t="internal">Prueba interna</span><span class="v"><span class="pill on" data-t="internalState">Activa (100% a los testers internos)</span></span></div>
     <div class="kv"><span class="k" data-t="closed">Prueba cerrada</span><span class="v"><span class="pill off" data-t="closedState">En preparación: la producción requiere 12 testers por 14 días</span></span></div>
@@ -67,7 +61,7 @@
 
   <div class="card">
     <h2 data-t="flowTitle">Flujo nuevo de medidas</h2>
-    <p data-t="flowText">El rediseño del flujo de medidas se prueba en el canal beta: paso 1 (cliente, proyecto y ubicación) y dimensiones base.</p>
+    <p data-t="flowText">El flujo de medidas rediseñado ya es el flujo principal para todas las cuentas: paso 1 (cliente, proyecto y ubicación) y dimensiones base.</p>
     <p style="margin-top:12px"><a href="https://app.nivelatolabs.com/flow.html" data-t="flowBtn">Abrir el flujo nuevo</a></p>
   </div>
 
@@ -75,12 +69,12 @@
     <h2 data-t="joinTitle">Cómo unirte</h2>
     <ul>
       <li data-t="join1">Prueba interna: pide una invitación a Nivelato Labs; tu correo se agrega a la lista de testers en Play Console y aceptas la invitación de Google Play.</li>
-      <li data-t="join2">Programa beta (web y empresa): inscríbete en beta.nivelatolabs.com con tu cuenta de Nivelato.</li>
-      <li data-t="join3">¿Ya estás probando? Envía comentarios desde beta.nivelatolabs.com/feedback: entran como prioritarios.</li>
+      <li data-t="join2">Flujo de medidas (web): ya está activo para todas las cuentas de Nivelato; no hay inscripción ni canal beta.</li>
+      <li data-t="join3">¿Ya estás probando? Envía comentarios desde la página de soporte de Nivelato Labs.</li>
     </ul>
   </div>
 
-  <footer>Nivelato Labs · <a href="https://beta.nivelatolabs.com">beta.nivelatolabs.com</a> · <a href="https://debug.nivelatolabs.com">debug.nivelatolabs.com</a></footer>
+  <footer>Nivelato Labs · <a href="https://debug.nivelatolabs.com">debug.nivelatolabs.com</a></footer>
 </div>
 
 <script type="module">
@@ -89,30 +83,28 @@ import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase
 
 const T = {
   es: { tag:'Pruebas', title:'Pistas de prueba', sub:'Qué está corriendo dónde, leído directamente del registro de versiones de Nivelato. Sin números inventados: si un dato no está publicado, la página lo dice.',
-    stableTitle:'Canal estable', betaTitle:'Canal beta', tracksTitle:'Pistas de Google Play',
+    stableTitle:'Versión actual', tracksTitle:'Pistas de Google Play',
     internal:'Prueba interna', internalState:'Activa (100% a los testers internos)',
     closed:'Prueba cerrada', closedState:'En preparación: la producción requiere 12 testers por 14 días',
     tracksNote:'El estado de las pistas lo controla Google Play Console; esta página refleja la configuración conocida al 12 de octubre de 2026.',
-    flowTitle:'Flujo nuevo de medidas', flowText:'El rediseño del flujo de medidas se prueba en el canal beta: paso 1 (cliente, proyecto y ubicación) y dimensiones base.', flowBtn:'Abrir el flujo nuevo',
+    flowTitle:'Flujo nuevo de medidas', flowText:'El flujo de medidas rediseñado ya es el flujo principal para todas las cuentas: paso 1 (cliente, proyecto y ubicación) y dimensiones base.', flowBtn:'Abrir el flujo nuevo',
     joinTitle:'Cómo unirte',
     join1:'Prueba interna: pide una invitación a Nivelato Labs; tu correo se agrega a la lista de testers en Play Console y aceptas la invitación de Google Play.',
-    join2:'Programa beta (web y empresa): inscríbete en beta.nivelatolabs.com con tu cuenta de Nivelato.',
-    join3:'¿Ya estás probando? Envía comentarios desde beta.nivelatolabs.com/feedback: entran como prioritarios.',
+    join2:'Flujo de medidas (web): ya está activo para todas las cuentas de Nivelato; no hay inscripción ni canal beta.',
+    join3:'¿Ya estás probando? Envía comentarios desde la página de soporte de Nivelato Labs.',
     loading:'Cargando...', version:'Versión', androidBuild:'Android (código)', webBackend:'Backend web', commit:'Commit', updated:'Actualizado', backfilled:'Dato retroactivo',
-    noBeta:'Todavía no hay una versión beta publicada. Cuando exista, aparecerá aquí con su versión y fecha.',
     unavailable:'El registro no está disponible ahora mismo.', desc:'Descripción' },
   en: { tag:'Testing', title:'Testing tracks', sub:'What is running where, read directly from the Nivelato version registry. No invented numbers: if a fact is not published, the page says so.',
-    stableTitle:'Stable channel', betaTitle:'Beta channel', tracksTitle:'Google Play tracks',
+    stableTitle:'Current version', tracksTitle:'Google Play tracks',
     internal:'Internal testing', internalState:'Active (100% to internal testers)',
     closed:'Closed testing', closedState:'In preparation: production requires 12 testers for 14 days',
     tracksNote:'Track state is controlled by Google Play Console; this page reflects the known configuration as of October 12, 2026.',
-    flowTitle:'New measurement flow', flowText:'The measurement flow redesign is being tested on the beta channel: step 1 (customer, project, and location) and base dimensions.', flowBtn:'Open the new flow',
+    flowTitle:'New measurement flow', flowText:'The redesigned measurement flow is now the main flow for every account: step 1 (customer, project, and location) and base dimensions.', flowBtn:'Open the new flow',
     joinTitle:'How to join',
     join1:'Internal testing: ask Nivelato Labs for an invite; your email is added to the Play Console tester list and you accept the Google Play invitation.',
-    join2:'Beta program (web and company): enroll at beta.nivelatolabs.com with your Nivelato account.',
-    join3:'Already testing? Send feedback from beta.nivelatolabs.com/feedback: it arrives as priority.',
+    join2:'Measurement flow (web): it is already active for every Nivelato account; there is no enrollment and no beta channel.',
+    join3:'Already testing? Send feedback from the Nivelato Labs support page.',
     loading:'Loading...', version:'Version', androidBuild:'Android (code)', webBackend:'Web backend', commit:'Commit', updated:'Updated', backfilled:'Backfilled record',
-    noBeta:'No beta version is published yet. When one exists, it will appear here with its version and date.',
     unavailable:'The registry is not available right now.', desc:'Description' }
 };
 let lang = localStorage.getItem('niv-lang') || 'es';
@@ -130,10 +122,9 @@ async function get(id){ const s = await getDoc(doc(db, 'app_updates', id)); retu
 
 async function load(){
   const stableBox = document.getElementById('stableBox');
-  const betaBox = document.getElementById('betaBox');
   try {
-    const [latest, android, backend, betaPtr] = await Promise.all([
-      get('latest'), get('android'), get('backend'), get('beta-latest')]);
+    const [latest, android, backend] = await Promise.all([
+      get('latest'), get('android'), get('backend')]);
     let html = '';
     if (latest) html += kv(T[lang].version, '<span class="mono">' + esc(latest.version) + '</span>');
     if (android) html += kv(T[lang].androidBuild, '<span class="mono">' + esc(android.versionCode) + ' · ' + esc(android.friendlyVersion || '') + '</span>');
@@ -141,16 +132,8 @@ async function load(){
     if (backend) html += kv(T[lang].commit, '<span class="mono">' + esc(String(backend.commit || '').slice(0, 12)) + '</span>');
     if (android && android.stampedAt) html += kv(T[lang].updated, esc(fmtTs(android.stampedAt)));
     stableBox.innerHTML = html || '<p>' + esc(T[lang].unavailable) + '</p>';
-    if (betaPtr && betaPtr.version){
-      let b = kv(T[lang].version, '<span class="mono">' + esc(betaPtr.version) + '</span>');
-      if (betaPtr.updatedAt) b += kv(T[lang].updated, esc(fmtTs(betaPtr.updatedAt)));
-      betaBox.innerHTML = b;
-    } else {
-      betaBox.innerHTML = '<p>' + esc(T[lang].noBeta) + '</p>';
-    }
   } catch (e) {
     stableBox.innerHTML = '<p>' + esc(T[lang].unavailable) + '</p>';
-    betaBox.innerHTML = '<p>' + esc(T[lang].unavailable) + '</p>';
   }
 }
 load();

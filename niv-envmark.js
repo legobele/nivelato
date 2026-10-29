@@ -13,7 +13,7 @@
  *    When setting prod it also marks the account being signed into: the
  *    account is not authed yet at chord time, so the mark is keyed by the
  *    email typed into the card's email field. Setting dev records the
- *    pending beta intent (see the beta cascade note below).
+ *    account marking for production accounts.
  * 3. Dev-flag interstitial: when a dev flag is detected, a FULL-SCREEN
  *    solid red interstitial pops up: "DEV ENVIRONMENT DETECTED!!!!" /
  *    "See support.nivelatolabs.com/dev for info and guidance". The
@@ -46,33 +46,25 @@
  *
  * Rail warning cards (flow rail, under the sections, above the user chip):
  * - DEV card (red): verbatim alarm text + support link, while dev active.
- * - BETA card (black): verbatim "You are on a beta version..." while the
- *   channel resolves to beta. Both rendered by renderRailCards().
+ * - PROD card: current-mark line while the prod mark is active.
+ * Both rendered by renderRailCards(). (A beta card used to render here;
+ * it died with the beta system, Oct 29 2026.)
  *
- * Beta cascade (Giulia, Oct 12 2026): "activate the beta flag" = the chord
- * must flip the beta channel as part of the dev mark, not just set a label.
- * - Setting the DEV mark ALSO enables the beta update channel at USER level:
- *   the account being marked gets beta versions. Recorded pre-auth as a
- *   pending intent ('niv-env-pending-beta': { email, companyId, companyName,
- *   companyBetaYes }), because the sign-in page has no auth yet.
- * - On company sign-in (QGC mode / company-account sign-in), setting the dev
- *   mark additionally PROMPTS whether to enable beta at COMPANY level. The
- *   org's channel changes only on an explicit Yes, and only after sign-in.
- * - Application happens post-auth (login.html's postAuthRedirect calls
- *   NivEnvMark.getPendingBeta() / clearPendingBeta()): users/{uid} gets
- *   { betaEnrolled: true, betaEnrolledAt, betaChannel: 'beta' }; on a
- *   confirmed company opt-in the org is enrolled in beta and the
- *   setOrgUpdateChannel callable adopts the beta channel. All best-effort,
- *   never blocks sign-in. Email must match the signed-in account or the
- *   intent is dropped (ambiguity = no write).
- * - The mark itself remains an alarm, never an authorization fact: no
- *   server-side gate may trust it.
+ * The mark itself remains an alarm, never an authorization fact: no
+ * server-side gate may trust it.
  *
- * Version-routing rule (recorded Oct 12): signed-out surfaces resolve
- * LATEST, signed-in surfaces resolve channel. resolveLatestVersion() is
- * the resolver signed-out surfaces must use; today no signed-out surface
- * displays a version, so nothing is repointed yet. "Latest" =
- * app_updates/beta-latest, the newest shipped projection.
+ * (The Oct 12 2026 beta cascade that used to hang off the dev mark,
+ * pending beta intent, company beta prompt, post-auth enrollment, was
+ * removed Oct 29 2026 when the beta system was killed and all beta
+ * content was promoted to main. The dev mark no longer enrolls anyone
+ * in anything.)
+ *
+ * Version-routing rule: signed-out surfaces resolve LATEST.
+ * resolveLatestVersion() is the resolver signed-out surfaces must use;
+ * today no signed-out surface displays a version, so nothing is
+ * repointed yet. "Latest" = app_updates/backend, the current shipped
+ * projection. (Before the beta kill, Oct 29 2026, "latest" tracked the
+ * beta projection; there is one channel now.)
  *
  * Classic script, no modules, no build step. Include AFTER niv-settings.js:
  *   <script src="/niv-settings.js"></script>
@@ -127,20 +119,8 @@
       }
     } catch (_) { ok = false; }
     try { if (v === '') window.localStorage.removeItem(MARK_KEY); else lsSet(MARK_KEY, v); } catch (_) { /* ignore */ }
-    if (v === 'dev') {
-      /* Beta cascade: the dev mark flips the beta channel for the account
-       * being marked (recorded pre-auth; applied post-auth). On a company
-       * card it also offers the company-wide opt-in prompt. */
-      recordPendingBeta();
-    } else if (v === '') {
-      /* Mark cleared before sign-in: the pending intent dies with it. */
-      clearPendingBeta();
-      betaPromptedKey = null;
-      dismissBetaPrompt();
-    }
     emitChange();
     refreshAll();
-    if (v === 'dev') maybePromptCompanyBeta();
     return ok;
   }
   function getAccounts() {
@@ -173,76 +153,6 @@
   function isDev() { return getMark() === 'dev'; }
   function isProd() { return getMark() === 'prod'; }
 
-  /* ---------------------------------------------------------------- */
-  /* beta cascade: pending intent (pre-auth) + company prompt          */
-  /* ---------------------------------------------------------------- */
-  /* The chord fires on a signed-out page: no auth, no Firestore write
-   * is possible. So the cascade records a PENDING intent keyed by the
-   * account being signed into; login.html applies it post-auth. */
-  var BETA_PENDING_KEY = 'niv-env-pending-beta';
-  function getPendingBeta() {
-    var raw = null;
-    try { if (window.NivSettings && window.NivSettings.get) raw = window.NivSettings.get(BETA_PENDING_KEY); } catch (_) { /* ignore */ }
-    if (!raw) raw = lsGet(BETA_PENDING_KEY);
-    if (!raw) return null;
-    try { var o = JSON.parse(raw); return (o && typeof o === 'object') ? o : null; } catch (_) { return null; }
-  }
-  function setPendingBeta(p) {
-    var json = '';
-    try { json = JSON.stringify(p || {}); } catch (_) { json = '{}'; }
-    try { if (window.NivSettings && window.NivSettings.set) window.NivSettings.set(BETA_PENDING_KEY, json); } catch (_) { /* ignore */ }
-    lsSet(BETA_PENDING_KEY, json);
-  }
-  function clearPendingBeta() {
-    try { if (window.NivSettings && window.NivSettings.remove) window.NivSettings.remove(BETA_PENDING_KEY); } catch (_) { /* ignore */ }
-    try { window.localStorage.removeItem(BETA_PENDING_KEY); } catch (_) { /* ignore */ }
-  }
-  function visibleCard() {
-    try {
-      var cards = document.querySelectorAll('[data-envmark-card]');
-      for (var i = 0; i < cards.length; i++) {
-        if (cards[i].offsetParent !== null) return cards[i];
-      }
-    } catch (_) { /* ignore */ }
-    return null;
-  }
-  /* Company-account sign-in card: the branded QGC-mode surface. Carries
-   * data-company-id (login.html renders it). */
-  function visibleCompanyCard() {
-    try {
-      var cards = document.querySelectorAll('.company-single[data-envmark-card]');
-      for (var i = 0; i < cards.length; i++) {
-        if (cards[i].offsetParent !== null) return cards[i];
-      }
-    } catch (_) { /* ignore */ }
-    return null;
-  }
-  function cardEmail(card) {
-    try {
-      var em = card.querySelector('input[type="email"]');
-      if (em && em.value && String(em.value).trim()) return String(em.value).trim().toLowerCase();
-    } catch (_) { /* ignore */ }
-    return '';
-  }
-  function cardCompanyInfo(card) {
-    var id = '', name = '';
-    try { id = card.getAttribute('data-company-id') || ''; } catch (_) { /* ignore */ }
-    try { var t = card.querySelector('.company-title'); if (t && t.textContent.trim()) name = t.textContent.trim(); } catch (_) { /* ignore */ }
-    if (!name) { try { var a = card.querySelector('.account-name'); if (a && a.textContent.trim()) name = a.textContent.trim(); } catch (_) { /* ignore */ } }
-    return { id: id, name: name || id };
-  }
-  function recordPendingBeta() {
-    var card = visibleCard();
-    var company = visibleCompanyCard();
-    var info = company ? cardCompanyInfo(company) : { id: '', name: '' };
-    setPendingBeta({
-      email: card ? cardEmail(card) : '',
-      companyId: info.id,
-      companyName: info.name,
-      companyBetaYes: null, /* answered by the company prompt, below */
-      at: Date.now()
-    });
-  }
 
   var changeListeners = [];
   function onChange(cb) { if (typeof cb === 'function') changeListeners.push(cb); }
@@ -266,16 +176,10 @@
       modalPrompt: '¿Seguro que quieres iniciar sesión?',
       modalGo: 'Continuar',
       modalCancel: 'Cancelar',
-      betaPromptTitle: '¿Activar la beta para toda la empresa?',
-      betaPromptBody: 'Marcaste DEV en el inicio de sesión de {company}. Esto activa el canal beta de actualizaciones para tu cuenta cuando inicies sesión. ¿Activarlo también para toda la empresa? El canal de la empresa solo cambia si eliges Sí, y solo después de iniciar sesión con una cuenta que pueda administrar la empresa.',
-      betaPromptYes: 'Sí, activar la beta para la empresa',
-      betaPromptNo: 'No, solo mi cuenta',
       devTitle: 'DEV ENVIRONMENT DETECTED!!!!',
       devSub: 'Ver support.nivelatolabs.com/dev para información y ayuda',
       devExit: 'Presiona CTRL+ALT+B para desactivar esta marca y cerrar esta pantalla.',
       prodState: 'Marca actual: entorno de PRODUCCIÓN',
-      betaTitle: 'ADVERTENCIA!!!',
-      betaBody: 'Estás en una versión beta de Nivelato. NO USES ESTA VERSIÓN EN UN ENTORNO PROD!!!!!!!!!!!!!!! ESPERA PÉRDIDA DE DATOS O PROBLEMAS'
     },
     en: {
       footerHint: 'Press CTRL+ALT+B to TOGGLE marking account being signed into & device as a PRODUCTION env',
@@ -286,16 +190,10 @@
       modalPrompt: 'Are you sure you would like to sign in?',
       modalGo: 'Continue',
       modalCancel: 'Cancel',
-      betaPromptTitle: 'Enable beta for the whole company?',
-      betaPromptBody: 'You set the DEV mark on the {company} sign-in. This enables the beta update channel for your account after you sign in. Also enable beta for the whole company? The company\'s channel only changes if you choose Yes — and only after you sign in with an account that can manage the company.',
-      betaPromptYes: 'Yes, enable beta for the company',
-      betaPromptNo: 'No, just my account',
       devTitle: 'DEV ENVIRONMENT DETECTED!!!!',
       devSub: 'See support.nivelatolabs.com/dev for info and guidance',
       devExit: 'Press CTRL+ALT+B to turn off this flag and dismiss this screen.',
       prodState: 'Current mark: PRODUCTION env',
-      betaTitle: 'WARNING!!!',
-      betaBody: 'You are on a beta version of Nivelato. DO NOT USE THIS VERSION ON A PROD ENV!!!!!!!!!!!!!!! EXPECT DATA LOSS OR ISSUES'
     }
   };
   function lang() {
@@ -357,9 +255,6 @@
     '.niv-envmark-interstitial.open{display:flex;}',
     '.niv-envmark-interstitial h1{font-size:34px;margin:0 0 14px;letter-spacing:.02em;}',
     '.niv-envmark-interstitial a{color:#fff;font-size:17px;}',
-    '.flow-envcard-beta{background:#000;color:#fff;border:1px solid #2e2e38;',
-    'border-radius:12px;padding:14px;margin:0 0 10px;font-size:13px;line-height:1.55;}',
-    '.flow-envcard-beta strong{display:block;font-size:15px;margin-bottom:6px;}',
     '.flow-envcard-dev{background:#c81e1e;color:#fff;border-radius:12px;',
     'padding:14px;margin:0 0 10px;font-size:13px;line-height:1.55;}',
     '.flow-envcard-dev strong{display:block;font-size:15px;margin-bottom:6px;}',
@@ -387,8 +282,8 @@
   var inOwnWrite = false;
   function isRevealed() { return lsGet(REVEAL_KEY) === '1'; }
   /* Idempotent and non-destructive (M34, env side): revealing an already
-   * revealed footer is a no-op. It never clears the mark, the pending
-   * beta intent, or any other setting. */
+   * revealed footer is a no-op. It never clears the mark or any other
+   * setting. */
   function setRevealed() {
     if (isRevealed()) { paintFooters(); return; }
     lsSet(REVEAL_KEY, '1'); paintFooters();
@@ -408,9 +303,6 @@
       }
       paintFooters();
     } finally { inOwnWrite = false; }
-    /* A company card rendered while the dev mark was already active
-     * (?env=dev at boot): backfill the pending intent, then prompt. */
-    refreshPendingBeta();
   }
   function paintFooters() {
     var revealed = isRevealed();
@@ -507,9 +399,8 @@
     } catch (_) { /* ignore */ }
   }
   /* CTRL+ALT+B ladder (M30): unset -> prod -> dev -> unset, so DEV is
-   * reachable by keyboard and the beta intent that hangs off setMark('dev')
-   * is recorded. In the dev sign-in modal the same chord turns the dev
-   * flag off (dev -> unset, the last ladder step). */
+   * reachable by keyboard. In the dev sign-in modal the same chord turns
+   * the dev flag off (dev -> unset, the last ladder step). */
   function toggleB() {
     var m = getMark();
     if (m === 'dev') {
@@ -583,96 +474,6 @@
   }
   function isModalOpen() { return !!(modalEl && modalEl.classList.contains('open')); }
 
-  /* ---------------------------------------------------------------- */
-  /* company-beta prompt (QGC mode): enable beta for the whole company?*/
-  /* ---------------------------------------------------------------- */
-  /* Asked once per (company, account) while the dev mark is set. The
-   * org's channel changes ONLY on an explicit Yes, applied post-auth by
-   * login.html (the callable enforces ownership server-side). Veil click
-   * or Esc counts as "just my account": conservative by design. */
-  var betaPromptEl = null;
-  var betaPromptedKey = null;
-  function buildBetaPrompt() {
-    var veil = document.createElement('div');
-    veil.className = 'niv-envmark-modal-veil';
-    veil.id = 'niv-envmark-betaprompt';
-    veil.setAttribute('role', 'alertdialog');
-    veil.setAttribute('aria-modal', 'true');
-    veil.innerHTML =
-      '<div class="niv-envmark-modal">' +
-      '<h2 data-bp="betaPromptTitle"></h2>' +
-      '<p class="niv-envmark-instr" data-bp="betaPromptBody" style="text-align:left"></p>' +
-      '<button type="button" class="niv-envmark-go" data-bp="betaPromptYes" style="background:#1f7a33"></button>' +
-      '<button type="button" class="niv-envmark-cancel" data-bp="betaPromptNo"></button>' +
-      '</div>';
-    inOwnWrite = true;
-    try { document.body.appendChild(veil); } finally { inOwnWrite = false; }
-    function answer(yes) {
-      var p = getPendingBeta();
-      if (p) { p.companyBetaYes = !!yes; setPendingBeta(p); }
-      veil.classList.remove('open');
-    }
-    veil.querySelector('.niv-envmark-go').addEventListener('click', function () { answer(true); });
-    veil.querySelector('.niv-envmark-cancel').addEventListener('click', function () { answer(false); });
-    veil.addEventListener('click', function (e) { if (e.target === veil) answer(false); });
-    betaPromptEl = veil;
-    return veil;
-  }
-  function paintBetaPrompt() {
-    if (!betaPromptEl || inOwnWrite) return;
-    inOwnWrite = true;
-    try {
-      var p = getPendingBeta() || {};
-      var els = betaPromptEl.querySelectorAll('[data-bp]');
-      for (var i = 0; i < els.length; i++) {
-        var v = t(els[i].getAttribute('data-bp'));
-        v = String(v).replace('{company}', p.companyName || p.companyId || '');
-        if (els[i].textContent !== v) els[i].textContent = v;
-      }
-    } finally { inOwnWrite = false; }
-  }
-  function maybePromptCompanyBeta() {
-    if (getMark() !== 'dev') return;
-    var company = visibleCompanyCard();
-    if (!company) return;
-    var p = getPendingBeta();
-    if (!p || !p.companyId) return;
-    if (typeof p.companyBetaYes === 'boolean') return;
-    var key = p.companyId + '|' + (p.email || '');
-    if (betaPromptedKey === key) return;
-    betaPromptedKey = key;
-    if (!betaPromptEl) buildBetaPrompt();
-    paintBetaPrompt();
-    betaPromptEl.classList.add('open');
-  }
-  function dismissBetaPrompt() {
-    if (!betaPromptEl || !betaPromptEl.classList.contains('open')) return;
-    var p = getPendingBeta();
-    if (p) { p.companyBetaYes = false; setPendingBeta(p); }
-    betaPromptEl.classList.remove('open');
-  }
-  function isBetaPromptOpen() { return !!(betaPromptEl && betaPromptEl.classList.contains('open')); }
-  /* Late fill: ?env=dev (or any programmatic set) can land before the card
-   * renders. When cards appear, backfill blanks without clobbering an
-   * already-answered company choice, then offer the company prompt. */
-  function refreshPendingBeta() {
-    if (getMark() !== 'dev') return;
-    var p = getPendingBeta();
-    if (!p) { recordPendingBeta(); maybePromptCompanyBeta(); return; }
-    var card = visibleCard();
-    var company = visibleCompanyCard();
-    var email = card ? cardEmail(card) : '';
-    var info = company ? cardCompanyInfo(company) : { id: '', name: '' };
-    var changed = false;
-    /* M35: the intent email is not a one-time snapshot. If the card now
-     * shows a different non-empty email (the natural order is mark first,
-     * type second), follow the card so post-auth enrollment matches the
-     * account actually being signed into. */
-    if (email && p.email !== email) { p.email = email; changed = true; }
-    if (!p.companyId && info.id) { p.companyId = info.id; p.companyName = info.name; changed = true; }
-    if (changed) setPendingBeta(p);
-    maybePromptCompanyBeta();
-  }
 
   function interceptSubmit(form, ev) {
     if (!isDev()) return;
@@ -761,12 +562,6 @@
   /* ---------------------------------------------------------------- */
   /* flow rail warning cards                                           */
   /* ---------------------------------------------------------------- */
-  var channelProvider = null;
-  function setChannelProvider(fn) { channelProvider = fn; }
-  function currentChannel() {
-    try { if (typeof channelProvider === 'function') return String(channelProvider() || ''); } catch (_) { /* ignore */ }
-    return '';
-  }
   function renderRailCards() {
     var host = document.getElementById('flow-env-cards');
     if (!host || inOwnWrite) return;
@@ -775,10 +570,6 @@
       var html = '';
       if (isProd()) {
         html += '<div class="flow-envcard-prod">' + escapeHtml(t('prodState')) + '</div>';
-      }
-      if (currentChannel() === 'beta') {
-        html += '<div class="flow-envcard-beta"><strong>' + escapeHtml(t('betaTitle')) + '</strong>' +
-          escapeHtml(t('betaBody')) + '</div>';
       }
       if (isDev()) {
         html += '<div class="flow-envcard-dev"><strong>' + escapeHtml(t('devTitle')) + '</strong>' +
@@ -791,14 +582,14 @@
   /* ---------------------------------------------------------------- */
   /* version-routing rule: signed-out surfaces resolve LATEST          */
   /* ---------------------------------------------------------------- */
-  /* "Latest" = app_updates/beta-latest, the newest shipped projection.
-   * Signed-out surfaces (login, sign-up, support) must use this, never a
-   * channel projection. Signed-in surfaces keep channel resolution. */
+  /* "Latest" = app_updates/backend, the current shipped projection.
+   * Signed-out surfaces (login, sign-up, support) use this. There are no
+   * channel projections anymore (beta system killed Oct 29 2026). */
   var FALLBACK_VERSION = '1.1.0'; /* mirrors repo-root VERSION */
   function resolveLatestVersion(db, fs) {
     return new Promise(function (resolve) {
       try {
-        fs.getDoc(fs.doc(db, 'app_updates', 'beta-latest')).then(function (s) {
+        fs.getDoc(fs.doc(db, 'app_updates', 'backend')).then(function (s) {
           try {
             if (s && s.exists && s.exists()) {
               var d = s.data() || {};
@@ -819,7 +610,6 @@
     paintFooters();
     paintDevPanels();
     paintModal();
-    paintBetaPrompt();
     renderInterstitial();
     renderRailCards();
   }
@@ -846,8 +636,6 @@
     return k;
   }
   document.addEventListener('keydown', function (e) {
-    var k0 = String(e.key || '').toLowerCase();
-    if (k0 === 'escape' && isBetaPromptOpen()) { e.preventDefault(); dismissBetaPrompt(); return; }
     if (!e.ctrlKey || !e.altKey) return;
     if (isEditableTarget(e)) return;
     var k = chordKey(e);
@@ -857,14 +645,6 @@
     if (e.shiftKey) dismissOnly();
     else toggleB();
   });
-  /* M35: typing the email after the mark was set updates the pending
-   * beta intent (refreshPendingBeta follows the visible card email). */
-  document.addEventListener('input', function (e) {
-    try {
-      var el = e && e.target;
-      if (el && String(el.type || '').toLowerCase() === 'email') refreshPendingBeta();
-    } catch (_) { /* ignore */ }
-  }, true);
   function applyQueryEnv() {
     try {
       var q = new URLSearchParams(window.location.search).get('env');
@@ -926,9 +706,6 @@
     dismissOnly: dismissOnly,
     getAccounts: getAccounts,
     addAccount: addAccount,
-    getPendingBeta: getPendingBeta,
-    clearPendingBeta: clearPendingBeta,
-    setChannelProvider: setChannelProvider,
     renderRailCards: renderRailCards,
     resolveLatestVersion: resolveLatestVersion,
     onChange: onChange,

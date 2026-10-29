@@ -590,10 +590,11 @@ let orgData = null;
 const dataVersion = () => (orgData && orgData.dataVersion) ? String(orgData.dataVersion) : '0.9';
 /* Header version display: the version REGISTRY wins, never the org
    doc and never a hardcoded string. app_updates is public-read
-   (SUPPORT_SURFACES.md section 3); the projection follows the org's
-   update channel: beta orgs read app_updates/beta-latest, everyone
-   else reads app_updates/backend when it carries a stable stamp (the
-   same doc the new flow's testing watermark reads). The legacy
+   (SUPPORT_SURFACES.md section 3); the projection is
+   app_updates/backend when it carries a stable stamp (the same doc
+   the flow's testing watermark reads). There are no update channels
+   anymore: the beta channel died with the beta system (Oct 29 2026)
+   and every org reads the same projection. The legacy
    app_updates/latest pointer predates the registry and its bare
    version field is stale (still the Oct 5 value), so it is
    deliberately NOT a display source. When the registry cannot be
@@ -601,7 +602,7 @@ const dataVersion = () => (orgData && orgData.dataVersion) ? String(orgData.data
    it in sync with the repo-root VERSION file). The org doc's
    dataVersion remains only as a last-resort fallback in
    paintVersion, never a primary display source. */
-const FALLBACK_VERSION = '1.1.0'; /* mirrors repo-root VERSION */
+const FALLBACK_VERSION = '1.2.10'; /* mirrors repo-root VERSION */
 let displayVersion = null;
 function paintVersion() {
   if (!orgData && !displayVersion) return; /* skeleton keeps its plain label until something real resolves */
@@ -609,17 +610,8 @@ function paintVersion() {
   /* item 18: the header version line is gone; the registry read stays
      only as the dataVersion fallback source, nothing paints it. */
 }
-async function resolveRegistryVersion(db, fs, channel) {
+async function resolveRegistryVersion(db, fs) {
   try {
-    if (channel === 'beta') {
-      const s = await fs.getDoc(fs.doc(db, 'app_updates', 'beta-latest'));
-      if (s.exists()) {
-        const d = s.data() || {};
-        const v = d.friendlyVersion || d.version;
-        if (v) return String(v);
-      }
-      return null;
-    }
     const s = await fs.getDoc(fs.doc(db, 'app_updates', 'backend'));
     if (s.exists()) {
       const d = s.data() || {};
@@ -628,17 +620,14 @@ async function resolveRegistryVersion(db, fs, channel) {
   } catch (_) { /* registry unreachable: the caller falls back */ }
   return null;
 }
-/* M7: version resolution is per channel, not one-shot. The first kick
-   resolves for the org's current channel; a later kick after the org
-   channel changes re-resolves for the new channel without a reload.
-   The org doc subscription in initFirebase feeds those later kicks. */
-let versionKickChannel = null;
+/* Version resolution is one-shot: there is a single channel now (the
+   beta channel was killed Oct 29 2026), so the first kick resolves
+   and later kicks are no-ops once a version is in hand. */
+let versionResolved = false;
 function kickVersionResolution(db, fs) {
-  const channel = orgData && orgData.updateChannel ? String(orgData.updateChannel) : 'stable';
-  if (versionKickChannel === channel && displayVersion) return;
-  versionKickChannel = channel;
-  resolveRegistryVersion(db, fs, channel).then((v) => {
-    if (versionKickChannel !== channel) return; /* a newer kick won */
+  if (versionResolved && displayVersion) return;
+  versionResolved = true;
+  resolveRegistryVersion(db, fs).then((v) => {
     displayVersion = v || FALLBACK_VERSION;
     paintVersion();
   });
@@ -1085,18 +1074,16 @@ async function initFirebase() {
       } catch (_) { orgData = orgData || {}; }
     }
     if (orgId && fsMod.onSnapshot) {
-      /* M7: keep the org doc live in this module. When the org's
-         updateChannel changes, the new channel arrives here and the
-         version line re-resolves for it without a reload;
-         renderCompanyHead repaints the head too. */
+      /* Keep the org doc live in this module: renderCompanyHead
+         repaints the head when the org doc changes. (This subscription
+         used to also re-resolve the version on updateChannel changes;
+         channels were killed with the beta system, Oct 29 2026.) */
       try {
         fsMod.onSnapshot(doc(db, 'orgs', orgId), (snap) => {
           if (!snap.exists()) return;
-          const prevChannel = orgData && orgData.updateChannel;
           orgData = snap.data() || {};
           if (TARGET === 'company' || TARGET === 'shell') {
             renderCompanyHead();
-            if (orgData.updateChannel !== prevChannel) kickVersionResolution(db, fsMod);
           }
         }, () => { /* snapshot is a refresh path; the getDoc data stays */ });
       } catch (_) { /* onSnapshot unavailable: one-shot behavior remains */ }
