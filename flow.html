@@ -346,7 +346,7 @@
     .flow-user { margin-top: 8px; }
     .flow-main { gap: 14px; }
     /* The form comes first on mobile; the graph moves below it. */
-    #flow-step1, #flow-step2 { order: 1; }
+    .flow-step { order: 1; }
     .flow-graph-panel { order: 2; min-height: 180px; flex: none; height: 200px; }
     .flow-cards { grid-template-columns: minmax(0, 1fr); gap: 14px; }
     .flow-cards > * { min-width: 0; }
@@ -440,7 +440,7 @@
      the step containers: a transform here would become the
      containing block for the fixed mobile action bar (the exact
      trap the glass pass documented above) and make it jump. */
-  #flow-step1, #flow-step2 { animation: niv-mo-fade var(--niv-mo-view) var(--niv-mo-ease); }
+  .flow-step { animation: niv-mo-fade var(--niv-mo-view) var(--niv-mo-ease); }
   .flow-shell { animation: niv-mo-fade var(--niv-mo-view) var(--niv-mo-ease); }
   .flow-progress-fill { transition: width var(--niv-mo-view) var(--niv-mo-ease); }
   .flow-section {
@@ -458,6 +458,79 @@
     transition: border-color var(--niv-mo-micro) var(--niv-mo-ease),
                 box-shadow var(--niv-mo-micro) var(--niv-mo-ease);
   }
+
+  /* ---- offsets group in the rail (Oct 29 2026, flow completion) ----
+     The Offsets parent entry carries a dotted marker (Giulia's
+     boards); its four substeps indent under it, tied to the parent
+     by a tree line. Ring state colors stay the shared tokens; only
+     the parent ring's resting border style is dotted. */
+  .flow-ring-group { border-style: dotted; }
+  .flow-ring-group[data-state="done"], .flow-ring-group[data-state="error"] { border-style: solid; }
+  .flow-ring-group[data-state="ongoing-section"] { border-style: dashed; }
+  .flow-subsections {
+    margin: 2px 0 2px 20px; padding-left: 14px;
+    border-left: 2px solid var(--niv-border-soft);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .flow-subsections .flow-section { font-size: 14px; padding: 7px 10px; }
+  .flow-subsections .flow-ring { width: 18px; height: 18px; border-width: 2.5px; }
+  @media (max-width: 900px) {
+    .flow-subsections { flex-basis: 100%; margin-left: 8px; }
+  }
+
+  /* ---- final summary in the rail ----
+     On the last step the step list is replaced by the summary:
+     group labels, then one tappable row per detail (rows navigate
+     back to the step that owns the detail). */
+  .flow-summary-nav { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+  .flow-summary-nav[hidden] { display: none; }
+  .flow-summary-title { font-size: 16px; font-weight: 700; margin: 2px 2px 8px; }
+  .flow-summary-group {
+    font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--niv-text-dim); margin: 10px 2px 2px;
+  }
+  .flow-summary-group:first-of-type { margin-top: 2px; }
+  .flow-sum-row {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    width: 100%; background: transparent; border: 1px solid transparent; border-radius: 10px;
+    color: var(--niv-text); font: 500 14.5px 'Inter', system-ui, sans-serif;
+    text-align: left; padding: 7px 10px; cursor: pointer;
+  }
+  .flow-sum-row:hover { background: var(--niv-surface-2); }
+  .flow-sum-row .k { color: var(--niv-text-dim); flex: none; }
+  .flow-sum-row .v { font-weight: 600; text-align: right; word-break: break-word; }
+  .flow-sum-loc { display: flex; align-items: stretch; gap: 6px; }
+  .flow-sum-loc .flow-sum-row { flex: 1; min-width: 0; }
+  .flow-maps-btn {
+    flex: none; align-self: center;
+    border: 1px solid var(--niv-border); border-radius: var(--niv-pill);
+    color: var(--niv-text); font: 600 12.5px 'Inter', system-ui, sans-serif;
+    padding: 7px 12px; text-decoration: none; white-space: nowrap;
+  }
+  .flow-maps-btn:hover { background: var(--niv-surface-2); }
+  .flow-summary-note { font-size: 12.5px; color: var(--niv-text-dim); margin: 12px 2px 0; line-height: 1.5; }
+
+  /* ---- photo step ---- */
+  .flow-photo-preview {
+    display: block; width: 100%; max-height: 320px; object-fit: contain;
+    border-radius: 12px; border: 1px solid var(--niv-border-soft);
+    background: var(--niv-surface-2); margin-bottom: 14px;
+  }
+  .flow-photo-status { font-size: 13.5px; color: var(--niv-text-dim); min-height: 18px; text-align: center; margin: 10px 0 2px; }
+  .flow-photo-status.err { color: var(--flow-error); }
+  .flow-photo-sure { margin-top: 6px; }
+
+  /* ---- send / saved ---- */
+  .flow-send { margin-top: 0; font-size: 16.5px; padding: 16px 18px; }
+  .flow-send[disabled] { opacity: .6; cursor: default; }
+  .flow-saved-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .flow-saved-actions button {
+    flex: 1; min-width: 140px;
+    background: transparent; border: 1px solid var(--niv-border); border-radius: var(--niv-pill);
+    color: var(--niv-text); font: 600 14.5px 'Inter', system-ui, sans-serif;
+    padding: 11px 16px; cursor: pointer;
+  }
+  .flow-saved-actions button:hover { background: var(--niv-surface-2); }
 </style>
 </head>
 <body data-envmark-interstitial>
@@ -490,8 +563,55 @@
         <span class="flow-ring" data-state="todo" id="flow-ring-2"></span>
         <span data-s="sectionDimensions">Dimensiones base</span>
       </button>
+      <button type="button" class="flow-section" id="flow-sec-off">
+        <span class="flow-ring flow-ring-group" data-state="todo" id="flow-ring-off"></span>
+        <span data-s="sectionOffsets">Desniveles</span>
+      </button>
+      <div class="flow-subsections">
+        <button type="button" class="flow-section" id="flow-sec-offL">
+          <span class="flow-ring" data-state="todo" id="flow-ring-offL"></span>
+          <span data-s="secOffL">Desnivel izquierdo</span>
+        </button>
+        <button type="button" class="flow-section" id="flow-sec-offR">
+          <span class="flow-ring" data-state="todo" id="flow-ring-offR"></span>
+          <span data-s="secOffR">Desnivel derecho</span>
+        </button>
+        <button type="button" class="flow-section" id="flow-sec-offT">
+          <span class="flow-ring" data-state="todo" id="flow-ring-offT"></span>
+          <span data-s="secOffT">Desnivel superior</span>
+        </button>
+        <button type="button" class="flow-section" id="flow-sec-offB">
+          <span class="flow-ring" data-state="todo" id="flow-ring-offB"></span>
+          <span data-s="secOffB">Desnivel inferior</span>
+        </button>
+      </div>
+      <button type="button" class="flow-section" id="flow-sec-photo">
+        <span class="flow-ring" data-state="todo" id="flow-ring-photo"></span>
+        <span data-s="sectionPhoto">Foto del área</span>
+      </button>
       <div class="flow-hint" id="flow-hint"></div>
     </nav>
+
+    <div class="flow-summary-nav niv-scroll" id="flow-summary-nav" hidden aria-label="Resumen final" data-s-aria="ariaSummary">
+      <div class="flow-summary-title" data-s="sumTitle">Resumen final</div>
+      <div class="flow-summary-group" data-s="sumBase">Base</div>
+      <button type="button" class="flow-sum-row" data-goto="dims"><span class="k" data-s="widthLabel">Ancho</span><span class="v" id="flow-sum-w">---</span></button>
+      <button type="button" class="flow-sum-row" data-goto="dims"><span class="k" data-s="heightLabel">Alto</span><span class="v" id="flow-sum-h">---</span></button>
+      <div class="flow-summary-group" data-s="sectionOffsets">Desniveles</div>
+      <button type="button" class="flow-sum-row" data-goto="offL"><span class="k" data-s="pairLeft">Izquierda</span><span class="v" id="flow-sum-offL">---</span></button>
+      <button type="button" class="flow-sum-row" data-goto="offR"><span class="k" data-s="pairRight">Derecha</span><span class="v" id="flow-sum-offR">---</span></button>
+      <button type="button" class="flow-sum-row" data-goto="offT"><span class="k" data-s="pairTop">Arriba</span><span class="v" id="flow-sum-offT">---</span></button>
+      <button type="button" class="flow-sum-row" data-goto="offB"><span class="k" data-s="pairBottom">Abajo</span><span class="v" id="flow-sum-offB">---</span></button>
+      <div class="flow-summary-group" data-s="sumCustomer">Cliente</div>
+      <button type="button" class="flow-sum-row" data-goto="details"><span class="k" data-s="sumName">Nombre</span><span class="v" id="flow-sum-cust">---</span></button>
+      <button type="button" class="flow-sum-row" data-goto="details"><span class="k" data-s="sumProject">Proyecto</span><span class="v" id="flow-sum-proj">---</span></button>
+      <button type="button" class="flow-sum-row" data-goto="details"><span class="k" data-s="sumArea">Área</span><span class="v" id="flow-sum-area">---</span></button>
+      <div class="flow-sum-loc">
+        <button type="button" class="flow-sum-row" data-goto="details"><span class="k" data-s="sumLocation">Ubicación</span><span class="v" id="flow-sum-loc">---</span></button>
+        <a class="flow-maps-btn" id="flow-sum-maps" href="#" target="_blank" rel="noopener" data-s="sumViewMaps" style="display:none">Ver en Maps</a>
+      </div>
+      <div class="flow-summary-note" data-s="sumClickNote">Toca cada detalle para ir a su paso.</div>
+    </div>
 
     <div class="flow-rail-spacer"></div>
 
@@ -520,7 +640,7 @@
       <canvas id="flow-graph-canvas"></canvas>
     </section>
 
-    <div id="flow-step1">
+    <div id="flow-step1" class="flow-step">
       <div class="flow-cards">
         <section class="flow-card" aria-label="Who" data-s-aria="ariaWho">
           <h2 data-s="whoTitle">¿Para quién es?</h2>
@@ -551,7 +671,7 @@
       <div class="flow-stub" id="flow-next-stub"></div>
     </div>
 
-    <div id="flow-step2" style="display:none">
+    <div id="flow-step2" class="flow-step" style="display:none">
       <div class="flow-dims-wrap">
         <section class="flow-card flow-dims-card" aria-label="Base dimensions" data-s-aria="ariaDims">
           <h2 data-s="dimsTitle">Saca tu cinta métrica. ¿Cuáles son las dimensiones base del área?</h2>
@@ -580,6 +700,154 @@
           <h3 data-s="whyTitle3">¿Por qué esto?</h3>
           <p data-s="dimsWhy">Esto nos permite medir los desniveles de la pieza dándonos una referencia con la que trabajar.</p>
         </aside>
+      </div>
+    </div>
+
+    <div id="flow-step-offL" class="flow-step" style="display:none">
+      <div class="flow-dims-wrap">
+        <section class="flow-card flow-dims-card" aria-label="Left offset" data-s-aria="ariaOffL">
+          <h2 data-s="offLTitle">Saca tu láser. Mide desde la pared izquierda hasta tu láser.</h2>
+          <div class="flow-dims-unit" data-s="dimsUnit">(pulgadas)</div>
+          <div class="flow-dim-row">
+            <div class="flow-dim-group">
+              <label for="flow-offL-a-whole" data-s="pairBottom">Abajo</label>
+              <div class="flow-dim-pair">
+                <input type="number" class="flow-whole" id="flow-offL-a-whole" min="0" step="1" inputmode="numeric" data-s-ph="wholePh" placeholder="Entero" />
+                <select class="flow-frac" id="flow-offL-a-frac" aria-label="Fracción de pulgada" data-s-aria="ariaFraction"></select>
+              </div>
+            </div>
+            <div class="flow-dim-group">
+              <label for="flow-offL-b-whole" data-s="pairTop">Arriba</label>
+              <div class="flow-dim-pair">
+                <input type="number" class="flow-whole" id="flow-offL-b-whole" min="0" step="1" inputmode="numeric" data-s-ph="wholePh" placeholder="Entero" />
+                <select class="flow-frac" id="flow-offL-b-frac" aria-label="Fracción de pulgada" data-s-aria="ariaFraction"></select>
+              </div>
+            </div>
+          </div>
+          <div class="flow-step-error" id="flow-offL-error" role="alert"></div>
+          <button type="button" class="flow-continue" id="flow-offL-continue" data-s="continueBtn">Continuar</button>
+        </section>
+        <aside class="flow-why-panel" aria-label="Stuck" data-s-aria="ariaStuck">
+          <h3 data-s="stuckTitle">¿Atascado aquí?</h3>
+          <p data-s="offLStuck">Simplemente coloca tu láser en algún punto a la izquierda sobre el piso y mide desde ahí.</p>
+        </aside>
+      </div>
+    </div>
+
+    <div id="flow-step-offR" class="flow-step" style="display:none">
+      <div class="flow-dims-wrap">
+        <section class="flow-card flow-dims-card" aria-label="Right offset" data-s-aria="ariaOffR">
+          <h2 data-s="offRTitle">Saca tu láser. Mide desde la pared derecha hasta tu láser.</h2>
+          <div class="flow-dims-unit" data-s="dimsUnit">(pulgadas)</div>
+          <div class="flow-dim-row">
+            <div class="flow-dim-group">
+              <label for="flow-offR-a-whole" data-s="pairBottom">Abajo</label>
+              <div class="flow-dim-pair">
+                <input type="number" class="flow-whole" id="flow-offR-a-whole" min="0" step="1" inputmode="numeric" data-s-ph="wholePh" placeholder="Entero" />
+                <select class="flow-frac" id="flow-offR-a-frac" aria-label="Fracción de pulgada" data-s-aria="ariaFraction"></select>
+              </div>
+            </div>
+            <div class="flow-dim-group">
+              <label for="flow-offR-b-whole" data-s="pairTop">Arriba</label>
+              <div class="flow-dim-pair">
+                <input type="number" class="flow-whole" id="flow-offR-b-whole" min="0" step="1" inputmode="numeric" data-s-ph="wholePh" placeholder="Entero" />
+                <select class="flow-frac" id="flow-offR-b-frac" aria-label="Fracción de pulgada" data-s-aria="ariaFraction"></select>
+              </div>
+            </div>
+          </div>
+          <div class="flow-step-error" id="flow-offR-error" role="alert"></div>
+          <button type="button" class="flow-continue" id="flow-offR-continue" data-s="continueBtn">Continuar</button>
+        </section>
+        <aside class="flow-why-panel" aria-label="Stuck" data-s-aria="ariaStuck">
+          <h3 data-s="stuckTitle">¿Atascado aquí?</h3>
+          <p data-s="offRStuck">Simplemente coloca tu láser en algún punto a la derecha sobre el piso y mide desde ahí.</p>
+        </aside>
+      </div>
+    </div>
+
+    <div id="flow-step-offT" class="flow-step" style="display:none">
+      <div class="flow-dims-wrap">
+        <section class="flow-card flow-dims-card" aria-label="Top offset" data-s-aria="ariaOffT">
+          <h2 data-s="offTTitle">Pon tu láser en cualquier pared. Mide desde el techo hasta tu láser.</h2>
+          <div class="flow-dims-unit" data-s="dimsUnit">(pulgadas)</div>
+          <div class="flow-dim-row">
+            <div class="flow-dim-group">
+              <label for="flow-offT-a-whole" data-s="pairLeft">Izquierda</label>
+              <div class="flow-dim-pair">
+                <input type="number" class="flow-whole" id="flow-offT-a-whole" min="0" step="1" inputmode="numeric" data-s-ph="wholePh" placeholder="Entero" />
+                <select class="flow-frac" id="flow-offT-a-frac" aria-label="Fracción de pulgada" data-s-aria="ariaFraction"></select>
+              </div>
+            </div>
+            <div class="flow-dim-group">
+              <label for="flow-offT-b-whole" data-s="pairRight">Derecha</label>
+              <div class="flow-dim-pair">
+                <input type="number" class="flow-whole" id="flow-offT-b-whole" min="0" step="1" inputmode="numeric" data-s-ph="wholePh" placeholder="Entero" />
+                <select class="flow-frac" id="flow-offT-b-frac" aria-label="Fracción de pulgada" data-s-aria="ariaFraction"></select>
+              </div>
+            </div>
+          </div>
+          <div class="flow-step-error" id="flow-offT-error" role="alert"></div>
+          <button type="button" class="flow-continue" id="flow-offT-continue" data-s="continueBtn">Continuar</button>
+        </section>
+        <aside class="flow-why-panel" aria-label="Stuck" data-s-aria="ariaStuck">
+          <h3 data-s="stuckTitle">¿Atascado aquí?</h3>
+          <p data-s="offWallStuck">Simplemente coloca tu láser en algún punto de cualquier pared y mide desde ahí.</p>
+        </aside>
+      </div>
+    </div>
+
+    <div id="flow-step-offB" class="flow-step" style="display:none">
+      <div class="flow-dims-wrap">
+        <section class="flow-card flow-dims-card" aria-label="Bottom offset" data-s-aria="ariaOffB">
+          <h2 data-s="offBTitle">Pon tu láser en cualquier pared. Mide desde el piso hasta tu láser.</h2>
+          <div class="flow-dims-unit" data-s="dimsUnit">(pulgadas)</div>
+          <div class="flow-dim-row">
+            <div class="flow-dim-group">
+              <label for="flow-offB-a-whole" data-s="pairLeft">Izquierda</label>
+              <div class="flow-dim-pair">
+                <input type="number" class="flow-whole" id="flow-offB-a-whole" min="0" step="1" inputmode="numeric" data-s-ph="wholePh" placeholder="Entero" />
+                <select class="flow-frac" id="flow-offB-a-frac" aria-label="Fracción de pulgada" data-s-aria="ariaFraction"></select>
+              </div>
+            </div>
+            <div class="flow-dim-group">
+              <label for="flow-offB-b-whole" data-s="pairRight">Derecha</label>
+              <div class="flow-dim-pair">
+                <input type="number" class="flow-whole" id="flow-offB-b-whole" min="0" step="1" inputmode="numeric" data-s-ph="wholePh" placeholder="Entero" />
+                <select class="flow-frac" id="flow-offB-b-frac" aria-label="Fracción de pulgada" data-s-aria="ariaFraction"></select>
+              </div>
+            </div>
+          </div>
+          <div class="flow-step-error" id="flow-offB-error" role="alert"></div>
+          <button type="button" class="flow-continue" id="flow-offB-continue" data-s="continueBtn">Continuar</button>
+        </section>
+        <aside class="flow-why-panel" aria-label="Stuck" data-s-aria="ariaStuck">
+          <h3 data-s="stuckTitle">¿Atascado aquí?</h3>
+          <p data-s="offWallStuck">Simplemente coloca tu láser en algún punto de cualquier pared y mide desde ahí.</p>
+        </aside>
+      </div>
+    </div>
+
+    <div id="flow-step-photo" class="flow-step" style="display:none">
+      <section class="flow-card" aria-label="Photo of area" data-s-aria="ariaPhoto">
+        <h2 data-s="photoTitle">¿Quieres tomar una foto del área para finalizar?</h2>
+        <img id="flow-photo-preview" class="flow-photo-preview" alt="" style="display:none" />
+        <button type="button" class="flow-continue flow-photo-sure" id="flow-photo-sure" data-s="photoSure">Sí, agregar foto</button>
+        <button type="button" class="flow-opt" id="flow-photo-skip" data-s="photoSkip" style="margin-top:10px">Saltar</button>
+        <input type="file" id="flow-photo-input" accept="image/*" hidden />
+        <div class="flow-photo-status" id="flow-photo-status"></div>
+        <button type="button" class="flow-continue" id="flow-photo-continue" data-s="continueBtn" style="display:none">Continuar</button>
+      </section>
+    </div>
+
+    <div id="flow-step-summary" class="flow-step" style="display:none">
+      <div class="flow-step-error" id="flow-save-error" role="alert" style="margin:0 0 14px"></div>
+      <button type="button" class="flow-continue flow-send" id="flow-send" data-s="sendBtn">Enviar medida</button>
+      <div class="flow-stub" id="flow-saved-panel">
+        <strong data-s="savedTitle">Medida guardada.</strong> <span data-s="savedText">Ya aparece en el panel como cualquier otra medida.</span>
+        <div class="flow-saved-actions">
+          <button type="button" id="flow-saved-dashboard" data-s="menuDashboard">Panel</button>
+          <button type="button" id="flow-saved-new" data-s="newMeasurementBtn">Nueva medida</button>
+        </div>
       </div>
     </div>
   </main>
@@ -628,10 +896,13 @@
 <script src="/niv-brandmark.js"></script>
 <script src="/adhd.js"></script>
 <script type="module">
-import { auth, db } from '/firebase-config.js';
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
-import { getDoc, getDocs, doc, collection } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+import { auth, db, storage } from '/firebase-config.js';
+import { onAuthStateChanged, getIdToken } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+import { getDoc, getDocs, doc, collection, addDoc, updateDoc, deleteDoc, deleteField, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js';
 import { resolveLang } from '/niv-user.js';
+import { ensureFlowClaims } from '/geo.js';
+import { makePermChecker } from '/permissions.js';
 
 /* New measurement flow (Giulia's boards, Oct 12 2026). Since Oct 29
    2026 this is THE measurement flow: the beta system was killed, all
@@ -693,7 +964,39 @@ const STR = {
     gateSigninTitle: 'Inicia sesión para continuar',
     gateSigninText: 'El flujo de medidas necesita tu cuenta de Nivelato.',
     gateSignin: 'Iniciar sesión',
-    loading: 'Cargando...'
+    loading: 'Cargando...',
+    sectionOffsets: 'Desniveles', sectionPhoto: 'Foto del área',
+    secOffL: 'Desnivel izquierdo', secOffR: 'Desnivel derecho', secOffT: 'Desnivel superior', secOffB: 'Desnivel inferior',
+    ariaOffL: 'Desnivel izquierdo', ariaOffR: 'Desnivel derecho', ariaOffT: 'Desnivel superior', ariaOffB: 'Desnivel inferior',
+    ariaPhoto: 'Foto del área', ariaSummary: 'Resumen final', ariaStuck: 'Atascado',
+    offLTitle: 'Saca tu láser. Mide desde la pared izquierda hasta tu láser.',
+    offRTitle: 'Saca tu láser. Mide desde la pared derecha hasta tu láser.',
+    offTTitle: 'Pon tu láser en cualquier pared. Mide desde el techo hasta tu láser.',
+    offBTitle: 'Pon tu láser en cualquier pared. Mide desde el piso hasta tu láser.',
+    stuckTitle: '¿Atascado aquí?',
+    offLStuck: 'Simplemente coloca tu láser en algún punto a la izquierda sobre el piso y mide desde ahí.',
+    offRStuck: 'Simplemente coloca tu láser en algún punto a la derecha sobre el piso y mide desde ahí.',
+    offWallStuck: 'Simplemente coloca tu láser en algún punto de cualquier pared y mide desde ahí.',
+    pairBottom: 'Abajo', pairTop: 'Arriba', pairLeft: 'Izquierda', pairRight: 'Derecha',
+    offError: 'Ambas lecturas necesitan un número entero para continuar. Cero es válido: significa que no hay desnivel.',
+    offErrorWhole: 'Ambas lecturas necesitan un número entero. Una fracción sola no es suficiente.',
+    offErrorMax: 'Ambas lecturas deben ser de 1000 pulgadas o menos para continuar.',
+    hintDimsFirst: 'Completa las dimensiones base para continuar.',
+    hintPrevOffset: 'Completa el desnivel anterior para continuar.',
+    hintOffsetsFirst: 'Completa los desniveles para continuar.',
+    photoTitle: '¿Quieres tomar una foto del área para finalizar?',
+    photoSure: 'Sí, agregar foto', photoSkip: 'Saltar',
+    photoAdded: 'Foto agregada.', photoSkipped: 'Sin foto. Puedes agregar una si quieres.',
+    photoNeedChoice: 'Elige Sí para agregar una foto, o Saltar para continuar sin foto.',
+    photoReadError: 'No se pudo leer esa foto. Intenta con otra.',
+    sumTitle: 'Resumen final', sumBase: 'Base', sumCustomer: 'Cliente',
+    sumName: 'Nombre', sumProject: 'Proyecto', sumArea: 'Área', sumLocation: 'Ubicación',
+    sumViewMaps: 'Ver en Maps', sumClickNote: 'Toca cada detalle para ir a su paso.',
+    sumNoProject: 'Sin proyecto', sumNoCustomer: 'Cliente nuevo',
+    sendBtn: 'Enviar medida', sendingBtn: 'Enviando...',
+    savedTitle: 'Medida guardada.', savedText: 'Ya aparece en el panel como cualquier otra medida.',
+    newMeasurementBtn: 'Nueva medida',
+    saveErrorTitle: 'No se pudo guardar la medida'
   },
   en: {
     docTitle: 'Nivelato - New measurement',
@@ -738,7 +1041,39 @@ const STR = {
     gateSigninTitle: 'Sign in to continue',
     gateSigninText: 'The measurement flow needs your Nivelato account.',
     gateSignin: 'Sign in',
-    loading: 'Loading...'
+    loading: 'Loading...',
+    sectionOffsets: 'Offsets', sectionPhoto: 'Photo of area',
+    secOffL: 'Left offset', secOffR: 'Right offset', secOffT: 'Top offset', secOffB: 'Bottom offset',
+    ariaOffL: 'Left offset', ariaOffR: 'Right offset', ariaOffT: 'Top offset', ariaOffB: 'Bottom offset',
+    ariaPhoto: 'Photo of area', ariaSummary: 'Final summary', ariaStuck: 'Stuck',
+    offLTitle: 'Get out your laser. Measure from the left wall to your laser.',
+    offRTitle: 'Get out your laser. Measure from the right wall to your laser.',
+    offTTitle: 'Put your laser on either wall. Measure from the roof to your laser.',
+    offBTitle: 'Put your laser on either wall. Measure from the floor to your laser.',
+    stuckTitle: 'Stuck here?',
+    offLStuck: 'Simply place your laser somewhere left on the floor, measure from there.',
+    offRStuck: 'Simply place your laser somewhere right on the floor, measure from there.',
+    offWallStuck: 'Simply place your laser somewhere on any wall, measure from there.',
+    pairBottom: 'Bottom', pairTop: 'Top', pairLeft: 'Left', pairRight: 'Right',
+    offError: 'Both readings need a whole number to continue. Zero is valid: it means no offset.',
+    offErrorWhole: 'Both readings need a whole number. A fraction on its own is not enough.',
+    offErrorMax: 'Both readings must be 1000 inches or less to continue.',
+    hintDimsFirst: 'Complete the base dimensions to continue.',
+    hintPrevOffset: 'Complete the previous offset to continue.',
+    hintOffsetsFirst: 'Complete the offsets to continue.',
+    photoTitle: 'Would you like to take a photo of the area to finalize?',
+    photoSure: 'Sure', photoSkip: 'Skip',
+    photoAdded: 'Photo added.', photoSkipped: 'No photo. You can still add one if you want.',
+    photoNeedChoice: 'Choose Sure to add a photo, or Skip to continue without one.',
+    photoReadError: 'That photo could not be read. Try another one.',
+    sumTitle: 'Final summary', sumBase: 'Base', sumCustomer: 'Customer',
+    sumName: 'Name', sumProject: 'Project', sumArea: 'Area', sumLocation: 'Location',
+    sumViewMaps: 'View on Maps', sumClickNote: 'Click on each detail to go to its step',
+    sumNoProject: 'No project', sumNoCustomer: 'New customer',
+    sendBtn: 'Send measurement', sendingBtn: 'Sending...',
+    savedTitle: 'Measurement saved.', savedText: 'It now shows in the dashboard like any other measurement.',
+    newMeasurementBtn: 'New measurement',
+    saveErrorTitle: 'The measurement could not be saved'
   }
 };
 
@@ -758,25 +1093,40 @@ try {
 } catch (e) {}
 const S = () => STR[LANG];
 
+/* One offset substep's state: two readings (a and b), each a whole +
+   fraction pair like the base dimensions. committed is the {a, b}
+   totals snapshot from the last valid Continue, same grammar as dims. */
+const freshOffset = () => ({
+  aWhole: '', aFrac: '0', bWhole: '', bFrac: '0',
+  committed: null, error: false, visited: false
+});
+
 const state = {
   who: null,               // 'individual' | 'company-new' | 'company-existing'
-  project: null,           // { id, name } when an existing project is picked/referred
+  project: null,           // { id, name, customer } when an existing project is picked/referred
   customerName: '',        // only when referred with ?customer=
-  // area: the measurement's display title (free-text label, e.g. "Bathroom 1"); will persist to the job doc as `area` when the flow's save step lands
+  customerId: '',          // stable id: the customers doc id (URL-encoded name) when the
+                           // customer is named; a generated doc id when created in step 1
+  // area: the measurement's display title (free-text label, e.g. "Bathroom 1"); persists to the job doc as `area`
   area: '',
   location: '',
   locationCoords: null,
   touched: false,          // any interaction, or a referral prefill
-  activeSection: 1,
+  activeSection: 'details', // 'details' | 'dims' | 'offL' | 'offR' | 'offT' | 'offB' | 'photo' | 'summary'
   dims: {                  // base dimensions (section 2)
     wWhole: '', wFrac: '0', hWhole: '', hFrac: '0',
     committed: null,       // { w, h } totals snapshot from the last valid Continue
     error: false,
     visited: false
   },
+  offsets: { L: freshOffset(), R: freshOffset(), T: freshOffset(), B: freshOffset() },
+  photo: { dataUrl: null, decided: false },
+  saved: false,            // a measurement was sent in this session
+  sending: false,
   projects: [],            // org projects for the existing picker
   projectsLoaded: false,
   user: null,              // { name, email, photoURL }
+  uid: null, orgId: null, userData: null, authUser: null, // boot identity for the save path
   surface: HOST_SURFACE,
   planState: null,         // 'free' | 'dev' | null(paid), from niv-brandmark at boot
   devMode: HOST_SURFACE === 'debug' || LOCAL_HOST || (DEMO && params.get('dev') === '1')
@@ -785,8 +1135,8 @@ const state = {
 if (DEMO) {
   state.user = { name: 'Demo User', email: 'demo@nivelato.app', photoURL: '' };
   state.projects = [
-    { id: 'demo-project-1', name: 'Test project' },
-    { id: 'fc6efa67b9cd2', name: 'Test project 2' }
+    { id: 'demo-project-1', name: 'Test project', customer: 'Test customer' },
+    { id: 'fc6efa67b9cd2', name: 'Test project 2', customer: 'Test customer' }
   ];
   state.projectsLoaded = true;
 }
@@ -803,7 +1153,7 @@ function whoValid() {
 function section1Done() { return whoValid() && state.location.trim().length > 0; }
 function section1State() {
   if (section1Done()) return 'done';
-  if (state.activeSection === 1) return 'ongoing-section';
+  if (state.activeSection === 'details') return 'ongoing-section';
   return 'todo';
 }
 /* Base dimensions: totals are whole + fraction, the same readVal math
@@ -842,14 +1192,139 @@ function section2Done() {
 function section2State() {
   if (state.dims.error) return 'error';
   if (section2Done()) return 'done';
-  if (state.activeSection === 2) return 'ongoing-section';
+  if (state.activeSection === 'dims') return 'ongoing-section';
+  return 'todo';
+}
+
+/* ---------- offsets (sections 3a-3d) ----------
+   Field mapping, the wizard's own (index.html + adhd.js recalcAll):
+   the left and right walls read A = bottom, B = top; the roof and
+   the floor read A = left, B = right. A substep is done when both
+   readings were committed by Continue and still match the inputs.
+   A total of 0 is a real answer here (laser against the wall), so
+   unlike the base dimensions the whole number may be zero; it just
+   has to be typed. */
+const OFF_KEYS = ['L', 'R', 'T', 'B'];
+const OFF_SECTION = { L: 'offL', R: 'offR', T: 'offT', B: 'offB' };
+function offsetTotals(key) {
+  const o = state.offsets[key];
+  return {
+    a: (parseFloat(o.aWhole) || 0) + (parseFloat(o.aFrac) || 0),
+    b: (parseFloat(o.bWhole) || 0) + (parseFloat(o.bFrac) || 0)
+  };
+}
+function offsetValidationError(key) {
+  const o = state.offsets[key];
+  const pairs = [[o.aWhole, o.aFrac], [o.bWhole, o.bFrac]];
+  for (const [wholeRaw, fracRaw] of pairs) {
+    const wholeStr = String(wholeRaw ?? '').trim();
+    const frac = parseFloat(fracRaw) || 0;
+    if (wholeStr === '') return frac > 0 ? 'offErrorWhole' : 'offError';
+    const whole = Number(wholeStr);
+    if (!Number.isFinite(whole) || whole < 0) return 'offError';
+    if (!Number.isInteger(whole)) return 'offErrorWhole';
+    if (whole === 0 && frac > 0) return 'offErrorWhole';
+    if (whole + frac > DIMS_MAX) return 'offErrorMax';
+  }
+  return null;
+}
+function offsetDone(key) {
+  const c = state.offsets[key].committed;
+  if (!c) return false;
+  const t = offsetTotals(key);
+  return t.a === c.a && t.b === c.b;
+}
+function offsetState(key) {
+  if (state.offsets[key].error) return 'error';
+  if (offsetDone(key)) return 'done';
+  if (state.activeSection === OFF_SECTION[key]) return 'ongoing-section';
+  return 'todo';
+}
+function offsetsAllDone() { return OFF_KEYS.every((k) => offsetDone(k)); }
+function offsetsGroupState() {
+  if (OFF_KEYS.some((k) => state.offsets[k].error)) return 'error';
+  if (offsetsAllDone()) return 'done';
+  if (OFF_KEYS.some((k) => state.activeSection === OFF_SECTION[k])) return 'ongoing-section';
+  return 'todo';
+}
+function photoDone() { return state.photo.decided; }
+function photoState() {
+  if (photoDone()) return 'done';
+  if (state.activeSection === 'photo') return 'ongoing-section';
   return 'todo';
 }
 function progressPct() {
   let done = 0;
   if (section1Done()) done++;
   if (section2Done()) done++;
-  return Math.round((done / 2) * 100);
+  for (const k of OFF_KEYS) if (offsetDone(k)) done++;
+  if (photoDone()) done++;
+  return Math.round((done / 7) * 100);
+}
+
+/* ---------- desnivel math ----------
+   Copied from adhd.js (the wizard engine) so a flow measurement
+   stores byte-identical labels and derived dimensions: raw is
+   a - b; the arrow depends on the wall (the right wall and the
+   floor flip theirs, exactly like recalcAll does). */
+function toFracStr(decimal) {
+  if (decimal === 0) return '0"';
+  const whole = Math.floor(Math.abs(decimal));
+  const frac = Math.abs(decimal) - whole;
+  const sixteenths = Math.round(frac * 16);
+  const sign = decimal < 0 ? '-' : '';
+  if (sixteenths === 0) return `${sign}${whole}"`;
+  if (sixteenths === 16) return `${sign}${whole + 1}"`;
+  const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+  const g = gcd(sixteenths, 16);
+  const n = sixteenths / g, d = 16 / g;
+  if (whole === 0) return `${sign}${n}/${d}"`;
+  return `${sign}${whole} ${n}/${d}"`;
+}
+function offsetResult(key) {
+  const c = state.offsets[key].committed;
+  if (!c) return null;
+  const diff = c.a - c.b;
+  if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
+  const val = Math.abs(diff);
+  let arrow;
+  if (key === 'L') arrow = diff > 0 ? '→' : '←';
+  else if (key === 'R') arrow = diff > 0 ? '←' : '→';
+  else if (key === 'T') arrow = diff > 0 ? '↓' : '↑';
+  else arrow = diff > 0 ? '↑' : '↓';
+  return { val, dir: arrow, label: arrow + ' ' + toFracStr(val), raw: diff };
+}
+function derivedDims() {
+  const c = state.dims.committed;
+  if (!c || !offsetsAllDone()) return null;
+  const izq = offsetResult('L'), der = offsetResult('R'), techo = offsetResult('T'), piso = offsetResult('B');
+  return {
+    anchoTop: Math.max(0, c.w - izq.raw - der.raw),
+    altoDer: Math.max(0, c.h - techo.raw - piso.raw)
+  };
+}
+
+/* ---------- customer identity (flag 2) ----------
+   The org's customer record key IS the URL-encoded name (orgs/{orgId}/
+   customers/{encodeURIComponent(name)}; see dashboard.html and
+   firestore.rules). A named customer therefore already has a stable
+   id. A customer created unnamed in step 1 gets a generated document
+   id, assigned when step 1 completes and persisted on the job doc. */
+function resolvedCustomerName() {
+  if (state.project && state.project.customer) return state.project.customer;
+  return state.customerName || '';
+}
+function ensureCustomerId() {
+  const name = resolvedCustomerName();
+  if (name) { state.customerId = encodeURIComponent(name); return state.customerId; }
+  if (!state.customerId) {
+    try {
+      state.customerId = doc(collection(db, 'orgs', state.orgId || 'demo', 'customers')).id;
+    } catch (e) {
+      state.customerId = 'cust-' + Math.random().toString(36).slice(2, 10);
+    }
+  }
+  return state.customerId;
 }
 
 /* ---------- step-1 gating (M17) + mobile scroll (M16) ---------- */
@@ -861,9 +1336,14 @@ function section1HintText() {
   if (whoMissing) return state.who === 'company-existing' ? S().step1HintProject : S().step1HintWho;
   return S().step1HintLocation;
 }
+const STEP_EL = {
+  details: 'flow-step1', dims: 'flow-step2',
+  offL: 'flow-step-offL', offR: 'flow-step-offR', offT: 'flow-step-offT', offB: 'flow-step-offB',
+  photo: 'flow-step-photo', summary: 'flow-step-summary'
+};
 function scrollToForm() {
   if (!window.matchMedia('(max-width: 900px)').matches) return;
-  const target = state.activeSection === 2 ? $('flow-step2') : $('flow-step1');
+  const target = $(STEP_EL[state.activeSection] || 'flow-step1');
   if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -892,12 +1372,19 @@ function renderContext() {
   const cEl = $('flow-ctx-customer');
   const pEl = $('flow-ctx-project');
   let cHtml, pHtml;
-  if (state.customerName) {
-    cHtml = esc(state.customerName);
+  /* Dev mode shows the customer id beside the name (Giulia's boards):
+     for a named customer the id is its record key, the URL-encoded
+     name; for an unnamed one it is the id assigned in step 1. */
+  const custName = resolvedCustomerName();
+  const custId = custName ? encodeURIComponent(custName) : state.customerId;
+  const idSuffix = state.devMode && custId
+    ? ' <span class="ctx-id">(id ' + esc(custId) + ')</span>' : '';
+  if (custName) {
+    cHtml = esc(custName) + idSuffix;
   } else if (state.project) {
-    cHtml = '<span class="dim">' + esc(S().ctxProjectCustomer) + '</span>';
+    cHtml = '<span class="dim">' + esc(S().ctxProjectCustomer) + '</span>' + idSuffix;
   } else if (state.who === 'individual' || state.who === 'company-new') {
-    cHtml = '<span class="dim">' + esc(S().newCustomer) + '</span>';
+    cHtml = '<span class="dim">' + esc(S().newCustomer) + '</span>' + idSuffix;
   } else {
     cHtml = '<span class="dim">' + esc(S().noCustomer) + '</span>';
   }
@@ -921,16 +1408,22 @@ function renderProgress() {
   $('flow-progress').setAttribute('aria-valuenow', String(pct));
   $('flow-progress-label').textContent = S().progressDone.replace('{n}', String(pct));
   const STATE_LABEL = { done: 'stateDone', error: 'stateError', 'ongoing-section': 'stateOngoingSection', ongoing: 'stateOngoing', todo: 'stateTodo' };
-  const r1 = $('flow-ring-1');
-  const s1 = section1State();
-  r1.dataset.state = s1;
-  r1.title = S()[STATE_LABEL[s1]];
-  const r2 = $('flow-ring-2');
-  const s2 = section2State();
-  r2.dataset.state = s2;
-  r2.title = S()[STATE_LABEL[s2]];
-  $('flow-sec-1').classList.toggle('active', state.activeSection === 1);
-  $('flow-sec-2').classList.toggle('active', state.activeSection === 2);
+  const setRing = (id, st) => {
+    const r = $(id);
+    if (!r) return;
+    r.dataset.state = st;
+    r.title = S()[STATE_LABEL[st]];
+  };
+  setRing('flow-ring-1', section1State());
+  setRing('flow-ring-2', section2State());
+  setRing('flow-ring-off', offsetsGroupState());
+  for (const k of OFF_KEYS) setRing('flow-ring-off' + k, offsetState(k));
+  setRing('flow-ring-photo', photoState());
+  $('flow-sec-1').classList.toggle('active', state.activeSection === 'details');
+  $('flow-sec-2').classList.toggle('active', state.activeSection === 'dims');
+  $('flow-sec-off').classList.toggle('active', OFF_KEYS.some((k) => state.activeSection === OFF_SECTION[k]));
+  for (const k of OFF_KEYS) $('flow-sec-off' + k).classList.toggle('active', state.activeSection === OFF_SECTION[k]);
+  $('flow-sec-photo').classList.toggle('active', state.activeSection === 'photo');
 }
 
 function renderWho() {
@@ -952,7 +1445,7 @@ function renderWho() {
       box.querySelectorAll('[data-project]').forEach((b) => {
         b.addEventListener('click', () => {
           const p = state.projects.find((x) => x.id === b.getAttribute('data-project'));
-          if (p) { state.project = p; state.touched = true; render(); }
+          if (p) { state.project = p; state.customerId = ''; state.touched = true; render(); }
         });
       });
     }
@@ -972,8 +1465,40 @@ function renderNextStub() {
 }
 
 function renderSections() {
-  $('flow-step1').style.display = state.activeSection === 1 ? '' : 'none';
-  $('flow-step2').style.display = state.activeSection === 2 ? '' : 'none';
+  for (const key of Object.keys(STEP_EL)) {
+    const el = $(STEP_EL[key]);
+    if (el) el.style.display = state.activeSection === key ? '' : 'none';
+  }
+  /* Final summary: the rail's step list is replaced by the summary
+     itself (Giulia's boards); rows there navigate back to steps. */
+  const inSummary = state.activeSection === 'summary';
+  $('flow-sections').style.display = inSummary ? 'none' : '';
+  $('flow-summary-nav').hidden = !inSummary;
+  if (inSummary) renderSummaryNav();
+}
+
+function renderSummaryNav() {
+  const c = state.dims.committed;
+  $('flow-sum-w').textContent = c ? toFracStr(c.w) : '---';
+  $('flow-sum-h').textContent = c ? toFracStr(c.h) : '---';
+  for (const k of OFF_KEYS) {
+    const r = offsetResult(k);
+    $('flow-sum-off' + k).textContent = r ? r.label : '---';
+  }
+  const name = resolvedCustomerName();
+  $('flow-sum-cust').textContent = name || S().sumNoCustomer;
+  $('flow-sum-proj').textContent = state.project ? state.project.name : S().sumNoProject;
+  $('flow-sum-area').textContent = state.area.trim() || '---';
+  $('flow-sum-loc').textContent = state.location.trim() || '---';
+  const maps = $('flow-sum-maps');
+  if (state.location.trim()) {
+    maps.style.display = '';
+    maps.href = state.locationCoords
+      ? 'https://www.google.com/maps?q=' + state.locationCoords.lat + ',' + state.locationCoords.lng
+      : 'https://www.google.com/maps?q=' + encodeURIComponent(state.location.trim());
+  } else {
+    maps.style.display = 'none';
+  }
 }
 
 function renderUser() {
@@ -1038,13 +1563,19 @@ function mountGraph() {
      passes for a job (hueco.anchoBot / hueco.altoIzq are the stored
      whole+fraction totals of the wizard's base fields). Until base
      dimensions are committed, the neutral 36 x 84 defaults the
-     renderer itself falls back to. Offsets stay 'Nivel': the offset
-     steps are later sections of this flow. */
+     renderer itself falls back to. Offsets feed their committed
+     desnivel labels (uncommitted walls stay 'Nivel', the renderer's
+     own neutral), plus the derived top width / right height once
+     all four are in, exactly like dashboard's _graphDataFor. */
   const c = state.dims.committed;
-  window.embedGraph(cvs, {
+  const lab = (k) => { const r = offsetResult(k); return r ? r.label : 'Nivel'; };
+  const payload = {
     anchoBot: c ? c.w : 36, altoIzq: c ? c.h : 84,
-    pIL: 'Nivel', pDL: 'Nivel', tL: 'Nivel', pL: 'Nivel'
-  });
+    pIL: lab('L'), pDL: lab('R'), tL: lab('T'), pL: lab('B')
+  };
+  const der = derivedDims();
+  if (der) { payload.anchoTop = der.anchoTop; payload.altoDer = der.altoDer; }
+  window.embedGraph(cvs, payload);
   graphMounted = true;
 }
 let resizeTimer = null;
@@ -1075,6 +1606,7 @@ document.querySelectorAll('[data-who]').forEach((b) => {
     state.who = b.getAttribute('data-who');
     state.touched = true;
     if (state.who !== 'company-existing') state.project = null;
+    state.customerId = ''; // customer source changed: re-derive at step 1 completion
     render();
   });
 });
@@ -1125,26 +1657,60 @@ $('flow-geo').addEventListener('click', () => {
   );
 });
 
-$('flow-sec-1').addEventListener('click', () => {
-  state.activeSection = 1;
-  $('flow-hint').textContent = '';
-  render();
-  scrollToForm();
-});
-$('flow-sec-2').addEventListener('click', () => {
-  if (!section1Done()) {
-    state.activeSection = 1;
-    render();
-    $('flow-hint').textContent = section1HintText();
-    scrollToForm();
-    return;
+/* ---------- section navigation ----------
+   The sidebar list is the only navigation (Giulia's boards: no
+   Back/Forward buttons). A step opens only when every step before
+   it is done, the cascade section 2 always had, now across the
+   whole flow. The Offsets parent jumps to its first unfinished
+   substep. Summary rows use the same door back to their step. */
+const SECTION_ORDER = ['details', 'dims', 'offL', 'offR', 'offT', 'offB', 'photo'];
+function sectionDone(key) {
+  if (key === 'details') return section1Done();
+  if (key === 'dims') return section2Done();
+  if (key === 'photo') return photoDone();
+  return offsetDone(key.slice(3));
+}
+function gateFor(key) {
+  const idx = SECTION_ORDER.indexOf(key);
+  for (let i = 0; i < idx; i++) {
+    const missing = SECTION_ORDER[i];
+    if (sectionDone(missing)) continue;
+    if (missing === 'details') return 'step1';
+    if (missing === 'dims') return 'hintDimsFirst';
+    return key === 'photo' ? 'hintOffsetsFirst' : 'hintPrevOffset';
   }
-  state.activeSection = 2;
-  state.dims.visited = true;
+  return '';
+}
+function goToSection(key) {
+  const gate = gateFor(key);
+  if (gate) {
+    $('flow-hint').textContent = gate === 'step1' ? section1HintText() : S()[gate];
+    return false;
+  }
+  state.activeSection = key;
+  if (key === 'dims') state.dims.visited = true;
+  const offKey = OFF_KEYS.find((k) => OFF_SECTION[k] === key);
+  if (offKey) state.offsets[offKey].visited = true;
   $('flow-hint').textContent = '';
   render();
   scrollToForm();
+  return true;
+}
+
+$('flow-sec-1').addEventListener('click', () => goToSection('details'));
+$('flow-sec-2').addEventListener('click', () => goToSection('dims'));
+$('flow-sec-off').addEventListener('click', () => {
+  const firstOpen = OFF_KEYS.map((k) => OFF_SECTION[k]).find((sec) => !sectionDone(sec)) || 'offL';
+  goToSection(firstOpen);
 });
+for (const k of OFF_KEYS) {
+  $('flow-sec-off' + k).addEventListener('click', () => goToSection(OFF_SECTION[k]));
+}
+$('flow-sec-photo').addEventListener('click', () => goToSection('photo'));
+document.querySelectorAll('[data-goto]').forEach((b) => {
+  b.addEventListener('click', () => goToSection(b.getAttribute('data-goto')));
+});
+
 $('flow-step1-continue').addEventListener('click', () => {
   state.touched = true;
   if (!section1Done()) {
@@ -1154,11 +1720,9 @@ $('flow-step1-continue').addEventListener('click', () => {
     }
     return;
   }
-  $('flow-hint').textContent = '';
-  state.activeSection = 2;
-  state.dims.visited = true;
-  render();
-  scrollToForm();
+  /* Step 1 complete: the customer gets its stable id here (flag 2). */
+  ensureCustomerId();
+  goToSection('dims');
 });
 
 /* ---------- base dimensions ---------- */
@@ -1215,7 +1779,315 @@ $('flow-dims-continue').addEventListener('click', () => {
   state.dims.committed = dimsTotals();
   render();
   mountGraph();
+  goToSection('offL');
 });
+
+/* ---------- offsets ---------- */
+for (const k of OFF_KEYS) {
+  $('flow-off' + k + '-a-frac').innerHTML = FRAC_OPTIONS;
+  $('flow-off' + k + '-b-frac').innerHTML = FRAC_OPTIONS;
+}
+function bindOffset(key) {
+  const bind = (inputId, field) => {
+    $(inputId).addEventListener('input', (e) => {
+      const o = state.offsets[key];
+      o[field] = e.target.value;
+      state.touched = true;
+      if (o.error) { o.error = false; $('flow-off' + key + '-error').classList.remove('on'); }
+      renderProgress();
+    });
+    $(inputId).addEventListener('change', (e) => { state.offsets[key][field] = e.target.value; });
+  };
+  bind('flow-off' + key + '-a-whole', 'aWhole');
+  bind('flow-off' + key + '-a-frac', 'aFrac');
+  bind('flow-off' + key + '-b-whole', 'bWhole');
+  bind('flow-off' + key + '-b-frac', 'bFrac');
+  $('flow-off' + key + '-continue').addEventListener('click', () => {
+    state.touched = true;
+    const o = state.offsets[key];
+    const errKey = offsetValidationError(key);
+    if (errKey) {
+      o.error = true;
+      const err = $('flow-off' + key + '-error');
+      err.textContent = S()[errKey];
+      err.classList.add('on');
+      renderProgress();
+      return;
+    }
+    o.error = false;
+    $('flow-off' + key + '-error').classList.remove('on');
+    o.committed = offsetTotals(key);
+    render();
+    mountGraph();
+    goToSection({ L: 'offR', R: 'offT', T: 'offB', B: 'photo' }[key]);
+  });
+}
+for (const k of OFF_KEYS) bindOffset(k);
+
+/* ---------- photo of area ----------
+   The app's photo handling, minus the wizard's annotation editor
+   (the boards ask for a plain photo of the area): the picked image
+   becomes a JPEG data URL in state, and the save path uploads it to
+   the same Storage location the wizard uses and stores the download
+   URL on the job, so the dashboard shows it like any other. */
+function setPhotoStatus(key, isErr) {
+  const st = $('flow-photo-status');
+  st.textContent = key ? S()[key] : '';
+  st.classList.toggle('err', !!isErr);
+}
+function decidePhoto() {
+  state.photo.decided = true;
+  $('flow-photo-continue').style.display = '';
+  renderProgress();
+}
+function downscalePhoto(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const MAX = 1600;
+        const scale = Math.min(1, MAX / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+        if (scale >= 1) { resolve(dataUrl); return; }
+        const cvs = document.createElement('canvas');
+        cvs.width = Math.round(img.naturalWidth * scale);
+        cvs.height = Math.round(img.naturalHeight * scale);
+        cvs.getContext('2d').drawImage(img, 0, 0, cvs.width, cvs.height);
+        resolve(cvs.toDataURL('image/jpeg', 0.85));
+      } catch (err) { reject(err); }
+    };
+    img.onerror = () => reject(new Error('image decode failed'));
+    img.src = dataUrl;
+  });
+}
+$('flow-photo-sure').addEventListener('click', () => {
+  state.touched = true;
+  $('flow-photo-input').click();
+});
+$('flow-photo-input').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onerror = () => setPhotoStatus('photoReadError', true);
+  reader.onload = () => {
+    downscalePhoto(String(reader.result || '')).then((url) => {
+      state.photo.dataUrl = url;
+      const img = $('flow-photo-preview');
+      img.src = url;
+      img.style.display = '';
+      setPhotoStatus('photoAdded', false);
+      decidePhoto();
+      goToSection('summary');
+    }).catch(() => setPhotoStatus('photoReadError', true));
+  };
+  reader.readAsDataURL(file);
+});
+$('flow-photo-skip').addEventListener('click', () => {
+  state.touched = true;
+  state.photo.dataUrl = null;
+  const img = $('flow-photo-preview');
+  img.style.display = 'none';
+  img.removeAttribute('src');
+  setPhotoStatus('photoSkipped', false);
+  decidePhoto();
+  goToSection('summary');
+});
+$('flow-photo-continue').addEventListener('click', () => {
+  if (!state.photo.decided) { setPhotoStatus('photoNeedChoice', true); return; }
+  goToSection('summary');
+});
+
+/* ---------- send: the established measurement save path ----------
+   "Send measurement" persists through the SAME path the wizard
+   uses (window.saveJobToFirestore in auth-guard.js): the same
+   collection (orgs/{orgId}/jobs), the same job shape (adhd.js
+   _saveCurrentJob), the same draft -> photo -> finalize lifecycle
+   with heartbeat, the same flowGate claims and createMeasurements
+   permission, so a flow measurement lands in the dashboard
+   indistinguishable from a wizard one. auth-guard.js itself is
+   index.html's page guard (it owns that page's auth redirects,
+   identity banner and header injection), so the write sequence is
+   mirrored here rather than importing the guard into this page. */
+function buildFlowJob() {
+  const c = state.dims.committed;
+  const izq = offsetResult('L'), der = offsetResult('R'), techo = offsetResult('T'), piso = offsetResult('B');
+  const dd = derivedDims();
+  return {
+    hueco: { anchoBot: c.w, altoIzq: c.h, anchoTop: dd.anchoTop, altoDer: dd.altoDer },
+    desniveles: {
+      paredIzq: izq ? izq.label : null,
+      paredDer: der ? der.label : null,
+      techo: techo ? techo.label : null,
+      piso: piso ? piso.label : null
+    },
+    paredes: {
+      izq:   { a: state.offsets.L.committed.a, b: state.offsets.L.committed.b, desnivel: izq.raw },
+      der:   { a: state.offsets.R.committed.a, b: state.offsets.R.committed.b, desnivel: der.raw },
+      techo: { a: state.offsets.T.committed.a, b: state.offsets.T.committed.b, desnivel: techo.raw },
+      piso:  { a: state.offsets.B.committed.a, b: state.offsets.B.committed.b, desnivel: piso.raw }
+    },
+    customer: resolvedCustomerName(),
+    customerId: ensureCustomerId(),
+    project: state.project ? state.project.name : '',
+    location: state.location.trim(),
+    area: state.area.trim(),
+    warnings: [],
+    notas: '',
+    annotatedPhoto: state.photo.dataUrl || null
+  };
+}
+
+/* Same helper as auth-guard.js, kept identical. */
+function dataUrlToBlob(dataUrl) {
+  const comma = dataUrl.indexOf(',');
+  const header = dataUrl.slice(0, comma);
+  const base64 = dataUrl.slice(comma + 1);
+  const mime = (header.match(/data:([^;]+)/) || [])[1] || 'image/jpeg';
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+async function saveFlowMeasurement(jobData) {
+  if (!state.authUser || !state.userData) throw new Error('No autenticado');
+  if (!makePermChecker(state.userData)('createMeasurements')) throw new Error('No tienes permiso para crear medidas');
+  // Las reglas exigen los claims de flowGate (fail-closed): garantizarlos antes de escribir.
+  const gate = await Promise.race([
+    ensureFlowClaims(),
+    new Promise((res) => setTimeout(() => res({ ok: false, timedOut: true }), 10000)),
+  ]);
+  if (!gate.ok) throw new Error('No se pudo verificar tu sesion, revisa tu conexion y vuelve a intentarlo.');
+  // El token en cache puede no traer claims recien acunados: forzar refresh.
+  await getIdToken(state.authUser, true);
+  const orgId = state.orgId;
+  const jobsCol = collection(db, 'orgs', orgId, 'jobs');
+
+  // 1. temp job first (finalizing:true desde el nacimiento, igual que el wizard)
+  const jobRef = await addDoc(jobsCol, {
+    ...jobData,
+    annotatedPhoto: null,
+    status: 'draft',
+    finalizing: true,
+    draftHeartbeat: serverTimestamp(),
+    installerUid: state.authUser.uid,
+    installerName: state.userData.name || state.authUser.email,
+    installerRole: state.userData.role,
+    orgId,
+    createdAt: serverTimestamp()
+  });
+  const photoPath = `annotated/${orgId}/${jobRef.id}.jpg`;
+
+  // 2. phone home every 5s while this tab is alive
+  const heartbeat = setInterval(() => {
+    updateDoc(jobRef, { draftHeartbeat: serverTimestamp() }).catch(() => {});
+  }, 5000);
+
+  try {
+    let annotatedPhoto = jobData.annotatedPhoto || null;
+    if (annotatedPhoto && annotatedPhoto.startsWith('data:image')) {
+      const blob = dataUrlToBlob(annotatedPhoto);
+      await uploadBytes(ref(storage, photoPath), blob, { contentType: blob.type || 'image/jpeg' });
+      annotatedPhoto = await getDownloadURL(ref(storage, photoPath));
+    }
+    // 3. finalize — no longer a draft
+    await updateDoc(jobRef, {
+      ...(annotatedPhoto ? { annotatedPhoto } : {}),
+      status: 'complete',
+      draftHeartbeat: deleteField(),
+      finalizing: deleteField(),
+    });
+  } catch (e) {
+    // flow died: remove the temp job + any partial upload, no orphans
+    try { await deleteDoc(jobRef); } catch (_) {}
+    try { await deleteObject(ref(storage, photoPath)); } catch (_) {}
+    throw e;
+  } finally {
+    clearInterval(heartbeat);
+  }
+  return jobRef.id;
+}
+
+$('flow-send').addEventListener('click', async () => {
+  if (state.sending) return;
+  /* Defensive: the summary is only reachable with every step done,
+     but never send a partial measurement if state disagrees. */
+  if (!(section1Done() && section2Done() && offsetsAllDone() && photoDone())) return;
+  const btn = $('flow-send');
+  const errBox = $('flow-save-error');
+  errBox.classList.remove('on');
+  errBox.textContent = '';
+  state.sending = true;
+  btn.disabled = true;
+  btn.textContent = S().sendingBtn;
+  try {
+    const jobData = buildFlowJob();
+    if (DEMO) {
+      /* Demo has no backend: keep the exact payload inspectable
+         instead of pretending a write happened. */
+      window.__flowDemoSavedJob = jobData;
+    } else {
+      await saveFlowMeasurement(jobData);
+    }
+    state.saved = true;
+    state.touched = false; // saved work is not discarded work: no exit guard
+    btn.style.display = 'none';
+    $('flow-saved-panel').classList.add('on');
+  } catch (e) {
+    errBox.textContent = S().saveErrorTitle + (e && e.message ? ': ' + e.message : '');
+    errBox.classList.add('on');
+    btn.disabled = false;
+    btn.textContent = S().sendBtn;
+  } finally {
+    state.sending = false;
+  }
+});
+$('flow-saved-dashboard').addEventListener('click', () => {
+  window.location.href = '/dashboard.html';
+});
+$('flow-saved-new').addEventListener('click', () => resetFlow());
+
+function resetFlow() {
+  state.who = null;
+  state.project = null;
+  state.customerName = '';
+  state.customerId = '';
+  state.area = '';
+  state.location = '';
+  state.locationCoords = null;
+  state.touched = false;
+  state.saved = false;
+  state.activeSection = 'details';
+  state.dims = { wWhole: '', wFrac: '0', hWhole: '', hFrac: '0', committed: null, error: false, visited: false };
+  for (const k of OFF_KEYS) state.offsets[k] = freshOffset();
+  state.photo = { dataUrl: null, decided: false };
+  $('flow-area').value = '';
+  $('flow-location').value = '';
+  $('flow-geo-status').textContent = '';
+  $('flow-w-whole').value = ''; $('flow-w-frac').value = '0';
+  $('flow-h-whole').value = ''; $('flow-h-frac').value = '0';
+  for (const k of OFF_KEYS) {
+    $('flow-off' + k + '-a-whole').value = ''; $('flow-off' + k + '-a-frac').value = '0';
+    $('flow-off' + k + '-b-whole').value = ''; $('flow-off' + k + '-b-frac').value = '0';
+    $('flow-off' + k + '-error').classList.remove('on');
+  }
+  $('flow-dims-error').classList.remove('on');
+  const pv = $('flow-photo-preview');
+  pv.style.display = 'none';
+  pv.removeAttribute('src');
+  setPhotoStatus('', false);
+  $('flow-photo-continue').style.display = 'none';
+  $('flow-save-error').classList.remove('on');
+  const send = $('flow-send');
+  send.style.display = '';
+  send.disabled = false;
+  send.textContent = S().sendBtn;
+  $('flow-saved-panel').classList.remove('on');
+  $('flow-hint').textContent = '';
+  render();
+  mountGraph();
+  scrollToForm();
+}
 
 /* user chip menu + exit guard */
 const menu = $('flow-menu');
@@ -1282,7 +2154,9 @@ function applyReferral(projectsById) {
   if (pid) {
     const known = projectsById && projectsById.get(pid);
     state.who = 'company-existing';
-    state.project = { id: pid, name: known || params.get('projectName') || pid };
+    state.project = known
+      ? { id: pid, name: known.name, customer: known.customer || '' }
+      : { id: pid, name: params.get('projectName') || pid, customer: '' };
     state.touched = true;
   }
 }
@@ -1306,10 +2180,18 @@ async function bootReal() {
       if (us.exists()) userData = us.data() || {};
     } catch (e) { /* fail soft: empty user doc, defaults apply */ }
     const orgId = userData.orgId || null;
+    state.authUser = user;
+    state.uid = user.uid;
+    state.userData = userData;
+    state.orgId = orgId;
     if (orgId) {
       try {
         const ps = await getDocs(collection(db, 'orgs', orgId, 'projects'));
-        state.projects = ps.docs.map((d) => ({ id: d.id, name: (d.data() && d.data().name) || d.id }));
+        state.projects = ps.docs.map((d) => ({
+          id: d.id,
+          name: (d.data() && d.data().name) || d.id,
+          customer: (d.data() && d.data().customer) || ''
+        }));
       } catch (e) { state.projects = []; }
       state.projectsLoaded = true;
     }
@@ -1333,7 +2215,7 @@ async function bootReal() {
 
     // No channel gate anymore (beta system killed Oct 29 2026): every
     // signed-in user gets the flow.
-    applyReferral(new Map(state.projects.map((p) => [p.id, p.name])));
+    applyReferral(new Map(state.projects.map((p) => [p.id, p])));
     showFlow();
     loadWatermark();
   });
