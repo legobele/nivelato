@@ -780,12 +780,19 @@ body.has-sidebar #niv-panel.collapsed {
   touch-action: pan-y;
 }
 body.has-sidebar #niv-panel.collapsed #niv-panel-expand-handle { display: block; }
+/* item 41: the affordance paint is a short grab segment centered on
+   the strip, in the scrollbar thumb's hover tone. The old paint (a
+   full-height 2px line in var(--niv-accent) #fafafa on hover/drag)
+   drew a stark white stripe down the rail exactly where a scrollbar
+   sits, and read as a misplaced scrollbar. The strip itself (hitbox,
+   cursor, drag-to-expand behavior) is unchanged. */
 #niv-panel-expand-handle::after {
-  content: ""; position: absolute; top: 0; bottom: 0; left: 5px; width: 2px;
+  content: ""; position: absolute; top: 50%; left: 5px; width: 2px; height: 72px;
+  transform: translateY(-50%);
   background: transparent; transition: background 0.15s; border-radius: 2px;
 }
 #niv-panel-expand-handle:hover::after, #niv-panel-expand-handle.dragging::after {
-  background: var(--niv-accent, #fafafa);
+  background: var(--niv-text-dim, #a7a7ad);
 }
 #niv-panel { position: relative; }
 .niv-panel-sec-title { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; padding-right: 12px; }

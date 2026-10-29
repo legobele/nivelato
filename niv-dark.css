@@ -868,6 +868,7 @@ body .date-input-wrap input[type="date"]:focus-visible {
      .niv-sidebar       the settings shell sidebar (.niv-shell > .niv-sidebar)
      .niv-side          the shared company sidebar (users, updates)
      .niv-select-list   the niv-select dropdown list
+     .user-settings-col the company users per-user settings column (item 41)
    The top bar tab strips are deliberately NOT covered: they hide their
    scrollbar on purpose in their own page rules. */
 .niv-scroll,
@@ -883,6 +884,7 @@ body .date-input-wrap input[type="date"]:focus-visible {
 .ov-detail,
 .users-col,
 .detail,
+.user-settings-col,
 html {
   scrollbar-width: thin;
   scrollbar-color: var(--niv-border) transparent;
@@ -900,6 +902,7 @@ html {
 .ov-detail::-webkit-scrollbar,
 .users-col::-webkit-scrollbar,
 .detail::-webkit-scrollbar,
+.user-settings-col::-webkit-scrollbar,
 html::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -917,6 +920,7 @@ html::-webkit-scrollbar {
 .ov-detail::-webkit-scrollbar-track,
 .users-col::-webkit-scrollbar-track,
 .detail::-webkit-scrollbar-track,
+.user-settings-col::-webkit-scrollbar-track,
 html::-webkit-scrollbar-track {
   background: transparent;
 }
@@ -933,6 +937,7 @@ html::-webkit-scrollbar-track {
 .ov-detail::-webkit-scrollbar-thumb,
 .users-col::-webkit-scrollbar-thumb,
 .detail::-webkit-scrollbar-thumb,
+.user-settings-col::-webkit-scrollbar-thumb,
 html::-webkit-scrollbar-thumb {
   background: var(--niv-border);
   border-radius: var(--niv-pill);
@@ -950,6 +955,7 @@ html::-webkit-scrollbar-thumb {
 .ov-detail::-webkit-scrollbar-thumb:hover,
 .users-col::-webkit-scrollbar-thumb:hover,
 .detail::-webkit-scrollbar-thumb:hover,
+.user-settings-col::-webkit-scrollbar-thumb:hover,
 html::-webkit-scrollbar-thumb:hover {
   background: var(--niv-text-dim);
 }
