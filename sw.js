@@ -2,14 +2,13 @@
 // precached file changes. A version bump is required for the update to take
 // effect — activate() deletes every cache whose name !== CACHE, so without a
 // new name the old precache survives and the changed list never installs.
-const CACHE = 'nivelato-v69';
+const CACHE = 'nivelato-v70';
 // App shell: every file that must exist for the app to work offline.
 // (Keep this list in sync with the repo — a missing file used to make
 // addAll() reject and silently skip the ENTIRE precache.)
 const URLS = [
   './index.html',
   './login.html',
-  './dashboard.html',
   './photo.html',
   './settings.html',
   './sso.html',
