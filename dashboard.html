@@ -319,6 +319,11 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     .btn-save { width: 100%; padding: 12px; margin-top: 8px; background: #fafafa; color: #050505; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
     .btn-save:hover { background: #dcdce0; }
     .btn-cancel { width: 100%; padding: 12px; margin-top: 4px; background: #f1f3f5; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+    /* Action buttons in the Nuevo proyecto / Nuevo cliente modals sit taller
+       (founder 2026-10-28): 16px vertical padding; horizontal padding and
+       the rest of the modal geometry unchanged. Scoped to these two modals. */
+    #np-modal-overlay .btn-save, #np-modal-overlay .btn-cancel,
+    #nc-modal-overlay .btn-save, #nc-modal-overlay .btn-cancel { padding-top: 16px; padding-bottom: 16px; }
     .modal-edit-input { width: 100%; padding: 8px 10px; border: 1.5px solid #dee2e6; border-radius: 6px; font-size: 13px; font-family: inherit; color: #212529; margin-top: 2px; }
     .modal-edit-input:focus { outline: none; border-color: #fafafa; box-shadow: 0 0 0 3px rgba(255,255,255,.25); }
     .modal-edit-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #adb5bd; margin-top: 12px; display: block; }
@@ -1504,8 +1509,6 @@ try {
     <a class="niv-btn-pill niv-btn-primary" id="home-act-new-measure" href="https://app.nivelatolabs.com/">+ Nueva medida</a>
     <button type="button" class="niv-btn-pill" id="home-act-new-project" onclick="openNewProject()">+ Nuevo proyecto</button>
     <button type="button" class="niv-btn-pill" id="home-act-new-customer" onclick="window._panelNewCustomer()">+ Nuevo cliente</button>
-    <button type="button" class="niv-btn-pill" id="home-act-measures" onclick="window.showDashView('measures')">Medidas</button>
-    <button type="button" class="niv-btn-pill" id="home-act-notifications" onclick="window.showDashView('notifications')">Notificaciones</button>
     <button type="button" class="niv-btn-pill" id="home-act-quotes" style="display:none" onclick="window.showDashView('quotes')">Cotizaciones</button>
   </div>
   <div class="niv-home-grid">
@@ -1895,6 +1898,17 @@ try {
   </div>
 </div>
 
+<div class="modal-overlay" id="nc-modal-overlay" role="dialog" aria-modal="true" onclick="closeNewCustomer(event)">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-title">Nuevo cliente</div>
+    <label class="modal-edit-label" for="nc-name">Nombre *</label>
+    <input class="modal-edit-input" id="nc-name" placeholder="Ej. Casa Rivera" maxlength="120" autocomplete="off" />
+    <div class="pl-error" id="nc-error" style="display:none"></div>
+    <button class="btn-save" onclick="saveNewCustomer()">Crear cliente</button>
+    <button class="btn-cancel" onclick="closeNewCustomer()">Cancelar</button>
+  </div>
+</div>
+
 <script type="module">
 import { auth, db, centralFunctions, isCustomBackend } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
@@ -1982,6 +1996,83 @@ const _graphDataFor = (job) => {
   if (d.anchoTop != null) data.anchoTop = d.anchoTop;
   if (d.altoDer != null) data.altoDer = d.altoDer;
   return data;
+};
+
+// ─── Per-order graph: the MAIN APP renderer (adhd.js static-image graph),
+// fed from the job payload through its documented host seam: readVal()
+// checks window._embedData before the DOM inputs, and recalcAll() then
+// recomputes the core `results` from it, so no wizard form is needed and
+// no renderer internals are touched. Pairs are sign-aware: the core
+// derives each desnivel from (a - b), so a negative-direction offset is
+// fed as magnitude on the b-side key and 0 on the a-side key. Stored-label
+// sign conventions (what saveJob writes): paredIzq raw>0 = '→',
+// paredDer raw>0 = '←', techo raw>0 = '↓', piso raw>0 = '↑'. Magnitudes
+// come from adhd.js's own parseLabelValue. (founder order 2026-10-28:
+// dashboard per-order views use the main-app graph, not embedGraph.)
+const _graphPair = (label, posArrow, negArrow) => {
+  const m = label ? Math.abs(parseLabelValue(label) || 0) : 0;
+  if (!m || !label) return [0, 0];
+  return label.indexOf(negArrow) !== -1 ? [0, m] : [m, 0];
+};
+const _feedJobGraph = (job) => {
+  const data = _graphDataFor(job);
+  const pI = _graphPair(data.pIL, '→', '←');
+  const pD = _graphPair(data.pDL, '←', '→');
+  const t  = _graphPair(data.tL,  '↓', '↑');
+  const p  = _graphPair(data.pL,  '↑', '↓');
+  window._embedData = {
+    'hueco-ancho-bot-whole': data.anchoBot || 36,
+    'hueco-alto-izq-whole': data.altoIzq || 84,
+    'pI-a-whole': pI[0], 'pI-b-whole': pI[1],
+    'pD-a-whole': pD[0], 'pD-b-whole': pD[1],
+    't-a-whole': t[0],  't-b-whole': t[1],
+    'p-a-whole': p[0],  'p-b-whole': p[1],
+  };
+};
+// Renders the job's graph into a dashboard surface ('modal' | 'measure'):
+// parks the shared #drawing-canvas inside the surface at the embed
+// canvas's layout size, hides the embed canvas, and lets the core
+// regenerate the graph image. The canvas is shared between surfaces, so
+// each open re-parks and re-feeds it. If the surface is not laid out yet
+// (openMeasure runs before its view is shown), retry on the next frames.
+const _renderJobGraph = (job, surface) => {
+  const dc = document.getElementById('drawing-canvas');
+  if (!dc || typeof recalcAll !== 'function') return;
+  _feedJobGraph(job);
+  let host, sib;
+  if (surface === 'modal') {
+    sib = document.getElementById('modal-canvas');
+    host = document.querySelector('.modal-canvas-wrap');
+  } else {
+    sib = document.getElementById('measure-canvas');
+    host = sib ? sib.parentElement : null;
+  }
+  if (!host) return;
+  // Size from the host, not the embed canvas: the modal branch hides the
+  // embed canvas before this runs, and a hidden canvas reports 0. The
+  // embed canvas's rendered height is its width at the 340:420 attribute
+  // aspect, which is what the fallback reproduces.
+  let w = host.clientWidth || (sib && sib.clientWidth) || 0;
+  let h = (sib && sib.clientHeight) || 0;
+  if (w && !h) h = Math.round(w * 420 / 340);
+  if (!w || !h) {
+    dc.__nvDefer = (dc.__nvDefer || 0) + 1;
+    if (dc.__nvDefer <= 10) requestAnimationFrame(() => _renderJobGraph(job, surface));
+    return;
+  }
+  dc.__nvDefer = 0;
+  if (sib) sib.style.display = 'none';
+  if (dc.parentElement !== host) host.appendChild(dc);
+  dc.style.cssText = 'display:block;width:' + w + 'px;height:' + h + 'px;border-radius:10px;cursor:grab;';
+  const dpr = window.devicePixelRatio || 1;
+  dc.width = Math.round(w * dpr);
+  dc.height = Math.round(h * dpr);
+  recalcAll(); // core recomputes results from _embedData and regenerates the graph image
+  // Start each surface from the fitted Resumen view (TOTAL_STEPS = 7): the
+  // canvas and its camera are shared with every other surface, so without
+  // this a zoom left over from the last view would greet the next one. The
+  // fit branch's padding is the one built to clear the desnivel labels.
+  if (typeof animateCanvas === 'function') animateCanvas(7);
 };
 
 // PR-local calendar day as YYYY-MM-DD (en-CA) for the "Hoy" stat and date filter.
@@ -2201,10 +2292,11 @@ window.showUpgradeModal = showUpgradeModal;
 
 // redraw open modal graph when bread mode toggles
 document.addEventListener('breadchange', function () {
-  const mc = document.getElementById('modal-canvas');
-  if (mc && window._currentJobIdx != null && window._jobs && window._jobs[window._currentJobIdx]) {
+  const pi = document.getElementById('modal-photo-img');
+  if (pi && pi.style.display !== 'none') return; // photo branch: no graph on screen to redraw
+  if (window._currentJobIdx != null && window._jobs && window._jobs[window._currentJobIdx]) {
     const job = window._jobs[window._currentJobIdx];
-    if (_jobHasDims(job)) window.embedGraph(mc, _graphDataFor(job));
+    if (_jobHasDims(job)) _renderJobGraph(job, 'modal');
   }
 });
 
@@ -2588,18 +2680,46 @@ let currentUser;
   // doc: the same doc the customer overview reads/writes for contact data.
   // Creating it opens that customer's overview, where contact info, and
   // later projects and measures, attach to the exact same name string.
-  window._panelNewCustomer = async () => {
-    const name = (window.prompt(L('Nombre del cliente nuevo:', 'New customer name:')) || '').trim();
-    if (!name) return;
+  // The name is collected in the styled #nc-modal-overlay (openNewCustomer /
+  // saveNewCustomer, immediately below) — the native prompt() it used
+  // before was off-system (founder 2026-10-28).
+  window._panelNewCustomer = () => { window.openNewCustomer(); };
+
+  // ---- nuevo cliente (modal; reemplaza el prompt() nativo) ----
+  // Same component pattern as the Nuevo proyecto modal. Behavior preserved
+  // from the prompt() flow: cancel/backdrop just closes (the prompt's
+  // cancel no-op), a name creates the customer doc and opens its overview;
+  // the create itself is the old _panelNewCustomer body verbatim, with the
+  // failure surfaced in the modal's error row (same message text the old
+  // window.alert used) instead of a native dialog. These functions live in
+  // THIS scope on purpose: like the original, they close over
+  // _panelStoredCustomers, which is not module-scope.
+  window.openNewCustomer = () => {
+    document.getElementById('nc-name').value = '';
+    document.getElementById('nc-error').style.display = 'none';
+    document.getElementById('nc-modal-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('nc-name').focus(), 100);
+  };
+  window.closeNewCustomer = (e) => {
+    // close on overlay backdrop click or Cancel button; ignore clicks inside the modal
+    if (e && e.type === 'click' && e.target && !e.target.classList.contains('modal-overlay') && e.target.textContent.trim() !== 'Cancelar') return;
+    document.getElementById('nc-modal-overlay').classList.remove('open');
+  };
+  window.saveNewCustomer = async () => {
+    const name = document.getElementById('nc-name').value.trim();
+    const errEl = document.getElementById('nc-error');
+    if (!name) { errEl.textContent = 'El nombre es obligatorio.'; errEl.style.display = 'block'; return; }
     try {
       const orgId = window._currentOrgId;
       if (!orgId) throw new Error('no org');
       await setDoc(doc(db, 'orgs', orgId, 'customers', encodeURIComponent(name)), { nombre: name, createdAt: serverTimestamp() }, { merge: true });
       if (_panelStoredCustomers && !_panelStoredCustomers.includes(name)) _panelStoredCustomers.push(name);
       if (window._panelJobs) window.refreshFloatPanel(window._panelJobs);
+      document.getElementById('nc-modal-overlay').classList.remove('open');
       window.openCustomer(name);
     } catch (e) {
-      window.alert(L('No se pudo crear el cliente. Intenta de nuevo.', 'Could not create the customer. Try again.'));
+      errEl.textContent = L('No se pudo crear el cliente. Intenta de nuevo.', 'Could not create the customer. Try again.');
+      errEl.style.display = 'block';
     }
   };
 
@@ -2883,6 +3003,8 @@ let currentUser;
     if (job.annotatedPhoto) {
       if (cw) cw.style.display = 'block';
       if (cvs) cvs.style.display = 'none';
+      const dcP = document.getElementById('drawing-canvas');
+      if (dcP && cw && dcP.parentElement === cw) dcP.style.display = 'none';
       if (noDimsEl) noDimsEl.style.display = 'none';
       photoImg.style.display = 'block';
       photoImg.src = job.annotatedPhoto;
@@ -2890,14 +3012,16 @@ let currentUser;
       if (cw) cw.style.display = 'block';
       photoImg.style.display = 'none';
       if (noDimsEl) noDimsEl.style.display = 'none';
-      if (cvs) cvs.style.display = 'block';
-      window.embedGraph(cvs, _graphDataFor(job));
+      if (cvs) cvs.style.display = 'none';
+      _renderJobGraph(job, 'modal');
     } else {
       // M13: no dimensions were ever recorded for this measure. Show that
       // plainly instead of drawing a fabricated 36x84 opening.
       if (cw) cw.style.display = 'block';
       photoImg.style.display = 'none';
       if (cvs) cvs.style.display = 'none';
+      const dcN = document.getElementById('drawing-canvas');
+      if (dcN && cw && dcN.parentElement === cw) dcN.style.display = 'none';
       if (noDimsEl) {
         noDimsEl.textContent = L('Sin dimensiones registradas para esta medida.', 'No dimensions recorded for this measurement.');
         noDimsEl.style.display = 'block';
@@ -4687,10 +4811,12 @@ let currentUser;
     const cvs = document.getElementById('measure-canvas');
     const noDims = document.getElementById('measure-nodims');
     if (_jobHasDims(job)) {
-      if (cvs) { cvs.style.display = 'block'; if (window.embedGraph) window.embedGraph(cvs, _graphDataFor(job)); }
+      _renderJobGraph(job, 'measure');
       if (noDims) noDims.style.display = 'none';
     } else {
       if (cvs) cvs.style.display = 'none';
+      const dcM = document.getElementById('drawing-canvas');
+      if (dcM && cvs && dcM.parentElement === cvs.parentElement) dcM.style.display = 'none';
       if (noDims) {
         noDims.textContent = L('Sin dimensiones registradas para esta medida.', 'No dimensions recorded for this measurement.');
         noDims.style.display = 'block';
@@ -5006,8 +5132,6 @@ let currentUser;
     setText('home-act-new-measure', L('+ Nueva medida', '+ New measurement'));
     setText('home-act-new-project', L('+ Nuevo proyecto', '+ New project'));
     setText('home-act-new-customer', L('+ Nuevo cliente', '+ New customer'));
-    setText('home-act-measures', L('Medidas', 'Measurements'));
-    setText('home-act-notifications', L('Notificaciones', 'Notifications'));
     setText('home-act-quotes', L('Cotizaciones', 'Quotes'));
     const _homeActs = document.getElementById('home-actions');
     if (_homeActs) _homeActs.setAttribute('aria-label', L('Acciones rápidas', 'Quick actions'));

@@ -654,10 +654,12 @@ html, body {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
 }
-body { counter-reset: niv-step; }
-.step-panel { counter-increment: niv-step; }
+/* Section badge number: stamped by adhd.js (_syncStepBadge) from the same
+   step state that renders "Paso N de 8". Do NOT go back to a CSS counter
+   here: .step-panel siblings are display:none, hidden elements never
+   increment a counter, and every step badge read [ 01 ]. */
 .step-title::before {
-  content: "[ " counter(niv-step, decimal-leading-zero) " ]  ";
+  content: "[ " attr(data-step-num) " ]  ";
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 0.72rem;
   font-weight: 500;

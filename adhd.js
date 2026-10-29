@@ -106,6 +106,17 @@ function getLingerView(leavingStep) {
   return null;
 }
 
+// Section badge "[ NN ]": stamped from the SAME step index that renders
+// "Paso N de 8", at the same call sites, so the two can never drift apart.
+// (The old autism.css CSS counter could only ever show 01: .step-panel
+// siblings are display:none, and display:none elements never increment a
+// CSS counter, so the one visible panel was always counted first.)
+function _syncStepBadge(n) {
+  const panel = document.getElementById('step-' + n);
+  const title = panel && panel.querySelector('.step-title');
+  if (title) title.dataset.stepNum = String(n + 1).padStart(2, '0');
+}
+
 function goStep(n, skipHistory, skipSave) {
   userZoomed = false; // reset auto-focus on each step transition
   // (b) el botón "Restablecer" zoom solo tiene sentido con zoom manual activo
@@ -116,6 +127,7 @@ function goStep(n, skipHistory, skipSave) {
   document.getElementById('step-' + n)?.classList.add('active');
   currentStep = n;
   document.getElementById('step-num').textContent = n + 1;
+  _syncStepBadge(n);
   const pct = Math.max(0, Math.min(100, ((n + 1) / (TOTAL_STEPS + 1)) * 100));
   document.getElementById('progress-bar').style.width = pct + '%';
   recalcAll();
@@ -291,6 +303,7 @@ window.addEventListener('popstate', function(e) {
       document.getElementById('step-' + targetStep)?.classList.add('active');
       currentStep = targetStep;
       document.getElementById('step-num').textContent = targetStep + 1;
+      _syncStepBadge(targetStep);
       const pct = Math.max(0, Math.min(100, ((targetStep + 1) / (TOTAL_STEPS + 1)) * 100));
       document.getElementById('progress-bar').style.width = pct + '%';
       recalcAll();
@@ -692,10 +705,12 @@ const STEP_VIEWS = [
   { focusX: 0.5, focusY: 0.5, zoom: 0.72 }, // step 6 - resumen
 ];
 
-function getGlassRect() {
+function getGlassRect(W, H) {
   if (!canvas) return { x: 0, y: 0, w: 100, h: 100 };
-  const W = canvas.width  / window.devicePixelRatio;
-  const H = canvas.height / window.devicePixelRatio;
+  if (W === undefined) {
+    W = canvas.width  / window.devicePixelRatio;
+    H = canvas.height / window.devicePixelRatio;
+  }
   const ancho = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 48;
   const alto  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 36;
   const aspect = ancho / alto;
@@ -745,7 +760,7 @@ function smoothAnimate() {
   vp.y     += (vpTarget.y     - vp.y)     * ease;
   vp.scale += (vpTarget.scale - vp.scale) * ease;
 
-  drawCanvas();
+  presentGraphImage();
 
   const dx = Math.abs(vp.x - vpTarget.x);
   const dy = Math.abs(vp.y - vpTarget.y);
@@ -754,28 +769,87 @@ function smoothAnimate() {
     animFrame = requestAnimationFrame(smoothAnimate);
   } else {
     vp.x = vpTarget.x; vp.y = vpTarget.y; vp.scale = vpTarget.scale;
-    drawCanvas();
+    presentGraphImage();
   }
 }
 
-function drawCanvas() {
-  if (!canvas || !ctx) return;
-  const dpr = window.devicePixelRatio;
-  const W   = canvas.width  / dpr;
-  const H   = canvas.height / dpr;
+// ─── STATIC-IMAGE GRAPH PRESENTATION (founder directive 2026-10-28) ──────
+// The graph scene is rendered ONCE per data change into an offscreen image,
+// supersampled GRAPH_SS× so the baked-in labels stay crisp when zooming in.
+// Pan/zoom then only transforms that image on the visible canvas
+// (proportional, smoothed by the existing vp→vpTarget lerp) instead of
+// re-running the scene under an animated camera on every frame. vp/vpTarget
+// now describe the IMAGE transform. The leveling core (recalcAll /
+// calcDesnivel_*) and every scene geometry computation are unchanged; only
+// the rendering surface and the camera moved.
+const GRAPH_SS = 3; // supersample factor: image px per CSS px
+let graphImg = null; // offscreen canvas holding the current graph image
 
-  ctx.save();
-  ctx.scale(dpr, dpr);
+function drawCanvas() { renderGraphImage(); }
+
+// Canvas binding: the wizard loads this file after its markup, so the
+// load-time lookup above finds #drawing-canvas. The dashboard loads it
+// from <head>, before the element exists, so hosts there acquire the
+// canvas lazily on first render and bind its interactions then. The
+// wizard INIT block below still only runs when the canvas existed at
+// load, so step logic never starts on the dashboard.
+function _ensureGraphCanvas() {
+  if (canvas) return true;
+  const el = document.getElementById('drawing-canvas');
+  if (!el) return false;
+  canvas = el;
+  ctx = el.getContext('2d');
+  _bindGraphInteractions();
+  return true;
+}
+
+function renderGraphImage() {
+  if (!_ensureGraphCanvas()) return;
+  const rect = canvas.getBoundingClientRect();
+  const cssW = rect.width, cssH = rect.height;
+  if (!cssW || !cssH) { graphImg = null; presentGraphImage(); return; }
+  if (!graphImg) graphImg = document.createElement('canvas');
+  graphImg.width  = Math.max(1, Math.round(cssW * GRAPH_SS));
+  graphImg.height = Math.max(1, Math.round(cssH * GRAPH_SS));
+  const g = graphImg.getContext('2d');
+  g.setTransform(GRAPH_SS, 0, 0, GRAPH_SS, 0, 0);
+  drawGraphScene(g, cssW, cssH);
+  presentGraphImage();
+}
+
+function presentGraphImage() {
+  if (!_ensureGraphCanvas()) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.width / dpr, H = canvas.height / dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#f8f9fa';
+  ctx.fillRect(0, 0, W, H);
+  if (graphImg) {
+    ctx.save();
+    ctx.translate(vp.x, vp.y);
+    ctx.scale(vp.scale, vp.scale);
+    ctx.drawImage(graphImg, 0, 0, graphImg.width / GRAPH_SS, graphImg.height / GRAPH_SS);
+    ctx.restore();
+  }
+  // 🍞 bread mode — drawn over the presented image in screen space, exactly
+  // where the old pipeline drew it (fixed to the viewport, not the camera).
+  if (window.BREAD && window.BREAD.isOn()) {
+    try { window.BREAD.draw(ctx, W, H); } catch (e) {}
+  }
+}
+
+// The graph scene itself, drawn in CSS-pixel space at scale 1. Drawing
+// commands, order, colors and geometry are the old drawCanvas scene
+// verbatim; the old vp camera transform is gone because the camera now
+// moves the rendered image instead of the scene.
+function drawGraphScene(ctx, W, H) {
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = '#f8f9fa';
   ctx.fillRect(0, 0, W, H);
 
-  ctx.save();
-  ctx.translate(vp.x, vp.y);
-  ctx.scale(vp.scale, vp.scale);
-
-  const gr  = getGlassRect();
-  const sc  = vp.scale;
+  const gr  = getGlassRect(W, H);
+  const sc  = 1;
 
   // ── read values ──
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 48;
@@ -900,16 +974,6 @@ function drawCanvas() {
     ctx.restore();
   }
 
-  ctx.restore();
-  ctx.restore();
-
-  // 🍞 bread mode — cover the graph area with bread, cropped to shape
-  if (window.BREAD && window.BREAD.isOn()) {
-    ctx.save();
-    ctx.scale(dpr, dpr);
-    window.BREAD.draw(ctx, W, H);
-    ctx.restore();
-  }
 }
 
 // redraw when bread mode toggles
@@ -966,23 +1030,29 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
   // For horizontal edges (top/bottom): offset is vertical at the RIGHT
   let offsetPx, arrowX, arrowY, labelX, labelY;
 
+  // Anchor law (founder fix 2026-10-28): every desnivel marker hangs off
+  // the GLASS (rough) corner it measures, never off the level-reference
+  // corner (the old code anchored at levelP1/levelP2, so markers floated at
+  // the dashed rect's corner, detached from the glass tip whenever the
+  // perpendicular offset was nonzero). Vertical edges: the offset is
+  // horizontal at the TOP corner, so the arrow runs at the glass tip's own
+  // height. Horizontal edges: the offset is vertical at the RIGHT corner,
+  // so the arrow runs at the glass tip's own x.
   if (side === 'left') {
-    // Left edge: offset at top = roughTL.x - levelTL.x → draw at TOP end
     offsetPx = roughP1.x - levelP1.x;
-    arrowY = levelP1.y;
+    arrowY = roughP1.y;
     arrowX = levelP1.x;
     labelX = Math.min(levelP1.x, roughP1.x) - PAD;
     labelY = arrowY;
   } else if (side === 'right') {
-    // Right edge: offset at top = roughTR.x - levelTR.x → draw at TOP end
     offsetPx = roughP1.x - levelP1.x;
-    arrowY = levelP1.y;
+    arrowY = roughP1.y;
     arrowX = levelP1.x;
     labelX = Math.max(levelP1.x, roughP1.x) + PAD;
     labelY = arrowY;
-  } else { // top / bottom — offset at RIGHT end (P2), arrow at RIGHT end
+  } else { // top / bottom — offset at RIGHT end (P2), anchored at the glass tip
     offsetPx = roughP2.y - levelP2.y;
-    arrowX = levelP2.x;
+    arrowX = roughP2.x;
     arrowY = levelP2.y;
     labelX = arrowX;
     labelY = side === 'top'
@@ -1032,11 +1102,19 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
       ctx.moveTo(ax2 - tickLen, ay2);
       ctx.lineTo(ax2 + tickLen, ay2);
       ctx.stroke();
-      // Roof/floor labels sit BELOW the clamped RIGHT-end point (mirrors the
-      // dashboard embed graph): keeps the roof label clear of the right-wall
-      // label sharing the top-right corner.
-      ctx.textBaseline = "top";
-      ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2, ay2 + 14/scale);
+      // Corner callout separation (founder fix 2026-10-28): the techo label
+      // sits ABOVE the glass tip and the piso label BELOW it. The old code
+      // put BOTH below the corner, so at the top-right the techo label ran
+      // down the right edge and read as if it belonged under the right-wall
+      // callout. Now the top-right pair is split by construction: pared-der
+      // label beside the tip, techo label above it, no shared edge.
+      if (side === 'top') {
+        ctx.textBaseline = "bottom";
+        ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2, Math.min(ay2, arrowY) - 14/scale);
+      } else {
+        ctx.textBaseline = "top";
+        ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2, Math.max(ay2, arrowY) + 14/scale);
+      }
     }
   }
   ctx.restore();
@@ -1150,7 +1228,7 @@ let dragStart = { x: 0, y: 0 };
 let vpAtDrag  = { x: 0, y: 0 };
 let userZoomed = false; // single source of truth: manual pan/zoom state (reset on step change)
 
-if (canvas) {
+function _bindGraphInteractions() {
 canvas.addEventListener('mousedown', function(e) {
   if (e.button !== 0) return;
   isDragging = true;
@@ -1166,7 +1244,7 @@ window.addEventListener('mousemove', function(e) {
   vpTarget.x = vp.x; vpTarget.y = vp.y;
   userZoomed = true;
   _syncResetZoomBtn();
-  drawCanvas();
+  presentGraphImage();
 });
 window.addEventListener('mouseup', function() { isDragging = false; canvas.style.cursor = 'grab'; });
 canvas.style.cursor = 'grab';
@@ -1180,18 +1258,25 @@ function _syncResetZoomBtn() {
   const btn = document.getElementById('reset-zoom-btn');
   if (btn) btn.style.display = userZoomed ? '' : 'none';
 }
+// window.resetZoom (below, outside the bind block) calls this by bare
+// name; publish it since the bind block no longer leaks it globally.
+window._syncResetZoomBtn = _syncResetZoomBtn;
 
 function applyZoom(cx, cy, factor) {
-  const clampedFactor = Math.max(0.85, Math.min(1.18, factor));
+  // Zoom toward the TARGET transform and let smoothAnimate ease the image
+  // there: continuous, smooth zooming instead of per-event jumps. The old
+  // factor clamp (0.85–1.18) also strangled large scroll deltas, which is
+  // part of why zooming felt non-proportional.
+  const clampedFactor = Math.max(0.5, Math.min(2.0, factor));
   userZoomed = true;
   _syncResetZoomBtn();
-  const newScale = Math.max(0.3, Math.min(10, vp.scale * clampedFactor));
-  const sf = newScale / vp.scale;
-  vp.x = cx - sf * (cx - vp.x);
-  vp.y = cy - sf * (cy - vp.y);
-  vp.scale = newScale;
-  vpTarget.x = vp.x; vpTarget.y = vp.y; vpTarget.scale = vp.scale;
-  drawCanvas();
+  const newScale = Math.max(0.3, Math.min(10, vpTarget.scale * clampedFactor));
+  const sf = newScale / vpTarget.scale;
+  vpTarget.x = cx - sf * (cx - vpTarget.x);
+  vpTarget.y = cy - sf * (cy - vpTarget.y);
+  vpTarget.scale = newScale;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  smoothAnimate();
 }
 
 canvas.addEventListener('touchstart', function(e) {
@@ -1216,7 +1301,7 @@ canvas.addEventListener('touchmove', function(e) {
     vpTarget.x = vp.x; vpTarget.y = vp.y;
     userZoomed = true;
     _syncResetZoomBtn();
-    drawCanvas();
+    presentGraphImage();
   } else if (e.touches.length === 2 && lastPinchDist !== null) {
     const dx   = e.touches[0].clientX - e.touches[1].clientX;
     const dy   = e.touches[0].clientY - e.touches[1].clientY;
@@ -1234,15 +1319,21 @@ canvas.addEventListener('touchend', function(e) {
   if (e.touches.length < 2)   { lastPinchDist = null; }
 }, { passive: true });
 
-// mouse wheel zoom
+// mouse wheel zoom — proportional: the zoom factor scales with the actual
+// scroll delta (the old fixed 1.03/0.97 steps ignored delta magnitude, so a
+// trackpad flick and a mouse notch moved the same amount). deltaMode:
+// 0 = pixels, 1 = lines, 2 = pages.
 canvas.addEventListener('wheel', function(e) {
   e.preventDefault();
   const rect = canvas.getBoundingClientRect();
-  applyZoom(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.03 : 0.97);
+  const delta = e.deltaMode === 1 ? e.deltaY * 33
+              : (e.deltaMode === 2 ? e.deltaY * rect.height : e.deltaY);
+  applyZoom(e.clientX - rect.left, e.clientY - rect.top, Math.exp(-delta * 0.0018));
 }, { passive: false });
 
 // 🏳️‍⚧️ trans rights — built with love
-} // end if (canvas)
+}
+if (canvas) _bindGraphInteractions();
 
 // reset zoom button
 window.resetZoom = function() { userZoomed = false; _syncResetZoomBtn(); animateCanvas(currentStep); };
