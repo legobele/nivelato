@@ -137,6 +137,11 @@ service cloud.firestore {
           && unchanged('orgId')
           && unchanged('permissions')
           && unchanged('disabled')
+          // Account switcher: memberships + personalOrgId are
+          // server-managed (functions only). Pinned here so no client
+          // can forge a membership the switch callable would honor.
+          && unchanged('memberships')
+          && unchanged('personalOrgId')
           && unchanged('deleteApprovedAt')
           && unchanged('geoStatus')
           && unchanged('lastGeoCheck')
@@ -149,7 +154,9 @@ service cloud.firestore {
         || (isActive()
           && myUser().role == 'owner'
           && myOrgId() == resource.data.orgId
-          && request.resource.data.orgId == resource.data.orgId)
+          && request.resource.data.orgId == resource.data.orgId
+          && unchanged('memberships')
+          && unchanged('personalOrgId'))
       );
       allow delete: if false;
 

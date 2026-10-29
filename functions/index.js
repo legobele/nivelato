@@ -623,6 +623,20 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
     });
   }
 
+  // Account switcher: keep the memberships directory truthful for the
+  // ACTIVE org (server-managed; firestore.rules pin the field against
+  // client writes). Writes only when the entry is missing or its role
+  // drifted from what this gate just verified.
+  const _existingMembership = (user.memberships && typeof user.memberships === 'object')
+    ? user.memberships[orgId] : null;
+  if (!_existingMembership || _existingMembership.role !== claimedRole) {
+    const _entry = { role: claimedRole };
+    if (user.permissions && typeof user.permissions === 'object') _entry.permissions = user.permissions;
+    _entry.joinedAt = (_existingMembership && _existingMembership.joinedAt)
+      || admin.firestore.FieldValue.serverTimestamp();
+    await db.doc(`users/${uid}`).set({ memberships: { [orgId]: _entry } }, { merge: true });
+  }
+
   // 7. Mint claims. licenseStatus passes through so rules can enforce the
   //    past-due read-only grace (rules: read ok on past_due, write denied).
   const claims = {
@@ -640,6 +654,187 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
   const uiVersion = uiVersionDoc ? uiVersionDoc.tag : null;
 
   return { verdict, flow, geoOk, licenseStatus, reason, uiVersion };
+});
+
+// ---------------------------------------------------------------------------
+// Account contexts — the account switcher (design record:
+// nivelato-dashboard-batch/account-switcher-spec.md).
+//
+// users/{uid} keeps presenting ONE active context in its top-level
+// orgId/role/permissions, so every rule and read path works unchanged.
+// The directory of contexts lives in users/{uid}.memberships (plus
+// personalOrgId) and is written ONLY server-side: here, in flowGate's
+// active-org sync, and in applyPendingInvite. firestore.rules pin both
+// fields unchanged for every client writer, so a membership can never
+// be forged from the browser; the switch below therefore never widens
+// permissions — it copies role/permissions FROM the target membership.
+// ---------------------------------------------------------------------------
+
+const KNOWN_CONTEXT_ROLES = ['owner', 'supervisor', 'medidor', 'cotizador'];
+
+function membershipsOf(user) {
+  const m = user && user.memberships;
+  return (m && typeof m === 'object' && !Array.isArray(m)) ? m : {};
+}
+
+async function loadContextOrg(orgId) {
+  if (!orgId || typeof orgId !== 'string') return null;
+  const snap = await db.doc(`orgs/${orgId}`).get();
+  return snap.exists ? { id: orgId, ...snap.data() } : null;
+}
+
+// listMyContexts — the switcher's list: every non-disabled membership
+// whose org still exists (owner cross-checked, as in flowGate), plus
+// the personal context's existence state.
+exports.listMyContexts = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'listMyContexts requires a signed-in user.');
+  }
+  const uid = request.auth.uid;
+  const userSnap = await db.doc(`users/${uid}`).get();
+  if (!userSnap.exists) return { contexts: [], personal: { exists: false } };
+  const user = userSnap.data();
+  const memberships = { ...membershipsOf(user) };
+  // The active context is always listable, even before flowGate's sync
+  // has recorded it (display synthesis only; nothing is written here).
+  if (user.orgId && !memberships[user.orgId]) {
+    memberships[user.orgId] = {
+      role: user.role, permissions: user.permissions, disabled: user.disabled,
+    };
+  }
+  const contexts = [];
+  for (const [orgId, m] of Object.entries(memberships)) {
+    if (!m || m.disabled === true) continue; // revoked/absent never lists
+    const org = await loadContextOrg(orgId);
+    if (!org) continue;
+    const role = KNOWN_CONTEXT_ROLES.includes(m.role) ? m.role : 'medidor';
+    if (role === 'owner' && org.ownerId !== uid) continue; // B1 cross-check
+    contexts.push({
+      orgId,
+      name: org.name || orgId,
+      role,
+      flow: org.flow || null,
+      isPersonal: !!user.personalOrgId && orgId === user.personalOrgId,
+      active: orgId === user.orgId,
+    });
+  }
+  contexts.sort((a, b) =>
+    (Number(b.active) - Number(a.active))
+    || (Number(a.isPersonal) - Number(b.isPersonal))
+    || String(a.name).localeCompare(String(b.name)));
+  let personal = { exists: false };
+  if (user.personalOrgId) {
+    const org = await loadContextOrg(user.personalOrgId);
+    if (org) personal = { exists: true, orgId: user.personalOrgId, name: org.name || 'Personal' };
+  }
+  return { contexts, personal };
+});
+
+// switchOrgContext — move the active context. No re-login, no session
+// change (the shared cookie is uid-bound and org-blind by design): the
+// user doc's active fields are rewritten from the target membership
+// and baseline claims for the TARGET org are minted here, so a failed
+// client-side flowGate re-verification can never leave the previous
+// org's claims describing the new context. geoOk is carried only
+// within the same flow; a qgi target must re-earn it in the flowGate
+// pass the client runs immediately after (fail-closed until then).
+exports.switchOrgContext = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'switchOrgContext requires a signed-in user.');
+  }
+  const uid = request.auth.uid;
+  const target = request.data && typeof request.data.orgId === 'string'
+    ? request.data.orgId : null;
+  if (!target) throw new HttpsError('invalid-argument', 'orgId is required.');
+  const userSnap = await db.doc(`users/${uid}`).get();
+  if (!userSnap.exists) {
+    throw new HttpsError('failed-precondition', 'No user profile yet.');
+  }
+  const user = userSnap.data();
+  if (target === user.orgId) return { ok: true, orgId: target, already: true };
+  const membership = membershipsOf(user)[target];
+  if (!membership || membership.disabled === true) {
+    throw new HttpsError('permission-denied', 'Not a member of that account.');
+  }
+  const org = await loadContextOrg(target);
+  if (!org) throw new HttpsError('not-found', 'That account no longer exists.');
+  const role = KNOWN_CONTEXT_ROLES.includes(membership.role) ? membership.role : 'medidor';
+  if (role === 'owner' && org.ownerId !== uid) {
+    throw new HttpsError('permission-denied', 'Role does not match org ownership.');
+  }
+  const patch = { orgId: target, role, disabled: false };
+  if (membership.permissions && typeof membership.permissions === 'object') {
+    patch.permissions = membership.permissions;
+  } else {
+    patch.permissions = admin.firestore.FieldValue.delete();
+  }
+  await db.doc(`users/${uid}`).update(patch);
+  const prev = request.auth.token || {};
+  const flow = org.flow || null;
+  const claims = {
+    orgId: target,
+    role,
+    flow,
+    geoOk: prev.flow === flow && prev.geoOk === true,
+    licenseStatus: org.licenseStatus || 'active',
+    versionCode: Number.isInteger(prev.versionCode) ? prev.versionCode : 0,
+  };
+  await admin.auth().setCustomUserClaims(uid, claims);
+  return { ok: true, orgId: target, flow };
+});
+
+// createPersonalContext — the personal account is an org of one owned
+// by the user (the only shape the existing data plane can hold). If the
+// user had no org at all (the org-less personal account state the
+// dashboard dead-ends on), creating also activates them inside it.
+exports.createPersonalContext = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'createPersonalContext requires a signed-in user.');
+  }
+  const uid = request.auth.uid;
+  const userSnap = await db.doc(`users/${uid}`).get();
+  if (!userSnap.exists) {
+    throw new HttpsError('failed-precondition', 'No user profile yet.');
+  }
+  const user = userSnap.data();
+  if (user.personalOrgId) {
+    const existing = await loadContextOrg(user.personalOrgId);
+    if (existing) {
+      if (!membershipsOf(user)[user.personalOrgId]) {
+        await db.doc(`users/${uid}`).set(
+          { memberships: { [user.personalOrgId]: { role: 'owner', joinedAt: admin.firestore.FieldValue.serverTimestamp() } } },
+          { merge: true });
+      }
+      return { ok: true, orgId: user.personalOrgId, created: false };
+    }
+  }
+  const orgRef = db.collection('orgs').doc();
+  const orgId = orgRef.id;
+  const baseName = String(
+    user.name || user.displayName
+    || (request.auth.token.email || '').split('@')[0]
+    || 'Personal'
+  ).slice(0, 80);
+  await orgRef.set({
+    name: baseName,
+    ownerId: uid,
+    joinCode: orgId,
+    flow: 'external',
+    versionPolicy: 'external-hybrid',
+    licenseStatus: 'active',
+    trialSavesUsed: 0,
+    isPersonal: true,
+    personalOwnerUid: uid,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  const hadNoOrg = !user.orgId;
+  const patch = { personalOrgId: orgId };
+  if (hadNoOrg) { patch.orgId = orgId; patch.role = 'owner'; patch.disabled = false; }
+  await db.doc(`users/${uid}`).update(patch);
+  await db.doc(`users/${uid}`).set(
+    { memberships: { [orgId]: { role: 'owner', joinedAt: admin.firestore.FieldValue.serverTimestamp() } } },
+    { merge: true });
+  return { ok: true, orgId, created: true, switchedIn: hadNoOrg };
 });
 
 // ---------------------------------------------------------------------------
@@ -2243,6 +2438,15 @@ async function applyPendingInvite(uid, user, token) {
       if (Object.keys(clean).length) patch.permissions = clean;
     }
     await db.doc(`users/${uid}`).update(patch);
+    // Account switcher: record the membership server-side so the org
+    // shows up in the member's context list from their first session.
+    const _membershipEntry = {
+      role: patch.role || user.role || 'medidor',
+      joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+    if (patch.permissions) _membershipEntry.permissions = patch.permissions;
+    await db.doc(`users/${uid}`).set(
+      { memberships: { [orgId]: _membershipEntry } }, { merge: true });
     await invRef.update({
       status: 'accepted',
       acceptedAt: admin.firestore.FieldValue.serverTimestamp(),
