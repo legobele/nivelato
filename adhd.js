@@ -216,11 +216,15 @@ function validateStep(n) {
     if (!p) return L('Ponle nombre al proyecto para identificar el trabajo.', 'Project name is missing - enter a name to identify the job.');
     return null;
   }
-  if (n === 1) return _checkPair('hueco-ancho-bot', 'hueco-alto-izq', 'Ancho abajo', 'Alto izquierda');
-  if (n === 2) return _checkPair('pI-a', 'pI-b', 'Pared izq. A', 'Pared izq. B');
-  if (n === 3) return _checkPair('pD-a', 'pD-b', 'Pared der. A', 'Pared der. B');
-  if (n === 4) return _checkPair('t-a', 't-b', 'Arriba A', 'Arriba B');
-  if (n === 5) return _checkPair('p-a', 'p-b', 'Abajo A', 'Abajo B');
+  // v1.2.18: los rótulos pasan por L() con el texto exacto que ve el
+  // usuario en el campo (claves anchoBase/altoBase/aBottom/bTop/aLeft/
+  // bRight del diccionario). Antes iban fijos en español y el error
+  // salía como "Arriba B: enter a measurement..." en la UI en inglés.
+  if (n === 1) return _checkPair('hueco-ancho-bot', 'hueco-alto-izq', L('Ancho - Abajo (base)', 'Width - Bottom (base)'), L('Alto - Izquierda (base)', 'Height - Left (base)'));
+  if (n === 2) return _checkPair('pI-a', 'pI-b', L('A - Abajo', 'A - Bottom'), L('B - Arriba', 'B - Top'));
+  if (n === 3) return _checkPair('pD-a', 'pD-b', L('A - Abajo', 'A - Bottom'), L('B - Arriba', 'B - Top'));
+  if (n === 4) return _checkPair('t-a', 't-b', L('A - Izquierda', 'A - Left'), L('B - Derecha', 'B - Right'));
+  if (n === 5) return _checkPair('p-a', 'p-b', L('A - Izquierda', 'A - Left'), L('B - Derecha', 'B - Right'));
   return null; // paso 6 (foto opcional) y 7 (resumen) siempre pasan
 }
 
@@ -244,6 +248,10 @@ const DRAFT_KEY = 'nivelato_wizard_draft_v1';
 // (e) la foto anotada vive aquí desde el arranque para que saveDraft/restoreDraft
 // puedan leerla sin caer en la TDZ durante el init
 let annotatedPhotoDataUrl = null;
+// (v1.2.18) payload de anotaciones de photo.html (ubicación + tamaños):
+// viaja con la foto en el borrador y en el job guardado, y se le devuelve
+// al editor en NIVELATO_MEASUREMENTS para restaurar la colocación.
+let annotatedPhotoAnnotations = null;
 const DRAFT_IDS = ['customer-name','project-name','location-name','area-name','notas-field',
   'hueco-ancho-bot-whole','hueco-ancho-bot-frac','hueco-alto-izq-whole','hueco-alto-izq-frac',
   'pI-a-whole','pI-a-frac','pI-b-whole','pI-b-frac',
@@ -261,11 +269,13 @@ function saveDraft() {
     // (e) la foto anotada también es parte del borrador
     const draft = { v: 1, ts: Date.now(), step: currentStep, values };
     if (annotatedPhotoDataUrl) draft.photo = annotatedPhotoDataUrl;
+    if (annotatedPhotoDataUrl && annotatedPhotoAnnotations) draft.annotations = annotatedPhotoAnnotations;
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
     } catch (e2) {
       // la foto no cabe en localStorage: guardar el borrador sin ella
       delete draft.photo;
+      delete draft.annotations;
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
     }
   } catch (e) { /* storage lleno o bloqueado: el wizard sigue funcionando */ }
@@ -283,6 +293,7 @@ function restoreDraft() {
   // (e) restaurar la foto anotada guardada en el borrador
   if (d.photo) {
     annotatedPhotoDataUrl = d.photo;
+    annotatedPhotoAnnotations = d.annotations || null;
     const pimg = document.getElementById('photo-preview-img');
     const pprev = document.getElementById('photo-preview');
     const pbtn = document.getElementById('btn-open-photo');
@@ -422,7 +433,11 @@ function runValidation() {
   if ((pI_A > 0||pI_B > 0) && (pD_A > 0||pD_B > 0)) {
     const offsetIzq = pI_A - pI_B;
     const offsetDer = pD_A - pD_B;
-    if (Math.abs(offsetIzq - offsetDer) > TOLERANCE) {
+    // v1.2.18: se comparan las magnitudes que el mensaje imprime. La
+    // comparación firmada disparaba "no coincide" con ambos valores
+    // impresos iguales (1" vs 1") cuando los desniveles firmados eran
+    // espejo: el texto comparaba una cosa y mostraba otra.
+    if (Math.abs(Math.abs(offsetIzq) - Math.abs(offsetDer)) > TOLERANCE) {
       warnings.push(L('Paredes no cuadran - el desnivel izq. (', 'Walls are out of square - the left offset (') + toFracStr(Math.abs(offsetIzq)) + L(') no coincide con el der. (', ') does not match the right offset (') + toFracStr(Math.abs(offsetDer)) + L('). Revisa las medidas.', '). Check the measurements.'));
       keys.push('walls-out-of-square');
     }
@@ -430,7 +445,7 @@ function runValidation() {
   if ((t_A > 0||t_B > 0) && (p_A > 0||p_B > 0)) {
     const offsetTecho = t_A - t_B;
     const offsetPiso  = p_A - p_B;
-    if (Math.abs(offsetTecho - offsetPiso) > TOLERANCE) {
+    if (Math.abs(Math.abs(offsetTecho) - Math.abs(offsetPiso)) > TOLERANCE) {
       warnings.push(L('Arriba/Abajo no cuadran - el desnivel de arriba (', 'Top/Bottom are out of square - the top offset (') + toFracStr(Math.abs(offsetTecho)) + L(') no coincide con el de abajo (', ') does not match the bottom offset (') + toFracStr(Math.abs(offsetPiso)) + L('). Revisa las medidas.', '). Check the measurements.'));
       keys.push('top-bottom-out-of-square');
     }
@@ -556,6 +571,7 @@ window.newMeasurement = function() {
   }
   clearDraft();
   annotatedPhotoDataUrl = null;
+  annotatedPhotoAnnotations = null;
   const prev = document.getElementById('photo-preview');
   if (prev) prev.style.display = 'none';
   const btnOpen = document.getElementById('btn-open-photo');
@@ -670,7 +686,10 @@ function _saveCurrentJob(warnings) {
     area: area,
     warnings: warnings || [],
     notas: notas,
-    annotatedPhoto: annotatedPhotoDataUrl || null
+    annotatedPhoto: annotatedPhotoDataUrl || null,
+    // (v1.2.18) las anotaciones viven en el mismo registro que la foto:
+    // el mismo saveJobToFirestore las persiste, sin store paralelo.
+    annotatedPhotoAnnotations: annotatedPhotoAnnotations || null
   };
   // Timeout: un addDoc colgado no puede dejar el "⏳ Guardando…" eterno (QA 2026-09-18)
   const _saveWithTimeout = Promise.race([
@@ -1637,7 +1656,10 @@ window.openPhotoEditor = function() {
     paredDer: results.paredDer?.label,
     techo:    results.techo?.label,
     piso:     results.piso?.label,
-    customer: document.getElementById('customer-name')?.value || ''
+    customer: document.getElementById('customer-name')?.value || '',
+    // (v1.2.18) anotaciones guardadas de esta medida: photo.html las
+    // restaura (posición + tamaños) al abrir el editor de nuevo.
+    annotations: annotatedPhotoAnnotations || null
   };
   // in-app iframe modal — no popup tab (mobile browsers kill popup tabs)
   const overlay = document.getElementById('photo-editor-overlay');
@@ -1664,6 +1686,7 @@ window.skipPhoto = function() { nextStep(); };
 
 window.removePhoto = function() {
   annotatedPhotoDataUrl = null;
+  annotatedPhotoAnnotations = null;
   document.getElementById('photo-preview').style.display = 'none';
   document.getElementById('btn-open-photo').textContent = L('Agregar foto', 'Add photo');
   saveDraft(); // (e) el borrador ya no debe llevar la foto
@@ -1673,6 +1696,9 @@ window.addEventListener('message', function(e) {
   if (e.origin !== window.location.origin) return;
   if (e.data && e.data.type === 'NIVELATO_ANNOTATED_PHOTO' && e.data.dataUrl) {
     annotatedPhotoDataUrl = e.data.dataUrl;
+    // (v1.2.18) el payload trae las anotaciones: guardarlas con la foto
+    // (antes se descartaban y reabrir el editor perdía la colocación).
+    if (e.data.annotations) annotatedPhotoAnnotations = e.data.annotations;
     const prev = document.getElementById('photo-preview');
     const img = document.getElementById('photo-preview-img');
     if (prev && img) {

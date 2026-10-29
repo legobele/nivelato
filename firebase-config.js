@@ -54,7 +54,15 @@ export const storage = getStorage(app);
 // (nivelato-app), aunque el taller use su propio backend. Así las
 // notificaciones no dependen de dónde estén los datos.
 const centralApp = initializeApp(defaultConfig, 'nivelato-central');
-export const centralFunctions = getFunctions(centralApp, 'us-central1');
+// v1.2.18: sin backend personalizado, el proyecto central ES el proyecto
+// activo, así que las funciones se enlazan a la app principal — la que
+// tiene la sesión iniciada y cuyo token viaja con cada callable.
+// Enlazarlas siempre a centralApp (una segunda app donde nadie inicia
+// sesión) dejaba cada callable sin Authorization y el servidor
+// respondía 401 UNAUTHENTICATED (reportLoginAlert, audit Oct 29).
+export const centralFunctions = customConfig
+  ? getFunctions(centralApp, 'us-central1')
+  : getFunctions(app, 'us-central1');
 
 /** ¿Estamos en un backend personalizado? */
 export function isCustomBackend() {

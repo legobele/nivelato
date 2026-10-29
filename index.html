@@ -46,7 +46,19 @@
 #wiz-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
 #wiz-main #app-header { flex: none; }
 #wiz-main #canvas-wrap { flex: 0 0 auto; height: clamp(200px, 34vh, 320px); position: relative; }
-#wiz-main #bottom-panel { flex: 1 1 auto; }
+#wiz-main #bottom-panel { flex: 1 1 auto; display: flex; flex-direction: column; overflow-y: hidden; }
+/* v1.2.18 (defect 1): the step panel now fills the bottom panel instead
+   of sizing to its content — before, the form and nav row rode high and
+   the bottom half of the viewport was dead space (Giulia's audit). The
+   panel takes over the internal scroll the container used to own, and
+   each step's nav row pins to the panel bottom like an app footer. */
+#wiz-main .step-panel.active { flex: 1 1 auto; min-height: 0; overflow-y: auto; box-sizing: border-box; }
+#wiz-main .step-panel .btn-row { margin-top: auto; }
+/* v1.2.18 (defect 3): the photo step's footer pairing is pinned at this
+   layer too (the last word in the cascade), not only in autism.css:
+   dark surface under the light-text Back/Skip pair, identical to every
+   other step's nav row, so it cannot be repainted light-on-light. */
+#wiz-main #step-6 .btn-row { background: var(--niv-surface); }
 #photo-stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--niv-bg); padding: 12px; overflow: auto; }
 #photo-stage[hidden] { display: none; }
 #photo-stage #photo-panel { width: 100%; max-width: 560px; }

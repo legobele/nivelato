@@ -2139,6 +2139,11 @@ import { ensureFlowClaims, routeAfterGate } from './geo.js';
 // does for index.html). Fails soft when functions aren't deployed.
 
 // ─── Central helpers ───
+// Warning icon for the job warnings box. v1.2.18: both detail render
+// paths interpolate WARN_SVG but the constant was never defined, so
+// rendering a job with warnings threw "ReferenceError: Can't find
+// variable: WARN_SVG" on click (Giulia's audit, Oct 29).
+const WARN_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
 // Escape ALL user-controlled strings before innerHTML interpolation (XSS).
 const escapeHtml = (s) => String(s ?? '')
   .replace(/&/g, '&amp;')
