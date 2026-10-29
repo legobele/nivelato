@@ -1141,12 +1141,18 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 @media (min-width: 901px) {
   body.has-sidebar .niv-topbar { display: none; }
   body.has-sidebar.niv-compact.sidebar-collapsed .niv-topbar { display: flex; }
-  /* items 32/35: in exactly the state where the top bar takes over
-     (compact mode, sidebar collapsed to its rail), the rail's nav
-     icons duplicate the top bar's destinations and hide. The company
-     head (org tile + expand chevron) is not part of the nav and stays
-     as the re-expand affordance. */
-  body.has-sidebar.niv-compact.sidebar-collapsed .niv-side-nav { display: none; }
+  /* items 32/35, generalized by Giulia's Oct 29 ruling: "The section
+     with the buttons shouldn't appear if the top bar is active." The
+     32/35 rule only hid the section while the rail was collapsed, but
+     at desktop widths the top bar is active in BOTH rail states
+     whenever compact mode is on (niv-dark.css m18 shows it expanded
+     or collapsed), so expanding the sidebar brought the duplicate
+     button list back under a live top bar. The section now hides
+     whenever compact is on; the top bar carries every destination.
+     The company head (org tile + collapse chevron) is not part of
+     the nav and stays as the collapse/reach affordance. With compact
+     off there is no top bar and the section renders as before. */
+  body.has-sidebar.niv-compact .niv-side-nav { display: none; }
   body.has-sidebar.niv-compact .niv-topbar-project {
     position: absolute; right: 32px; top: 50%;
     transform: translateY(-50%); margin-left: 0;
