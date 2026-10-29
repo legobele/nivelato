@@ -37,6 +37,29 @@ try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|
     body.niv-nav-open #chrome-sidebar { display: block; }
   }
   .co-note { font-size: 12px; color: var(--niv-text-dim); margin: 0 0 12px; }
+  /* items 19/20/21: second settings sidebar + one section at a time in
+     the content pane, mirroring the settings.html layout pattern. The
+     sidebar rows are the shared kit (.niv-nav / .niv-nav-btn), the same
+     design system as the main sidebar module (item 28). */
+  .settings-layout { display: flex; gap: 20px; align-items: flex-start; }
+  .co-settings-sidebar { width: 260px; flex: none; }
+  .settings-sections { flex: 1; min-width: 0; }
+  .settings-section { display: none; }
+  .settings-section.active { display: block; animation: niv-mo-view-in var(--niv-mo-view, 300ms) var(--niv-mo-ease, cubic-bezier(.22, 1, .36, 1)); }
+  #delete-requests-card { display: none; }
+  #delete-requests-card.active.co-has-requests { display: block; }
+  .mod-ico { display: inline-flex; width: 24px; height: 24px; vertical-align: -7px; margin-right: 9px; color: var(--niv-text-dim, #a7a7ad); }
+  .mod-ico svg { width: 24px; height: 24px; display: block; }
+  .mod-ico .tile { fill: currentColor; }
+  .mod-ico .glyph { fill: var(--niv-text, #f5f5f7); }
+  .niv-nav-btn:hover .mod-ico { color: var(--niv-surface, #17171a); }
+  .niv-nav-btn.active .mod-ico { color: var(--niv-accent, #fafafa); }
+  .niv-nav-btn.active .mod-ico .glyph { fill: #050505; }
+  @media (max-width: 900px) {
+    .settings-layout { flex-direction: column; }
+    .co-settings-sidebar { width: 100%; }
+    .settings-sections { width: 100%; }
+  }
   .co-loading { color: var(--niv-text-dim); font-size: 13px; }
   html, body { overflow-y: auto !important; }
 </style>
@@ -56,8 +79,36 @@ try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|
   <!-- m38: the form stays hidden until auth resolves and the
        userManagement gate passes; no fully enabled form pre-auth. -->
   <div id="company-area" style="display:none;">
+  <div class="settings-layout">
+  <aside class="co-settings-sidebar" aria-label="Ajustes">
+    <nav class="niv-nav">
+      <!-- Canonical account/company block (item 23): identical to the
+           main sidebar module and to settings.html. -->
+      <div class="niv-nav-group">
+        <div class="niv-nav-group-title" data-i18n="groupCompany">Compañía</div>
+        <a class="niv-nav-btn" href="/company/users"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><path class="glyph" d="M9.2 6.1a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4zM3.9 18.7c.7-3.1 2.8-4.7 5.3-4.7s4.6 1.6 5.3 4.7zM16.6 7.6a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zM15.9 14.3c2.1.3 3.7 1.8 4.3 4.4h-4.5c.35-1.6.42-3.05.2-4.4z"/></svg></span><span data-i18n="companyTeam">Usuarios</span></a>
+        <a class="niv-nav-btn active" href="/company/settings" aria-current="page"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><rect class="glyph" x="4.6" y="6.1" width="14.8" height="1.9" rx="0.95"/><rect class="glyph" x="4.6" y="11.05" width="14.8" height="1.9" rx="0.95"/><rect class="glyph" x="4.6" y="16" width="14.8" height="1.9" rx="0.95"/><circle class="glyph" cx="9" cy="7.05" r="2.1"/><circle class="glyph" cx="15" cy="12" r="2.1"/><circle class="glyph" cx="8" cy="16.95" r="2.1"/></svg></span><span data-i18n="companyProfile">Ajustes de la compañía</span></a>
+      </div>
+      <div class="niv-nav-group">
+        <div class="niv-nav-group-title" data-i18n="groupAccount">Cuenta</div>
+        <a class="niv-nav-btn" href="/account/settings"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><path class="glyph" d="M12 6.2a3.4 3.4 0 1 1 0 6.8 3.4 3.4 0 0 1 0-6.8zM5 19.2c.8-3.4 3.6-5.2 7-5.2s6.2 1.8 7 5.2z"/></svg></span><span data-i18n="myAccount">Mi cuenta</span></a>
+      </div>
+      <!-- Item 21: one entry per settings section, page order. -->
+      <div class="niv-nav-group">
+        <div class="niv-nav-group-title" data-i18n="navSections">Secciones</div>
+        <button type="button" class="niv-nav-btn co-sec-btn active" data-section-target="perfil" data-i18n="profileTitle">Perfil de la compañía</button>
+        <button type="button" class="niv-nav-btn co-sec-btn" data-section-target="cotizacion" data-i18n="quoteTitle">Ajustes de cotización</button>
+        <button type="button" class="niv-nav-btn co-sec-btn" data-section-target="api-2fa" data-i18n="tfaTitle">API de 2FA</button>
+        <button type="button" class="niv-nav-btn co-sec-btn" data-section-target="seguridad" data-i18n="securityTitle">Requisitos de seguridad</button>
+        <button type="button" class="niv-nav-btn co-sec-btn" data-section-target="permisos" data-i18n="permTitle">Permisos de miembros</button>
+        <button type="button" class="niv-nav-btn co-sec-btn" data-section-target="solicitudes" data-i18n="requestsTitle">Solicitudes de acceso</button>
+        <button type="button" class="niv-nav-btn co-sec-btn" id="co-nav-delete" data-section-target="eliminacion" data-i18n="deleteTitle" hidden>Solicitudes de eliminación</button>
+      </div>
+    </nav>
+  </aside>
+  <div class="settings-sections">
 
-  <div class="niv-settings-card" id="card-company-profile">
+  <div class="niv-settings-card settings-section active" id="card-company-profile" data-section-panel="perfil">
     <div class="niv-card-title" data-i18n="profileTitle">Perfil de la compañía</div>
     <div class="niv-card-desc" data-i18n="profileDesc">Nombre de la compañía como aparece en la app.</div>
     <div class="niv-field"><label data-i18n="nameLabel">Nombre de la compañía</label><input id="co-name" type="text" autocomplete="off" /></div>
@@ -65,7 +116,7 @@ try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|
     <button class="niv-btn-pill niv-btn-primary" style="width:100%" id="btn-co-profile-save" onclick="saveCompanyProfile()" data-i18n="saveProfile">Guardar perfil</button>
     <div class="niv-status-line" id="co-profile-status"></div>
   </div>
-  <div class="niv-settings-card" id="card-quote-settings">
+  <div class="niv-settings-card settings-section" id="card-quote-settings" data-section-panel="cotizacion">
     <div class="niv-card-title" data-i18n="quoteTitle">Ajustes de cotización</div>
     <div class="niv-card-desc" data-i18n="quoteDesc">Valores por defecto al crear cotizaciones nuevas.</div>
     <div class="niv-field"><label data-i18n="prefixLabel">Prefijo de folio</label><input id="co-prefijo" type="text" placeholder="NIV" autocomplete="off" /></div>
@@ -77,14 +128,14 @@ try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|
     <button class="niv-btn-pill niv-btn-primary" style="width:100%" id="btn-co-quote-save" onclick="saveQuoteSettings()" data-i18n="saveQuote">Guardar ajustes</button>
     <div class="niv-status-line" id="co-quote-status"></div>
   </div>
-  <div class="niv-settings-card">
+  <div class="niv-settings-card settings-section" id="card-tfa-api" data-section-panel="api-2fa">
     <div class="niv-card-title" data-i18n="tfaTitle">API de 2FA</div>
     <div class="niv-card-desc" data-i18n="tfaDesc">Dominio o URL del API que el taller usa para el segundo factor de autenticación. Nivel de compañía, no por usuario.</div>
     <div class="niv-field niv-field-mono"><label data-i18n="tfaUrlLabel">URL del API de 2FA</label><input id="tfa-url" type="url" placeholder="https://example.com/api/2fa" autocomplete="off" /></div>
     <button class="niv-btn-pill niv-btn-primary" style="width:100%" id="btn-tfa-save" onclick="saveTfaApi()" data-i18n="save">Guardar</button>
     <div class="niv-status-line" id="tfa-status"></div>
   </div>
-  <div class="niv-settings-card" id="card-security-requirements">
+  <div class="niv-settings-card settings-section" id="card-security-requirements" data-section-panel="seguridad">
     <div class="niv-card-title" data-i18n="securityTitle">Requisitos de seguridad</div>
     <div class="niv-card-desc" data-i18n="securityDesc">Requisitos de la compañía para sus miembros. Cada ajuste dice exactamente qué hace hoy.</div>
     <div class="niv-setting-row">
@@ -103,26 +154,27 @@ try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|
     </div>
     <div class="niv-status-line" id="sec-status"></div>
   </div>
-  <div class="niv-settings-card">
+  <div class="niv-settings-card settings-section" id="card-permissions" data-section-panel="permisos">
     <div class="niv-card-title" data-i18n="permTitle">Permisos de miembros</div>
     <div class="niv-card-desc" data-i18n="permDesc">Gestiona las capacidades de cada miembro del taller.</div>
     <div id="permissions-list"><p class="co-loading" data-i18n="loadingMembers">Cargando miembros…</p></div>
     <div class="niv-saved-msg" id="perm-saved" data-i18n="permSaved">✓ Cambios guardados</div>
     <div class="niv-status-line" id="perm-status"></div>
   </div>
-  <div class="niv-settings-card">
+  <div class="niv-settings-card settings-section" id="card-requests" data-section-panel="solicitudes">
     <div class="niv-card-title" data-i18n="requestsTitle">Solicitudes de acceso</div>
     <div class="niv-card-desc" data-i18n="requestsDesc">Cuentas pendientes de aprobación para unirse al taller.</div>
     <div id="requests-list"><p class="co-loading" data-i18n="loadingRequests">Cargando solicitudes…</p></div>
     <div class="niv-status-line" id="requests-status"></div>
   </div>
-  <div class="niv-settings-card" id="delete-requests-card" style="display:none;">
+  <div class="niv-settings-card settings-section" id="delete-requests-card" data-section-panel="eliminacion">
     <div class="niv-card-title" data-i18n="deleteTitle">Solicitudes de eliminación</div>
     <div class="niv-card-desc" data-i18n="deleteDesc">Usuarios que han solicitado eliminar su cuenta.</div>
     <div id="delete-requests-list"><p class="co-loading" data-i18n="loading">Cargando…</p></div>
     <div class="niv-status-line" id="delete-requests-status"></div>
   </div>
-
+  </div><!-- /settings-sections -->
+  </div><!-- /settings-layout -->
   </div>
 </div><!-- /niv-main -->
 </div><!-- /niv-shell -->
@@ -140,6 +192,41 @@ try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|
       target: 'company', active: 'settings', lang: lang
     });
   } catch (e) { window.__coSidebar = null; }
+})();
+</script>
+<script>
+/* Items 20/21: second-sidebar section navigation. One section at a
+   time in the content pane, deep-linkable by hash, mirroring the
+   settings.html showSection pattern. */
+(function () {
+  var KEYS = ['perfil', 'cotizacion', 'api-2fa', 'seguridad', 'permisos', 'solicitudes', 'eliminacion'];
+  function showCoSection(key) {
+    if (KEYS.indexOf(key) === -1) return;
+    document.querySelectorAll('[data-section-panel]').forEach(function (p) {
+      p.classList.toggle('active', p.getAttribute('data-section-panel') === key);
+    });
+    document.querySelectorAll('.co-sec-btn').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-section-target') === key);
+    });
+    try {
+      var url = key === 'perfil' ? window.location.pathname : '#' + key;
+      window.history.replaceState(null, '', url);
+    } catch (e) {}
+  }
+  window.__coShowSection = showCoSection;
+  document.querySelectorAll('.co-sec-btn').forEach(function (b) {
+    b.addEventListener('click', function () { showCoSection(b.getAttribute('data-section-target')); });
+  });
+  var h = String(window.location.hash || '').replace(/^#/, '');
+  showCoSection(KEYS.indexOf(h) !== -1 ? h : 'perfil');
+  /* The delete-requests section exists only while requests pend: its
+     card and its nav entry appear and disappear together. */
+  window.__coSyncDeleteCard = function (has) {
+    var card = document.getElementById('delete-requests-card');
+    if (card) card.classList.toggle('co-has-requests', !!has);
+    var btn = document.getElementById('co-nav-delete');
+    if (btn) btn.hidden = !has;
+  };
 })();
 </script>
 <!-- Referrer-aware Back: owned by nav-referrer.js (loaded below), which consumes for this page under its /company/settings entry: its own one-shot key, its allowlist, .niv-btn-back. -->
@@ -161,6 +248,7 @@ import { ensureFlowClaims } from '../geo.js';
 const STR = {
   es: {
     docTitle: 'Nivelato - Ajustes de la compañía', mobileNav: 'Navegación',
+    groupCompany: 'Compañía', groupAccount: 'Cuenta', myAccount: 'Mi cuenta', companyProfile: 'Ajustes de la compañía', companyTeam: 'Usuarios', navSections: 'Secciones',
     back: '← Volver', heading: 'Ajustes de la compañía',
     sub: 'Configuración del taller. Solo usuarios con permiso de gestión.',
     deniedTitle: 'Sin acceso', deniedDesc: 'No tienes permiso para ver los ajustes de la compañía.',
@@ -204,6 +292,7 @@ const STR = {
   },
   en: {
     docTitle: 'Nivelato - Company settings', mobileNav: 'Navigation',
+    groupCompany: 'Company', groupAccount: 'Account', myAccount: 'My account', companyProfile: 'Company settings', companyTeam: 'Users', navSections: 'Sections',
     back: '← Back', heading: 'Company settings',
     sub: 'Shop configuration. Only users with the management permission.',
     deniedTitle: 'No access', deniedDesc: 'You do not have permission to view company settings.',
@@ -580,7 +669,7 @@ window.rejectRequest = async (uid, btn) => {
 function renderDeleteRequests() {
   const container = document.getElementById('delete-requests-list');
   const drs = orgMembers.filter(m => !!m.deleteRequestedAt);
-  document.getElementById('delete-requests-card').style.display = drs.length ? 'block' : 'none';
+  window.__coSyncDeleteCard(drs.length > 0);
   if (drs.length === 0) {
     container.innerHTML = '<p class="co-loading">' + escapeHtml(t('noDeleteRequests')) + '</p>';
     return;
@@ -622,13 +711,13 @@ window.processDeleteRequest = async (uid, approved, btn) => {
     }
     if (card) card.remove();
     if (!document.querySelector('#delete-requests-list .niv-request-card')) {
-      document.getElementById('delete-requests-card').style.display = 'none';
+      window.__coSyncDeleteCard(false);
       document.getElementById('delete-requests-list').innerHTML = '<p class="co-loading">' + escapeHtml(t('noDeleteRequests')) + '</p>';
     }
   } catch(e) {
     coStatus('delete-requests-status', 'err', t('processErr') + e.message);
     setCardButtons(card, false);
-    document.getElementById('delete-requests-card').style.display = 'block';
+    window.__coSyncDeleteCard(true);
   } finally {
     endAction(key, null);
   }

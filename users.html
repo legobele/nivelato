@@ -95,6 +95,21 @@
   .ov-proj-name { font-size: 14px; font-weight: 600; word-break: break-word; }
   .ov-proj-sub { font-size: 12px; color: var(--niv-text-dim); margin-top: 2px; }
   .ov-empty { text-align: center; color: var(--niv-text-dim); font-size: 13px; padding: 18px 0; }
+  /* registered devices (detail panel): the company/users.html device
+     rows, retokenized to this page's kit (item 25) */
+  .dev-row { display: flex; align-items: center; gap: 12px; border: 1.5px solid var(--niv-border-soft); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+  .dev-row.outdated { border-color: #8a6d1f; }
+  .dev-icon { width: 26px; height: 44px; flex: none; border: 1.5px solid var(--niv-text-dim); border-radius: 6px; position: relative; }
+  .dev-icon::after { content: ""; position: absolute; left: 50%; bottom: 3px; transform: translateX(-50%); width: 10px; height: 2px; background: var(--niv-text-dim); border-radius: 2px; }
+  .dev-meta { min-width: 0; flex: 1; }
+  .dev-name { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .dev-sub { font-size: 12px; color: var(--niv-text-dim); margin-top: 2px; }
+  .dev-warn { font-size: 11px; font-weight: 700; color: #ffd43b; border: 1px solid #8a6d1f; border-radius: 999px; padding: 1px 8px; }
+  .dev-rename { margin-left: auto; background: transparent; border: 1px solid var(--niv-border-soft); color: var(--niv-text-dim); border-radius: 999px; padding: 3px 10px; font-size: 12px; font-family: inherit; cursor: pointer; }
+  .dev-rename:hover { color: var(--niv-text); }
+  .dev-edit { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .dev-edit input { flex: 1; min-width: 140px; padding: 9px 12px; font-size: 13px; font-family: inherit; color: var(--niv-text); background: var(--niv-surface-2); border: 1px solid var(--niv-border-soft); border-radius: 10px; box-sizing: border-box; }
+  .dev-edit button { padding: 9px 14px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border-radius: 10px; border: 1px solid var(--niv-border-soft); background: transparent; color: var(--niv-text); }
   .ov-state { text-align: center; color: var(--niv-text-dim); font-size: 14px; padding: 48px 16px; }
   .ov-error {
     border: 1px solid rgba(229, 72, 77, 0.55); background: rgba(229, 72, 77, 0.12);
@@ -200,6 +215,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/f
 import {
   getDoc, doc, getDocs, collection, query, where, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
 import { startPresence, getOnlineUsers } from '/presence.js';
 import { PERM_DEFS, makePermChecker, orgHasQuotes } from '/permissions.js';
 import { ensureFlowClaims, routeAfterGate } from '/geo.js';
@@ -244,6 +260,12 @@ const STR = {
     permSaveFailed: 'No se pudieron guardar los permisos: {msg}',
     permLabels: Object.fromEntries(PERM_DEFS.map(d => [d.key, d.label])),
     projectsTitle: 'Proyectos', projectsDesc: 'Proyectos con espacios medidos por este usuario.',
+    devices: 'Dispositivos registrados', devicesDesc: 'Dispositivos vinculados a esta cuenta.',
+    loadingDevices: 'Cargando dispositivos...', noDevices: 'Todavía no hay dispositivos vinculados.',
+    couldNotDevices: 'No se pudieron cargar los dispositivos.', unnamedDevice: 'Dispositivo sin nombre',
+    updateAvailable: 'Actualización disponible', linked: 'Vinculado', rename: 'Renombrar',
+    deviceName: 'Nombre del dispositivo', save: 'Guardar', cancel: 'Cancelar', saving: 'Guardando...',
+    renameFailed: 'No se pudo renombrar el dispositivo: {msg}', viewMore: 'Ver más', showLess: 'Ver menos',
     loadingProjects: 'Cargando proyectos...', couldNotProjects: 'No se pudieron cargar los proyectos.',
     noProjects: 'Todavía no hay proyectos.', measuredSpace: 'espacio medido', measuredSpaces: 'espacios medidos',
     deniedTitle: 'Sin acceso',
@@ -283,6 +305,12 @@ const STR = {
       approveQuotes: 'Approve quotes', userManagement: 'Manage users'
     },
     projectsTitle: 'Projects', projectsDesc: 'Projects with spaces measured by this user.',
+    devices: 'Registered devices', devicesDesc: 'Devices linked to this account.',
+    loadingDevices: 'Loading devices...', noDevices: 'No linked devices yet.',
+    couldNotDevices: 'Could not load devices.', unnamedDevice: 'Unnamed device',
+    updateAvailable: 'Update available', linked: 'Linked', rename: 'Rename',
+    deviceName: 'Device name', save: 'Save', cancel: 'Cancel', saving: 'Saving...',
+    renameFailed: 'Could not rename device: {msg}', viewMore: 'View more', showLess: 'Show less',
     loadingProjects: 'Loading projects...', couldNotProjects: 'Could not load projects.',
     noProjects: 'No projects yet.', measuredSpace: 'measured space', measuredSpaces: 'measured spaces',
     deniedTitle: 'No access',
@@ -524,11 +552,17 @@ function renderDetail() {
       + '<div class="niv-card-desc">' + escapeHtml(t('projectsDesc')) + '</div>'
       + '<div id="ov-projects-body"><div class="ov-empty">' + escapeHtml(t('loadingProjects')) + '</div></div></div>';
   }
+  if (canSeePerms(m)) {
+    html += '<div class="niv-card"><div class="niv-card-title" id="ov-devices-title">' + escapeHtml(t('devices')) + '</div>'
+      + '<div class="niv-card-desc">' + escapeHtml(t('devicesDesc')) + '</div>'
+      + '<div id="ov-devices-body"><div class="ov-empty">' + escapeHtml(t('loadingDevices')) + '</div></div></div>';
+  }
   detail.innerHTML = html;
   const editBtn = document.getElementById('ov-perms-edit');
   if (editBtn) editBtn.addEventListener('click', () => startPermEdit(m));
   if (permEdit && permEdit.uid === m.uid) wirePermEditor(m);
   if (canSeeProjects(m)) renderProjects(m);
+  if (canSeePerms(m)) renderDevices(m);
 }
 function infoRow(label, value, rawHtml) {
   return '<div class="niv-info-row"><div class="niv-info-label">' + escapeHtml(label) + '</div>'
@@ -545,6 +579,106 @@ function permsChipsHtml(m) {
   if (!keys.length) return '<span class="ov-empty" style="padding:0">' + escapeHtml(t('permsNone')) + '</span>';
   return keys.map((k) => '<span class="ov-perm-chip">'
     + escapeHtml((STR[LANG].permLabels && STR[LANG].permLabels[k]) || k) + '</span>').join('');
+}
+
+/* ---- registered devices (item 25) ----
+   Ported from company/users.html's detail panel: the read goes through
+   the owner-scoped listUserDevices callable (devices/{id} is not
+   client-readable by rules). Own devices rename through renameDevice;
+   a member's devices rename through the org-scoped renameMemberDevice.
+   The server enforces the owner rule either way. */
+let expandedDevices = false;
+async function renderDevices(m) {
+  const body = document.getElementById('ov-devices-body');
+  const title = document.getElementById('ov-devices-title');
+  if (!body) return;
+  if (!guardEnter('devices:' + m.uid)) return;
+  body.innerHTML = '<div class="ov-empty">' + escapeHtml(t('loadingDevices')) + '</div>';
+  try {
+    const fn = httpsCallable(getFunctions(auth.app, 'us-central1'), 'listUserDevices');
+    const { data } = await fn({ uid: m.uid });
+    if (!body.isConnected) { guardExit('devices:' + m.uid); return; }
+    const devices = (data && data.devices) || [];
+    const limit = (data && data.limit) || 5;
+    if (title) title.textContent = t('devices') + ' (' + devices.length + '/' + limit + ')';
+    if (!devices.length) {
+      body.innerHTML = '<div class="ov-empty">' + escapeHtml(t('noDevices')) + '</div>';
+      guardExit('devices:' + m.uid);
+      return;
+    }
+    guardExit('devices:' + m.uid);
+    const visible = expandedDevices ? devices : devices.slice(0, limit);
+    const isSelfView = m.uid === (currentUser && currentUser.uid);
+    const canRename = isSelfView || _can('userManagement');
+    body.innerHTML = visible.map((d) => {
+      const name = d.displayName || t('unnamedDevice');
+      const modelBits = [d.brand, d.model].filter(Boolean).join(' ');
+      const sub = modelBits || (d.appVersionName ? 'Nivelato v' + d.appVersionName : 'Nivelato');
+      const linked = d.linkedAt
+        ? new Date(d.linkedAt).toLocaleDateString(LANG === 'es' ? 'es' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : '';
+      return '<div class="dev-row' + (d.outdated ? ' outdated' : '') + '">'
+        + '<div class="dev-icon" aria-hidden="true"></div>'
+        + '<div class="dev-meta">'
+        + '<div class="dev-name"><span class="dev-name-text">' + escapeHtml(name) + '</span>'
+        + (d.outdated ? '<span class="dev-warn">' + escapeHtml(t('updateAvailable')) + '</span>' : '')
+        + (canRename ? '<button class="dev-rename" data-rename="' + escapeHtml(d.uuid) + '">' + escapeHtml(t('rename')) + '</button>' : '')
+        + '</div>'
+        + '<div class="dev-sub">' + escapeHtml(sub) + (linked ? ' · ' + escapeHtml(t('linked')) + ' ' + escapeHtml(linked) : '') + '</div>'
+        + '<div class="dev-edit-slot"></div>'
+        + '</div></div>';
+    }).join('') +
+    (devices.length > limit ? '<button class="niv-btn-pill" id="ov-btn-more-devices">' + escapeHtml(expandedDevices ? t('showLess') : t('viewMore')) + '</button>' : '');
+    const more = document.getElementById('ov-btn-more-devices');
+    if (more) more.addEventListener('click', () => { expandedDevices = !expandedDevices; renderDevices(m); });
+    body.querySelectorAll('[data-rename]').forEach((btn) => {
+      btn.addEventListener('click', () => openDeviceRename(btn, m));
+    });
+  } catch (e) {
+    guardExit('devices:' + m.uid);
+    if (body.isConnected) body.innerHTML = '<div class="ov-empty">' + escapeHtml(t('couldNotDevices')) + '</div>';
+  }
+}
+
+function openDeviceRename(btn, m) {
+  const row = btn.closest('.dev-row');
+  const slot = row && row.querySelector('.dev-edit-slot');
+  if (!slot || slot.dataset.open === '1') return;
+  slot.dataset.open = '1';
+  const uuid = btn.getAttribute('data-rename');
+  const nameEl = row.querySelector('.dev-name-text');
+  const current = nameEl ? nameEl.textContent.trim() : '';
+  slot.innerHTML = '<div class="dev-edit">'
+    + '<input type="text" maxlength="60" value="' + escapeHtml(current === t('unnamedDevice') ? '' : current) + '" placeholder="' + escapeHtml(t('deviceName')) + '" aria-label="' + escapeHtml(t('deviceName')) + '" />'
+    + '<button class="dev-save">' + escapeHtml(t('save')) + '</button>'
+    + '<button class="dev-cancel">' + escapeHtml(t('cancel')) + '</button>'
+    + '</div>';
+  const input = slot.querySelector('input');
+  input.focus();
+  input.select();
+  slot.querySelector('.dev-cancel').addEventListener('click', () => renderDevices(m));
+  slot.querySelector('.dev-save').addEventListener('click', async () => {
+    const saveBtn = slot.querySelector('.dev-save');
+    if (saveBtn.disabled || !guardEnter('rename:' + uuid)) return;
+    saveBtn.disabled = true;
+    saveBtn.textContent = t('saving');
+    try {
+      const isSelfView = m.uid === (currentUser && currentUser.uid);
+      const fn = httpsCallable(getFunctions(auth.app, 'us-central1'),
+        isSelfView ? 'renameDevice' : 'renameMemberDevice');
+      const payload = isSelfView
+        ? { deviceUuid: uuid, displayName: input.value.trim() }
+        : { uid: m.uid, deviceUuid: uuid, displayName: input.value.trim() };
+      await fn(payload);
+      guardExit('rename:' + uuid);
+      renderDevices(m);
+    } catch (e) {
+      guardExit('rename:' + uuid);
+      alert(t('renameFailed', { msg: e.message || t('unknownError') }));
+      saveBtn.disabled = false;
+      saveBtn.textContent = t('save');
+    }
+  });
 }
 
 /* ---- permission editing ----

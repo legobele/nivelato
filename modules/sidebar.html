@@ -31,6 +31,7 @@
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    padding-top: 14px;
     scrollbar-width: thin;
     scrollbar-color: var(--niv-border) transparent;
   }
@@ -198,7 +199,7 @@
       <div class="niv-company-avatar js-org-avatar" id="org-avatar">--</div>
       <div>
         <div class="niv-company-name js-org-name" id="org-name">Cargando...</div>
-        <div class="niv-company-ver js-org-version" id="org-version">Nivelato</div>
+
       </div>
     </div>
     <div class="niv-mod-scroll" id="company-scroll">
@@ -246,7 +247,7 @@
       <div class="niv-company-avatar js-org-avatar">--</div>
       <div>
         <div class="niv-company-name js-org-name">Cargando...</div>
-        <div class="niv-company-ver js-org-version">Nivelato</div>
+
       </div>
     </div>
     <div class="niv-mod-scroll">
@@ -605,7 +606,8 @@ let displayVersion = null;
 function paintVersion() {
   if (!orgData && !displayVersion) return; /* skeleton keeps its plain label until something real resolves */
   const v = displayVersion || dataVersion();
-  document.querySelectorAll('.js-org-version').forEach((el) => { el.textContent = 'Nivelato v' + v; });
+  /* item 18: the header version line is gone; the registry read stays
+     only as the dataVersion fallback source, nothing paints it. */
 }
 async function resolveRegistryVersion(db, fs, channel) {
   try {

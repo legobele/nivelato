@@ -231,6 +231,11 @@
 .niv-user-name { font-weight: 600; font-size: 14px; }
 .niv-user-email { font-size: 12px; color: var(--niv-text-dim); }
 .niv-user-row.selected .niv-user-email { color: rgba(5,5,5,0.65); }
+/* El nombre no tiene color propio: hereda el de la fila, y en paginas
+   que redefinen el color de la fila (users.html) el estado seleccionado
+   lo dejaba en el blanco del tema oscuro sobre el fondo claro de la
+   fila seleccionada (blanco sobre blanco). Se fija como el correo. */
+.niv-user-row.selected .niv-user-name { color: #050505; }
 
 /* ---- misc ---- */
 .niv-page-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
@@ -388,6 +393,8 @@ body:not(.has-sidebar) .niv-shell {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* item 14: the first scroller section no longer sits flush */
+  padding-top: 14px;
 }
 .niv-panel-bottom {
   flex: none;

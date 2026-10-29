@@ -69,8 +69,8 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     .subtitle { font-size: 14px; color: #868e96; margin-bottom: 24px; }
 
     /* JOIN CODE */
-    #join-code-section { display: none; padding: 14px 20px; margin: 0 0 24px; align-items: center; gap: 16px; flex-wrap: wrap; }
-    #join-code-section.show { display: flex; }
+    #join-code-section, .join-code-card { display: none; padding: 14px 20px; margin: 0 0 24px; align-items: center; gap: 16px; flex-wrap: wrap; }
+    #join-code-section.show, .join-code-card.show { display: flex; }
 
     /* STATS ROW */
     .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
@@ -349,8 +349,8 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       .modal-overlay.open .modal { transform: translateY(0); }
       .modal-overlay { align-items: flex-end; padding: 0; }
       .modal-title { font-size: 16px; }
-      #join-code-section { flex-direction: column; align-items: flex-start; gap: 8px; }
-      #join-code-section button { width: 100%; }
+      #join-code-section, .join-code-card { flex-direction: column; align-items: flex-start; gap: 8px; }
+      #join-code-section button, .join-code-card button { width: 100%; }
       .header-logo { font-size: 17px; }
       .org-badge { font-size: 11px; padding: 3px 8px; }
     }
@@ -494,7 +494,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   .date-input-wrap input[type="date"]:focus { color: #f5f5f7; }
 
   /* join code section */
-  #join-code-section { background: #17171a; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; }
+  #join-code-section, .join-code-card { background: #17171a; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; }
 
   /* job cards */
   .job-card { background: #17171a; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; box-shadow: none; }
@@ -653,8 +653,11 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   display: flex; align-items: center; gap: 14px;
   min-height: var(--niv-topbar-h);
   padding: 10px 32px;
-  background: var(--niv-bg, #0e0e10);
-  border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+  /* item 31: the band is transparent; the pill track and the account
+     chip carry their own surfaces, so scrolled content stays readable
+     underneath exactly as with the floating panel chrome */
+  background: transparent;
+  border-bottom: 1px solid transparent;
   font-family: 'Inter', system-ui, sans-serif;
 }
 .niv-topbar-tabs {
@@ -670,6 +673,10 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   font-family: inherit; font-size: 14px; font-weight: 600;
   padding: 8px 18px; border-radius: 999px; cursor: pointer; white-space: nowrap;
   display: inline-flex; align-items: center; gap: 8px;
+  /* item 33: the label color runs on the indicator's own clock (same
+     duration and easing) so it never sits dark on the dark bar while
+     the pill is still travelling */
+  transition: color 0.38s cubic-bezier(0.25, 1.35, 0.35, 1);
 }
 .niv-tab:hover { color: var(--niv-text, #f5f5f7); }
 .niv-tab.active { background: linear-gradient(135deg, #fafafa, #c9c9ce); color: #050505; }
@@ -705,6 +712,14 @@ body.has-sidebar .niv-shell > main {
 }
 .niv-proj-grid { gap: 20px; }
 .niv-home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; align-items: start; }
+/* Panel: la vista llena el alto del area principal y la rejilla de
+   tarjetas recientes se estira con el (filas iguales, tarjetas a todo
+   el alto); sin esto las tarjetas terminan a mitad de pantalla y el
+   resto queda negro. En una columna las filas vuelven a su alto
+   natural para no aplastar la tercera y cuarta tarjeta. */
+#view-home { display: flex; flex-direction: column; min-height: 100%; }
+#view-home .niv-home-grid { flex: 1 0 auto; grid-template-rows: 1fr 1fr; align-items: stretch; }
+@media (max-width: 1100px) { #view-home .niv-home-grid { grid-template-rows: none; } }
 .niv-stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
   .niv-skel {
     display: inline-block; width: 46px; height: 24px; border-radius: 7px;
@@ -732,6 +747,11 @@ body.has-sidebar .niv-shell > main {
 .niv-resize-handle:hover::after, .niv-resize-handle.dragging::after { background: var(--niv-accent, #fafafa); }
 body.sidebar-collapsed .niv-resize-handle { display: none; }
 body.niv-resizing { cursor: col-resize; user-select: none; }
+/* Durante el arrastre de redimensionado el ancho sigue al puntero sin
+   transicion: la transicion de #niv-panel (pensada para el colapso)
+   haria que cada ancho escrito persiguiera al anterior con ~300ms de
+   retraso y el movimiento se viera entrecortado. */
+body.niv-resizing #niv-panel { transition: none; }
 
 /* ---- v1.1: sidebar collapse/show slide animations ----
    The panel width transitions (slide in/out) instead of snapping.
@@ -768,7 +788,10 @@ body.has-sidebar #niv-panel.collapsed #niv-panel-expand-handle { display: block;
   background: var(--niv-accent, #fafafa);
 }
 #niv-panel { position: relative; }
-.niv-panel-sec-title { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.niv-panel-sec-title { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; padding-right: 12px; }
+/* item 15: the Clientes tools row (the + button) keeps clear of the
+   panel scrollbar in expanded and collapsed states alike */
+#panel-customer-tools { padding-right: 12px; box-sizing: border-box; }
 .niv-sec-chev {
   margin-left: auto; width: 22px; height: 22px; border-radius: 50%;
   border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
@@ -1014,8 +1037,10 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 .niv-panel-collapse:hover { background: var(--niv-accent, #fafafa); filter: brightness(1.18); }
 .niv-float-panel.collapsed .niv-panel-head { padding-bottom: 2px; }
 .niv-float-panel.collapsed .niv-panel-collapse { width: 40px; height: 40px; font-size: 19px; }
-#niv-snav-projects-body { display: none; }
-#niv-snav-projects-body.open { display: block; margin-bottom: 14px; }
+/* item 12: the projects list is a peer panel section now (Clientes
+   pattern); visibility is the section collapse, not the old nav-unit
+   accordion gate. The 'open' class the unit code still toggles is a
+   harmless no-op. */
 .niv-projlist-title { font-size: 13px; color: var(--niv-text-dim, #a7a7ad); margin-bottom: 8px; padding-left: 4px; }
 
 /* iconos por token: la baldosa hereda currentColor del span y el glifo va
@@ -1092,12 +1117,28 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 }
 .niv-tab-indicator.dragging { transition: none; }
 .niv-topbar-tabs.ind-on .niv-tab.active { background: transparent; }
+/* item 33: the incoming label leans late (it flips as the pill
+   arrives); a label losing the pill gets no delay and lightens as the
+   pill departs */
+.niv-topbar-tabs.ind-on .niv-tab.active { transition-delay: 0.15s; }
+/* item 34: while dragging, the committed item's label returns to the
+   resting color (the pill has left it) and the previewed item takes
+   the dark label (the pill is under it); both respond fast */
+.niv-topbar-tabs.drag-preview .niv-tab { transition-duration: 0.08s; transition-delay: 0s; }
+.niv-topbar-tabs.drag-preview .niv-tab.active { color: var(--niv-text-dim, #a7a7ad); }
+.niv-topbar-tabs.drag-preview .niv-tab.preview { color: #050505; }
 @media (prefers-reduced-motion: reduce) {
   .niv-tab-indicator { transition: none; }
 }
 @media (min-width: 901px) {
   body.has-sidebar .niv-topbar { display: none; }
   body.has-sidebar.niv-compact.sidebar-collapsed .niv-topbar { display: flex; }
+  /* items 32/35: in exactly the state where the top bar takes over
+     (compact mode, sidebar collapsed to its rail), the rail's nav
+     icons duplicate the top bar's destinations and hide. The company
+     head (org tile + expand chevron) is not part of the nav and stays
+     as the re-expand affordance. */
+  body.has-sidebar.niv-compact.sidebar-collapsed .niv-side-nav { display: none; }
   body.has-sidebar.niv-compact .niv-topbar-project {
     position: absolute; right: 32px; top: 50%;
     transform: translateY(-50%); margin-left: 0;
@@ -1138,7 +1179,7 @@ body.has-sidebar .niv-float-panel {
 }
 body.has-sidebar .niv-shell > main { border-radius: 14px; }
 /* content geometry: sharp */
-.stat-card, .job-card, #join-code-section, .niv-notif-item,
+.stat-card, .job-card, #join-code-section, .join-code-card, .niv-notif-item,
 .niv-proj-measure { border-radius: 6px; }
 .niv-navunit { border-radius: 10px; }
 .niv-company-pop { border-radius: 12px; }
@@ -1161,6 +1202,16 @@ body.has-sidebar main h1 {
    the text itself is the existing dictionary string */
 .stat-label::before { content: "[ "; }
 .stat-label::after { content: " ]"; }
+/* Las etiquetas HUD de las tarjetas de stats van siempre en UNA linea:
+   sin esto la mas larga ("Medidas totales") parte y el corchete de
+   cierre cae solo en la segunda. El tamano se reduce con el viewport
+   (y el tracking se aprieta) para que la etiqueta mas larga quepa en
+   la tarjeta mas estrecha sin desbordar. */
+.stat-label {
+  white-space: nowrap;
+  letter-spacing: 0.1em;
+  font-size: clamp(0.58rem, 0.5rem + 0.22vw, 0.68rem);
+}
 
 /* ---- Medidas = Ledger (A) + Timeline (C), call de Giulia Oct 19 ----
    Una sola franja HUD con los conteos de siempre (mismos ids y la
@@ -1205,8 +1256,22 @@ body.has-sidebar main h1 {
   font-family: var(--niv-font-mono); font-size: 10px; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--niv-text-dim, #a8a8b0); margin-top: 9px;
 }
-.niv-tl-items { border-left: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); padding-left: 22px; min-width: 0; }
+/* Leyenda del riel de la linea de dias: cada nodo es una medida;
+   el anillo ambar marca las que llevan advertencias (job.warnings). */
+.niv-tl-legend {
+  display: flex; align-items: center; gap: 7px; margin: 0 0 14px;
+  font-family: var(--niv-font-mono); font-size: 10px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--niv-text-dim, #a8a8b0);
+}
+.niv-tl-legend .niv-tl-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex: none;
+  background: var(--niv-bg, #050505); border: 2px solid var(--niv-text-dim, #a8a8b0);
+}
+.niv-tl-legend .niv-tl-dot.warn { border-color: #fbbf24; }
+.niv-tl-legend .niv-tl-dot + span { margin-right: 10px; }
+.niv-tl-items { border-left: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); padding-left: 22px; min-width: 0; display: flex; flex-direction: column; }
 .niv-tl-row {
+  flex: 1 0 auto;
   position: relative; display: grid; grid-template-columns: 84px 1fr auto;
   gap: 2px 14px; align-items: center; min-height: 54px;
   padding: 8px 8px 8px 2px; border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
@@ -1400,9 +1465,11 @@ body.has-sidebar main h1 {
   </nav>
   </div><!-- /niv-panel-topzone -->
   <div class="niv-panel-body" id="niv-panel-body">
-    <div class="niv-projlist" id="niv-snav-projects-body">
-      <div class="niv-projlist-title" id="panel-projects-title">Proyectos</div>
-      <div id="niv-panel-projects"><div class="niv-panel-empty" id="panel-empty-projects">Sin proyectos</div></div>
+    <div class="niv-panel-sec" data-seckey="projects">
+      <div class="niv-panel-sec-title"><span id="panel-projects-title">Proyectos</span></div>
+      <div class="niv-projlist niv-sec-body" id="niv-snav-projects-body">
+        <div id="niv-panel-projects"><div class="niv-panel-empty" id="panel-empty-projects">Sin proyectos</div></div>
+      </div>
     </div>
     <div class="niv-panel-sec" data-seckey="customers">
       <div class="niv-panel-sec-title" id="panel-customers-title">Clientes</div>
@@ -1497,6 +1564,12 @@ try {
     <h1 style="margin:0;" id="home-title">Panel</h1>
   </div>
   <div class="subtitle" id="home-subtitle"></div>
+  <div class="join-code-card" id="join-code-section-home">
+    <span class="join-code-label" style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
+    <span class="join-code-code" style="font-size:24px; font-weight:700; color:#fafafa; letter-spacing:0.15em; font-family:'JetBrains Mono', monospace; margin-left:8px;">--</span>
+    <button onclick="copyJoinCode(this)" class="join-code-copy" style="margin-left:auto; background:#fafafa; color:#050505; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;"><span class="copy-btn-label">📋 Copiar</span></button>
+    <span class="join-code-hint" style="font-size:11px; color:#888; width:100%; margin-top:2px;">Dáselo a tus empleados para que se registren en Nivelato</span>
+  </div>
   <div class="niv-stats-row">
     <div class="stat-card"><div class="stat-num" id="home-stat-projects"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-projects-label">Proyectos</div></div>
     <div class="stat-card"><div class="stat-num" id="home-stat-total"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-total-label">Medidas totales</div></div>
@@ -1571,17 +1644,22 @@ try {
     }, 1800);
   })();
   </script>
-  <div id="join-code-section">
-    <span id="join-code-label" style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
-    <span id="join-code-display" style="font-size:24px; font-weight:700; color:#fafafa; letter-spacing:0.15em; font-family:'JetBrains Mono', monospace; margin-left:8px;">--</span>
-    <button onclick="copyJoinCode()" id="copy-btn" style="margin-left:auto; background:#fafafa; color:#050505; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;"><span id="copy-btn-label">📋 Copiar</span></button>
-    <span id="join-code-hint" style="font-size:11px; color:#888; width:100%; margin-top:2px;">Dáselo a tus empleados para que se registren en Nivelato</span>
+  <div id="join-code-section" class="join-code-card">
+    <span id="join-code-label" class="join-code-label" style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
+    <span id="join-code-display" class="join-code-code" style="font-size:24px; font-weight:700; color:#fafafa; letter-spacing:0.15em; font-family:'JetBrains Mono', monospace; margin-left:8px;">--</span>
+    <button onclick="copyJoinCode(this)" id="copy-btn" style="margin-left:auto; background:#fafafa; color:#050505; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;"><span id="copy-btn-label" class="copy-btn-label">📋 Copiar</span></button>
+    <span id="join-code-hint" class="join-code-hint" style="font-size:11px; color:#888; width:100%; margin-top:2px;">Dáselo a tus empleados para que se registren en Nivelato</span>
   </div>
 
   <div class="niv-hudstrip" id="measures-hudstrip" role="group" aria-label="Resumen">
     <div class="niv-hudcell"><span class="niv-hud-label" id="stat-total-label">Medidas totales</span><span class="stat-num niv-hud-num" id="stat-total"><span class="niv-skel" aria-hidden="true"></span></span></div>
     <div class="niv-hudcell"><span class="niv-hud-label" id="stat-today-label">Hoy</span><span class="stat-num niv-hud-num" id="stat-today"><span class="niv-skel" aria-hidden="true"></span></span></div>
     <div class="niv-hudcell warncell"><span class="niv-hud-label" id="stat-warn-label">Con advertencias</span><span class="stat-num niv-hud-num" id="stat-warn"><span class="niv-skel" aria-hidden="true"></span></span></div>
+  </div>
+
+  <div class="niv-tl-legend" id="tl-legend">
+    <span class="niv-tl-dot" aria-hidden="true"></span><span id="tl-legend-ok">Sin advertencias</span>
+    <span class="niv-tl-dot warn" aria-hidden="true"></span><span id="tl-legend-warn">Con advertencias</span>
   </div>
 
   <div class="filter-row">
@@ -1706,6 +1784,9 @@ try {
   <button class="niv-btn-pill niv-btn-primary" id="proj-new-btn" style="margin-left:auto;" onclick="openNewProject()">+ Nuevo proyecto</button>
   </div>
   <div class="subtitle" id="proj-subtitle"></div>
+  <div id="proj-list-wrap" style="display:none">
+    <div class="niv-card"><div id="proj-list"></div></div>
+  </div>
   <div class="niv-proj-grid">
     <div class="niv-card">
       <div class="niv-card-title" id="proj-measures-title" style="font-size:20px;margin-bottom:16px;">Measurements</div>
@@ -2598,11 +2679,12 @@ let currentUser;
     window._currentOrgId = orgId;
     loadProjects();
     document.getElementById('dash-subtitle').textContent = `${orgName} · ${_can('userManagement') ? 'Administrador' : (hasQuotes ? 'Cotizaciones' : 'Medidas')}`;
-    // show join code only for user management
+    // show join code only for user management (la tarjeta vive en
+    // Medidas y en el Panel: ambas copias se pueblan a la vez)
     if (_can('userManagement')) {
-      const jcs = document.getElementById('join-code-section');
-      jcs.classList.add('show');
-      document.getElementById('join-code-display').textContent = orgDoc.data()?.joinCode || orgId;
+      const _jc = orgDoc.data()?.joinCode || orgId;
+      document.querySelectorAll('.join-code-card').forEach((el) => el.classList.add('show'));
+      document.querySelectorAll('.join-code-code').forEach((el) => { el.textContent = _jc; });
       // el camino a la administracion de usuarios solo existe para gerentes
       const uab = document.getElementById('users-admin-btn');
       if (uab) uab.style.display = '';
@@ -2770,23 +2852,16 @@ let currentUser;
     const custEl = document.getElementById('niv-panel-customers');
     if (custEl) {
       _loadStoredCustomers();
-      // one-time toolbar (search + new customer), injected as a sibling so
-      // the list re-renders below never wipe it
+      // one-time toolbar row (new customer only; item 16 removed the
+      // per-section search input), injected as a sibling so the list
+      // re-renders below never wipe it
       const sec = custEl.parentElement;
       if (sec && !document.getElementById('panel-customer-tools')) {
         const tools = document.createElement('div');
         tools.id = 'panel-customer-tools';
-        tools.style.cssText = 'display:flex;gap:8px;align-items:center;margin:2px 0 8px;';
-        tools.innerHTML = '<input type="search" id="panel-customer-search" style="flex:1;min-width:0;background:var(--niv-surface-2,#1e1e22);border:1px solid var(--niv-border-soft,rgba(255,255,255,.14));border-radius:9px;color:var(--niv-text,#f5f5f7);font:inherit;font-size:13px;padding:7px 10px;" />' +
-          '<button type="button" class="niv-plus-btn" id="panel-customer-new" onclick="window._panelNewCustomer()">+</button>';
+        tools.style.cssText = 'display:flex;gap:8px;align-items:center;justify-content:flex-end;margin:2px 0 8px;';
+        tools.innerHTML = '<button type="button" class="niv-plus-btn" id="panel-customer-new" onclick="window._panelNewCustomer()">+</button>';
         sec.insertBefore(tools, custEl);
-        const inp = tools.querySelector('#panel-customer-search');
-        inp.addEventListener('input', () => { window._panelCustFilter = inp.value; if (window._panelJobs) window.refreshFloatPanel(window._panelJobs); });
-      }
-      const searchEl = document.getElementById('panel-customer-search');
-      if (searchEl) {
-        searchEl.placeholder = L('Buscar clientes…', 'Search customers…');
-        if (document.activeElement !== searchEl && searchEl.value !== (window._panelCustFilter || '')) searchEl.value = window._panelCustFilter || '';
       }
       const newBtn = document.getElementById('panel-customer-new');
       if (newBtn) { newBtn.title = L('Nuevo cliente', 'New customer'); newBtn.setAttribute('aria-label', L('Nuevo cliente', 'New customer')); }
@@ -2794,11 +2869,10 @@ let currentUser;
       const all = [...new Set([...jobs.map(j => j.customer).filter(Boolean), ...(_panelStoredCustomers || [])])];
       const titleEl = document.getElementById('panel-customers-title');
       if (titleEl) titleEl.textContent = L('Clientes', 'Customers') + (all.length ? ' · ' + all.length : '');
-      const needle = (window._panelCustFilter || '').trim().toLowerCase();
-      const customers = needle ? all.filter(c => c.toLowerCase().includes(needle)) : all;
+      const customers = all;
       custEl.innerHTML = customers.length
-        ? customers.map((c, i) => `<div class="niv-panel-item${i === 0 && !needle ? ' first' : ''}" onclick="window.openCustomer(decodeURIComponent('${custEnc(c)}'))"><span>${esc(c)}</span>${dashDotsBtn('customer', null, c)}</div>`).join('')
-        : '<div class="niv-panel-empty">' + (needle ? L('Sin clientes con ese nombre', 'No customers match that name') : L('Sin clientes', 'No customers')) + '</div>';
+        ? customers.map((c, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="window.openCustomer(decodeURIComponent('${custEnc(c)}'))"><span>${esc(c)}</span>${dashDotsBtn('customer', null, c)}</div>`).join('')
+        : '<div class="niv-panel-empty">' + L('Sin clientes', 'No customers') + '</div>';
     }
     const measEl = document.getElementById('niv-panel-measures');
     if (measEl) {
@@ -3345,14 +3419,14 @@ let currentUser;
     }
   });
 
-  window.copyJoinCode = async () => {
-    const btn = document.getElementById('copy-btn');
+  window.copyJoinCode = async (btnEl) => {
+    const btn = btnEl || document.getElementById('copy-btn');
     const show = (txt) => {
       if (!btn) return;
       btn.textContent = txt;
       setTimeout(() => { btn.textContent = '📋 Copiar'; }, 2000);
     };
-    const code = (document.getElementById('join-code-display')?.textContent || '').trim();
+    const code = (document.querySelector('.join-code-code')?.textContent || '').trim();
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(code);
@@ -4752,30 +4826,14 @@ let currentUser;
     } catch (e) { console.warn('[Nivelato] projects load failed:', e.message); _projects = []; }
     const el = document.getElementById('niv-panel-projects');
     if (el) {
-      // m35: one-time search toolbar for the projects panel (mirrors the
-      // customers toolbar in refreshFloatPanel)
-      const sec = el.parentElement;
-      if (sec && !document.getElementById('panel-project-tools')) {
-        const tools = document.createElement('div');
-        tools.id = 'panel-project-tools';
-        tools.style.cssText = 'display:flex;gap:8px;align-items:center;margin:2px 0 8px;';
-        tools.innerHTML = '<input type="search" id="panel-project-search" style="flex:1;min-width:0;background:var(--niv-surface-2,#1e1e22);border:1px solid var(--niv-border-soft,rgba(255,255,255,.14));border-radius:9px;color:var(--niv-text,#f5f5f7);font:inherit;font-size:13px;padding:7px 10px;" />';
-        sec.insertBefore(tools, el);
-        tools.querySelector('#panel-project-search').addEventListener('input', (ev) => { window._panelProjFilter = ev.target.value; if (window._renderPanelProjects) window._renderPanelProjects(); });
-      }
-      const searchEl = document.getElementById('panel-project-search');
-      if (searchEl) {
-        searchEl.placeholder = L('Buscar proyectos…', 'Search projects…');
-        if (document.activeElement !== searchEl && searchEl.value !== (window._panelProjFilter || '')) searchEl.value = window._panelProjFilter || '';
-      }
+      // item 16: the per-section search input is removed (global search
+      // is specced separately); the list always renders in full.
       window._renderPanelProjects = () => {
-        const needle = (window._panelProjFilter || '').trim().toLowerCase();
-        const list = needle ? _projects.filter((p) => (p.name || '').toLowerCase().includes(needle)) : _projects;
         const titleEl = document.getElementById('panel-projects-title');
         if (titleEl) titleEl.textContent = L('Proyectos', 'Projects') + (_projects.length ? ' · ' + _projects.length : '');
-        el.innerHTML = list.length
-          ? list.map((p, i) => `<div class="niv-panel-item${i === 0 && !needle ? ' first' : ''}" onclick="openProject('${p.id}')"><span>${escapeHtml(p.name || 'Proyecto')}</span>${dashDotsBtn('project', p.id, p.name || 'Proyecto')}</div>`).join('')
-          : '<div class="niv-panel-empty">' + (needle ? L('Sin proyectos con ese nombre', 'No projects match that name') : L('Sin proyectos', 'No projects')) + '</div>';
+        el.innerHTML = _projects.length
+          ? _projects.map((p, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="openProject('${p.id}')"><span>${escapeHtml(p.name || 'Proyecto')}</span>${dashDotsBtn('project', p.id, p.name || 'Proyecto')}</div>`).join('')
+          : '<div class="niv-panel-empty">' + L('Sin proyectos', 'No projects') + '</div>';
       };
       window._renderPanelProjects();
     }
@@ -4810,6 +4868,13 @@ let currentUser;
       : '<div class="niv-panel-empty">' + L('Sin medidas en este proyecto.', 'No measurements in this project.') + '</div>';
     // assigned users
     renderProjectUsers(p);
+    // detalle: se oculta la lista de la pestaña y vuelve la rejilla
+    const _lw = document.getElementById('proj-list-wrap');
+    if (_lw) _lw.style.display = 'none';
+    const _pg = document.querySelector('#view-project .niv-proj-grid');
+    if (_pg) _pg.style.display = '';
+    const _pb = document.getElementById('proj-back-btn');
+    if (_pb) _pb.style.display = '';
     window.showDashView('project');
   };
 
@@ -5217,6 +5282,14 @@ let currentUser;
     setText('join-code-label', L('CÓDIGO DEL TALLER:', 'WORKSHOP CODE:'));
     setText('copy-btn-label', L('📋 Copiar', '📋 Copy'));
     setText('join-code-hint', L('Dáselo a tus empleados para que se registren en Nivelato', 'Give it to your employees so they can sign up for Nivelato'));
+    // la copia de la tarjeta del codigo que vive en el Panel (ids unicos
+    // por tarjeta: se localiza por clase dentro de la copia)
+    document.querySelectorAll('#join-code-section-home .join-code-label').forEach((el) => { el.textContent = L('CÓDIGO DEL TALLER:', 'WORKSHOP CODE:'); });
+    document.querySelectorAll('#join-code-section-home .copy-btn-label').forEach((el) => { el.textContent = L('📋 Copiar', '📋 Copy'); });
+    document.querySelectorAll('#join-code-section-home .join-code-hint').forEach((el) => { el.textContent = L('Dáselo a tus empleados para que se registren en Nivelato', 'Give it to your employees so they can sign up for Nivelato'); });
+    // leyenda del riel de la linea de dias (Medidas)
+    setText('tl-legend-ok', L('Sin advertencias', 'No warnings'));
+    setText('tl-legend-warn', L('Con advertencias', 'With warnings'));
     setText('date-placeholder', L('📅 Filtrar por fecha · dd/mm/aaaa', '📅 Filter by date · mm/dd/yyyy'));
     setText('filter-installer-all', L('Todos los técnicos', 'All technicians'));
     setText('filter-customer-all', L('Todos los clientes', 'All customers'));
@@ -5627,21 +5700,33 @@ let currentUser;
     if (name === 'users' && window._ensureUsersFrame) window._ensureUsersFrame(false);
   };
 
-  // pestaña Proyectos: abre el proyecto actual (o el primero, o la vista vacía)
+  // pestaña Proyectos: sin una seleccion explicita muestra la LISTA de
+  // proyectos; el detalle (medidas + usuarios asignados) solo se abre
+  // al elegir un proyecto (openProject). Antes esto saltaba directo al
+  // detalle del primer proyecto (o a un detalle vacio), como si ya
+  // hubiera uno seleccionado.
   window.openProjectTab = () => {
-    if (_currentProject) {
-      const tp = document.getElementById('niv-topbar-project');
-      if (tp) tp.textContent = _currentProject.name || L('Proyecto', 'Project');
-      window.showDashView('project');
-      return;
-    }
-    if (_projects.length) { window.openProject(_projects[0].id); return; }
     document.getElementById('proj-title').textContent = L('Proyectos', 'Projects');
-    document.getElementById('proj-subtitle').textContent = '';
-    document.getElementById('proj-measures').innerHTML = '<div class="niv-panel-empty">' + L('Sin proyectos todavía.', 'No projects yet.') + '</div>';
-    document.getElementById('proj-users').innerHTML = '';
+    document.getElementById('proj-subtitle').textContent = _projects.length
+      ? _projects.length + ' ' + (_projects.length === 1 ? L('proyecto', 'project') : L('proyectos', 'projects'))
+      : '';
     const tp = document.getElementById('niv-topbar-project');
     if (tp) tp.textContent = '';
+    const listEl = document.getElementById('proj-list');
+    if (listEl) {
+      listEl.innerHTML = _projects.length
+        ? _projects.map((p) => {
+            const n = allJobs.filter((j) => j.projectId === p.id).length;
+            return '<div class="niv-proj-measure" onclick="openProject(\'' + p.id + '\')"><span>' + escapeHtml(p.name || 'Proyecto') + '</span><span class="niv-home-count">' + n + ' ' + (n === 1 ? L('medida', 'measurement') : L('medidas', 'measurements')) + '</span></div>';
+          }).join('')
+        : '<div class="niv-panel-empty">' + L('Sin proyectos todavía.', 'No projects yet.') + '</div>';
+    }
+    const listWrap = document.getElementById('proj-list-wrap');
+    if (listWrap) listWrap.style.display = '';
+    const grid = document.querySelector('#view-project .niv-proj-grid');
+    if (grid) grid.style.display = 'none';
+    const back = document.getElementById('proj-back-btn');
+    if (back) back.style.display = 'none';
     window.showDashView('project');
   };
 
@@ -5758,8 +5843,9 @@ let currentUser;
   // Donde la barra existe (movil, o modo compacto con el riel activo) la
   // seleccion es una sola pastilla elevada que se MUEVE al boton activo:
   // animacion rapida con un leve sobreimpulso y topes discretos, uno por
-  // boton. Arrastrar sobre la pista mueve el indicador con el puntero; al
-  // cruzar el centro de un boton se confirma esa vista, igual que un clic.
+  // boton. Arrastrar sobre la pista mueve el indicador con el puntero y
+  // PREVISUALIZA el boton bajo el (sin navegar); la navegacion se
+  // confirma solo al soltar sobre la barra (item 34).
   // Con prefers-reduced-motion los saltos son instantaneos.
   (() => {
     const tabsEl = document.querySelector('.niv-topbar-tabs');
@@ -5789,6 +5875,14 @@ let currentUser;
       window._onDashViewChange = (name) => { origChange(name); place(true); };
     }
     window.addEventListener('resize', () => place(false));
+    // item 33: re-measure once webfonts land (label widths change) and
+    // whenever the bar's own geometry changes (the bar appears and
+    // disappears with the compact/collapsed sidebar states); a pill
+    // measured against a stale layout lands between items.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => place(false));
+    if (window.ResizeObserver) {
+      try { new ResizeObserver(() => place(false)).observe(tabsEl); } catch (_) {}
+    }
     // arrastre con topes: un tope por boton, en su centro
     let dragId = null, downX = 0, dragTab = null;
     const centerOf = (el) => el.offsetLeft + el.offsetWidth / 2;
@@ -5803,6 +5897,7 @@ let currentUser;
         dragging = true;
         try { tabsEl.setPointerCapture(dragId); } catch (_) {}
         ind.classList.add('dragging');
+        tabsEl.classList.add('drag-preview');
       }
       const list = pills();
       if (!list.length) return;
@@ -5818,22 +5913,39 @@ let currentUser;
       let near = lo, nd = Infinity;
       list.forEach((el) => { const d = Math.abs(centerOf(el) - x); if (d < nd) { nd = d; near = el; } });
       if (near !== dragTab) {
+        // item 34: crossing an item only previews it now; navigation
+        // commits on release (see endDrag). The old code clicked the
+        // item mid-drag, so the view changed under the pointer.
         dragTab = near;
         ind.style.width = near.offsetWidth + 'px';
-        near.click();
+        list.forEach((el) => el.classList.toggle('preview', el === near));
       }
     });
     const endDrag = (e) => {
       if (dragId === null || (e && e.pointerId !== dragId)) return;
+      const wasDragging = dragging;
+      const previewTab = dragTab;
       dragId = null;
-      if (!dragging) return;
       dragging = false;
+      dragTab = null;
+      tabsEl.classList.remove('drag-preview');
+      pills().forEach((el) => el.classList.remove('preview'));
+      ind.classList.remove('dragging');
+      if (!wasDragging) return;
+      // item 34: commit only when the pointer is released over the
+      // bar itself. A release outside it, or a pointercancel, returns
+      // the pill to the current item with no navigation.
+      let commit = null;
+      if (e && e.type === 'pointerup' && previewTab) {
+        const r = tabsEl.getBoundingClientRect();
+        const inside = e.clientX >= r.left - 12 && e.clientX <= r.right + 12
+          && e.clientY >= r.top - 12 && e.clientY <= r.bottom + 12;
+        if (inside && previewTab !== activePill()) commit = previewTab;
+      }
+      if (commit) commit.click();
       suppressClick = true;
       setTimeout(() => { suppressClick = false; }, 400);
-      const target = dragTab || activePill();
-      ind.classList.remove('dragging');
-      settle(target, true);
-      dragTab = null;
+      settle(commit || activePill(), true);
     };
     tabsEl.addEventListener('pointerup', endDrag);
     tabsEl.addEventListener('pointercancel', endDrag);
@@ -6059,15 +6171,23 @@ let currentUser;
         // durante el arrastre. Asi el snap y los limites dependen solo del
         // ancho, no del margen exterior que tenga la carcasa.
         const startLeft = panel.getBoundingClientRect().left;
+        // El ancho se aplica como maximo una vez por frame (rAF): los
+        // pointermove llegan mucho mas rapido que el repintado y cada
+        // escritura de width reordena toda la carcasa; sin coalescer,
+        // el panel se mueve a tirones detras del puntero.
+        let rafId = 0;
+        let lastX = null;
         const endDrag = () => {
+          if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
           handle.classList.remove('dragging');
           document.body.classList.remove('niv-resizing');
           document.removeEventListener('pointermove', move);
           document.removeEventListener('pointerup', up);
         };
-        const move = (ev) => {
-          if (snapped) return; // el arrastre ya termino: cero parpadeo en el borde
-          const rawW = ev.clientX - startLeft;
+        const applyMove = () => {
+          rafId = 0;
+          if (snapped || lastX === null) return;
+          const rawW = lastX - startLeft;
           if (rawW < SNAP_W) {
             snapped = true;
             _nivSetSetting(WKEY, String(lastGoodW));
@@ -6080,7 +6200,14 @@ let currentUser;
           lastGoodW = w;
           panel.style.width = w + 'px';
         };
+        const move = (ev) => {
+          if (snapped) return; // el arrastre ya termino: cero parpadeo en el borde
+          lastX = ev.clientX;
+          if (!rafId) rafId = requestAnimationFrame(applyMove);
+        };
         const up = () => {
+          // aplica la ultima posicion pendiente antes de persistir
+          if (rafId && !snapped) { cancelAnimationFrame(rafId); rafId = 0; applyMove(); }
           endDrag();
           if (snapped) return; // WKEY ya guarda lastGoodW; el width quedo limpio
           const w = parseInt(panel.style.width, 10);

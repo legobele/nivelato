@@ -36,6 +36,15 @@
   .settings-sections { flex: 1; min-width: 0; }
   .settings-section { display: none; }
   .settings-section.active { display: block; }
+  /* canonical block icons (item 23): same .mod-ico treatment as the
+     sidebar module */
+  .mod-ico { display: inline-flex; width: 24px; height: 24px; vertical-align: -7px; margin-right: 9px; color: var(--niv-text-dim, #a7a7ad); }
+  .mod-ico svg { width: 24px; height: 24px; display: block; }
+  .mod-ico .tile { fill: currentColor; }
+  .mod-ico .glyph { fill: var(--niv-text, #f5f5f7); }
+  .niv-nav-btn:hover .mod-ico { color: var(--niv-surface, #17171a); }
+  .niv-nav-btn.active .mod-ico { color: var(--niv-accent, #fafafa); }
+  .niv-nav-btn.active .mod-ico .glyph { fill: #050505; }
   /* Motion system (Oct 2026, "zero jump-cuts"): section swaps
      ease in instead of snapping. The animation restarts on each
      display flip; keyframes/tokens live in niv-dark.css. */
@@ -91,22 +100,24 @@ html, body { overflow-y: auto !important; }
       <div class="niv-company-avatar" id="set-company-avatar">N</div>
       <div>
         <div class="niv-company-name" id="set-company-name">…</div>
-        <div class="niv-company-ver" id="set-company-ver">Nivelato</div>
       </div>
     </div>
   </div>
   <nav class="niv-nav">
-    <div class="niv-nav-group">
-      <div class="niv-nav-group-title">Mi cuenta</div>
-      <a class="niv-nav-btn active" href="/account/settings">Mi cuenta</a>
-    </div>
-    <!-- Company settings (v1.1): in company context the sidebar also
-         carries the company-settings destinations. Rendered by JS once
-         the org doc loads (hidden for users without a company). -->
+    <!-- Canonical account/company block (item 23): same groups, order,
+         entry names and icons as the main sidebar module
+         (modules/sidebar.html, target=company): Compañía first
+         (Usuarios, Ajustes de la compañía), then Cuenta (Mi cuenta).
+         In company context the Compañía group renders once the org doc
+         loads (hidden for users without a company). -->
     <div class="niv-nav-group" id="company-settings-group" hidden>
       <div class="niv-nav-group-title" data-i18n="groupCompany">Compañía</div>
-      <a class="niv-nav-btn" href="/company/settings" data-i18n="companyProfile">Ajustes de la compañía</a>
-      <a class="niv-nav-btn" href="/company/users" data-i18n="companyTeam">Equipo y usuarios</a>
+      <a class="niv-nav-btn" href="/company/users"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><path class="glyph" d="M9.2 6.1a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4zM3.9 18.7c.7-3.1 2.8-4.7 5.3-4.7s4.6 1.6 5.3 4.7zM16.6 7.6a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zM15.9 14.3c2.1.3 3.7 1.8 4.3 4.4h-4.5c.35-1.6.42-3.05.2-4.4z"/></svg></span><span data-i18n="companyTeam">Usuarios</span></a>
+      <a class="niv-nav-btn" href="/company/settings"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><rect class="glyph" x="4.6" y="6.1" width="14.8" height="1.9" rx="0.95"/><rect class="glyph" x="4.6" y="11.05" width="14.8" height="1.9" rx="0.95"/><rect class="glyph" x="4.6" y="16" width="14.8" height="1.9" rx="0.95"/><circle class="glyph" cx="9" cy="7.05" r="2.1"/><circle class="glyph" cx="15" cy="12" r="2.1"/><circle class="glyph" cx="8" cy="16.95" r="2.1"/></svg></span><span data-i18n="companyProfile">Ajustes de la compañía</span></a>
+    </div>
+    <div class="niv-nav-group">
+      <div class="niv-nav-group-title" data-i18n="groupAccount">Cuenta</div>
+      <a class="niv-nav-btn active" href="/account/settings"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><path class="glyph" d="M12 6.2a3.4 3.4 0 1 1 0 6.8 3.4 3.4 0 0 1 0-6.8zM5 19.2c.8-3.4 3.6-5.2 7-5.2s6.2 1.8 7 5.2z"/></svg></span><span data-i18n="myAccount">Mi cuenta</span></a>
     </div>
     <!-- Account settings shows ONLY account navigation in its sidebar
          (Giulia, 2026-10-12): no company zone here. The company doors
@@ -178,7 +189,7 @@ html, body { overflow-y: auto !important; }
     <div class="niv-settings-card">
       <div class="niv-card-title" data-i18n="langTitle">Idioma</div>
       <div class="niv-card-desc" data-i18n="langDesc">Idioma de la pantalla de inicio de sesión. Se guarda en tu cuenta y aplica en tus dispositivos.</div>
-      <div class="niv-lang" style="margin:4px 0 0"><button type="button" id="lang-toggle" class="niv-lang-current" aria-expanded="false" aria-haspopup="listbox" aria-controls="niv-lang-list"><span class="niv-lang-current-label"></span><span class="niv-lang-chev" aria-hidden="true">\u25be</span></button><div class="niv-lang-list" id="niv-lang-list" role="listbox" hidden></div></div>
+      <div class="niv-lang" style="margin:4px 0 0"><button type="button" id="lang-toggle" class="niv-lang-current" aria-expanded="false" aria-haspopup="listbox" aria-controls="niv-lang-list"><span class="niv-lang-current-label"></span><span class="niv-lang-chev" aria-hidden="true">▾</span></button><div class="niv-lang-list" id="niv-lang-list" role="listbox" hidden></div></div>
       <div class="niv-saved-msg" id="lang-saved" data-i18n="langSaved">✓ Idioma guardado</div>
       <div class="niv-status-line" id="lang-status"></div>
     </div>
@@ -265,7 +276,7 @@ html, body { overflow-y: auto !important; }
   var STR = {
     es: {
       docTitle: 'Nivelato - Ajustes', pageTitle: 'Ajustes', pageSub: 'Configuración de tu cuenta', back: '← Volver',
-      mobileNav: 'Navegación', groupCompany: 'Compañía', companyProfile: 'Ajustes de la compañía', companyTeam: 'Equipo y usuarios',
+      mobileNav: 'Navegación', groupCompany: 'Compañía', groupAccount: 'Cuenta', myAccount: 'Mi cuenta', companyProfile: 'Ajustes de la compañía', companyTeam: 'Usuarios',
       accountInfo: 'Información de la cuenta', accountInfoDesc: 'Datos de tu perfil en Nivelato.', changePhoto: 'Cambiar foto',
       uploading: 'Subiendo...', photoUpdated: 'Foto actualizada.', photoFailed: 'No se pudo subir la foto. Intenta de nuevo.',
       lblName: 'Nombre', lblEmail: 'Correo', lblRole: 'Rol', lblOrg: 'Taller', lblCode: 'Código',
@@ -305,7 +316,7 @@ html, body { overflow-y: auto !important; }
     },
     en: {
       docTitle: 'Nivelato - Settings', pageTitle: 'Settings', pageSub: 'Your account settings', back: '← Back',
-      mobileNav: 'Navigation', groupCompany: 'Company', companyProfile: 'Company settings', companyTeam: 'Team & users',
+      mobileNav: 'Navigation', groupCompany: 'Company', groupAccount: 'Account', myAccount: 'My account', companyProfile: 'Company settings', companyTeam: 'Users',
       accountInfo: 'Account information', accountInfoDesc: 'Your Nivelato profile details.', changePhoto: 'Change photo',
       uploading: 'Uploading...', photoUpdated: 'Photo updated.', photoFailed: 'The photo could not be uploaded. Try again.',
       lblName: 'Name', lblEmail: 'Email', lblRole: 'Role', lblOrg: 'Workshop', lblCode: 'Code',
@@ -588,29 +599,8 @@ onAuthStateChanged(auth, async (user) => {
       const _cg = document.getElementById('company-settings-group');
       if (_cg) _cg.hidden = false;
     }
-    // Header version: read the version registry (app_updates public
-    // projections, channel aware), never a hardcoded string. Beta orgs
-    // read app_updates/beta-latest; everyone else reads
-    // app_updates/backend when it carries a stable stamp (the legacy
-    // app_updates/latest pointer is stale and is not a display
-    // source). Fallback: the repo VERSION value, 1.1.0.
-    try {
-      const _chan = _os.data()?.updateChannel;
-      let _ver = null;
-      if (_chan === 'beta') {
-        const _bs = await getDoc(doc(db, 'app_updates', 'beta-latest'));
-        if (_bs.exists()) _ver = _bs.data()?.friendlyVersion || _bs.data()?.version || null;
-      } else {
-        const _bs = await getDoc(doc(db, 'app_updates', 'backend'));
-        if (_bs.exists()) {
-          const _bd = _bs.data() || {};
-          if ((!_bd.channel || _bd.channel === 'stable') && _bd.friendlyVersion) _ver = _bd.friendlyVersion;
-        }
-      }
-      document.getElementById('set-company-ver').textContent = 'Nivelato v' + (_ver || '1.1.0');
-    } catch (_) { /* registry unreachable: repo VERSION fallback */
-      document.getElementById('set-company-ver').textContent = 'Nivelato v1.1.0';
-    }
+    /* item 18: the header version line is removed; nothing paints a
+       version string in this header anymore. */
   } catch (_) { /* keep placeholder */ }
 
   initPasswordSection();

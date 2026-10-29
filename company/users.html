@@ -63,14 +63,19 @@
     overflow-y: auto;
     max-height: none;
   }
-  .users-title { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.72rem; font-weight: 500; color: var(--faint); text-transform: uppercase; letter-spacing: .18em; padding: 4px 6px 0; }
+  /* items 24/28: this list speaks the main sidebar's design language:
+     flat rows (no boxed tiles), the panel section-header treatment,
+     row rhythm from padding, hover as a surface lift. The list
+     container is a flex column so rows never sit flush-stacked. */
+  #user-list { display: flex; flex-direction: column; }
+  .users-title { font-size: 13px; font-weight: 500; color: var(--faint); margin-bottom: 8px; padding-left: 4px; }
   .user-card {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 14px;
-    border: 1.5px solid var(--line);
-    border-radius: var(--radius-md);
+    padding: 8px 6px;
+    border: none;
+    border-radius: 8px;
     background: transparent;
     cursor: pointer;
     text-align: left;
@@ -78,7 +83,20 @@
     font-family: inherit;
     width: 100%;
   }
-  .user-card:hover { border-color: var(--faint); }
+  .user-card:hover { background: #17171a; }
+  /* items 20/26: settings second sidebar + per-user settings column */
+  .co-settings-nav { width: 220px; flex: none; }
+  .user-settings-col {
+    width: 260px; flex: none;
+    border: 1px solid var(--line); border-radius: var(--radius-md);
+    background: #0b0b0d; padding: 24px 18px; overflow-y: auto;
+  }
+  .user-settings-name { font-size: 14px; font-weight: 600; margin-bottom: 12px; word-break: break-word; }
+  .user-settings-col .btn-danger { width: 100%; }
+  @media (max-width: 1180px) {
+    .shell { flex-wrap: wrap; }
+    .detail { flex-basis: 100%; }
+  }
   .user-card.selected {
     background: linear-gradient(135deg, #fafafa, #c9c9ce);
     border-color: transparent;
@@ -393,10 +411,38 @@
 <div class="shell">
   <div id="chrome-sidebar" aria-label="Company navigation"></div>
 
+  <!-- Item 20: settings second sidebar, the canonical account/company
+       block (item 23), same kit rows as the main sidebar (item 28). -->
+  <aside class="co-settings-nav" aria-label="Settings">
+    <nav class="niv-nav">
+      <div class="niv-nav-group">
+        <div class="niv-nav-group-title" id="co-nav-group-company">Compañía</div>
+        <a class="niv-nav-btn active" href="/company/users" aria-current="page"><span id="co-nav-users-label">Usuarios</span></a>
+        <a class="niv-nav-btn" href="/company/settings"><span id="co-nav-settings-label">Ajustes de la compañía</span></a>
+      </div>
+      <div class="niv-nav-group">
+        <div class="niv-nav-group-title" id="co-nav-group-account">Cuenta</div>
+        <a class="niv-nav-btn" href="/account/settings"><span id="co-nav-account-label">Mi cuenta</span></a>
+      </div>
+    </nav>
+  </aside>
+
   <section class="users-col" aria-label="Company users">
     <div class="users-title" id="team-title">Team</div>
     <div id="user-list"><div class="state-loading" id="list-loading">Loading users...</div></div>
   </section>
+
+  <!-- Item 26: fourth sidebar, the selected user's settings panel.
+       Per-user account actions live here (today: the removal zone);
+       per-user security controls (2FA and similar) belong here as
+       they are built. Per-user DATA lives in the Usuarios tab
+       (item 25). -->
+  <aside class="user-settings-col" id="user-settings-col" aria-label="User settings">
+    <div class="users-title" id="user-settings-title">Ajustes del usuario</div>
+    <div class="user-settings-name" id="user-settings-name"></div>
+    <div class="delete-note" id="user-settings-empty" style="text-align:left">Selecciona un usuario.</div>
+    <div id="delete-zone"></div>
+  </aside>
 
   <main class="detail" id="detail"><div class="state-loading" id="detail-loading">Select a user to see details.</div></main>
 </div>
@@ -438,6 +484,9 @@ const STR = {
     showLess: 'Show less', viewMore: 'View more', viewAll: 'View all',
     permissions: 'Permissions', onlyOwnersPerms: 'Only owners can change permissions.',
     devices: 'Registered devices', loadingDevices: 'Loading devices...', noDevices: 'No linked devices yet.',
+    groupCompany: 'Company', companyTeam: 'Users', companyProfile: 'Company settings', groupAccount: 'Account', myAccount: 'My account',
+    userSettings: 'User settings', userSettingsEmpty: 'Select a user.',
+    usersTabTitle: 'User data', usersTabNote: 'Projects, permissions and registered devices for this user live in the Users tab of the main app.', viewInUsers: 'Open in Users',
     couldNotDevices: 'Could not load devices.', unnamedDevice: 'Unnamed device', updateAvailable: 'Update available',
     rename: 'Rename', deviceName: 'Device name', save: 'Save', cancel: 'Cancel', saving: 'Saving...',
     linked: 'Linked', renameFailed: 'Could not rename device: {msg}', permFailed: 'Could not update permission: {msg}',
@@ -458,6 +507,9 @@ const STR = {
     showLess: 'Ver menos', viewMore: 'Ver más', viewAll: 'Ver todo',
     permissions: 'Permisos', onlyOwnersPerms: 'Solo los dueños pueden cambiar los permisos.',
     devices: 'Dispositivos registrados', loadingDevices: 'Cargando dispositivos...', noDevices: 'Todavía no hay dispositivos vinculados.',
+    groupCompany: 'Compañía', companyTeam: 'Usuarios', companyProfile: 'Ajustes de la compañía', groupAccount: 'Cuenta', myAccount: 'Mi cuenta',
+    userSettings: 'Ajustes del usuario', userSettingsEmpty: 'Selecciona un usuario.',
+    usersTabTitle: 'Datos del usuario', usersTabNote: 'Los proyectos, permisos y dispositivos registrados de este usuario viven en la pestaña Usuarios de la app principal.', viewInUsers: 'Abrir en Usuarios',
     couldNotDevices: 'No se pudieron cargar los dispositivos.', unnamedDevice: 'Dispositivo sin nombre', updateAvailable: 'Actualización disponible',
     rename: 'Renombrar', deviceName: 'Nombre del dispositivo', save: 'Guardar', cancel: 'Cancelar', saving: 'Guardando...',
     linked: 'Vinculado', renameFailed: 'No se pudo renombrar el dispositivo: {msg}', permFailed: 'No se pudo actualizar el permiso: {msg}',
@@ -485,6 +537,16 @@ function applyStaticLang() {
   if (ll) ll.textContent = t('loadingUsers');
   const dl = document.getElementById('detail-loading');
   if (dl) dl.textContent = t('selectUser');
+  const coLabels = {
+    'co-nav-group-company': 'groupCompany', 'co-nav-users-label': 'companyTeam',
+    'co-nav-settings-label': 'companyProfile', 'co-nav-group-account': 'groupAccount',
+    'co-nav-account-label': 'myAccount', 'user-settings-title': 'userSettings',
+    'user-settings-empty': 'userSettingsEmpty'
+  };
+  for (const id in coLabels) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t(coLabels[id]);
+  }
   try { document.documentElement.setAttribute('lang', LANG); } catch (e) {}
 }
 applyStaticLang();
@@ -617,61 +679,36 @@ function renderList() {
   });
 }
 
-async function loadProjects(uid) {
-  // "Projects by {name}": group the user's jobs by project (fallback: customer).
-  // Each job is one measured opening, so the count is honest "measured spaces".
-  try {
-    const qs = await getDocs(query(collection(db, 'orgs', orgId, 'jobs'), where('installerUid', '==', uid)));
-    const groups = new Map();
-    qs.forEach((d) => {
-      const j = d.data();
-      if (j.status === 'draft') return;
-      const key = j.project || j.customer || 'Untitled';
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push(j);
-    });
-    return [...groups.entries()]
-      .map(([name, jobs]) => ({ name, count: jobs.length }))
-      .sort((a, b) => b.count - a.count);
-  } catch (e) {
-    console.warn('[Nivelato] could not load jobs:', e.message);
-    return null; // null = load failed (vs [] = none)
-  }
-}
 
 function renderDetail() {
-  expandedDevices = false;
   const detail = document.getElementById('detail');
   const m = memberById(selectedUid);
+  const usName = document.getElementById('user-settings-name');
+  const usEmpty = document.getElementById('user-settings-empty');
   if (!m) {
     detail.innerHTML = '<div class="state-loading">' + escapeHtml(t('selectUser')) + '</div>';
+    if (usName) usName.textContent = '';
+    if (usEmpty) usEmpty.style.display = '';
+    const dz = document.getElementById('delete-zone');
+    if (dz) dz.innerHTML = '';
     return;
   }
   const name = m.name || m.email || t('unknownUser');
+  if (usName) usName.textContent = name;
+  if (usEmpty) usEmpty.style.display = 'none';
+  /* Item 25: the per-user data surface (projects, permissions,
+     devices) lives in the main app's Usuarios tab now. This page
+     keeps roster management; per-user settings controls live in the
+     user-settings column (item 26). */
   detail.innerHTML = `
     <div class="detail-head">
       <div class="detail-name">${escapeHtml(name)} <span class="detail-email-inline">(${escapeHtml(m.email || '')})</span></div>
     </div>
-    <div class="detail-grid">
-      <div class="panel" id="projects-panel">
-        <h3>${escapeHtml(t('projectsBy', { name: String(name).split(' ')[0] }))}</h3>
-        <div id="projects-body"><div class="empty">${escapeHtml(t('loadingProjects'))}</div></div>
-      </div>
-      <div class="panel" id="perms-panel">
-        <h3>${escapeHtml(t('permissions'))}</h3>
-        <div id="perms-body"></div>
-        ${isOwner() ? '' : '<div class="perm-note">' + escapeHtml(t('onlyOwnersPerms')) + '</div>'}
-      </div>
-    </div>
-    <div class="panel devices-panel" id="devices-panel">
-      <h3 id="devices-title">${escapeHtml(t('devices'))}</h3>
-      <div id="devices-body"><div class="empty">${escapeHtml(t('loadingDevices'))}</div></div>
-    </div>
-    <div id="delete-zone"></div>
-  `;
-  renderProjects(m);
-  renderPerms(m);
-  renderDevices(m);
+    <div class="panel">
+      <h3>${escapeHtml(t('usersTabTitle'))}</h3>
+      <p class="delete-note" style="text-align:left">${escapeHtml(t('usersTabNote'))}</p>
+      <a class="btn" href="/users?user=${encodeURIComponent(m.uid)}">${escapeHtml(t('viewInUsers'))}</a>
+    </div>`;
   renderDelete(m);
 }
 
@@ -681,172 +718,9 @@ function renderDetail() {
 // renameDevice (device-owner-only on the server); the org owner also
 // gets the Rename action on member devices, saved through
 // renameMemberDevice, which applies the same org-owner rule server-side.
-async function renderDevices(m) {
-  const body = document.getElementById('devices-body');
-  const title = document.getElementById('devices-title');
-  if (!body) return;
-  if (!guardEnter('devices:' + m.uid)) return;
-  body.innerHTML = '<div class="empty">' + escapeHtml(t('loadingDevices')) + '</div>';
-  try {
-    const fn = httpsCallable(getFunctions(auth.app, 'us-central1'), 'listUserDevices');
-    const { data } = await fn({ uid: m.uid });
-    if (!body.isConnected) { guardExit('devices:' + m.uid); return; }
-    const devices = (data && data.devices) || [];
-    const limit = (data && data.limit) || 5;
-    if (title) title.textContent = t('devices') + ` (${devices.length}/${limit})`;
-    if (!devices.length) {
-      body.innerHTML = '<div class="empty">' + escapeHtml(t('noDevices')) + '</div>';
-      guardExit('devices:' + m.uid);
-      return;
-    }
-    guardExit('devices:' + m.uid);
-    const visible = expandedDevices ? devices : devices.slice(0, limit);
-    const isSelfView = m.uid === (currentUser && currentUser.uid);
-    const canRename = isSelfView || viewerIsOrgOwner();
-    body.innerHTML = visible.map((d) => {
-      const name = d.displayName || t('unnamedDevice');
-      const modelBits = [d.brand, d.model].filter(Boolean).join(' ');
-      const sub = modelBits || (d.appVersionName ? 'Nivelato v' + d.appVersionName : 'Nivelato');
-      const linked = d.linkedAt
-        ? new Date(d.linkedAt).toLocaleDateString(LANG === 'es' ? 'es' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-        : '';
-      return `<div class="dev-row${d.outdated ? ' outdated' : ''}">
-        <div class="dev-icon" aria-hidden="true"></div>
-        <div class="dev-meta">
-          <div class="dev-name"><span class="dev-name-text">${escapeHtml(name)}</span>${d.outdated ? '<span class="dev-warn">' + escapeHtml(t('updateAvailable')) + '</span>' : ''}${canRename ? `<button class="dev-rename" data-rename="${escapeHtml(d.uuid)}">${escapeHtml(t('rename'))}</button>` : ''}</div>
-          <div class="dev-sub">${escapeHtml(sub)}${linked ? ' · ' + escapeHtml(t('linked')) + ' ' + escapeHtml(linked) : ''}</div>
-          <div class="dev-edit-slot"></div>
-        </div>
-      </div>`;
-    }).join('') +
-    (devices.length > limit ? `<button class="btn" id="btn-more-devices">${expandedDevices ? escapeHtml(t('showLess')) : escapeHtml(t('viewMore'))}</button>` : '');
-    const more = document.getElementById('btn-more-devices');
-    if (more) more.addEventListener('click', () => { expandedDevices = !expandedDevices; renderDevices(m); });
-    body.querySelectorAll('[data-rename]').forEach((btn) => {
-      btn.addEventListener('click', () => openDeviceRename(btn, m));
-    });
-  } catch (e) {
-    guardExit('devices:' + m.uid);
-    if (body.isConnected) body.innerHTML = '<div class="empty">' + escapeHtml(t('couldNotDevices')) + '</div>';
-  }
-}
 
-function openDeviceRename(btn, m) {
-  const row = btn.closest('.dev-row');
-  const slot = row && row.querySelector('.dev-edit-slot');
-  if (!slot || slot.dataset.open === '1') return;
-  slot.dataset.open = '1';
-  const uuid = btn.getAttribute('data-rename');
-  const nameEl = row.querySelector('.dev-name-text');
-  const current = nameEl ? nameEl.textContent.trim() : '';
-  slot.innerHTML = `<div class="dev-edit">
-    <input type="text" maxlength="60" value="${escapeHtml(current === t('unnamedDevice') ? '' : current)}" placeholder="${escapeHtml(t('deviceName'))}" aria-label="${escapeHtml(t('deviceName'))}" />
-    <button class="dev-save">${escapeHtml(t('save'))}</button>
-    <button class="dev-cancel">${escapeHtml(t('cancel'))}</button>
-  </div>`;
-  const input = slot.querySelector('input');
-  input.focus();
-  input.select();
-  slot.querySelector('.dev-cancel').addEventListener('click', () => renderDevices(m));
-  slot.querySelector('.dev-save').addEventListener('click', async () => {
-    const saveBtn = slot.querySelector('.dev-save');
-    if (saveBtn.disabled || !guardEnter('rename:' + uuid)) return;
-    saveBtn.disabled = true;
-    saveBtn.textContent = t('saving');
-    try {
-      // Own devices go through renameDevice (device-owner-only);
-      // a member's devices go through the org-scoped renameMemberDevice.
-      const isSelfView = m.uid === (currentUser && currentUser.uid);
-      const fn = httpsCallable(getFunctions(auth.app, 'us-central1'),
-        isSelfView ? 'renameDevice' : 'renameMemberDevice');
-      const payload = isSelfView
-        ? { deviceUuid: uuid, displayName: input.value.trim() }
-        : { uid: m.uid, deviceUuid: uuid, displayName: input.value.trim() };
-      await fn(payload);
-      guardExit('rename:' + uuid);
-      renderDevices(m);
-    } catch (e) {
-      guardExit('rename:' + uuid);
-      alert(t('renameFailed', { msg: e.message || t('unknownError') }));
-      saveBtn.disabled = false;
-      saveBtn.textContent = t('save');
-    }
-  });
-}
 
-async function renderProjects(m) {
-  const body = document.getElementById('projects-body');
-  if (!body) return;
-  if (!guardEnter('projects:' + m.uid)) return;
-  const groups = await loadProjects(m.uid);
-  guardExit('projects:' + m.uid);
-  if (!body.isConnected) return;
-  if (groups === null) {
-    body.innerHTML = '<div class="empty">' + escapeHtml(t('couldNotProjects')) + '</div>';
-    return;
-  }
-  if (!groups.length) {
-    body.innerHTML = '<div class="empty">' + escapeHtml(t('noProjects')) + '</div>';
-    return;
-  }
-  const visible = expandedProjects ? groups : groups.slice(0, 3);
-  body.innerHTML = visible.map((g) => `
-    <div class="proj-row">
-      <div class="proj-thumb">IMG</div>
-      <div>
-        <div class="proj-name">${escapeHtml(g.name)}</div>
-        <div class="proj-sub">${g.count} ${escapeHtml(g.count === 1 ? t('measuredSpace') : t('measuredSpaces'))}</div>
-      </div>
-    </div>`).join('') +
-    (groups.length > 3 ? `<button class="btn" id="btn-more-projects">${expandedProjects ? escapeHtml(t('showLess')) : escapeHtml(t('viewMore'))}</button>` : '');
-  const btn = document.getElementById('btn-more-projects');
-  if (btn) btn.addEventListener('click', () => { expandedProjects = !expandedProjects; renderProjects(m); });
-}
 
-function renderPerms(m) {
-  const body = document.getElementById('perms-body');
-  if (!body) return;
-  const checker = makePermChecker(m);
-  // orgs sin quoting (QGC): no se muestran los permisos de precios/cotizaciones
-  const allKeys = orgHasQuotes(m) ? PERM_KEYS : PERM_KEYS.filter(k => !QUOTE_KEYS.includes(k));
-  const keys = expandedPerms ? allKeys : allKeys.slice(0, PERMS_PREVIEW);
-  const canEdit = isOwner();
-  body.innerHTML = keys.map((k) => {
-    const on = !!checker(k);
-    return `<div class="perm-row">
-      <span>${escapeHtml(permLabel(k))}</span>
-      <button class="toggle${on ? ' on' : ''}" data-key="${escapeHtml(k)}" ${canEdit ? '' : 'disabled'}
-        aria-pressed="${on}" aria-label="${escapeHtml(permLabel(k))}">
-        <span class="knob"></span>
-      </button>
-    </div>`;
-  }).join('') +
-  (allKeys.length > PERMS_PREVIEW
-    ? `<button class="btn" id="btn-all-perms">${expandedPerms ? escapeHtml(t('showLess')) : escapeHtml(t('viewAll'))}</button>`
-    : '');
-  const btnAll = document.getElementById('btn-all-perms');
-  if (btnAll) btnAll.addEventListener('click', () => { expandedPerms = !expandedPerms; renderPerms(m); });
-  if (canEdit) {
-    body.querySelectorAll('.toggle').forEach((t) => {
-      t.addEventListener('click', async () => {
-        const key = t.getAttribute('data-key');
-        if (t.disabled || !guardEnter('perm:' + m.uid + ':' + key)) return;
-        const cur = memberById(m.uid);
-        const nowOn = !!makePermChecker(cur)(key);
-        t.disabled = true;
-        try {
-          await updateDoc(doc(db, 'users', m.uid), { ['permissions.' + key]: !nowOn });
-          cur.permissions = { ...(cur.permissions || {}), [key]: !nowOn };
-        } catch (e) {
-          alert(t('permFailed', { msg: e.message || t('unknownError') }));
-        } finally {
-          guardExit('perm:' + m.uid + ':' + key);
-        }
-        renderPerms(memberById(m.uid));
-      });
-    });
-  }
-}
 
 function renderDelete(m) {
   const zone = document.getElementById('delete-zone');
@@ -986,6 +860,29 @@ onAuthStateChanged(auth, async (user) => {
 </script>
 <script src="/niv-settings.js"></script>
 <script src="/modules/shell-bridge.js"></script>
+<script>
+  /* Item 26: this view auto-collapses the main sidebar to its icon
+     rail to make room for the extra columns. The stored compact
+     preference is the module's own switch: remember the prior value,
+     force compact on for this view only, restore it on the way out.
+     A leftover session flag (a tab that died mid-visit) preserves the
+     ORIGINAL prior value, so the restore stays truthful. */
+  (function () {
+    try {
+      if (!window.NivSettings) return;
+      var KEY = 'niv-users-autocompact-prior';
+      var prior = window.sessionStorage.getItem(KEY);
+      if (prior === null) {
+        prior = window.NivSettings.getCompact() ? '1' : '0';
+        window.sessionStorage.setItem(KEY, prior);
+      }
+      window.NivSettings.setCompact(true);
+      window.addEventListener('pagehide', function () {
+        try { window.NivSettings.setCompact(prior === '1'); } catch (e) {}
+      });
+    } catch (e) { /* the view also works with the sidebar expanded */ }
+  })();
+</script>
 <script>
   /* Chrome modules: sidebar (target=company, this page is the Users door)
      and, per the shell rule, the top bar ONLY at >=901px (never on mobile)

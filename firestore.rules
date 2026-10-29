@@ -342,7 +342,7 @@ service cloud.firestore {
       allow read: if isSignedIn() && myUid() == userId;
       allow write: if isSignedIn() && myUid() == userId
         && request.resource.data.keys().hasOnly(
-             ['welcomeEmail', 'newProject', 'projectEdit', 'quoteReady', 'updatedAt']);
+             ['welcomeEmail', 'loginAlert', 'newProject', 'projectEdit', 'quoteReady', 'updatedAt']);
     }
 
     // Easter-egg odometer — public read (the gay-button press count lives
