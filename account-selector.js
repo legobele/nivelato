@@ -65,7 +65,10 @@ function injectStyles() {
   .acct-trigger:active { transform: scale(0.98); }
   .acct-avatar {
     width: 22px; height: 22px; border-radius: 50%;
-    background: var(--niv-accent, #1971c2); color: #fff;
+    /* Fixed color, not var(--niv-accent): the Neue tokens redefine
+       --niv-accent to #fafafa, which rendered white initials on a
+       near-white tile (blank avatar circle, fixed 2026-10-28). */
+    background: #1971c2; color: #fff;
     display: inline-flex; align-items: center; justify-content: center;
     font-size: 11px; font-weight: 700; flex-shrink: 0;
     overflow: hidden;
@@ -87,7 +90,9 @@ function injectStyles() {
     border-top: 1px solid var(--niv-border, rgba(255,255,255,0.14));
     transform: rotate(45deg);
   }
-  .acct-info { padding: 10px 12px; border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.08)); }
+  .acct-info { padding: 10px 12px; border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.08));
+    display: flex; align-items: center; gap: 10px; }
+  .acct-info .acct-avatar { width: 34px; height: 34px; font-size: 13px; }
   .acct-info .nm { font-size: 14px; font-weight: 700; color: var(--niv-text, #f5f5f7); }
   .acct-info .em { font-size: 12px; color: var(--niv-text-dim, #a7a7ad); margin-top: 2px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -178,9 +183,12 @@ function buildMenu({ user, userData }) {
     </button>
     <div class="acct-dropdown" id="acct-dropdown" role="menu">
       <div class="acct-info">
-        <div class="nm">${escapeHtml(displayName)}</div>
-        ${email ? `<div class="em">${escapeHtml(email)}</div>` : ""}
-        <div class="rl">${escapeHtml(roleLabel(userData?.role))}</div>
+        <span class="acct-avatar">${avatarHTML}</span>
+        <div>
+          <div class="nm">${escapeHtml(displayName)}</div>
+          ${email ? `<div class="em">${escapeHtml(email)}</div>` : ""}
+          <div class="rl">${escapeHtml(roleLabel(userData?.role))}</div>
+        </div>
       </div>
       ${canDashboard ? `<button class="acct-item" id="acct-dashboard" role="menuitem" onclick="window.location.href='https://app.nivelatolabs.com/dashboard.html?view=home'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:2px;"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg> ${T.dashboard}</button>` : ""}
       <button class="acct-item" id="acct-settings" role="menuitem" onclick="window.location.href='settings.html'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:2px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> ${T.settings}</button>
