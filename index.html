@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
+<script>try{var c='; '+document.cookie;var lm=c.match(/; nivelato-login-lang=(es|en)(?:;|$)/);var ll=lm?lm[1]:(localStorage.getItem('nivelato-login-lang')||'');if(ll!=='es'&&ll!=='en')ll=(navigator.language||'en').toLowerCase().indexOf('es')===0?'es':'en';document.documentElement.lang=ll;}catch(e){}</script>
 <script src="./company-theme.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Nivelato - Medición de campo para talleres de cristales</title>
@@ -32,6 +33,105 @@
 #nv-modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
 </style>
 <link rel="stylesheet" href="./qgc-theme.css">
+<style>
+/* ─── WIZARD SIDEBAR LAYOUT (v1.2.17) ────────────────────────────────
+   The approved design (Giulia's wireframes) replaces the stacked
+   shell: persistent left sidebar + content column (graph panel on
+   top, the step's card below it). Also carries the token-level fixes
+   for the surfaces her audit caught: the summary grid's white card,
+   the validation banners' light strips, and the photo step's sticky
+   white footer (autism.css painted it var(--white) while the Neue
+   buttons are light-text). */
+#app-shell { flex-direction: row; }
+#wiz-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+#wiz-main #app-header { flex: none; }
+#wiz-main #canvas-wrap { flex: 0 0 auto; height: clamp(200px, 34vh, 320px); position: relative; }
+#wiz-main #bottom-panel { flex: 1 1 auto; }
+#photo-stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--niv-bg); padding: 12px; overflow: auto; }
+#photo-stage[hidden] { display: none; }
+#photo-stage #photo-panel { width: 100%; max-width: 560px; }
+#photo-stage #photo-preview { margin-top: 0 !important; }
+.photo-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--niv-text-dim); text-align: center; font-size: 14px; padding: 24px; }
+#app-shell.on-photo-step #drawing-canvas, #app-shell.on-photo-step #reset-zoom-btn { display: none !important; }
+
+#wiz-sidebar {
+  flex: 0 0 264px; width: 264px; min-height: 0; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 14px;
+  background: var(--niv-surface); border-right: 1px solid var(--niv-border);
+  padding: 18px 16px; font-family: 'Inter', system-ui, sans-serif;
+}
+.wiz-watermark { font-family: var(--niv-font-mono, 'JetBrains Mono', monospace); font-size: 11px; color: #f87171; letter-spacing: 0.04em; }
+.wiz-brand { font-family: var(--niv-font-display, 'Space Grotesk', 'Inter', sans-serif); font-size: 22px; font-weight: 700; color: var(--niv-text); }
+.wiz-context { font-size: 13px; color: var(--niv-text); line-height: 1.5; overflow-wrap: anywhere; }
+.wiz-context .dim { color: var(--niv-text-dim); }
+.wiz-progress-row { display: flex; align-items: center; gap: 10px; }
+.wiz-progress-row #progress-bar-wrap { flex: 1 1 auto; height: 6px; border-radius: 999px; overflow: hidden; }
+.wiz-progress-label { font-family: var(--niv-font-mono, 'JetBrains Mono', monospace); font-size: 11px; color: var(--niv-text-dim); white-space: nowrap; }
+.wiz-sections { display: flex; flex-direction: column; gap: 2px; }
+.wiz-section { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; border: none; border-radius: 10px; background: transparent; color: var(--niv-text-dim); font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.wiz-section:hover { background: var(--niv-surface-2); color: var(--niv-text); }
+.wiz-section.current { background: var(--niv-surface-2); color: var(--niv-text); }
+.wiz-ring { flex: none; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--niv-border); position: relative; }
+.wiz-ring.done { border-color: #4ade80; background: #4ade80; }
+.wiz-ring.current { border-color: var(--niv-accent, #fafafa); }
+.wiz-ring.current::after { content: ''; position: absolute; inset: 2.5px; border-radius: 50%; background: var(--niv-accent, #fafafa); }
+.wiz-ring.group { border-radius: 4px; border-style: dotted; }
+.wiz-subsections { margin-left: 17px; padding-left: 12px; border-left: 1px solid var(--niv-border-soft); display: flex; flex-direction: column; gap: 2px; }
+.wiz-summary-nav { display: flex; flex-direction: column; gap: 2px; font-size: 13.5px; }
+.wiz-summary-nav[hidden] { display: none; }
+.wiz-summary-title { font-weight: 700; color: var(--niv-text); font-size: 15px; margin-bottom: 4px; }
+.wiz-summary-group { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--niv-text-dim); margin: 10px 0 2px; }
+.wiz-sum-row { display: flex; justify-content: space-between; gap: 10px; width: 100%; padding: 6px 10px; border: none; border-radius: 8px; background: transparent; color: var(--niv-text); font-family: inherit; font-size: 13.5px; cursor: pointer; text-align: left; }
+.wiz-sum-row:hover { background: var(--niv-surface-2); }
+.wiz-sum-row .k { color: var(--niv-text-dim); flex: none; }
+.wiz-sum-row .v { font-family: var(--niv-font-mono, 'JetBrains Mono', monospace); overflow-wrap: anywhere; text-align: right; }
+.wiz-maps-btn { display: inline-block; margin: 2px 0 0 10px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--niv-border); color: var(--niv-text); font-size: 12.5px; font-weight: 600; text-decoration: none; }
+.wiz-summary-note { font-size: 12px; color: var(--niv-text-dim); margin-top: 10px; line-height: 1.45; }
+.wiz-banner { border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.5; }
+.wiz-banner[hidden] { display: none; }
+.wiz-banner.free { background: var(--niv-surface-2); border: 1px solid var(--niv-border-soft); color: var(--niv-text); }
+.wiz-banner.free .plan { display: block; margin-top: 6px; color: var(--niv-text-dim); font-weight: 600; }
+.wiz-banner.dev { background: rgba(229, 72, 77, 0.14); border: 1px solid rgba(229, 72, 77, 0.55); color: #ffb4b8; font-weight: 700; }
+.wiz-banner.dev .sub { display: block; margin-top: 6px; font-weight: 500; color: var(--niv-text); }
+.wiz-user { margin-top: auto; display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid var(--niv-border-soft); }
+.wiz-avatar { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--niv-surface-2); border: 1px solid var(--niv-border-soft); color: var(--niv-text); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+.wiz-user-meta { display: flex; flex-direction: column; min-width: 0; }
+.wiz-user-name { font-size: 13.5px; font-weight: 600; color: var(--niv-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wiz-user-email { font-size: 12px; color: var(--niv-text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wiz-user #estradiol-indicator { margin-left: auto; }
+
+/* field cards: autism.css paints .input-col white; the item-37 pass
+   tokenized the inputs inside them but not the cards themselves, so
+   every field rendered as a white card in the dark UI (visible in
+   the step-1 screenshot). Tokenized here with the derived/read-only
+   variants and the notes textarea. */
+.input-col { background: var(--niv-surface-2); border-color: var(--niv-border-soft); }
+.input-col.derived label { color: var(--niv-text-dim); }
+.input-col.derived input, .input-col.derived select { background: var(--niv-surface); color: var(--niv-text-dim); }
+#notas-field { background: var(--niv-surface-2); color: var(--niv-text); border-color: var(--niv-border-soft); }
+
+/* summary + validation surfaces pair text with the dark tokens */
+.summary-grid { background: var(--niv-surface-2); border: 1px solid var(--niv-border-soft); box-shadow: none; }
+#validation-block { padding: 10px 14px; border-radius: 8px; font-size: 13.5px; font-weight: 600; border: 1px solid transparent; }
+#validation-block.val-ok { background: rgba(34, 197, 94, 0.13); color: #4ade80; border-color: rgba(34, 197, 94, 0.4); }
+#validation-block.val-warn { background: rgba(230, 119, 0, 0.13); color: #fbbf24; border-color: rgba(230, 119, 0, 0.4); white-space: pre-line; line-height: 1.55; }
+.verify-note { background: rgba(230, 119, 0, 0.13) !important; color: #fbbf24; border: 1px solid rgba(230, 119, 0, 0.4); }
+
+@media (max-width: 900px) {
+  #app-shell { flex-direction: column; }
+  #wiz-sidebar { flex: none; width: 100%; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 14px; border-right: none; border-bottom: 1px solid var(--niv-border); overflow: visible; }
+  .wiz-brand { font-size: 18px; }
+  .wiz-context, .wiz-banner { display: none; }
+  .wiz-progress-row { flex: 1 1 140px; }
+  .wiz-sections { flex-direction: row; overflow-x: auto; flex: 1 1 100%; order: 5; padding-bottom: 2px; }
+  .wiz-section { width: auto; white-space: nowrap; padding: 6px 9px; }
+  .wiz-subsections { flex-direction: row; margin-left: 0; padding-left: 0; border-left: none; }
+  .wiz-summary-nav { flex: 1 1 100%; order: 5; }
+  .wiz-user { margin: 0; padding: 0; border: none; }
+  .wiz-user-meta { display: none; }
+  #wiz-main #canvas-wrap { height: clamp(160px, 26vh, 240px); }
+}
+</style>
 <script type="module" src="auth-guard.js?v=2"></script>
 <script type="module" src="account-selector.js"></script>
 <script type="module" src="grass.js"></script>
@@ -113,55 +213,91 @@ html, body { background: var(--niv-bg); color: var(--niv-text); }
 </head>
 <body>
 <div id="app-shell">
+<!-- SIDEBAR — the approved wizard design (Giulia's wireframes; spec at
+     nivelato-dashboard-batch/wizard-sidebar-design-spec.md): persistent
+     left rail with watermark, context, progress, the tappable step
+     list (the navigation model), the banner zone and the user chip.
+     Ported from flow.html's rail, the v1.2.11 implementation. -->
+<aside id="wiz-sidebar" aria-label="Nivelato">
+  <div class="wiz-watermark" id="wiz-watermark" hidden></div>
+  <div class="wiz-brand">Nivelato</div>
+  <div class="wiz-context">
+    <div id="wiz-ctx-customer"><span class="dim" data-i18n="noCustomer">Sin cliente todavía</span></div>
+    <div id="wiz-ctx-project"><span class="dim" data-i18n="noProject">Sin proyecto todavía</span></div>
+  </div>
+  <div class="wiz-progress-row">
+    <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+    <div class="wiz-progress-label" id="wiz-progress-label">0%</div>
+  </div>
+  <nav class="wiz-sections" id="wiz-sections" aria-label="Pasos"></nav>
+  <div class="wiz-summary-nav" id="wiz-summary-nav" hidden></div>
+  <div class="wiz-banner" id="wiz-banner" hidden></div>
+  <div class="wiz-user" id="wiz-user">
+    <span class="wiz-avatar" id="wiz-avatar">?</span>
+    <span class="wiz-user-meta">
+      <span class="wiz-user-name" id="wiz-user-name">...</span>
+      <span class="wiz-user-email" id="wiz-user-email"></span>
+    </span>
+    <span id="estradiol-indicator">E2</span>
+  </div>
+</aside>
+<div id="wiz-main">
 <!-- HEADER -->
 <header id="app-header">
 <span id="app-logo">Nivelato</span>
-<span id="step-indicator">Paso <span id="step-num">1</span> de 8</span>
-<span id="estradiol-indicator">E2</span>
+<span id="step-indicator"><span data-i18n="stepOf1">Paso</span> <span id="step-num">1</span> <span data-i18n="stepOf2">de 8</span></span>
 </header>
-<!-- PROGRESS BAR -->
-<div id="progress-bar-wrap"><div id="progress-bar"></div></div>
-<!-- CANVAS — grows to fill remaining space -->
+<!-- CANVAS — the graph panel: bounded height beside the sidebar; the
+     step card lives below it, not under a giant empty preview -->
 <div id="canvas-wrap">
 <canvas id="drawing-canvas"></canvas>
-<button onclick="resetZoom()" id="reset-zoom-btn" title="Restablecer zoom" style="display:none">Restablecer</button>
+<button onclick="resetZoom()" id="reset-zoom-btn" title="Restablecer zoom" style="display:none" data-i18n="resetZoom">Restablecer</button>
+<!-- PHOTO STAGE: on the photo step the photo state occupies the graph
+     area itself (not a floating box over it). #photo-panel is moved
+     here by the chrome script; the empty state is this area's own. -->
+<div id="photo-stage" hidden>
+  <div class="photo-empty" id="photo-empty">
+    <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    <div data-i18n="photoEmpty">Agrega una foto del hueco para marcar las medidas.</div>
+  </div>
+</div>
 </div>
 <!-- BOTTOM PANEL — fixed height, all steps live here -->
 <div id="bottom-panel">
 
 <!-- ══ STEP 0 — CLIENTE ══ -->
 <section class="step-panel active" id="step-0">
-<h2 class="step-title">Cliente / Proyecto</h2>
-<p class="step-hint">Ingresa el nombre del cliente y del proyecto antes de empezar a medir. La ubicación es opcional.</p>
+<h2 class="step-title" data-i18n="s0Title">Cliente / Proyecto</h2>
+<p class="step-hint" data-i18n="s0Hint">Ingresa el nombre del cliente y del proyecto antes de empezar a medir. La ubicación es opcional.</p>
 <div class="input-row">
 <div class="input-col">
-<label for="customer-name">Cliente</label>
-<input type="text" id="customer-name" placeholder="Nombre del cliente" />
+<label for="customer-name" data-i18n="customer">Cliente</label>
+<input type="text" id="customer-name" placeholder="Nombre del cliente" data-i18n-ph="phCustomer" />
 </div>
 <div class="input-col">
-<label for="project-name">Proyecto</label>
-<input type="text" id="project-name" placeholder="Nombre del proyecto" />
+<label for="project-name" data-i18n="project">Proyecto</label>
+<input type="text" id="project-name" placeholder="Nombre del proyecto" data-i18n-ph="phProject" />
 </div>
 <div class="input-col">
-<label for="location-name">Ubicación</label>
-<input type="text" id="location-name" placeholder="Ubicación / dirección" />
+<label for="location-name" data-i18n="location">Ubicación</label>
+<input type="text" id="location-name" placeholder="Ubicación / dirección" data-i18n-ph="phLocation" />
 </div>
 <div class="input-col">
-<label for="area-name">Área</label>
-<input type="text" id="area-name" placeholder="Ej.: Baño 1" />
+<label for="area-name" data-i18n="area">Área</label>
+<input type="text" id="area-name" placeholder="Ej.: Baño 1" data-i18n-ph="phArea" />
 </div>
 </div>
 <div class="step-error" role="alert"></div>
-<button class="btn-primary" onclick="nextStep()">Siguiente →</button>
+<button class="btn-primary" onclick="nextStep()" data-i18n="next">Siguiente →</button>
 </section>
 
 <!-- ══ STEP 1 — HUECO ══ -->
 <section class="step-panel" id="step-1">
-<h2 class="step-title">Medidas del hueco</h2>
-<p class="step-hint">Ingresa las 2 medidas base: ancho abajo y alto izquierda. Las otras 2 se calculan automáticamente con los desniveles.</p>
+<h2 class="step-title" data-i18n="s1Title">Medidas del hueco</h2>
+<p class="step-hint" data-i18n="s1Hint">Ingresa las 2 medidas base: ancho abajo y alto izquierda. Las otras 2 se calculan automáticamente con los desniveles.</p>
 <div class="input-row">
 <div class="input-col">
-<label for="hueco-ancho-bot-whole">Ancho - Abajo (base)</label>
+<label for="hueco-ancho-bot-whole" data-i18n="anchoBase">Ancho - Abajo (base)</label>
 <div class="fraction-row">
 <input type="number" id="hueco-ancho-bot-whole" placeholder="0" min="0" step="1" />
 <select aria-label="Fracción de pulgada" id="hueco-ancho-bot-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -169,7 +305,7 @@ html, body { background: var(--niv-bg); color: var(--niv-text); }
 </div>
 </div>
 <div class="input-col">
-<label for="hueco-alto-izq-whole">Alto - Izquierda (base)</label>
+<label for="hueco-alto-izq-whole" data-i18n="altoBase">Alto - Izquierda (base)</label>
 <div class="fraction-row">
 <input type="number" id="hueco-alto-izq-whole" placeholder="0" min="0" step="1" />
 <select aria-label="Fracción de pulgada" id="hueco-alto-izq-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -178,16 +314,19 @@ html, body { background: var(--niv-bg); color: var(--niv-text); }
 </div>
 </div>
 <div class="step-error" role="alert"></div>
-<button class="btn-primary" onclick="nextStep()">Siguiente →</button>
+<div class="btn-row">
+<button class="btn-secondary" onclick="prevStep()" data-i18n="back">← Atrás</button>
+<button class="btn-primary" onclick="nextStep()" data-i18n="next">Siguiente →</button>
+</div>
 </section>
 
 <!-- ══ STEP 2 — PARED IZQUIERDA ══ -->
 <section class="step-panel" id="step-2">
-<h2 class="step-title">Pared izquierda</h2>
-<p class="step-hint">Mide del láser a la pared izquierda: punto A (abajo) y punto B (arriba).</p>
+<h2 class="step-title" data-i18n="s2Title">Pared izquierda</h2>
+<p class="step-hint" data-i18n="s2Hint">Mide del láser a la pared izquierda: punto A (abajo) y punto B (arriba).</p>
 <div class="input-row">
 <div class="input-col">
-<label for="pI-a-whole">A - Abajo</label>
+<label for="pI-a-whole" data-i18n="aBottom">A - Abajo</label>
 <div class="fraction-row">
 <input type="number" id="pI-a-whole" placeholder="0" min="0" step="1" />
 <select aria-label="Fracción de pulgada" id="pI-a-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -195,7 +334,7 @@ html, body { background: var(--niv-bg); color: var(--niv-text); }
 </div>
 </div>
 <div class="input-col">
-<label for="pI-b-whole">B - Arriba</label>
+<label for="pI-b-whole" data-i18n="bTop">B - Arriba</label>
 <div class="fraction-row">
 <input type="number" id="pI-b-whole" placeholder="0" min="0" step="1" />
 <select aria-label="Fracción de pulgada" id="pI-b-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -205,18 +344,18 @@ html, body { background: var(--niv-bg); color: var(--niv-text); }
 </div>
 <div class="step-error" role="alert"></div>
 <div class="btn-row">
-<button class="btn-secondary" onclick="prevStep()">← Atrás</button>
-<button class="btn-primary" onclick="nextStep()">Siguiente →</button>
+<button class="btn-secondary" onclick="prevStep()" data-i18n="back">← Atrás</button>
+<button class="btn-primary" onclick="nextStep()" data-i18n="next">Siguiente →</button>
 </div>
 </section>
 
 <!-- ══ STEP 3 — PARED DERECHA ══ -->
 <section class="step-panel" id="step-3">
-<h2 class="step-title">Pared derecha</h2>
-<p class="step-hint">Mide del láser a la pared derecha: punto A (abajo) y punto B (arriba).</p>
+<h2 class="step-title" data-i18n="s3Title">Pared derecha</h2>
+<p class="step-hint" data-i18n="s3Hint">Mide del láser a la pared derecha: punto A (abajo) y punto B (arriba).</p>
 <div class="input-row">
 <div class="input-col">
-<label for="pD-a-whole">A - Abajo</label>
+<label for="pD-a-whole" data-i18n="aBottom">A - Abajo</label>
 <div class="fraction-row">
 <input type="number" id="pD-a-whole" placeholder="0" min="0" step="1" />
 <select aria-label="Fracción de pulgada" id="pD-a-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -224,7 +363,7 @@ html, body { background: var(--niv-bg); color: var(--niv-text); }
 </div>
 </div>
 <div class="input-col">
-<label for="pD-b-whole">B - Arriba</label>
+<label for="pD-b-whole" data-i18n="bTop">B - Arriba</label>
 <div class="fraction-row">
 <input type="number" id="pD-b-whole" placeholder="0" min="0" step="1" />
 <select aria-label="Fracción de pulgada" id="pD-b-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -234,18 +373,18 @@ html, body { background: var(--niv-bg); color: var(--niv-text); }
 </div>
 <div class="step-error" role="alert"></div>
 <div class="btn-row">
-<button class="btn-secondary" onclick="prevStep()">← Atrás</button>
-<button class="btn-primary" onclick="nextStep()">Siguiente →</button>
+<button class="btn-secondary" onclick="prevStep()" data-i18n="back">← Atrás</button>
+<button class="btn-primary" onclick="nextStep()" data-i18n="next">Siguiente →</button>
 </div>
 </section>
 
 <!-- ══ STEP 4 — ARRIBA (was TECHO) ══ -->
 <section class="step-panel" id="step-4">
-<h2 class="step-title">Arriba</h2>
-<p class="step-hint">Mide del láser arriba: punto A (izquierda) y punto B (derecha).</p>
+<h2 class="step-title" data-i18n="s4Title">Arriba</h2>
+<p class="step-hint" data-i18n="s4Hint">Mide del láser arriba: punto A (izquierda) y punto B (derecha).</p>
 <div class="input-row">
 <div class="input-col">
-<label for="t-a-whole">A - Izquierda</label>
+<label for="t-a-whole" data-i18n="aLeft">A - Izquierda</label>
 <div class="fraction-row">
 <input type="number" id="t-a-whole" placeholder="0" min="0" step="1" />
 <select aria-label="Fracción de pulgada" id="t-a-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -253,7 +392,7 @@ html, body { background: var(--niv-bg); color: var(--niv-text); }
 </div>
 </div>
 <div class="input-col">
-<label for="t-b-whole">B - Derecha</label>
+<label for="t-b-whole" data-i18n="bRight">B - Derecha</label>
 <div class="fraction-row">
 <input type="number" id="t-b-whole" placeholder="0" min="0" step="1" />
 <select aria-label="Fracción de pulgada" id="t-b-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -263,19 +402,19 @@ html, body { background: var(--niv-bg); color: var(--niv-text); }
 </div>
 <div class="step-error" role="alert"></div>
 <div class="btn-row">
-<button class="btn-secondary" onclick="prevStep()">← Atrás</button>
-<button class="btn-primary" onclick="nextStep()">Siguiente →</button>
+<button class="btn-secondary" onclick="prevStep()" data-i18n="back">← Atrás</button>
+<button class="btn-primary" onclick="nextStep()" data-i18n="next">Siguiente →</button>
 </div>
 </section>
 <!-- trans rights -->
 
 <!-- ══ STEP 5 — ABAJO (was PISO) ══ -->
 <section class="step-panel" id="step-5">
-<h2 class="step-title">Abajo</h2>
-<p class="step-hint">Mide del láser abajo: punto A (izquierda) y punto B (derecha).</p>
+<h2 class="step-title" data-i18n="s5Title">Abajo</h2>
+<p class="step-hint" data-i18n="s5Hint">Mide del láser abajo: punto A (izquierda) y punto B (derecha).</p>
 <div class="input-row">
 <div class="input-col">
-<label for="p-a-whole">A - Izquierda</label>
+<label for="p-a-whole" data-i18n="aLeft">A - Izquierda</label>
 <div class="fraction-row">
 <input type="number" id="p-a-whole" placeholder="0" min="0" step="1" />
 <select aria-label="Fracción de pulgada" id="p-a-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -283,7 +422,7 @@ html, body { background: var(--niv-bg); color: var(--niv-text); }
 </div>
 </div>
 <div class="input-col">
-<label for="p-b-whole">B - Derecha</label>
+<label for="p-b-whole" data-i18n="bRight">B - Derecha</label>
 <div class="fraction-row">
 <input type="number" id="p-b-whole" placeholder="0" min="0" step="1" />
 <select aria-label="Fracción de pulgada" id="p-b-frac" class="frac-select">FRAC_OPTIONS</select>
@@ -293,75 +432,291 @@ html, body { background: var(--niv-bg); color: var(--niv-text); }
 </div>
 <div class="step-error" role="alert"></div>
 <div class="btn-row">
-<button class="btn-secondary" onclick="prevStep()">← Atrás</button>
-<button class="btn-primary" onclick="nextStep()">Siguiente →</button>
+<button class="btn-secondary" onclick="prevStep()" data-i18n="back">← Atrás</button>
+<button class="btn-primary" onclick="nextStep()" data-i18n="next">Siguiente →</button>
 </div>
 </section>
 
 <!-- ══ STEP 6 — FOTO (optional) ══ -->
 <section class="step-panel" id="step-6">
-<h2 class="step-title">Foto con medidas</h2>
-<p class="step-hint">Opcional: agrega una foto del hueco y márcala con las medidas para que el taller la vea.</p>
+<h2 class="step-title" data-i18n="s6Title">Foto con medidas</h2>
+<p class="step-hint" data-i18n="s6Hint">Opcional: agrega una foto del hueco y márcala con las medidas para que el taller la vea.</p>
 <div id="photo-panel">
-  <div id="photo-preview" style="display:none;margin-top:14px;background:var(--white);border:1px solid var(--grey-200);border-radius:12px;padding:10px;box-shadow:var(--shadow);">
+  <div id="photo-preview" style="display:none;margin-top:14px;background:var(--niv-surface-2);border:1px solid var(--niv-border-soft);border-radius:12px;padding:10px;">
     <img id="photo-preview-img" alt="Foto con medidas" style="width:100%;border-radius:8px;display:block;" />
     <div style="display:flex;gap:10px;margin-top:10px;">
-      <button class="btn-secondary" style="flex:1;" onclick="openPhotoEditor()">✏️ Editar</button>
-      <button class="btn-secondary" style="flex:1;" onclick="removePhoto()">🗑 Quitar</button>
+      <button class="btn-secondary" style="flex:1;" onclick="openPhotoEditor()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg><span data-i18n="editPhoto">Editar</span></button>
+      <button class="btn-secondary" style="flex:1;" onclick="removePhoto()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span data-i18n="removePhoto">Quitar</span></button>
     </div>
   </div>
 </div>
 <div class="step-error" role="alert"></div>
 <div class="btn-row">
-<button class="btn-secondary" onclick="prevStep()" style="flex:0 0 auto;">← Atrás</button>
-<button class="btn-primary" id="btn-open-photo" onclick="openPhotoEditor()">📷 Agregar foto</button>
-<button class="btn-secondary" onclick="skipPhoto()" style="flex:0 0 auto;">Omitir</button>
+<button class="btn-secondary" onclick="prevStep()" style="flex:0 0 auto;" data-i18n="back">← Atrás</button>
+<button class="btn-primary" id="btn-open-photo" onclick="openPhotoEditor()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span data-i18n="addPhoto">Agregar foto</span></button>
+<button class="btn-secondary" onclick="skipPhoto()" style="flex:0 0 auto;" data-i18n="skip">Omitir</button>
 </div>
 </section>
 
 <!-- ══ STEP 7 — RESUMEN ══ -->
 <section class="step-panel" id="step-7">
-<h2 class="step-title">Resumen</h2>
-<div id="validation-block" class="val-ok">✓ Medidas OK</div>
-<div class="verify-note" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;font-weight:500;">
-⚠️ Verifique todas las medidas calculadas con mediciones manuales antes de cotizar o instalar.
+<h2 class="step-title" data-i18n="s7Title">Resumen</h2>
+<div id="validation-block" class="val-ok">Medidas OK</div>
+<div class="verify-note" style="margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:500;" data-i18n="verifyNote">
+Verifique todas las medidas calculadas con mediciones manuales antes de cotizar o instalar.
 </div>
 <div class="summary-grid">
-<div class="summary-row"><span class="summary-label">Hueco</span><span class="summary-val" id="res-area">- x -</span></div>
-<div class="summary-row"><span class="summary-label">Pared Izq.</span><span class="summary-val" id="res-pared-izq">-</span></div>
-<div class="summary-row"><span class="summary-label">Pared Der.</span><span class="summary-val" id="res-pared-der">-</span></div>
-<div class="summary-row"><span class="summary-label">Arriba</span><span class="summary-val" id="res-techo">-</span></div>
-<div class="summary-row"><span class="summary-label">Abajo</span><span class="summary-val" id="res-piso">-</span></div>
+<div class="summary-row"><span class="summary-label" data-i18n="sumOpening">Hueco</span><span class="summary-val" id="res-area">- x -</span></div>
+<div class="summary-row"><span class="summary-label" data-i18n="sumLeft">Pared Izq.</span><span class="summary-val" id="res-pared-izq">-</span></div>
+<div class="summary-row"><span class="summary-label" data-i18n="sumRight">Pared Der.</span><span class="summary-val" id="res-pared-der">-</span></div>
+<div class="summary-row"><span class="summary-label" data-i18n="s4Title">Arriba</span><span class="summary-val" id="res-techo">-</span></div>
+<div class="summary-row"><span class="summary-label" data-i18n="s5Title">Abajo</span><span class="summary-val" id="res-piso">-</span></div>
 </div>
 <div class="notas-block">
-<label for="notas-field">Notas</label>
-<textarea id="notas-field" placeholder="Observaciones adicionales..."></textarea>
+<label for="notas-field" data-i18n="notes">Notas</label>
+<textarea id="notas-field" placeholder="Observaciones adicionales..." data-i18n-ph="notesPh"></textarea>
 </div>
 <div class="btn-row">
-<button class="btn-secondary" onclick="prevStep()">← Atrás</button>
-<button class="btn-primary" id="btn-guardar" onclick="saveJob()">💾 Guardar medida</button>
+<button class="btn-secondary" onclick="prevStep()" data-i18n="back">← Atrás</button>
+<button class="btn-primary" id="btn-guardar" onclick="saveJob()"><span data-i18n="saveMeasure">Guardar medida</span></button>
 </div>
 <div id="post-save-actions" style="display:none;margin-top:10px;">
 <div class="btn-row">
-<button class="btn-secondary" id="btn-ver-dashboard" onclick="goToDashboard()">📊 Ver en dashboard</button>
-<button class="btn-primary" onclick="newMeasurement()">＋ Nueva medida</button>
+<button class="btn-secondary" id="btn-ver-dashboard" onclick="goToDashboard()"><span data-i18n="viewDashboard">Ver en dashboard</span></button>
+<button class="btn-primary" onclick="newMeasurement()" data-i18n="newMeasureBtn">＋ Nueva medida</button>
 </div>
 </div>
-<div id="save-status" style="text-align:center;font-size:12px;color:#2f9e44;margin-top:8px;display:none;">✓ Guardado en la nube</div>
+<div id="save-status" style="text-align:center;font-size:12px;color:#4ade80;margin-top:8px;display:none;" data-i18n="savedCloud">Guardado en la nube</div>
 </section>
 </div><!-- /bottom-panel -->
+</div><!-- /wiz-main -->
 </div><!-- /app-shell -->
 
 <!-- PHOTO EDITOR — in-app fullscreen modal (iframe, no popup tab) -->
 <div id="photo-editor-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#000;flex-direction:column;">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#171b21;color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;flex-shrink:0;">
-    <span>📷 Foto con medidas</span>
+    <span style="display:inline-flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span data-i18n="photoTitle">Foto con medidas</span></span>
     <button onclick="window.closePhotoEditor()" aria-label="Cerrar" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 10px;">✕</button>
   </div>
   <iframe id="photo-editor-frame" src="about:blank" style="flex:1;width:100%;border:none;background:#0f1216;"></iframe>
 </div>
 <script src="adhd.js?v=2"></script>
 <script type="module" src="gay.js"></script>
+<script>
+/* ─── WIZARD CHROME (v1.2.17) ────────────────────────────────────────
+   The approved sidebar design's behavior + the wizard's join into
+   the app's ONE localization system (same resolution as everywhere:
+   cookie nivelato-login-lang -> localStorage -> navigator; static
+   strings via data-i18n, dynamic strings via the dict here and the
+   L() helper in adhd.js). */
+(function () {
+  var I18N = {
+    es: { stepOf1: 'Paso', stepOf2: 'de 8', noCustomer: 'Sin cliente todavía', noProject: 'Sin proyecto todavía', photoEmpty: 'Agrega una foto del hueco para marcar las medidas.', editPhoto: 'Editar', removePhoto: 'Quitar', addPhoto: 'Agregar foto', verifyNote: 'Verifique todas las medidas calculadas con mediciones manuales antes de cotizar o instalar.', saveMeasure: 'Guardar medida', viewDashboard: 'Ver en dashboard', savedCloud: 'Guardado en la nube', photoTitle: 'Foto con medidas', s0Title: 'Cliente / Proyecto', s1Title: 'Medidas del hueco', s2Title: 'Pared izquierda', s3Title: 'Pared derecha', s4Title: 'Arriba', s5Title: 'Abajo', s6Title: 'Foto con medidas', s7Title: 'Resumen', s0Hint: 'Ingresa el nombre del cliente y del proyecto antes de empezar a medir. La ubicación es opcional.', s1Hint: 'Ingresa las 2 medidas base: ancho abajo y alto izquierda. Las otras 2 se calculan automáticamente con los desniveles.', s2Hint: 'Mide del láser a la pared izquierda: punto A (abajo) y punto B (arriba).', s3Hint: 'Mide del láser a la pared derecha: punto A (abajo) y punto B (arriba).', s4Hint: 'Mide del láser arriba: punto A (izquierda) y punto B (derecha).', s5Hint: 'Mide del láser abajo: punto A (izquierda) y punto B (derecha).', s6Hint: 'Opcional: agrega una foto del hueco y márcala con las medidas para que el taller la vea.', customer: 'Cliente', project: 'Proyecto', location: 'Ubicación', area: 'Área', anchoBase: 'Ancho - Abajo (base)', altoBase: 'Alto - Izquierda (base)', aBottom: 'A - Abajo', bTop: 'B - Arriba', aLeft: 'A - Izquierda', bRight: 'B - Derecha', phCustomer: 'Nombre del cliente', phProject: 'Nombre del proyecto', phLocation: 'Ubicación / dirección', phArea: 'Ej.: Baño 1', notesPh: 'Observaciones adicionales...', next: 'Siguiente →', back: '← Atrás', skip: 'Omitir', newMeasureBtn: '＋ Nueva medida', sumOpening: 'Hueco', sumLeft: 'Pared Izq.', sumRight: 'Pared Der.', notes: 'Notas', resetZoom: 'Restablecer', secDetails: 'Datos del cliente y el proyecto', secDims: 'Dimensiones base', secOffsets: 'Desniveles', secOffL: 'Desnivel izquierdo', secOffR: 'Desnivel derecho', secOffT: 'Desnivel superior', secOffB: 'Desnivel inferior', secPhoto: 'Foto del área', doneSuffix: '% completado', sumTitle: 'Resumen final', sumBase: 'Base', sumWidth: 'Ancho', sumHeight: 'Alto', sumCustomer: 'Cliente', sumProject: 'Proyecto', sumArea: 'Área', sumLocation: 'Ubicación', sumMaps: 'Ver en Maps', sumClick: 'Toca cada detalle para ir a su paso.', freeBanner: 'Esta es una versión gratuita limitada de Nivelato', freePlan: 'Nivelato (Gratis)' },
+    en: { stepOf1: 'Step', stepOf2: 'of 8', noCustomer: 'No customer yet', noProject: 'No project yet', photoEmpty: 'Add a photo of the opening to mark the measurements.', editPhoto: 'Edit', removePhoto: 'Remove', addPhoto: 'Add photo', verifyNote: 'Verify all calculated measurements with manual measurements before quoting or installing.', saveMeasure: 'Save measurement', viewDashboard: 'View in dashboard', savedCloud: 'Saved to the cloud', photoTitle: 'Photo with measurements', s0Title: 'Customer / Project', s1Title: 'Base dimensions', s2Title: 'Left wall', s3Title: 'Right wall', s4Title: 'Top', s5Title: 'Bottom', s6Title: 'Photo with measurements', s7Title: 'Summary', s0Hint: 'Enter the customer and project names before you start measuring. Location is optional.', s1Hint: 'Enter the 2 base measurements: bottom width and left height. The other 2 are calculated automatically from the offsets.', s2Hint: 'Measure from the laser to the left wall: point A (bottom) and point B (top).', s3Hint: 'Measure from the laser to the right wall: point A (bottom) and point B (top).', s4Hint: 'Measure from the laser upward: point A (left) and point B (right).', s5Hint: 'Measure from the laser downward: point A (left) and point B (right).', s6Hint: 'Optional: add a photo of the opening and mark it with the measurements so the shop can see it.', customer: 'Customer', project: 'Project', location: 'Location', area: 'Area', anchoBase: 'Width - Bottom (base)', altoBase: 'Height - Left (base)', aBottom: 'A - Bottom', bTop: 'B - Top', aLeft: 'A - Left', bRight: 'B - Right', phCustomer: 'Customer name', phProject: 'Project name', phLocation: 'Location / address', phArea: 'E.g.: Bath 1', notesPh: 'Additional notes...', next: 'Next →', back: '← Back', skip: 'Skip', newMeasureBtn: '＋ New measurement', sumOpening: 'Opening', sumLeft: 'Left wall', sumRight: 'Right wall', notes: 'Notes', resetZoom: 'Reset', secDetails: 'Customer and project details', secDims: 'Base dimensions', secOffsets: 'Offsets', secOffL: 'Left offset', secOffR: 'Right offset', secOffT: 'Top offset', secOffB: 'Bottom offset', secPhoto: 'Photo of area', doneSuffix: '% done', sumTitle: 'Final summary', sumBase: 'Base', sumWidth: 'Width', sumHeight: 'Height', sumCustomer: 'Customer', sumProject: 'Project', sumArea: 'Area', sumLocation: 'Location', sumMaps: 'View on Maps', sumClick: 'Click on each detail to go to its step.', freeBanner: 'This is a limited free version of Nivelato', freePlan: 'Nivelato (Free)' }
+  };
+  var LANG = 'es';
+  try {
+    var cm = ('; ' + document.cookie).match(/; nivelato-login-lang=(es|en)(?:;|$)/);
+    var saved = null;
+    try { saved = localStorage.getItem('nivelato-login-lang'); } catch (e) {}
+    LANG = cm ? cm[1] : (saved === 'en' || saved === 'es' ? saved : (document.documentElement.lang === 'en' ? 'en' : 'es'));
+  } catch (e) {}
+  var D = I18N[LANG] || I18N.es;
+  var t = function (k) { return D[k] || I18N.es[k] || k; };
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = t(el.getAttribute('data-i18n')); if (v) el.textContent = v; });
+  document.querySelectorAll('[data-i18n-ph]').forEach(function (el) { var v = t(el.getAttribute('data-i18n-ph')); if (v) el.setAttribute('placeholder', v); });
+
+  /* photo panel: occupy the graph area on the photo step */
+  var stage = document.getElementById('photo-stage');
+  var photoPanel = document.getElementById('photo-panel');
+  if (stage && photoPanel) stage.appendChild(photoPanel);
+  function syncPhotoStage(step) {
+    var shell = document.getElementById('app-shell');
+    var onPhoto = step === 6;
+    if (shell) shell.classList.toggle('on-photo-step', onPhoto);
+    if (stage) stage.hidden = !onPhoto;
+    if (onPhoto) {
+      var prev = document.getElementById('photo-preview');
+      var empty = document.getElementById('photo-empty');
+      var has = prev && prev.style.display !== 'none';
+      if (empty) empty.style.display = has ? 'none' : '';
+    }
+  }
+
+  /* sidebar step list: the navigation model (spec: tappable, no
+     Back/Fwd buttons as the primary mechanism; the content column
+     keeps its Atrás/Siguiente pair per Giulia's later ruling) */
+  var STEPS = [
+    { step: 0, key: 'secDetails' },
+    { step: 1, key: 'secDims' },
+    { step: 2, key: 'secOffsets', group: true },
+    { step: 2, key: 'secOffL', sub: true }, { step: 3, key: 'secOffR', sub: true },
+    { step: 4, key: 'secOffT', sub: true }, { step: 5, key: 'secOffB', sub: true },
+    { step: 6, key: 'secPhoto' },
+    { step: 7, key: 's7Title' }
+  ];
+  var nav = document.getElementById('wiz-sections');
+  var btns = [];
+  var subsWrap = null;
+  STEPS.forEach(function (s) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'wiz-section';
+    b.innerHTML = '<span class="wiz-ring' + (s.group ? ' group' : '') + '"></span><span></span>';
+    b.querySelector('span:last-child').textContent = t(s.key);
+    b.addEventListener('click', function () { if (typeof window.goStep === 'function') window.goStep(s.step); });
+    if (s.sub) {
+      if (!subsWrap) { subsWrap = document.createElement('div'); subsWrap.className = 'wiz-subsections'; nav.appendChild(subsWrap); }
+      subsWrap.appendChild(b);
+    } else { subsWrap = null; nav.appendChild(b); }
+    btns.push({ el: b, ring: b.querySelector('.wiz-ring'), step: s.step });
+  });
+
+  /* final-summary sidebar state */
+  var sumNav = document.getElementById('wiz-summary-nav');
+  function val(id) { var el = document.getElementById(id); return el ? (el.value !== undefined && el.tagName !== 'SPAN' && el.tagName !== 'DIV' ? el.value : el.textContent) : ''; }
+  function buildSummary() {
+    var rows = [
+      { g: t('sumBase') },
+      { k: t('sumWidth'), v: sumPart(0), step: 1 }, { k: t('sumHeight'), v: sumPart(1), step: 1 },
+      { g: t('secOffsets') },
+      { k: t('secOffL'), v: txt('res-pared-izq'), step: 2 }, { k: t('secOffR'), v: txt('res-pared-der'), step: 3 },
+      { k: t('secOffT'), v: txt('res-techo'), step: 4 }, { k: t('secOffB'), v: txt('res-piso'), step: 5 },
+      { g: t('sumCustomer') },
+      { k: t('sumCustomer'), v: val('customer-name') || '---', step: 0 }, { k: t('sumProject'), v: val('project-name') || '---', step: 0 },
+      { k: t('sumArea'), v: val('area-name') || '---', step: 0 }, { k: t('sumLocation'), v: val('location-name') || '---', step: 0, maps: true }
+    ];
+    sumNav.innerHTML = '';
+    var title = document.createElement('div'); title.className = 'wiz-summary-title'; title.textContent = t('sumTitle'); sumNav.appendChild(title);
+    rows.forEach(function (r) {
+      if (r.g) { var g = document.createElement('div'); g.className = 'wiz-summary-group'; g.textContent = r.g; sumNav.appendChild(g); return; }
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'wiz-sum-row';
+      var k = document.createElement('span'); k.className = 'k'; k.textContent = r.k;
+      var v = document.createElement('span'); v.className = 'v'; v.textContent = r.v;
+      b.appendChild(k); b.appendChild(v);
+      b.addEventListener('click', function () { if (typeof window.goStep === 'function') window.goStep(r.step); });
+      sumNav.appendChild(b);
+      if (r.maps && val('location-name')) {
+        var a = document.createElement('a');
+        a.className = 'wiz-maps-btn'; a.target = '_blank'; a.rel = 'noopener';
+        a.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(val('location-name'));
+        a.textContent = t('sumMaps');
+        sumNav.appendChild(a);
+      }
+    });
+    var note = document.createElement('div'); note.className = 'wiz-summary-note'; note.textContent = t('sumClick'); sumNav.appendChild(note);
+  }
+  function txt(id) { var el = document.getElementById(id); var s = el ? el.textContent.trim() : ''; return s && s !== '-' ? s : '---'; }
+  function sumPart(i) {
+    var a = txt('res-area');
+    if (a === '---') return '---';
+    var parts = a.split(/[x×]/);
+    return (parts[i] || '---').trim() || '---';
+  }
+
+  /* context lines + sync on step change */
+  function syncContext() {
+    var c = document.getElementById('wiz-ctx-customer');
+    var p = document.getElementById('wiz-ctx-project');
+    if (c) c.innerHTML = ''; if (p) p.innerHTML = '';
+    var cv = val('customer-name'), pv = val('project-name');
+    if (c) { if (cv) c.textContent = cv; else { var s1 = document.createElement('span'); s1.className = 'dim'; s1.textContent = t('noCustomer'); c.appendChild(s1); } }
+    if (p) { if (pv) p.textContent = pv; else { var s2 = document.createElement('span'); s2.className = 'dim'; s2.textContent = t('noProject'); p.appendChild(s2); } }
+  }
+  ['customer-name', 'project-name', 'location-name', 'area-name'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', syncContext);
+  });
+  var currentStep = 0;
+  function syncSidebar(step) {
+    currentStep = step;
+    btns.forEach(function (b) {
+      var state = b.step < step ? 'done' : (b.step === step ? 'current' : 'todo');
+      b.el.classList.toggle('current', b.step === step);
+      b.ring.className = 'wiz-ring' + (state === 'done' ? ' done' : state === 'current' ? ' current' : '') + (b.el.querySelector('.wiz-ring.group') ? ' group' : '');
+    });
+    var lbl = document.getElementById('wiz-progress-label');
+    if (lbl) lbl.textContent = Math.round(((step + 1) / 8) * 100) + t('doneSuffix');
+    var summary = step === 7;
+    if (nav) nav.hidden = summary;
+    if (sumNav) { sumNav.hidden = !summary; if (summary) buildSummary(); }
+    syncPhotoStage(step);
+    syncContext();
+  }
+  if (typeof window.goStep === 'function') {
+    var origGoStep = window.goStep;
+    window.goStep = function (n, a, b) { var r = origGoStep(n, a, b); syncSidebar(n); return r; };
+  }
+  syncSidebar(0);
+
+  /* banner zone: dev replaces free; no signal, no banner */
+  var host = location.hostname || '';
+  var devSignal = /(^|\.)(testing|beta|debug|dev)\./.test(host) || host === 'localhost' || host === '127.0.0.1';
+  try { if (localStorage.getItem('niv-dev') === '1') devSignal = true; } catch (e) {}
+  var banner = document.getElementById('wiz-banner');
+  if (banner && devSignal) {
+    banner.hidden = false; banner.className = 'wiz-banner dev';
+    banner.innerHTML = '';
+    banner.appendChild(document.createTextNode('DEV ENVIRONMENT DETECTED!!!!'));
+    var sub = document.createElement('span'); sub.className = 'sub'; sub.textContent = 'See support.nivelatolabs.com/dev for info and guidance';
+    banner.appendChild(sub);
+  } else if (banner) {
+    var plan = null;
+    try { plan = localStorage.getItem('niv-plan'); } catch (e) {}
+    if (plan === 'free') {
+      banner.hidden = false; banner.className = 'wiz-banner free';
+      banner.textContent = t('freeBanner');
+      var pl = document.createElement('span'); pl.className = 'plan'; pl.textContent = t('freePlan');
+      banner.appendChild(pl);
+    }
+  }
+
+  /* testing watermark: only on non-production hosts, with the actual
+     running build's version (VERSION file) and commit (the public
+     backend registry projection), never placeholder values */
+  var wm = document.getElementById('wiz-watermark');
+  if (wm && host !== 'app.nivelatolabs.com') {
+    fetch('VERSION').then(function (r) { return r.ok ? r.text() : ''; }).then(function (v) {
+      v = (v || '').trim();
+      if (!v) return;
+      wm.textContent = 'TEST-- v' + v;
+      wm.hidden = false;
+      return fetch('https://firestore.googleapis.com/v1/projects/nivelato-app/databases/(default)/documents/app_updates/backend')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          var sha = j && j.fields && j.fields.backendCommit && j.fields.backendCommit.stringValue;
+          if (sha) wm.textContent = 'TEST-- v' + v + ' (' + sha.slice(0, 7) + ')';
+        }).catch(function () {});
+    }).catch(function () {});
+  }
+
+  /* photo preview visibility drives the empty state */
+  var prev = document.getElementById('photo-preview');
+  if (prev && window.MutationObserver) {
+    new MutationObserver(function () { syncPhotoStage(currentStep); }).observe(prev, { attributes: true, attributeFilter: ['style'] });
+  }
+})();
+</script>
+<script type="module">
+/* user chip: the signed-in user, from the same Firebase app the
+   auth guard uses */
+import { auth } from './firebase-config.js';
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+try {
+  onAuthStateChanged(auth, (u) => {
+    if (!u) return;
+    const name = u.displayName || (u.email ? u.email.split('@')[0] : '');
+    const n = document.getElementById('wiz-user-name');
+    const e = document.getElementById('wiz-user-email');
+    const a = document.getElementById('wiz-avatar');
+    if (n) n.textContent = name || '...';
+    if (e) e.textContent = u.email || '';
+    if (a) a.textContent = (name || '?').charAt(0).toUpperCase();
+  });
+} catch (e) {}
+</script>
 <script>
 // Populate fraction selects
 const FRAC_OPTIONS = `

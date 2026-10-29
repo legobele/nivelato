@@ -147,10 +147,17 @@
 .niv-btn-primary {
   background: var(--niv-accent);
   border-color: transparent;
+  /* Primary pairing by construction: the accent is a light/white
+     surface, so the label is near-black HERE, in the class itself.
+     (It previously arrived only via the LABS MONOCHROME block far
+     below; any page or partial stylesheet load that missed that
+     block rendered white text on the white accent.) */
+  color: #050505;
 }
 .niv-btn-danger {
   background: var(--niv-red);
   border-color: transparent;
+  color: #fff;
   width: 100%;
   padding: 14px;
   font-size: 15px;

@@ -84,8 +84,8 @@
     width: 100%;
   }
   .user-card:hover { background: #17171a; }
-  /* items 20/26: settings second sidebar + per-user settings column */
-  .co-settings-nav { width: 220px; flex: none; }
+  /* item 26: per-user settings column (the module sidebar owns all
+     cross-page navigation; this column is local actions only) */
   .user-settings-col {
     width: 260px; flex: none;
     border: 1px solid var(--line); border-radius: var(--radius-md);
@@ -366,6 +366,31 @@
   }
   .dev-edit button:disabled { opacity: .55; cursor: default; }
 
+  /* ---------- per-user detail: identity rows, permission chips,
+     enrollment card (ported from users.html, local tokens) ---------- */
+  .info-row { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line-soft); font-size: 14px; }
+  .info-row:last-child { border-bottom: 0; }
+  .info-row .k { color: var(--muted); width: 110px; flex: none; }
+  .info-row .v { min-width: 0; word-break: break-word; }
+  .status-on { color: var(--green); font-weight: 600; }
+  .status-pending { color: #fbbf24; font-weight: 600; }
+  .perm-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .perm-chip {
+    display: inline-flex; align-items: center; font-size: 12px; font-weight: 500;
+    color: var(--text); padding: 4px 10px; background: #0b0b0d;
+    border-radius: 8px; border: 1px solid var(--line);
+  }
+  .btn-accent { background: #fafafa; border-color: transparent; color: #050505; }
+  .btn-accent:hover { border-color: transparent; background: #e4e4e7; }
+  .enroll-status { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 12px; }
+  .enroll-qr { background: #fff; border-radius: 12px; padding: 10px; line-height: 0; width: 52%; max-width: 240px; margin: 4px auto 14px; box-sizing: border-box; }
+  .enroll-qr svg { width: 100%; height: auto; display: block; }
+  .enroll-otp-label { text-align: center; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .enroll-otp { text-align: center; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 17px; font-weight: 600; letter-spacing: .08em; margin: 6px 0 4px; word-break: break-all; }
+  .enroll-expiry { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .enroll-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .enroll-actions .btn { width: auto; margin-top: 0; }
+
   @media (max-width: 1100px) {
     .detail-grid { grid-template-columns: 1fr; }
   }
@@ -411,21 +436,10 @@
 <div class="shell">
   <div id="chrome-sidebar" aria-label="Company navigation"></div>
 
-  <!-- Item 20: settings second sidebar, the canonical account/company
-       block (item 23), same kit rows as the main sidebar (item 28). -->
-  <aside class="co-settings-nav" aria-label="Settings">
-    <nav class="niv-nav">
-      <div class="niv-nav-group">
-        <div class="niv-nav-group-title" id="co-nav-group-company">Compañía</div>
-        <a class="niv-nav-btn active" href="/company/users" aria-current="page"><span id="co-nav-users-label">Usuarios</span></a>
-        <a class="niv-nav-btn" href="/company/settings"><span id="co-nav-settings-label">Ajustes de la compañía</span></a>
-      </div>
-      <div class="niv-nav-group">
-        <div class="niv-nav-group-title" id="co-nav-group-account">Cuenta</div>
-        <a class="niv-nav-btn" href="/account/settings"><span id="co-nav-account-label">Mi cuenta</span></a>
-      </div>
-    </nav>
-  </aside>
+  <!-- Cross-page navigation (Users / Company settings / My account)
+       lives ONLY in the module sidebar (#chrome-sidebar, target=company).
+       This page intentionally carries no second nav sidebar: its extra
+       columns are the member list and the per-user action column. -->
 
   <section class="users-col" aria-label="Company users">
     <div class="users-title" id="team-title">Team</div>
@@ -484,16 +498,30 @@ const STR = {
     showLess: 'Show less', viewMore: 'View more', viewAll: 'View all',
     permissions: 'Permissions', onlyOwnersPerms: 'Only owners can change permissions.',
     devices: 'Registered devices', loadingDevices: 'Loading devices...', noDevices: 'No linked devices yet.',
-    groupCompany: 'Company', companyTeam: 'Users', companyProfile: 'Company settings', groupAccount: 'Account', myAccount: 'My account',
     userSettings: 'User settings', userSettingsEmpty: 'Select a user.',
-    usersTabTitle: 'User data', usersTabNote: 'Projects, permissions and registered devices for this user live in the Users tab of the main app.', viewInUsers: 'Open in Users',
+    email: 'Email', role: 'Role', status: 'Status', statusActive: 'Active', statusPending: 'Pending approval',
+    presence: 'Presence', online: 'Online now', offline: 'Not online',
+    permsDesc: 'What this user can do, from their role and saved permissions.', permsNone: 'No active permissions.',
+    editPerms: 'Edit permissions', savePerms: 'Save permissions', cancelEdit: 'Cancel',
+    permSaveFailed: 'Could not save permissions: {msg}',
+    projectsTitle: 'Projects', projectsDesc: 'Projects with spaces measured by this user.',
+    devicesDesc: 'Devices linked to this account.',
+    enrollTitle: 'Link a device',
+    enrollDesc: 'A single-use code for this employee to sign in on mobile. The QR code and the typed code are the same code: they are used up together.',
+    enrollGenerate: 'Generate code', enrollRegenerate: 'Generate a new one', enrollWorking: 'Generating...',
+    enrollOtpLabel: 'Code (OTP)',
+    enrollActive: 'An active code exists, valid until {date}. It cannot be shown again: generate a new one if you need it.',
+    enrollExpires: 'Valid until {date}.', enrollUsed: 'The last code was already used.',
+    enrollRevoked: 'The last code was revoked.', enrollNone: 'No link code yet for this employee.',
+    enrollFailed: 'The code could not be generated. Try again.', linkAnother: 'Link another device',
+    copyLink: 'Copy link', copiedLink: 'Link copied', copyCode: 'Copy code', copiedCode: 'Code copied',
     couldNotDevices: 'Could not load devices.', unnamedDevice: 'Unnamed device', updateAvailable: 'Update available',
     rename: 'Rename', deviceName: 'Device name', save: 'Save', cancel: 'Cancel', saving: 'Saving...',
     linked: 'Linked', renameFailed: 'Could not rename device: {msg}', permFailed: 'Could not update permission: {msg}',
-    deleteUser: 'Delete user', removing: 'Removing...', deleteNote: 'This deactivates the account immediately. One click to confirm, no maze.',
-    cannotRemoveSelf: 'You cannot remove your own account here.', cannotRemoveOwner: 'The organization owner cannot be removed.',
-    confirmRemove: 'Remove {label} from the company? They will lose access immediately.',
-    removeFailed: 'Could not remove user: {msg}', unknownError: 'unknown error',
+    deleteUser: 'Disable user', removing: 'Disabling...', deleteNote: 'Disables this account immediately. The user loses access and is removed from this list. The account record is not deleted.',
+    cannotRemoveSelf: 'You cannot disable your own account here.', cannotRemoveOwner: 'The organization owner cannot be disabled.',
+    confirmRemove: 'Disable {label}? They will lose access immediately.',
+    removeFailed: 'Could not disable user: {msg}', unknownError: 'unknown error',
     couldNotCompany: 'Could not load company data: {msg}', couldNotUsers: 'Could not load users: {msg}',
     couldNotProfile: 'Could not load your user profile: {msg}', missingProfile: 'We could not find your user profile. Please sign in again to repair it.',
     noOrg: 'Your user profile has no company assigned.',
@@ -507,16 +535,30 @@ const STR = {
     showLess: 'Ver menos', viewMore: 'Ver más', viewAll: 'Ver todo',
     permissions: 'Permisos', onlyOwnersPerms: 'Solo los dueños pueden cambiar los permisos.',
     devices: 'Dispositivos registrados', loadingDevices: 'Cargando dispositivos...', noDevices: 'Todavía no hay dispositivos vinculados.',
-    groupCompany: 'Compañía', companyTeam: 'Usuarios', companyProfile: 'Ajustes de la compañía', groupAccount: 'Cuenta', myAccount: 'Mi cuenta',
     userSettings: 'Ajustes del usuario', userSettingsEmpty: 'Selecciona un usuario.',
-    usersTabTitle: 'Datos del usuario', usersTabNote: 'Los proyectos, permisos y dispositivos registrados de este usuario viven en la pestaña Usuarios de la app principal.', viewInUsers: 'Abrir en Usuarios',
+    email: 'Correo', role: 'Rol', status: 'Estado', statusActive: 'Activo', statusPending: 'Pendiente de aprobación',
+    presence: 'Presencia', online: 'En línea ahora', offline: 'No está en línea',
+    permsDesc: 'Lo que este usuario puede hacer, según su rol y sus permisos guardados.', permsNone: 'Ningún permiso activo.',
+    editPerms: 'Editar permisos', savePerms: 'Guardar permisos', cancelEdit: 'Cancelar',
+    permSaveFailed: 'No se pudieron guardar los permisos: {msg}',
+    projectsTitle: 'Proyectos', projectsDesc: 'Proyectos con espacios medidos por este usuario.',
+    devicesDesc: 'Dispositivos vinculados a esta cuenta.',
+    enrollTitle: 'Vincular un dispositivo',
+    enrollDesc: 'Un código de un solo uso para que este empleado inicie sesión en el móvil. El código QR y el código escrito son el mismo código: se agotan juntos.',
+    enrollGenerate: 'Generar código', enrollRegenerate: 'Generar uno nuevo', enrollWorking: 'Generando...',
+    enrollOtpLabel: 'Código (OTP)',
+    enrollActive: 'Hay un código activo, válido hasta el {date}. No se puede volver a mostrar: genera uno nuevo si lo necesitas.',
+    enrollExpires: 'Válido hasta el {date}.', enrollUsed: 'El último código ya se usó.',
+    enrollRevoked: 'El último código fue revocado.', enrollNone: 'Todavía no hay código de vinculación para este empleado.',
+    enrollFailed: 'No se pudo generar el código. Inténtalo de nuevo.', linkAnother: 'Vincular otro dispositivo',
+    copyLink: 'Copiar enlace', copiedLink: 'Enlace copiado', copyCode: 'Copiar código', copiedCode: 'Código copiado',
     couldNotDevices: 'No se pudieron cargar los dispositivos.', unnamedDevice: 'Dispositivo sin nombre', updateAvailable: 'Actualización disponible',
     rename: 'Renombrar', deviceName: 'Nombre del dispositivo', save: 'Guardar', cancel: 'Cancelar', saving: 'Guardando...',
     linked: 'Vinculado', renameFailed: 'No se pudo renombrar el dispositivo: {msg}', permFailed: 'No se pudo actualizar el permiso: {msg}',
-    deleteUser: 'Eliminar usuario', removing: 'Eliminando...', deleteNote: 'Esto desactiva la cuenta de inmediato. Un clic para confirmar, sin laberintos.',
-    cannotRemoveSelf: 'No puedes eliminar tu propia cuenta aquí.', cannotRemoveOwner: 'El dueño de la compañía no se puede eliminar.',
-    confirmRemove: '¿Eliminar a {label} de la compañía? Perderá el acceso de inmediato.',
-    removeFailed: 'No se pudo eliminar al usuario: {msg}', unknownError: 'error desconocido',
+    deleteUser: 'Desactivar usuario', removing: 'Desactivando...', deleteNote: 'Desactiva esta cuenta de inmediato. El usuario pierde el acceso y desaparece de esta lista. Su registro no se elimina.',
+    cannotRemoveSelf: 'No puedes desactivar tu propia cuenta aquí.', cannotRemoveOwner: 'El dueño de la compañía no se puede desactivar.',
+    confirmRemove: '¿Desactivar a {label}? Perderá el acceso de inmediato.',
+    removeFailed: 'No se pudo desactivar al usuario: {msg}', unknownError: 'error desconocido',
     couldNotCompany: 'No se pudieron cargar los datos de la compañía: {msg}', couldNotUsers: 'No se pudieron cargar los usuarios: {msg}',
     couldNotProfile: 'No se pudo cargar tu perfil de usuario: {msg}', missingProfile: 'No pudimos encontrar tu perfil de usuario. Inicia sesión de nuevo para repararlo.',
     noOrg: 'Tu perfil de usuario no tiene una compañía asignada.',
@@ -538,9 +580,7 @@ function applyStaticLang() {
   const dl = document.getElementById('detail-loading');
   if (dl) dl.textContent = t('selectUser');
   const coLabels = {
-    'co-nav-group-company': 'groupCompany', 'co-nav-users-label': 'companyTeam',
-    'co-nav-settings-label': 'companyProfile', 'co-nav-group-account': 'groupAccount',
-    'co-nav-account-label': 'myAccount', 'user-settings-title': 'userSettings',
+    'user-settings-title': 'userSettings',
     'user-settings-empty': 'userSettingsEmpty'
   };
   for (const id in coLabels) {
@@ -680,6 +720,139 @@ function renderList() {
 }
 
 
+/* ---- per-user detail: the SAME substance as users.html renderDetail
+   (identity, permissions with editing, projects, registered devices,
+   and the section 2.6 enrollment card), implemented with the same
+   data paths and the same component logic, adapted only to this
+   page's local classes/tokens. The viewer's checker (_can) is set
+   from the signed-in user's doc in the auth handler below. ---- */
+let _can = () => false;
+let permEdit = null;
+const statusOf = (m) => (m.disabled === true ? 'pending' : 'active');
+function canSeeProjects(m) {
+  if (!m) return false;
+  const isSelf = m.uid === (currentUser && currentUser.uid);
+  return isSelf ? _can('viewOwnMeasurements') : _can('viewOthersMeasurements');
+}
+function canSeePerms(m) {
+  if (!m) return false;
+  return m.uid === (currentUser && currentUser.uid) || _can('userManagement');
+}
+function canEditPerms() {
+  return !!(_can && _can('userManagement') && currentUserData && currentUserData.role === 'owner');
+}
+function infoRow(label, valueHtml) {
+  return `<div class="info-row"><span class="k">${escapeHtml(label)}</span><span class="v">${valueHtml}</span></div>`;
+}
+function permKeysFor(m) {
+  return PERM_DEFS.map((d) => d.key)
+    .filter((k) => orgHasQuotes(m) || !QUOTE_KEYS.includes(k));
+}
+function permsChipsHtml(m) {
+  const checker = makePermChecker(m);
+  const keys = permKeysFor(m)
+    .filter((k) => { try { return !!checker(k); } catch (e) { return false; } });
+  if (!keys.length) return '<span class="empty" style="padding:0">' + escapeHtml(t('permsNone')) + '</span>';
+  return keys.map((k) => '<span class="perm-chip">' + escapeHtml(permLabel(k)) + '</span>').join('');
+}
+function permEditorRowsHtml(m) {
+  return permKeysFor(m).map((k) => {
+    const on = !!(permEdit.values && permEdit.values[k]);
+    return `<div class="perm-row"><span>${escapeHtml(permLabel(k))}</span>`
+      + `<button type="button" class="toggle${on ? ' on' : ''}" data-key="${escapeHtml(k)}" aria-pressed="${on}" aria-label="${escapeHtml(permLabel(k))}"><span class="knob"></span></button></div>`;
+  }).join('');
+}
+function startPermEdit(m) {
+  const checker = makePermChecker(m);
+  const values = {};
+  permKeysFor(m).forEach((k) => { values[k] = !!checker(k); });
+  permEdit = { uid: m.uid, values };
+  renderDetail();
+}
+function wirePermEditor(m) {
+  document.querySelectorAll('#detail .toggle[data-key]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const k = btn.getAttribute('data-key');
+      permEdit.values[k] = !permEdit.values[k];
+      btn.classList.toggle('on', permEdit.values[k]);
+      btn.setAttribute('aria-pressed', String(permEdit.values[k]));
+    });
+  });
+  const cancel = document.getElementById('co-perms-cancel');
+  if (cancel) cancel.addEventListener('click', () => { permEdit = null; renderDetail(); });
+  const save = document.getElementById('co-perms-save');
+  if (save) save.addEventListener('click', () => savePermEdit(m, save));
+}
+async function savePermEdit(m, btn) {
+  if (!permEdit || !guardEnter('perm-save:' + m.uid)) return;
+  const checker = makePermChecker(m);
+  const updates = {};
+  const saved = {};
+  Object.keys(permEdit.values).forEach((k) => {
+    if (!!checker(k) !== !!permEdit.values[k]) {
+      updates['permissions.' + k] = !!permEdit.values[k];
+      saved[k] = !!permEdit.values[k];
+    }
+  });
+  if (!Object.keys(updates).length) {
+    permEdit = null;
+    guardExit('perm-save:' + m.uid);
+    renderDetail();
+    return;
+  }
+  btn.disabled = true;
+  try {
+    await updateDoc(doc(db, 'users', m.uid), updates);
+    m.permissions = { ...(m.permissions || {}), ...saved };
+    permEdit = null;
+    renderDetail();
+  } catch (e) {
+    alert(t('permSaveFailed', { msg: e.message || t('unknownError') }));
+    btn.disabled = false;
+  } finally {
+    guardExit('perm-save:' + m.uid);
+  }
+}
+async function loadProjects(uid) {
+  try {
+    const qs = await getDocs(query(collection(db, 'orgs', orgId, 'jobs'), where('installerUid', '==', uid)));
+    const groups = new Map();
+    qs.forEach((d) => {
+      const j = d.data();
+      if (j.status === 'draft') return;
+      const key = j.project || j.customer || 'Untitled';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(j);
+    });
+    return [...groups.entries()].map(([name, jobs]) => ({ name, count: jobs.length }))
+      .sort((a, b) => b.count - a.count);
+  } catch (e) {
+    console.warn('[Nivelato] could not load jobs:', e.message);
+    return null;
+  }
+}
+async function renderProjects(m) {
+  const body = document.getElementById('co-projects-body');
+  if (!body) return;
+  if (!guardEnter('projects:' + m.uid)) return;
+  const groups = await loadProjects(m.uid);
+  guardExit('projects:' + m.uid);
+  if (!body.isConnected || selectedUid !== m.uid) return;
+  if (groups === null) {
+    body.innerHTML = '<div class="empty">' + escapeHtml(t('couldNotProjects')) + '</div>';
+    return;
+  }
+  if (!groups.length) {
+    body.innerHTML = '<div class="empty">' + escapeHtml(t('noProjects')) + '</div>';
+    return;
+  }
+  body.innerHTML = groups.map((g) =>
+    `<div class="proj-row"><div class="proj-thumb">${escapeHtml(initialsOf(g.name, ''))}</div>`
+    + `<div><div class="proj-name">${escapeHtml(g.name)}</div>`
+    + `<div class="proj-sub">${g.count} ${escapeHtml(g.count === 1 ? t('measuredSpace') : t('measuredSpaces'))}</div></div></div>`
+  ).join('');
+}
+
 function renderDetail() {
   const detail = document.getElementById('detail');
   const m = memberById(selectedUid);
@@ -693,31 +866,250 @@ function renderDetail() {
     if (dz) dz.innerHTML = '';
     return;
   }
+  if (permEdit && permEdit.uid !== m.uid) permEdit = null;
   const name = m.name || m.email || t('unknownUser');
   if (usName) usName.textContent = name;
   if (usEmpty) usEmpty.style.display = 'none';
-  /* Item 25: the per-user data surface (projects, permissions,
-     devices) lives in the main app's Usuarios tab now. This page
-     keeps roster management; per-user settings controls live in the
-     user-settings column (item 26). */
-  detail.innerHTML = `
+  const pending = statusOf(m) === 'pending';
+  const online = onlineUids.has(m.uid);
+  let html = `
     <div class="detail-head">
       <div class="detail-name">${escapeHtml(name)} <span class="detail-email-inline">(${escapeHtml(m.email || '')})</span></div>
     </div>
-    <div class="panel">
-      <h3>${escapeHtml(t('usersTabTitle'))}</h3>
-      <p class="delete-note" style="text-align:left">${escapeHtml(t('usersTabNote'))}</p>
-      <a class="btn" href="/users?user=${encodeURIComponent(m.uid)}">${escapeHtml(t('viewInUsers'))}</a>
+    <div class="panel" style="max-width:880px;margin:0 auto 20px">
+      ${infoRow(t('email'), escapeHtml(m.email || ''))}
+      ${infoRow(t('role'), escapeHtml(roleLabel(m.role)))}
+      ${infoRow(t('status'), `<span class="${pending ? 'status-pending' : 'status-on'}">${escapeHtml(pending ? t('statusPending') : t('statusActive'))}</span>`)}
+      ${infoRow(t('presence'), `<span id="co-presence-value">${escapeHtml(online ? t('online') : t('offline'))}</span>`)}
     </div>`;
+  if (canSeePerms(m)) {
+    html += `<div class="panel" style="max-width:880px;margin:0 auto 20px">
+      <h3>${escapeHtml(t('permissions'))}</h3>
+      <p class="delete-note" style="text-align:left;margin:0 0 12px">${escapeHtml(t('permsDesc'))}</p>`;
+    if (permEdit && permEdit.uid === m.uid) {
+      html += permEditorRowsHtml(m)
+        + `<button class="btn" id="co-perms-save">${escapeHtml(t('savePerms'))}</button>`
+        + `<button class="btn" id="co-perms-cancel">${escapeHtml(t('cancelEdit'))}</button>`;
+    } else {
+      html += `<div class="perm-grid">${permsChipsHtml(m)}</div>`;
+      if (canEditPerms()) {
+        html += `<button class="btn" id="co-perms-edit">${escapeHtml(t('editPerms'))}</button>`;
+      } else {
+        html += `<div class="perm-note">${escapeHtml(t('onlyOwnersPerms'))}</div>`;
+      }
+    }
+    html += `</div>`;
+  }
+  if (canSeeProjects(m)) {
+    html += `<div class="panel" style="max-width:880px;margin:0 auto 20px">
+      <h3>${escapeHtml(t('projectsTitle'))}</h3>
+      <p class="delete-note" style="text-align:left;margin:0 0 12px">${escapeHtml(t('projectsDesc'))}</p>
+      <div id="co-projects-body"><div class="empty">${escapeHtml(t('loadingProjects'))}</div></div>
+    </div>`;
+  }
+  if (canSeePerms(m)) {
+    html += `<div class="panel devices-panel">
+      <h3 id="co-devices-title">${escapeHtml(t('devices'))}</h3>
+      <p class="delete-note" style="text-align:left;margin:0 0 12px">${escapeHtml(t('devicesDesc'))}</p>
+      <div id="co-devices-body"><div class="empty">${escapeHtml(t('loadingDevices'))}</div></div>
+    </div>`;
+  }
+  if (canSeePerms(m) && _can('userManagement') && m.email) {
+    html += `<div class="panel devices-panel">
+      <h3>${escapeHtml(t('enrollTitle'))}</h3>
+      <p class="delete-note" style="text-align:left;margin:0 0 12px">${escapeHtml(t('enrollDesc'))}</p>
+      <div id="co-enroll-body"><div class="empty">${escapeHtml(t('loadingDevices'))}</div></div>
+    </div>`;
+  }
+  detail.innerHTML = html;
+  const editBtn = document.getElementById('co-perms-edit');
+  if (editBtn) editBtn.addEventListener('click', () => startPermEdit(m));
+  if (permEdit && permEdit.uid === m.uid) wirePermEditor(m);
+  if (canSeeProjects(m)) renderProjects(m);
+  if (canSeePerms(m)) renderDevices(m);
   renderDelete(m);
 }
 
-// Registered devices for the selected user. The read goes through the
-// owner-scoped listUserDevices callable (devices/{id} is not
-// client-readable by rules). Renaming your own devices uses
-// renameDevice (device-owner-only on the server); the org owner also
-// gets the Rename action on member devices, saved through
-// renameMemberDevice, which applies the same org-owner rule server-side.
+// Registered devices for the selected user (same implementation as
+// users.html): the read goes through the owner-scoped listUserDevices
+// callable (devices/{id} is not client-readable by rules). Renaming
+// your own devices uses renameDevice (device-owner-only on the
+// server); the org owner also gets the Rename action on member
+// devices, saved through renameMemberDevice, which applies the same
+// org-owner rule server-side.
+async function renderDevices(m) {
+  const body = document.getElementById('co-devices-body');
+  const title = document.getElementById('co-devices-title');
+  if (!body) return;
+  if (!guardEnter('devices:' + m.uid)) return;
+  body.innerHTML = '<div class="empty">' + escapeHtml(t('loadingDevices')) + '</div>';
+  try {
+    const fn = httpsCallable(getFunctions(auth.app, 'us-central1'), 'listUserDevices');
+    const { data } = await fn({ uid: m.uid });
+    if (!body.isConnected) { guardExit('devices:' + m.uid); return; }
+    const devices = (data && data.devices) || [];
+    const limit = (data && data.limit) || 5;
+    if (title) title.textContent = t('devices') + ' (' + devices.length + '/' + limit + ')';
+    if (!devices.length) {
+      body.innerHTML = '<div class="empty">' + escapeHtml(t('noDevices')) + '</div>';
+      guardExit('devices:' + m.uid);
+      renderEnroll(m, 0);
+      return;
+    }
+    guardExit('devices:' + m.uid);
+    const visible = expandedDevices ? devices : devices.slice(0, limit);
+    const isSelfView = m.uid === (currentUser && currentUser.uid);
+    const canRename = isSelfView || _can('userManagement');
+    body.innerHTML = visible.map((d) => {
+      const name = d.displayName || t('unnamedDevice');
+      const modelBits = [d.brand, d.model].filter(Boolean).join(' ');
+      const sub = modelBits || (d.appVersionName ? 'Nivelato v' + d.appVersionName : 'Nivelato');
+      const linked = d.linkedAt
+        ? new Date(d.linkedAt).toLocaleDateString(LANG === 'es' ? 'es' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : '';
+      return `<div class="dev-row${d.outdated ? ' outdated' : ''}">
+        <div class="dev-icon" aria-hidden="true"></div>
+        <div class="dev-meta">
+          <div class="dev-name"><span class="dev-name-text">${escapeHtml(name)}</span>
+          ${d.outdated ? `<span class="dev-warn">${escapeHtml(t('updateAvailable'))}</span>` : ''}
+          ${canRename ? `<button class="dev-rename" data-rename="${escapeHtml(d.uuid)}">${escapeHtml(t('rename'))}</button>` : ''}
+          </div>
+          <div class="dev-sub">${escapeHtml(sub)}${linked ? ' · ' + escapeHtml(t('linked')) + ' ' + escapeHtml(linked) : ''}</div>
+          <div class="dev-edit-slot"></div>
+        </div></div>`;
+    }).join('') +
+    (devices.length > limit ? `<button class="btn" id="co-btn-more-devices">${escapeHtml(expandedDevices ? t('showLess') : t('viewMore'))}</button>` : '');
+    const more = document.getElementById('co-btn-more-devices');
+    if (more) more.addEventListener('click', () => { expandedDevices = !expandedDevices; renderDevices(m); });
+    body.querySelectorAll('[data-rename]').forEach((btn) => {
+      btn.addEventListener('click', () => openDeviceRename(btn, m));
+    });
+    renderEnroll(m, devices.length);
+  } catch (e) {
+    guardExit('devices:' + m.uid);
+    if (body.isConnected) body.innerHTML = '<div class="empty">' + escapeHtml(t('couldNotDevices')) + '</div>';
+    renderEnroll(m, null);
+  }
+}
+
+function openDeviceRename(btn, m) {
+  const row = btn.closest('.dev-row');
+  const slot = row && row.querySelector('.dev-edit-slot');
+  if (!slot || slot.dataset.open === '1') return;
+  slot.dataset.open = '1';
+  const uuid = btn.getAttribute('data-rename');
+  const nameEl = row.querySelector('.dev-name-text');
+  const current = nameEl ? nameEl.textContent.trim() : '';
+  slot.innerHTML = `<div class="dev-edit">
+    <input type="text" maxlength="60" value="${escapeHtml(current === t('unnamedDevice') ? '' : current)}" placeholder="${escapeHtml(t('deviceName'))}" aria-label="${escapeHtml(t('deviceName'))}" />
+    <button class="dev-save">${escapeHtml(t('save'))}</button>
+    <button class="dev-cancel">${escapeHtml(t('cancel'))}</button>
+    </div>`;
+  const input = slot.querySelector('input');
+  input.focus();
+  input.select();
+  slot.querySelector('.dev-cancel').addEventListener('click', () => renderDevices(m));
+  slot.querySelector('.dev-save').addEventListener('click', async () => {
+    const saveBtn = slot.querySelector('.dev-save');
+    if (saveBtn.disabled || !guardEnter('rename:' + uuid)) return;
+    saveBtn.disabled = true;
+    saveBtn.textContent = t('saving');
+    try {
+      const isSelfView = m.uid === (currentUser && currentUser.uid);
+      const fn = httpsCallable(getFunctions(auth.app, 'us-central1'),
+        isSelfView ? 'renameDevice' : 'renameMemberDevice');
+      const payload = isSelfView
+        ? { deviceUuid: uuid, displayName: input.value.trim() }
+        : { uid: m.uid, deviceUuid: uuid, displayName: input.value.trim() };
+      await fn(payload);
+      guardExit('rename:' + uuid);
+      renderDevices(m);
+    } catch (e) {
+      guardExit('rename:' + uuid);
+      alert(t('renameFailed', { msg: e.message || t('unknownError') }));
+      saveBtn.disabled = false;
+      saveBtn.textContent = t('save');
+    }
+  });
+}
+
+// ---- enrollment card (spec section 2.6; same implementation as
+// users.html) ---------------------------------------------------------
+// QR + typed code, the SAME single-use token in two forms. Prominent
+// Generate when the employee has no registered device; a plain
+// "Link another device" button once devices exist (the tile appears
+// only after it is pressed). The token is server-minted
+// (createEnrollmentToken) and never stored or re-read here.
+async function renderEnroll(m, deviceCount) {
+  const body = document.getElementById('co-enroll-body');
+  if (!body || !m.email) return;
+  if (!guardEnter('enroll:' + m.uid)) return;
+  try {
+    const statusFn = httpsCallable(getFunctions(auth.app, 'us-central1'), 'getEnrollmentTokenStatus');
+    const { data } = await statusFn({ orgId, email: m.email });
+    guardExit('enroll:' + m.uid);
+    if (!body.isConnected) return;
+    paintEnroll(body, m, (data && data.status) || 'none', data || {}, deviceCount === 0);
+  } catch (e) {
+    guardExit('enroll:' + m.uid);
+    if (body.isConnected) paintEnroll(body, m, 'none', {}, deviceCount === 0);
+  }
+}
+
+function paintEnroll(body, m, status, info, prominent) {
+  let statusText = t('enrollNone');
+  if (status === 'pending') {
+    statusText = info.expiresAt
+      ? t('enrollActive', { date: new Date(info.expiresAt).toLocaleDateString() })
+      : t('enrollActive', { date: '' });
+  } else if (status === 'used') statusText = t('enrollUsed');
+  else if (status === 'revoked') statusText = t('enrollRevoked');
+  const genLabel = prominent
+    ? (status === 'none' ? t('enrollGenerate') : t('enrollRegenerate'))
+    : t('linkAnother');
+  body.innerHTML = '<div class="enroll-status">' + escapeHtml(statusText) + '</div>'
+    + '<div class="enroll-actions"><button type="button" class="btn' + (prominent ? ' btn-accent' : '') + '" id="co-enroll-gen">'
+    + escapeHtml(genLabel) + '</button></div>'
+    + '<div id="co-enroll-result"></div>';
+  const gen = document.getElementById('co-enroll-gen');
+  if (gen) gen.addEventListener('click', function () { generateEnroll(m); });
+}
+
+async function generateEnroll(m) {
+  const result = document.getElementById('co-enroll-result');
+  const gen = document.getElementById('co-enroll-gen');
+  if (!result) return;
+  if (gen) { gen.disabled = true; gen.textContent = t('enrollWorking'); }
+  try {
+    const createTok = httpsCallable(getFunctions(auth.app, 'us-central1'), 'createEnrollmentToken');
+    const { data } = await createTok({ orgId, email: m.email });
+    if (!result.isConnected) return;
+    const when = data.expiresAt ? new Date(data.expiresAt).toLocaleDateString() : '';
+    result.innerHTML = '<div style="margin-top:14px">'
+      + (data.qrSvg ? '<div class="enroll-qr">' + data.qrSvg + '</div>' : '')
+      + '<div class="enroll-otp-label">' + escapeHtml(t('enrollOtpLabel')) + '</div>'
+      + '<div class="enroll-otp">' + escapeHtml(data.codeDisplay || data.code || '') + '</div>'
+      + (when ? '<div class="enroll-expiry">' + escapeHtml(t('enrollExpires', { date: when })) + '</div>' : '')
+      + '<div class="enroll-actions">'
+      + '<button type="button" class="btn" id="co-enroll-copylink">' + escapeHtml(t('copyLink')) + '</button>'
+      + '<button type="button" class="btn" id="co-enroll-copycode">' + escapeHtml(t('copyCode')) + '</button>'
+      + '</div></div>';
+    const cl = document.getElementById('co-enroll-copylink');
+    if (cl) cl.addEventListener('click', async function () {
+      try { await navigator.clipboard.writeText(data.url); cl.textContent = t('copiedLink'); } catch (_) {}
+    });
+    const cc = document.getElementById('co-enroll-copycode');
+    if (cc) cc.addEventListener('click', async function () {
+      try { await navigator.clipboard.writeText(data.codeDisplay || data.code || ''); cc.textContent = t('copiedCode'); } catch (_) {}
+    });
+  } catch (e) {
+    if (result.isConnected) {
+      result.innerHTML = '<div class="enroll-status" style="color:#f0a3a3;margin-top:12px">' + escapeHtml(t('enrollFailed')) + '</div>';
+    }
+  } finally {
+    if (gen && gen.isConnected) { gen.disabled = false; gen.textContent = t('enrollRegenerate'); }
+  }
+}
 
 
 
@@ -764,6 +1156,8 @@ async function refreshOnline() {
     const online = await getOnlineUsers(orgId);
     onlineUids = new Set(online.map((u) => u.uid));
     renderList();
+    const pv = document.getElementById('co-presence-value');
+    if (pv && selectedUid) pv.textContent = onlineUids.has(selectedUid) ? t('online') : t('offline');
   } catch (_) { /* online dots are a nice-to-have */ }
 }
 
@@ -819,7 +1213,8 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
-  if (!makePermChecker(currentUserData)('userManagement')) {
+  _can = makePermChecker(currentUserData);
+  if (!_can('userManagement')) {
     if (window.nivSaveSettingsReferrer) window.nivSaveSettingsReferrer();
     window.location.href = '/account/settings';
     return;
@@ -899,7 +1294,10 @@ onAuthStateChanged(auth, async (user) => {
     } catch (e) {}
     window.__nivSidebarHandle = window.NivShell.mountSidebar('#chrome-sidebar', { target: 'company', active: 'users', lang: lang });
     if (window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
-      window.NivShell.mountTopbar('#chrome-topbar', { active: 'users', context: 'settings' });
+      /* Default (dashboard-family) context, NOT 'settings': the settings
+         context renders nothing by design (modules/README.md), which
+         left this page's topbar permanently empty. */
+      window.NivShell.mountTopbar('#chrome-topbar', { active: 'users' });
     }
   })();
 </script>

@@ -10,6 +10,27 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
+// ─── LANGUAGE — the app's ONE language system ─────────────────────────────
+// Resolution: cookie nivelato-login-lang -> localStorage nivelato-login-lang
+// -> navigator.language (es/en); Spanish is the app default.
+const WIZ_LANG = (() => {
+  try {
+    const ck = (document.cookie.match(/(?:^|; )nivelato-login-lang=(es|en)/) || [])[1];
+    if (ck) return ck;
+  } catch (e) {}
+  try {
+    const ls = window.localStorage.getItem('nivelato-login-lang');
+    if (ls === 'es' || ls === 'en') return ls;
+  } catch (e) {}
+  try {
+    const nav = (navigator.language || '').toLowerCase();
+    if (nav.indexOf('es') === 0) return 'es';
+    if (nav.indexOf('en') === 0) return 'en';
+  } catch (e) {}
+  return 'es';
+})();
+const L = (es, en) => (WIZ_LANG === 'en' ? en : es);
+
 // ─── FRACTION HELPERS ──────────────────────────────────────────────────────
 function readVal(wholeId, fracId) {
   // Allow override via _embedData for embedded graphs (dashboard)
@@ -178,8 +199,8 @@ const MAX_MEASURE_IN = 20000;
 
 function _checkMeasure(prefix, label) {
   const v = readVal(prefix + '-whole', prefix + '-frac');
-  if (!(v > 0)) return '⚠️ ' + label + ': escribe una medida mayor que 0 para poder seguir.';
-  if (v > MAX_MEASURE_IN) return '⚠️ ' + label + ': ese número está bien loco 😅 - revisa que sean pulgadas (máx 20,000").';
+  if (!(v > 0)) return label + L(': escribe una medida mayor que 0 para poder seguir.', ': enter a measurement greater than 0 to continue.');
+  if (v > MAX_MEASURE_IN) return label + L(': el valor está fuera de rango - revisa que sean pulgadas (máx 20,000").', ': value out of range - check that the value is in inches (max 20,000").');
   return null;
 }
 
@@ -191,8 +212,8 @@ function validateStep(n) {
   if (n === 0) {
     const c = (document.getElementById('customer-name')?.value || '').trim();
     const p = (document.getElementById('project-name')?.value || '').trim();
-    if (!c) return '⚠️ Falta el nombre del cliente - escríbelo para poder guardar la medida. 🙏';
-    if (!p) return '⚠️ Ponle nombre al proyecto para identificar el trabajo.';
+    if (!c) return L('Falta el nombre del cliente - escríbelo para poder guardar la medida.', 'Customer name is missing - enter it to save the measurement.');
+    if (!p) return L('Ponle nombre al proyecto para identificar el trabajo.', 'Project name is missing - enter a name to identify the job.');
     return null;
   }
   if (n === 1) return _checkPair('hueco-ancho-bot', 'hueco-alto-izq', 'Ancho abajo', 'Alto izquierda');
@@ -268,13 +289,13 @@ function restoreDraft() {
     if (pprev && pimg) {
       pimg.src = d.photo;
       pprev.style.display = 'block';
-      if (pbtn) pbtn.textContent = '📷 Cambiar foto';
+      if (pbtn) pbtn.textContent = L('Cambiar foto', 'Change photo');
     }
   }
   const step = Math.max(0, Math.min(TOTAL_STEPS, d.step | 0));
   if (step !== currentStep) goStep(step, true);
   else { recalcAll(); if (step === TOTAL_STEPS) renderSummary(); }
-  showToast('📝 Borrador restaurado');
+  showToast(L('Borrador restaurado', 'Draft restored'));
   return true;
 }
 
@@ -380,8 +401,15 @@ function recalcAll() {
 // ─── VALIDATION ────────────────────────────────────────────────────────────
 const TOLERANCE = 0.0625;
 
+// Language-independent keys for the most recent runValidation() call,
+// aligned by index with the warning strings it returned. autoFix routes
+// on these keys, so the routing cannot break when the warning text is
+// rendered in English instead of Spanish (or vice versa).
+let _lastWarningKeys = [];
+
 function runValidation() {
   const warnings = [];
+  const keys = [];
   const pI_A = readVal('pI-a-whole','pI-a-frac'), pI_B = readVal('pI-b-whole','pI-b-frac');
   const pD_A = readVal('pD-a-whole','pD-a-frac'), pD_B = readVal('pD-b-whole','pD-b-frac');
   const t_A  = readVal('t-a-whole', 't-a-frac'),  t_B  = readVal('t-b-whole', 't-b-frac');
@@ -389,24 +417,33 @@ function runValidation() {
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
   const anyEntered = pI_A||pI_B||pD_A||pD_B||t_A||t_B||p_A||p_B;
-  if (!anyEntered) return [];
+  if (!anyEntered) { _lastWarningKeys = []; return []; }
 
   if ((pI_A > 0||pI_B > 0) && (pD_A > 0||pD_B > 0)) {
     const offsetIzq = pI_A - pI_B;
     const offsetDer = pD_A - pD_B;
-    if (Math.abs(offsetIzq - offsetDer) > TOLERANCE)
-      warnings.push('⚠ Paredes no cuadran - el desnivel izq. (' + toFracStr(Math.abs(offsetIzq)) + ') no coincide con el der. (' + toFracStr(Math.abs(offsetDer)) + '). Revisa las medidas.');
+    if (Math.abs(offsetIzq - offsetDer) > TOLERANCE) {
+      warnings.push(L('Paredes no cuadran - el desnivel izq. (', 'Walls are out of square - the left offset (') + toFracStr(Math.abs(offsetIzq)) + L(') no coincide con el der. (', ') does not match the right offset (') + toFracStr(Math.abs(offsetDer)) + L('). Revisa las medidas.', '). Check the measurements.'));
+      keys.push('walls-out-of-square');
+    }
   }
   if ((t_A > 0||t_B > 0) && (p_A > 0||p_B > 0)) {
     const offsetTecho = t_A - t_B;
     const offsetPiso  = p_A - p_B;
-    if (Math.abs(offsetTecho - offsetPiso) > TOLERANCE)
-      warnings.push('⚠ Arriba/Abajo no cuadran - el desnivel de arriba (' + toFracStr(Math.abs(offsetTecho)) + ') no coincide con el de abajo (' + toFracStr(Math.abs(offsetPiso)) + '). Revisa las medidas.');
+    if (Math.abs(offsetTecho - offsetPiso) > TOLERANCE) {
+      warnings.push(L('Arriba/Abajo no cuadran - el desnivel de arriba (', 'Top/Bottom are out of square - the top offset (') + toFracStr(Math.abs(offsetTecho)) + L(') no coincide con el de abajo (', ') does not match the bottom offset (') + toFracStr(Math.abs(offsetPiso)) + L('). Revisa las medidas.', '). Check the measurements.'));
+      keys.push('top-bottom-out-of-square');
+    }
   }
-  if ((pI_A||pI_B||pD_A||pD_B||p_A||p_B) && t_A === 0 && t_B === 0)
-    warnings.push('⚠ Faltan niveles de arriba - mide del láser arriba en punto A (izq) y punto B (der)');
-  if (anyEntered && (anchoBot === 0 || altoIzq === 0))
-    warnings.push('⚠ Falta medida base del hueco - ingresa Ancho Abajo y Alto Izquierda');
+  if ((pI_A||pI_B||pD_A||pD_B||p_A||p_B) && t_A === 0 && t_B === 0) {
+    warnings.push(L('Faltan niveles de arriba - mide del láser arriba en punto A (izq) y punto B (der)', 'Top levels are missing - measure from the laser at the top at point A (left) and point B (right)'));
+    keys.push('missing-top-levels');
+  }
+  if (anyEntered && (anchoBot === 0 || altoIzq === 0)) {
+    warnings.push(L('Falta medida base del hueco - ingresa Ancho Abajo y Alto Izquierda', 'Base opening measurement is missing - enter Bottom Width and Left Height'));
+    keys.push('missing-base');
+  }
+  _lastWarningKeys = keys;
   return warnings;
 }
 
@@ -415,13 +452,21 @@ function runValidation() {
 // correspondiente para que mida de nuevo. (QA 2026-09-18: el autoFix
 // anterior inventaba datos copiando una pared sobre la otra.)
 function autoFix(warningText) {
-  if (warningText.includes('Paredes no cuadran')) { goStep(2); return; }
-  if (warningText.includes('Arriba/Abajo no cuadran')) { goStep(4); return; }
-  if (warningText.includes('Faltan niveles de arriba')) {
+  // Primary routing: the language-independent key from runValidation
+  // (_lastWarningKeys, aligned by index with the warning strings).
+  if (warningText === 'walls-out-of-square') { goStep(2); return; }
+  if (warningText === 'top-bottom-out-of-square') { goStep(4); return; }
+  if (warningText === 'missing-top-levels') { goStep(4); return; }
+  if (warningText === 'missing-base') { goStep(1); return; }
+  // Fallback for callers that pass warning text: match in both languages.
+  // The Spanish substrings below are byte-identical to the originals.
+  if (warningText.includes('Paredes no cuadran') || warningText.includes('Walls are out of square')) { goStep(2); return; }
+  if (warningText.includes('Arriba/Abajo no cuadran') || warningText.includes('Top/Bottom are out of square')) { goStep(4); return; }
+  if (warningText.includes('Faltan niveles de arriba') || warningText.includes('Top levels are missing')) {
     goStep(4);
     return;
   }
-  if (warningText.includes('Falta medida base')) {
+  if (warningText.includes('Falta medida base') || warningText.includes('Base opening measurement is missing')) {
     goStep(1);
     return;
   }
@@ -435,15 +480,15 @@ function renderValidation() {
   const warnings = runValidation();
   _lastWarnings = warnings;
   if (warnings.length === 0) {
-    el.textContent = '✓ Medidas OK';
+    el.textContent = L('Medidas OK', 'Measurements OK');
     el.className = 'val-ok';
   } else {
     el.innerHTML = warnings.map(function(w, i) {
-      return '<div style="margin-bottom:6px">' + escapeHtml(w) + ' <button data-widx="' + i + '" class="arreglar-btn" style="margin-left:8px;padding:2px 10px;border-radius:12px;border:none;background:#e07b00;color:#fff;font-size:12px;cursor:pointer;font-weight:600">Revisar →</button></div>';
+      return '<div style="margin-bottom:6px">' + escapeHtml(w) + ' <button data-widx="' + i + '" class="arreglar-btn" style="margin-left:8px;padding:2px 10px;border-radius:12px;border:none;background:#e07b00;color:#fff;font-size:12px;cursor:pointer;font-weight:600">' + escapeHtml(L('Revisar →', 'Review →')) + '</button></div>';
     }).join('');
     el.className = 'val-warn';
     el.querySelectorAll('.arreglar-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() { autoFix(_lastWarnings[+btn.dataset.widx] || ''); });
+      btn.addEventListener('click', function() { autoFix(_lastWarningKeys[+btn.dataset.widx] || _lastWarnings[+btn.dataset.widx] || ''); });
     });
   }
 }
@@ -478,7 +523,7 @@ function _setSaveBtn(disabled, label) {
 
 // Si el usuario edita algo después de guardar, el botón vuelve a activarse.
 function _dirtyResetSaveButton() {
-  if (_saveState === 'saved') { _saveState = 'idle'; _setSaveBtn(false, '💾 Guardar medida'); _hidePostSaveActions(); }
+  if (_saveState === 'saved') { _saveState = 'idle'; _setSaveBtn(false, L('Guardar medida', 'Save measurement')); _hidePostSaveActions(); }
 }
 
 // ─── POST-SAVE ACTIONS (QA 2026-09-18: antes el flujo moría en "✓ Guardado") ─
@@ -514,9 +559,9 @@ window.newMeasurement = function() {
   const prev = document.getElementById('photo-preview');
   if (prev) prev.style.display = 'none';
   const btnOpen = document.getElementById('btn-open-photo');
-  if (btnOpen) btnOpen.textContent = '📷 Agregar foto';
+  if (btnOpen) btnOpen.textContent = L('Agregar foto', 'Add photo');
   _saveState = 'idle';
-  _setSaveBtn(false, '💾 Guardar medida');
+  _setSaveBtn(false, L('Guardar medida', 'Save measurement'));
   _hidePostSaveActions();
   goStep(0, true);
   // (c) la entrada vieja del paso 7 seguiría en el historial y el Back del
@@ -553,11 +598,11 @@ function _showWarnModal(warnings, onContinue) {
   overlay.id = 'nv-modal-overlay';
   overlay.innerHTML =
     '<div id="nv-modal" role="alertdialog" aria-modal="true" aria-labelledby="nv-modal-title">' +
-      '<div id="nv-modal-title">⚠️ Revisa las medidas</div>' +
+      '<div id="nv-modal-title">' + escapeHtml(L('Revisa las medidas', 'Check the measurements')) + '</div>' +
       '<div id="nv-modal-body"></div>' +
       '<div id="nv-modal-actions">' +
-        '<button class="btn-secondary" id="nv-modal-cancel">← Volver a revisar</button>' +
-        '<button class="btn-primary" id="nv-modal-ok">Guardar de todas formas</button>' +
+        '<button class="btn-secondary" id="nv-modal-cancel">' + escapeHtml(L('← Volver a revisar', '← Go back and check')) + '</button>' +
+        '<button class="btn-primary" id="nv-modal-ok">' + escapeHtml(L('Guardar de todas formas', 'Save anyway')) + '</button>' +
       '</div>' +
     '</div>';
   overlay.querySelector('#nv-modal-body').textContent = warnings.join('\n');
@@ -579,7 +624,7 @@ function saveJob() {
 
 function _doSaveJob(warnings) {
   _saveState = 'saving';
-  _setSaveBtn(true, '⏳ Guardando…');
+  _setSaveBtn(true, L('Guardando…', 'Saving…'));
   _saveCurrentJob(warnings);
 }
 
@@ -587,7 +632,7 @@ function _saveCurrentJob(warnings) {
   if (typeof window.saveJobToFirestore !== 'function') {
     console.error('[Nivelato] saveJobToFirestore no está disponible - ¿se cargó auth-guard.js?');
     _saveState = 'idle';
-    _setSaveBtn(false, '💾 Guardar medida');
+    _setSaveBtn(false, L('Guardar medida', 'Save measurement'));
     return;
   }
   recalcAll(); // leer valores frescos del DOM — nunca guardar results viejos
@@ -631,18 +676,18 @@ function _saveCurrentJob(warnings) {
   const _saveWithTimeout = Promise.race([
     window.saveJobToFirestore(jobData),
     new Promise(function(_, reject) {
-      setTimeout(function() { reject(new Error('Se acabó el tiempo esperando la nube - revisa tu conexión e inténtalo de nuevo.')); }, 45000);
+      setTimeout(function() { reject(new Error(L('Se acabó el tiempo esperando la nube - revisa tu conexión e inténtalo de nuevo.', 'Timed out waiting for the cloud - check your connection and try again.'))); }, 45000);
     })
   ]);
   _saveWithTimeout.then(function() {
     _saveState = 'saved';
-    _setSaveBtn(true, '✓ Guardado');
+    _setSaveBtn(true, L('Guardado', 'Saved'));
     clearDraft();
     _showPostSaveActions();
     const el = document.getElementById('save-status');
     if (el) { el.style.display = 'block'; setTimeout(function() { el.style.display = 'none'; }, 4000); }
     const overlay = document.createElement('div');
-    overlay.innerHTML='☁️ Guardado en la nube';overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(25,135,84,0.92);color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;animation:fadeInOut 2.2s ease forwards;'
+    overlay.textContent=L('Guardado en la nube', 'Saved to the cloud');overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(25,135,84,0.92);color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;animation:fadeInOut 2.2s ease forwards;'
     overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; background:rgba(25,135,84,0.92); color:#fff; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; letter-spacing:0.02em; animation: fadeInOut 2.2s ease forwards;';
     if (!document.getElementById('nube-anim-style')) {
       const style = document.createElement('style');
@@ -655,20 +700,20 @@ function _saveCurrentJob(warnings) {
   }).catch(function(e) {
     console.error('[Nivelato] save failed:', e);
     _saveState = 'idle';
-    _setSaveBtn(false, '💾 Guardar medida');
+    _setSaveBtn(false, L('Guardar medida', 'Save measurement'));
     let reason = (e && e.message) ? e.message : String(e);
     if (/permission-denied|Missing or insufficient permissions/i.test(reason)) {
-      reason = 'No tienes permiso para guardar. Cierra sesion y entra de nuevo; si persiste, avisa al administrador.';
+      reason = L('No tienes permiso para guardar. Cierra sesion y entra de nuevo; si persiste, avisa al administrador.', 'You do not have permission to save. Sign out and sign back in; if the problem persists, contact the administrator.');
     }
     const overlay = document.createElement('div');
     overlay.id = 'nv-save-error';
     overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; background:rgba(220,53,69,0.94); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center;';
     overlay.innerHTML =
-      '<div style="font-size:28px;font-weight:700;margin-bottom:10px">⚠️ Error al guardar</div>' +
+      '<div style="font-size:28px;font-weight:700;margin-bottom:10px">' + escapeHtml(L('Error al guardar', 'Error saving')) + '</div>' +
       '<div id="nv-save-error-reason" style="font-size:14px;font-weight:500;opacity:.92;max-width:80vw;margin-bottom:20px;line-height:1.5"></div>' +
       '<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">' +
-        '<button class="btn-secondary" id="nv-save-error-close">Cerrar</button>' +
-        '<button class="btn-primary" id="nv-save-error-retry">🔄 Reintentar</button>' +
+        '<button class="btn-secondary" id="nv-save-error-close">' + escapeHtml(L('Cerrar', 'Close')) + '</button>' +
+        '<button class="btn-primary" id="nv-save-error-retry">' + escapeHtml(L('Reintentar', 'Retry')) + '</button>' +
       '</div>';
     overlay.querySelector('#nv-save-error-reason').textContent = reason;
     document.body.appendChild(overlay);
@@ -867,34 +912,20 @@ function drawGraphScene(ctx, W, H) {
   const p_A    = readVal('p-a-whole', 'p-a-frac');
   const p_B    = readVal('p-b-whole', 'p-b-frac');
 
-  // ── compute desnivel offsets (in pixels) ──
-  // These represent how much the ROUGH OPENING deviates from the LEVEL reference
-  // Positive = wall leans IN (toward center), negative = wall leans OUT
-  const EXAG = Math.min(gr.w, gr.h) * 0.15;
-  const clamp = function(v, lim) { return Math.max(-lim, Math.min(lim, v)); };
-
-  const pIMax = Math.max(pI_A, pI_B, 1);
-  const pDMax = Math.max(pD_A, pD_B, 1);
-  const tMax  = Math.max(t_A,  t_B,  1);
-  const pMax  = Math.max(p_A,  p_B,  1);
-
-  // Left wall desnivel: pI_A vs pI_B
-  // If pI_A > pI_B: bottom is further out = top leans IN = top shifts RIGHT (toward center)
-  const leftOffsetTop    = clamp(((pI_A - pI_B) / pIMax) * EXAG, EXAG);
-  const leftOffsetBottom = 0;
-
-  // Right wall desnivel: pD_A vs pD_B  
-  // If pD_A > pD_B: bottom is further out = top leans IN = top shifts LEFT (toward center)
-  const rightOffsetTop    = -clamp(((pD_A - pD_B) / pDMax) * EXAG, EXAG);
-  const rightOffsetBottom = 0;
-
-  // Ceiling desnivel: t_A vs t_B — LEFT is 0,0, offset is on RIGHT
-  const topOffsetLeft  = 0;
-  const topOffsetRight = clamp(((t_A - t_B) / tMax) * EXAG * (gr.h / gr.w), EXAG);
-
-  // Floor desnivel: p_A vs p_B — LEFT is 0,0, offset is on RIGHT
-  const bottomOffsetLeft  = 0;
-  const bottomOffsetRight = clamp(-((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
+  // ── TRUE-SCALE inch geometry (mirrors recalcAll; NO exaggeration) ──
+  // Signed desniveles in inches, exactly as recalcAll derives them.
+  // Positive = wall leans IN (toward center), negative = wall leans OUT.
+  const paredIzqRaw = pI_A - pI_B;
+  const paredDerRaw = pD_A - pD_B;
+  const techoRaw    = t_A - t_B;
+  const pisoRaw     = p_A - p_B;
+  const anchoTopIn = Math.max(0, anchoBot - paredIzqRaw - paredDerRaw);
+  const altoDerIn  = Math.max(0, altoIzq - techoRaw - pisoRaw);
+  // Pixels per inch. getGlassRect builds gr from the anchoBot/altoIzq
+  // aspect (with the 48x36 fallbacks above when a base dim is missing),
+  // so sx === sy whenever both base dims exist.
+  const sx = gr.w / anchoBot;
+  const sy = gr.h / altoIzq;
 
   // ── LEVEL REFERENCE rectangle (dashed) = where the straight frame goes ──
   const levelTL = { x: gr.x, y: gr.y };
@@ -902,11 +933,11 @@ function drawGraphScene(ctx, W, H) {
   const levelBR = { x: gr.x + gr.w, y: gr.y + gr.h };
   const levelBL = { x: gr.x, y: gr.y + gr.h };
 
-  // ── ROUGH OPENING (solid blue) = actual deformed wall opening ──
-  const roughTL = { x: gr.x + leftOffsetTop,    y: gr.y + topOffsetLeft };
-  const roughTR = { x: gr.x + gr.w + rightOffsetTop,   y: gr.y + topOffsetRight };
-  const roughBR = { x: gr.x + gr.w + rightOffsetBottom, y: gr.y + gr.h + bottomOffsetRight };
-  const roughBL = { x: gr.x + leftOffsetBottom,  y: gr.y + gr.h + bottomOffsetLeft };
+  // ── ROUGH OPENING (solid blue) = actual opening, drawn to true scale ──
+  const roughBL = { x: gr.x, y: gr.y + gr.h };
+  const roughBR = { x: gr.x + gr.w, y: gr.y + gr.h };
+  const roughTL = { x: gr.x + paredIzqRaw * sx, y: gr.y };
+  const roughTR = { x: gr.x + paredIzqRaw * sx + anchoTopIn * sx, y: gr.y + (altoIzq - altoDerIn) * sy };
 
   // Draw level reference (dashed gray rectangle)
   ctx.save();
@@ -970,7 +1001,7 @@ function drawGraphScene(ctx, W, H) {
     ctx.font = '600 ' + (14 / sc) + 'px Inter, system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Ingresa las medidas del hueco', gr.x + gr.w / 2, gr.y + gr.h / 2);
+    ctx.fillText(L('Ingresa las medidas del hueco', 'Enter the opening measurements'), gr.x + gr.w / 2, gr.y + gr.h / 2);
     ctx.restore();
   }
 
@@ -1402,22 +1433,43 @@ window.embedGraph = function(cvs, data) {
     dctx.fillStyle = '#f8faff';
     dctx.fillRect(0,0,W,H);
 
-    var pad = 72;
-    var bx = pad, by = pad, bw = W - pad*2, bh = H - pad*2;
-    var EXAG = Math.min(bw, bh) * 0.15;
-    var clamp = function(v, lim) { return Math.max(-lim, Math.min(lim, v)); };
-    var pIMax = Math.max(pIv, 1);
-    var pDMax = Math.max(pDv, 1);
-    var tMax = Math.max(tcv, 1);
-    var pMax = Math.max(psv, 1);
-    var leftOffsetTop = pIs * clamp(((pIv) / pIMax) * EXAG, EXAG);
-    var rightOffsetTop = -pDs * clamp(((pDv) / pDMax) * EXAG, EXAG);
-    var topOffsetRight = tSs * clamp(((tcv) / tMax) * EXAG * (bh / bw), EXAG);
-    var bottomOffsetRight = -pSs * clamp(((psv) / pMax) * EXAG * (bh / bw), EXAG);
-    var roughTL = { x: bx + leftOffsetTop, y: by };
-    var roughTR = { x: bx + bw + rightOffsetTop, y: by + topOffsetRight };
-    var roughBR = { x: bx + bw, y: by + bh + bottomOffsetRight };
+    // Contain, including dimension labels: the glass rect is inset by
+    // per-side padding that reserves label space OUTSIDE the shape.
+    // Dimension lines sit 24/scale beyond the rough corners, ticks add
+    // 6/scale, label glyphs ~14px beyond that, and the desnivel callouts
+    // sit ~16px above the top corners. Nominal padding (at st.scale 1):
+    // left 88, right 88, bottom 88, top 104 (72 base margin + 32 extra
+    // label reserve above the top edge). Tiny canvases scale all four
+    // down proportionally so bw/bh stay positive.
+    var padL = 88, padR = 88, padT = 104, padB = 88;
+    var padScale = Math.min(1, (W - 24) / (padL + padR), (H - 24) / (padT + padB));
+    if (!(padScale > 0)) padScale = 1;
+    padL *= padScale; padR *= padScale; padT *= padScale; padB *= padScale;
+    var bx = padL, by = padT, bw = W - padL - padR, bh = H - padT - padB;
+
+    // ── TRUE-SCALE inch geometry (mirrors recalcAll; NO exaggeration) ──
+    // Signed desniveles in inches: the ev() magnitudes above carry their
+    // sign in the label arrows, encoded by pIs/pDs/tSs/pSs.
+    var paredIzqRawE = pIs * pIv;
+    var paredDerRawE = pDs * pDv;
+    var techoRawE    = tSs * tcv;
+    var pisoRawE     = pSs * psv;
+    var anchoBotE = data.anchoBot || 36;
+    var altoIzqE  = data.altoIzq || 84;
+    // M39: caller-passed measured top/right dimensions win when present;
+    // otherwise derive them with recalcAll's formulas and clamps.
+    var anchoTopE = (typeof data.anchoTop === 'number' && isFinite(data.anchoTop))
+      ? Math.max(0, data.anchoTop)
+      : Math.max(0, anchoBotE - paredIzqRawE - paredDerRawE);
+    var altoDerE = (typeof data.altoDer === 'number' && isFinite(data.altoDer))
+      ? Math.max(0, data.altoDer)
+      : Math.max(0, altoIzqE - techoRawE - pisoRawE);
+    var sxE = bw / anchoBotE;
+    var syE = bh / altoIzqE;
     var roughBL = { x: bx, y: by + bh };
+    var roughBR = { x: bx + bw, y: by + bh };
+    var roughTL = { x: bx + paredIzqRawE * sxE, y: by };
+    var roughTR = { x: bx + paredIzqRawE * sxE + anchoTopE * sxE, y: by + (altoIzqE - altoDerE) * syE };
 
     // level reference (dashed gray)
     dctx.strokeStyle = '#adb5bd';
@@ -1459,20 +1511,17 @@ window.embedGraph = function(cvs, data) {
       dctx.restore();
     };
     // left/right edges: horizontal offset arrows at TOP (where the lean is)
-    if (data.pIL && data.pIL !== 'Nivel' && data.pIL !== '-') drawArrow({x: bx, y: by}, {x: bx + leftOffsetTop, y: by}, 0, true, data.pIL);
-    if (data.pDL && data.pDL !== 'Nivel' && data.pDL !== '-') drawArrow({x: bx + bw, y: by}, {x: bx + bw + rightOffsetTop, y: by}, 0, true, data.pDL);
+    if (data.pIL && data.pIL !== 'Nivel' && data.pIL !== '-') drawArrow({x: bx, y: by}, {x: roughTL.x, y: by}, 0, true, data.pIL);
+    if (data.pDL && data.pDL !== 'Nivel' && data.pDL !== '-') drawArrow({x: bx + bw, y: by}, {x: roughTR.x, y: by}, 0, true, data.pDL);
     // top/bottom edges: vertical offset arrows at RIGHT end (where the tilt is)
-    if (data.tL && data.tL !== 'Nivel' && data.tL !== '-') drawArrow({x: bx + bw, y: by}, {x: bx + bw, y: by + topOffsetRight}, 0, false, data.tL);
-    if (data.pL && data.pL !== 'Nivel' && data.pL !== '-') drawArrow({x: bx + bw, y: by + bh}, {x: bx + bw, y: by + bh + bottomOffsetRight}, 0, false, data.pL);
+    if (data.tL && data.tL !== 'Nivel' && data.tL !== '-') drawArrow({x: bx + bw, y: by}, {x: bx + bw, y: roughTR.y}, 0, false, data.tL);
+    if (data.pL && data.pL !== 'Nivel' && data.pL !== '-') drawArrow({x: bx + bw, y: by + bh}, {x: bx + bw, y: roughBR.y}, 0, false, data.pL);
 
-    // dimension labels
-    var anchoBot = data.anchoBot || 36;
-    var altoIzq = data.altoIzq || 84;
-    // M39: when the caller passes the measured top/right dimensions, label
-    // the drawing with those real values instead of deriving them from the
-    // offsets (out-of-square openings are not perfect rectangles).
-    var anchoTop = (typeof data.anchoTop === 'number' && isFinite(data.anchoTop)) ? data.anchoTop : anchoBot - pIv - pDv;
-    var altoDer = (typeof data.altoDer === 'number' && isFinite(data.altoDer)) ? data.altoDer : altoIzq - tcv - psv;
+    // dimension labels (same values the geometry above was built from)
+    var anchoBot = anchoBotE;
+    var altoIzq = altoIzqE;
+    var anchoTop = anchoTopE;
+    var altoDer = altoDerE;
     var dim = function(x1, y1, x2, y2, label, vertical) {
       dctx.save();
       dctx.strokeStyle = '#adb5bd';
@@ -1616,7 +1665,7 @@ window.skipPhoto = function() { nextStep(); };
 window.removePhoto = function() {
   annotatedPhotoDataUrl = null;
   document.getElementById('photo-preview').style.display = 'none';
-  document.getElementById('btn-open-photo').textContent = '📷 Agregar foto';
+  document.getElementById('btn-open-photo').textContent = L('Agregar foto', 'Add photo');
   saveDraft(); // (e) el borrador ya no debe llevar la foto
 };
 
@@ -1629,7 +1678,7 @@ window.addEventListener('message', function(e) {
     if (prev && img) {
       img.src = annotatedPhotoDataUrl;
       prev.style.display = 'block';
-      document.getElementById('btn-open-photo').textContent = '📷 Cambiar foto';
+      document.getElementById('btn-open-photo').textContent = L('Cambiar foto', 'Change photo');
     }
     try { e.source.postMessage({ type: 'NIVELATO_PHOTO_ACK' }, e.origin); } catch (_) {}
     if (typeof window.closePhotoEditor === 'function') window.closePhotoEditor();

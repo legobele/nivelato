@@ -28,9 +28,9 @@
   .btn-primary { width: 100%; padding: 12px 16px; min-height: 48px; background: #fafafa; color: #050505; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
   .btn-primary:active { transform: scale(0.98); background: #dcdce0; }
   .btn-primary:disabled { opacity: 0.6; cursor: default; }
-  /* second sidebar layout: company sidebar stays in .niv-shell, the
-     module sidebar (target=user) sits inside the main column next to
-     the section panels. */
+  /* Sidebar layout: the module sidebar (target=user) is the ONLY
+     sidebar layer; it sits inside the main column next to the
+     section panels. */
   .settings-layout { display: flex; gap: 20px; align-items: flex-start; }
   .user-settings-sidebar { width: 260px; flex: none; }
   .settings-sections { flex: 1; min-width: 0; }
@@ -62,8 +62,10 @@
       font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
       box-sizing: border-box; text-align: left;
     }
-    .niv-sidebar { display: none; }
-    body.niv-nav-open .niv-sidebar { display: block; }
+    /* The one sidebar layer (module target=user) hides behind the
+       hamburger bar on mobile instead of stacking above the panels. */
+    .user-settings-sidebar { display: none; }
+    body.niv-nav-open .user-settings-sidebar { display: block; }
     .settings-layout { flex-direction: column; }
     .user-settings-sidebar { width: 100%; }
     .settings-sections { width: 100%; }
@@ -92,41 +94,16 @@ html, body { overflow-y: auto !important; }
   </style>
 </head>
 <body>
-<button type="button" class="niv-mobile-nav-toggle" id="niv-mobile-nav-toggle" aria-expanded="false" aria-controls="settings-sidebar"><span aria-hidden="true">&#9776;</span><span data-i18n="mobileNav">Navegación</span></button>
+<button type="button" class="niv-mobile-nav-toggle" id="niv-mobile-nav-toggle" aria-expanded="false" aria-controls="user-settings-sidebar"><span aria-hidden="true">&#9776;</span><span data-i18n="mobileNav">Navegación</span></button>
 <div class="niv-shell">
-<aside class="niv-sidebar" id="settings-sidebar">
-  <div class="niv-company-card">
-    <div class="niv-company-top">
-      <div class="niv-company-avatar" id="set-company-avatar">N</div>
-      <div>
-        <div class="niv-company-name" id="set-company-name">…</div>
-      </div>
-    </div>
-  </div>
-  <nav class="niv-nav">
-    <!-- Canonical account/company block (item 23): same groups, order,
-         entry names and icons as the main sidebar module
-         (modules/sidebar.html, target=company): Compañía first
-         (Usuarios, Ajustes de la compañía), then Cuenta (Mi cuenta).
-         In company context the Compañía group renders once the org doc
-         loads (hidden for users without a company). -->
-    <div class="niv-nav-group" id="company-settings-group" hidden>
-      <div class="niv-nav-group-title" data-i18n="groupCompany">Compañía</div>
-      <a class="niv-nav-btn" href="/company/users"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><path class="glyph" d="M9.2 6.1a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4zM3.9 18.7c.7-3.1 2.8-4.7 5.3-4.7s4.6 1.6 5.3 4.7zM16.6 7.6a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2zM15.9 14.3c2.1.3 3.7 1.8 4.3 4.4h-4.5c.35-1.6.42-3.05.2-4.4z"/></svg></span><span data-i18n="companyTeam">Usuarios</span></a>
-      <a class="niv-nav-btn" href="/company/settings"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><rect class="glyph" x="4.6" y="6.1" width="14.8" height="1.9" rx="0.95"/><rect class="glyph" x="4.6" y="11.05" width="14.8" height="1.9" rx="0.95"/><rect class="glyph" x="4.6" y="16" width="14.8" height="1.9" rx="0.95"/><circle class="glyph" cx="9" cy="7.05" r="2.1"/><circle class="glyph" cx="15" cy="12" r="2.1"/><circle class="glyph" cx="8" cy="16.95" r="2.1"/></svg></span><span data-i18n="companyProfile">Ajustes de la compañía</span></a>
-    </div>
-    <div class="niv-nav-group">
-      <div class="niv-nav-group-title" data-i18n="groupAccount">Cuenta</div>
-      <a class="niv-nav-btn active" href="/account/settings"><span class="mod-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect class="tile" width="24" height="24" rx="6"/><path class="glyph" d="M12 6.2a3.4 3.4 0 1 1 0 6.8 3.4 3.4 0 0 1 0-6.8zM5 19.2c.8-3.4 3.6-5.2 7-5.2s6.2 1.8 7 5.2z"/></svg></span><span data-i18n="myAccount">Mi cuenta</span></a>
-    </div>
-    <!-- Account settings shows ONLY account navigation in its sidebar
-         (Giulia, 2026-10-12): no company zone here. The company doors
-         (Usuarios, Ajustes de la compañía, Billing) live in
-         the company sidebar module on the company pages, not on the
-         user settings surface. v1.1 amends: in company context the
-         company-settings section above IS shown. -->
-  </nav>
-</aside>
+<!-- Sidebar: ONE layer only. The module sidebar (target=user,
+     mounted into #user-settings-sidebar inside the layout below) owns
+     all sidebar navigation on this page: the five account
+     subsettings. The former hardcoded aside (company card + Company /
+     Account destination groups) duplicated destinations owned by the
+     company sidebar module on the company pages and the My account
+     self-entry; it is removed, per the account-surface rule that
+     company doors live on the company pages, not here. -->
 <div class="niv-main">
   <a class="niv-btn-back" href="/dashboard.html?view=home" data-i18n="back">← Volver</a>
   <h1 class="niv-page-title" data-i18n="pageTitle">Ajustes</h1>
@@ -179,7 +156,7 @@ html, body { overflow-y: auto !important; }
         <div><div class="niv-setting-label" data-i18n="ntf_quoteReady">Cotización enviada</div><div class="niv-setting-desc" data-i18n="ntf_quoteReadyDesc">Avisa cuando una cotización se marca como enviada al cliente.</div></div>
         <label class="niv-switch"><input type="checkbox" id="ntf-quoteReady" data-notif="quoteReady" checked /><span class="track"></span></label>
       </div>
-      <div class="niv-saved-msg" id="ntf-saved" data-i18n="notifSaved">✓ Preferencias guardadas</div>
+      <div class="niv-saved-msg" id="ntf-saved" data-i18n="notifSaved">Preferencias guardadas</div>
       <div class="niv-status-line" id="ntf-status"></div>
     </div>
   </section>
@@ -190,7 +167,7 @@ html, body { overflow-y: auto !important; }
       <div class="niv-card-title" data-i18n="langTitle">Idioma</div>
       <div class="niv-card-desc" data-i18n="langDesc">Idioma de la pantalla de inicio de sesión. Se guarda en tu cuenta y aplica en tus dispositivos.</div>
       <div class="niv-lang" style="margin:4px 0 0"><button type="button" id="lang-toggle" class="niv-lang-current" aria-expanded="false" aria-haspopup="listbox" aria-controls="niv-lang-list"><span class="niv-lang-current-label"></span><span class="niv-lang-chev" aria-hidden="true">▾</span></button><div class="niv-lang-list" id="niv-lang-list" role="listbox" hidden></div></div>
-      <div class="niv-saved-msg" id="lang-saved" data-i18n="langSaved">✓ Idioma guardado</div>
+      <div class="niv-saved-msg" id="lang-saved" data-i18n="langSaved">Idioma guardado</div>
       <div class="niv-status-line" id="lang-status"></div>
     </div>
 
@@ -226,7 +203,7 @@ html, body { overflow-y: auto !important; }
         <div><div class="niv-setting-label" data-i18n="ntf_loginAlert">Notificación de inicio de sesión</div><div class="niv-setting-desc" data-i18n="ntf_loginAlertDesc">Te avisa por correo y en la app cuando se inicia sesión en tu cuenta.</div></div>
         <label class="niv-switch"><input type="checkbox" id="sec-loginAlert" data-notif="loginAlert" checked /><span class="track"></span></label>
       </div>
-      <div class="niv-saved-msg" id="sec-login-saved" data-i18n="notifSaved">✓ Preferencias guardadas</div>
+      <div class="niv-saved-msg" id="sec-login-saved" data-i18n="notifSaved">Preferencias guardadas</div>
       <div class="niv-status-line" id="sec-notif-status"></div>
     </div>
 
@@ -251,7 +228,7 @@ html, body { overflow-y: auto !important; }
       <div class="niv-card-title" data-i18n="dataTitle">Datos y privacidad</div>
       <div class="niv-card-desc" data-i18n="dataDesc">Tus datos de cuenta y la política de privacidad de Nivelato.</div>
       <div style="margin-bottom:8px;"><a href="https://legobele.github.io/nivelato/privacy.html" style="font-size:13px;color:#fafafa;text-decoration:underline;" data-i18n="privacyPolicy">Política de privacidad</a></div>
-      <div id="delete-request-status" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:6px;font-size:13px;color:#e67700;display:none;" data-i18n="deletePending">⏳ Tu solicitud de eliminación está pendiente.</div>
+      <div id="delete-request-status" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:6px;font-size:13px;color:#e67700;display:none;" data-i18n="deletePending">Tu solicitud de eliminación está pendiente.</div>
       <button class="btn-delete-account" id="btn-delete-account" onclick="requestDeleteAccount()" data-i18n="deleteBtn">Solicitar eliminación de cuenta</button>
     </div>
   </section>
@@ -286,9 +263,9 @@ html, body { overflow-y: auto !important; }
       ntf_newProject: 'Nueva cotización', ntf_newProjectDesc: 'Avisa cuando alguien del taller crea una cotización.',
       ntf_projectEdit: 'Cotización editada', ntf_projectEditDesc: 'Avisa cuando editan una cotización existente.',
       ntf_quoteReady: 'Cotización enviada', ntf_quoteReadyDesc: 'Avisa cuando una cotización se marca como enviada al cliente.',
-      notifSaved: '✓ Preferencias guardadas', notifSaveFailed: 'No se pudieron guardar las preferencias. Revisa tu conexión e intenta de nuevo.',
+      notifSaved: 'Preferencias guardadas', notifSaveFailed: 'No se pudieron guardar las preferencias. Revisa tu conexión e intenta de nuevo.',
       langTitle: 'Idioma', langDesc: 'Idioma de la pantalla de inicio de sesión. Se guarda en tu cuenta y aplica en tus dispositivos.',
-      langSaved: '✓ Idioma guardado', langSaveFailed: 'No se pudo guardar el idioma. Intenta de nuevo.',
+      langSaved: 'Idioma guardado', langSaveFailed: 'No se pudo guardar el idioma. Intenta de nuevo.',
       ifaceTitle: 'Interfaz', ifaceDesc: 'Preferencias de apariencia de tu cuenta. Se guardan en este dispositivo y el panel las aplica al cargar.',
       compactLabel: 'Barra lateral compacta', compactDesc: 'Compacta la barra lateral del panel a un riel de iconos y muestra la barra superior.',
       pwdTitle: 'Cambiar contraseña', pwdDesc: 'Confirma tu contraseña actual y elige una nueva.',
@@ -309,7 +286,7 @@ html, body { overflow-y: auto !important; }
       devicesRenameFailed: 'No se pudo renombrar el dispositivo. Intenta de nuevo.', devicesRefresh: 'Actualizar lista',
       sessionTitle: 'Sesión', sessionDesc: 'Cierra la sesión de tu cuenta en este dispositivo.', logout: 'Cerrar sesión',
       dataTitle: 'Datos y privacidad', dataDesc: 'Tus datos de cuenta y la política de privacidad de Nivelato.', privacyPolicy: 'Política de privacidad',
-      deleteBtn: 'Solicitar eliminación de cuenta', deletePending: '⏳ Tu solicitud de eliminación está pendiente.',
+      deleteBtn: 'Solicitar eliminación de cuenta', deletePending: 'Tu solicitud de eliminación está pendiente.',
       deleteConfirm: '¿Solicitar la eliminación de tu cuenta y todos tus datos? Un administrador revisará tu solicitud.',
       deleteFailed: 'Error al solicitar eliminación. Intenta de nuevo.',
       profileMissing: 'No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.'
@@ -326,9 +303,9 @@ html, body { overflow-y: auto !important; }
       ntf_newProject: 'New quote', ntf_newProjectDesc: 'Alerts when someone at the workshop creates a quote.',
       ntf_projectEdit: 'Quote edited', ntf_projectEditDesc: 'Alerts when an existing quote is edited.',
       ntf_quoteReady: 'Quote sent', ntf_quoteReadyDesc: 'Alerts when a quote is marked as sent to the customer.',
-      notifSaved: '✓ Preferences saved', notifSaveFailed: 'Your preferences could not be saved. Check your connection and try again.',
+      notifSaved: 'Preferences saved', notifSaveFailed: 'Your preferences could not be saved. Check your connection and try again.',
       langTitle: 'Language', langDesc: 'Language for the sign in screen. It is saved to your account and applies on your devices.',
-      langSaved: '✓ Language saved', langSaveFailed: 'The language could not be saved. Try again.',
+      langSaved: 'Language saved', langSaveFailed: 'The language could not be saved. Try again.',
       ifaceTitle: 'Interface', ifaceDesc: 'Appearance preferences for your account. They are saved on this device and the dashboard applies them on load.',
       compactLabel: 'Compact sidebar', compactDesc: 'Compacts the dashboard sidebar into an icon rail and shows the top bar.',
       pwdTitle: 'Change password', pwdDesc: 'Confirm your current password and choose a new one.',
@@ -349,7 +326,7 @@ html, body { overflow-y: auto !important; }
       devicesRenameFailed: 'The device could not be renamed. Try again.', devicesRefresh: 'Refresh list',
       sessionTitle: 'Session', sessionDesc: 'Sign out of your account on this device.', logout: 'Sign out',
       dataTitle: 'Data and privacy', dataDesc: 'Your account data and the Nivelato privacy policy.', privacyPolicy: 'Privacy policy',
-      deleteBtn: 'Request account deletion', deletePending: '⏳ Your deletion request is pending.',
+      deleteBtn: 'Request account deletion', deletePending: 'Your deletion request is pending.',
       deleteConfirm: 'Request deletion of your account and all your data? An administrator will review your request.',
       deleteFailed: 'Error requesting deletion. Try again.',
       profileMissing: 'We could not find your user profile. Sign in again to repair it.'
@@ -581,27 +558,9 @@ onAuthStateChanged(auth, async (user) => {
     if (drStatus) drStatus.style.display = 'block';
   }
 
-  // The sidebar on this page carries account navigation only; the
-  // company doors live in the company sidebar module on the company
-  // pages (see the markup note at #set-company-group's old spot).
-  // sidebar company card
-  try {
-    const _os = await getDoc(doc(db, 'orgs', orgId));
-    const _on = _os.data()?.name || orgId;
-    document.getElementById('set-company-name').textContent = _on;
-    document.getElementById('set-company-avatar').textContent =
-      _on.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
-    // v1.1: company context -> show the company-settings destinations
-    // in the sidebar alongside the account nav. Company context is an
-    // org membership (orgId present); the company pages carry their own
-    // permission gates, so the links are safe to render.
-    if (orgId) {
-      const _cg = document.getElementById('company-settings-group');
-      if (_cg) _cg.hidden = false;
-    }
-    /* item 18: the header version line is removed; nothing paints a
-       version string in this header anymore. */
-  } catch (_) { /* keep placeholder */ }
+  // The sidebar on this page is the module sidebar (target=user)
+  // only; it needs no company card fill from here. The company doors
+  // live in the company sidebar module on the company pages.
 
   initPasswordSection();
   initDevicesSection();

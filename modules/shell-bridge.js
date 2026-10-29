@@ -82,6 +82,31 @@
     return '/dashboard.html?view=home';
   }
 
+  /* Self-navigation suppression: a niv:nav whose destination IS the
+     current page is dropped instead of reloading it. Paths are
+     normalized (trailing slash and .html stripped; the account
+     settings page is served as /account/settings but its file is
+     /settings) so the sidebar's /users entry matches users.html, the
+     company entries match their pages, and so on. A destination with
+     no query string counts as self on the same path (e.g. /users
+     while on /users?user=<id>); a destination WITH a query string
+     must match it exactly (dashboard ?view= entries stay distinct). */
+  function normalizePath(p) {
+    var s = String(p || '').replace(/\/+$/, '');
+    if (!s) s = '/';
+    if (s.slice(-5) === '.html') s = s.slice(0, -5);
+    if (s === '/settings') s = '/account/settings';
+    return s;
+  }
+  function isSelfHref(href) {
+    try {
+      var u = new URL(href, window.location.origin);
+      if (normalizePath(u.pathname) !== normalizePath(window.location.pathname)) return false;
+      if (!u.search) return true;
+      return u.search === window.location.search;
+    } catch (e) { return false; }
+  }
+
   function sameOriginHref(href) {
     if (typeof href !== 'string' || !href) return null;
     try {
@@ -172,6 +197,7 @@
         if (typeof opts.onReady === 'function') opts.onReady(d);
       } else if (d.type === 'niv:nav') {        var href = sameOriginHref(d.href);
         if (!href) return;
+        if (isSelfHref(href)) return; /* self-entry: no reload */
         /* Settings-destination navigations from inside a module iframe
            never pass through the host document's click capture, so
            nav-referrer.js would never learn the origin and Back would
@@ -199,7 +225,8 @@
           try { handled = opts.onRowAction(d) === false; } catch (e) { handled = false; }
         }
         if (!handled) {
-          window.location.href = rowOpenDest(d);
+          var dest = rowOpenDest(d);
+          if (!isSelfHref(dest)) window.location.href = dest;
         }
       } else if (d.type === 'niv:resize') {
         if (heightMode !== 'auto') return;

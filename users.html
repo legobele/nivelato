@@ -166,7 +166,9 @@
   .ov-toggle { width: 46px; height: 26px; flex: none; border-radius: 999px; border: 1px solid var(--niv-border); background: var(--niv-surface); position: relative; cursor: pointer; padding: 0; }
   .ov-toggle .knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--niv-text-dim); transition: left .15s ease, background .15s ease; }
   .ov-toggle.on { background: var(--niv-accent, #fafafa); border-color: transparent; }
-  .ov-toggle.on .knob { left: 22px; background: #fff; }
+  /* On-state pairing: the track is the light accent, so the knob is
+     near-black (white on the light track was invisible). */
+  .ov-toggle.on .knob { left: 22px; background: #050505; }
   .ov-edit-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 </style>
 <script>
@@ -720,7 +722,7 @@ function paintEnroll(body, m, status, info, prominent) {
     ? (status === 'none' ? t('enrollGenerate') : t('enrollRegenerate'))
     : t('linkAnother');
   body.innerHTML = '<div class="enroll-status">' + escapeHtml(statusText) + '</div>'
-    + '<div class="enroll-actions"><button type="button" class="niv-btn-pill' + (prominent ? ' primary' : '') + '" id="ov-enroll-gen">'
+    + '<div class="enroll-actions"><button type="button" class="niv-btn-pill' + (prominent ? ' niv-btn-primary' : '') + '" id="ov-enroll-gen">'
     + escapeHtml(genLabel) + '</button></div>'
     + '<div id="ov-enroll-result"></div>';
   const gen = document.getElementById('ov-enroll-gen');
@@ -1065,7 +1067,12 @@ applyStaticLang();
     } catch (err2) {}
     window.__nivSidebarHandle = window.NivShell.mountSidebar('#chrome-sidebar', { target: 'shell', active: 'users', lang: lang });
     if (window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
-      window.NivShell.mountTopbar('#chrome-topbar', { active: 'users', context: 'settings' });
+      /* Default (dashboard-family) context, NOT 'settings': the settings
+         context renders nothing by design (modules/README.md), which
+         left this page's topbar permanently empty. This page is a
+         dashboard view (shell sidebar, active 'users'), so it mounts
+         the bar the same way the dashboard family does. */
+      window.NivShell.mountTopbar('#chrome-topbar', { active: 'users' });
     }
   })();
 </script>

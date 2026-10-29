@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <script src="./company-theme.js"></script>
+<script>/* language resolution (same order as the app): cookie nivelato-login-lang -> localStorage nivelato-login-lang -> navigator.language */
+try{var __cm=('; '+document.cookie).match(/; nivelato-login-lang=(es|en)(?:;|$)/);var __ls=null;try{__ls=localStorage.getItem('nivelato-login-lang');}catch(e){}var __l=(__cm&&__cm[1])||(__ls==='es'||__ls==='en'?__ls:null)||(((navigator.language||'es').toLowerCase().indexOf('es')===0)?'es':'en');document.documentElement.lang=__l;window.__photoLang=__l;}catch(e){window.__photoLang='es';}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0e0e10" />
 <link rel="icon" href="icon-192.png" />
@@ -24,7 +26,11 @@
   .header-sub { font-size: 11px; color: var(--niv-text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .header-btns { display: flex; gap: 8px; flex-shrink: 0; }
   .header-btn { padding: 8px 14px; border: 1px solid var(--niv-border-soft); border-radius: var(--niv-pill); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; background: var(--niv-surface-2); color: var(--niv-text); }
-  .header-btn.primary { background: var(--niv-accent); border-color: transparent; }
+  /* primary pairing is deliberate, not token luck: --niv-accent is #fafafa
+     (near-white), so primary surfaces get the dashboard light gradient
+     with dark #050505 text (same pair as .niv-nav-btn.active). */
+  .header-btn.primary { background: linear-gradient(135deg, #fafafa, #c9c9ce); border-color: transparent; color: #050505; }
+  .header-btn svg { width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px; }
   .header-btn:hover { filter: brightness(1.15); }
   .header-btn:disabled { opacity: 0.4; cursor: default; }
 
@@ -34,14 +40,16 @@
 
   /* EMPTY STATE */
   #empty-state { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--niv-text-dim); text-align: center; padding: 24px; }
-  #empty-state .big { font-size: 44px; }
-  .btn-photo { padding: 14px 22px; border: 1px solid transparent; border-radius: var(--niv-pill); font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; background: var(--niv-accent); color: #fff; }
+  #empty-state .big { line-height: 0; }
+  #empty-state .big svg { width: 44px; height: 44px; display: block; }
+  .btn-photo { padding: 14px 22px; border: 1px solid transparent; border-radius: var(--niv-pill); font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; background: linear-gradient(135deg, #fafafa, #c9c9ce); color: #050505; }
   .btn-photo.ghost { background: var(--niv-surface-2); border-color: var(--niv-border-soft); color: var(--niv-text); }
 
   /* TOOLBAR */
   #toolbar { display: flex; gap: 6px; align-items: center; padding: 8px 12px; background: var(--niv-surface); border-top: 1px solid var(--niv-border-soft); flex-shrink: 0; overflow-x: auto; flex-wrap: wrap; }
   .tool-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 44px; padding: 6px 10px; border: 1px solid var(--niv-border-soft); border-radius: 8px; background: transparent; color: var(--niv-text-dim); font-family: inherit; font-size: 10px; font-weight: 600; cursor: pointer; }
-  .tool-btn .ico { font-size: 15px; }
+  .tool-btn .ico { line-height: 0; }
+  .tool-btn .ico svg { width: 16px; height: 16px; display: block; }
   .tool-btn.active { background: rgba(25,113,194,0.22); border-color: var(--niv-accent); color: var(--niv-text); }
   .tool-sep { width: 1px; height: 26px; background: var(--niv-border-soft); flex-shrink: 0; }
 
@@ -60,7 +68,7 @@
   .label-actions button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
   #load-error { display: none; color: #f87171; font-size: 13px; max-width: 320px; }
-  .btn-ok { background: var(--niv-accent); color: #fff; }
+  .btn-ok { background: linear-gradient(135deg, #fafafa, #c9c9ce); color: #050505; }
   .btn-cancel { background: var(--niv-surface-2); color: var(--niv-text-dim); }
   .quick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
   .quick-chips button { min-height: 44px; padding: 6px 12px; border: 1px solid var(--niv-border-soft); border-radius: 6px; background: transparent; color: var(--niv-text); font-size: 12px; font-family: inherit; cursor: pointer; }
@@ -75,35 +83,35 @@
 <div id="app-shell">
   <header>
     <div class="header-titles">
-      <h1 class="header-title">Foto con medidas</h1>
-      <div class="header-sub" id="header-sub">Alinea el marco con la abertura</div>
+      <h1 class="header-title" data-i18n="title">Foto con medidas</h1>
+      <div class="header-sub" id="header-sub" data-i18n="subDefault">Alinea el marco con la abertura</div>
     </div>
     <div class="header-btns">
-      <button class="header-btn" id="btn-reset" disabled>↩️ Marco</button>
-      <button class="header-btn primary" id="btn-done" disabled>✓ Usar esta foto</button>
+      <button class="header-btn" id="btn-reset" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V5a1 1 0 0 1 1-1h4"/><path d="M15 4h4a1 1 0 0 1 1 1v4"/><path d="M20 15v4a1 1 0 0 1-1 1h-4"/><path d="M9 20H5a1 1 0 0 1-1-1v-4"/></svg><span data-i18n="resetFrame">Marco</span></button>
+      <button class="header-btn primary" id="btn-done" disabled><span id="btn-done-label" data-i18n="usePhoto">Usar esta foto</span></button>
     </div>
   </header>
 
   <div id="stage">
     <div id="empty-state">
-      <div class="big">📷</div>
-      <div>Agrega una foto del hueco para marcar las medidas.</div>
+      <div class="big" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7l1.6-2.6h2.8L15 7"/><circle cx="12" cy="13.5" r="3.4"/></svg></div>
+      <div data-i18n="emptyText">Agrega una foto del hueco para marcar las medidas.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
-        <button class="btn-photo" id="btn-camera">Tomar foto</button>
-        <button class="btn-photo ghost" id="btn-gallery">Elegir de galería</button>
+        <button class="btn-photo" id="btn-camera" data-i18n="takePhoto">Tomar foto</button>
+        <button class="btn-photo ghost" id="btn-gallery" data-i18n="fromGallery">Elegir de galería</button>
       </div>
       <div id="load-error" role="alert"></div>
     </div>
-    <canvas id="photo-canvas" style="display:none;touch-action:none;" aria-label="Foto del hueco con marco de medidas"></canvas>
+    <canvas id="photo-canvas" style="display:none;touch-action:none;" aria-label="Foto del hueco con marco de medidas" data-i18n-aria="canvasLabel"></canvas>
     <canvas id="loupe-canvas"></canvas>
   </div>
 
   <div id="toolbar" style="display:none;">
-    <button class="tool-btn" id="tool-line" data-tool="line"><span class="ico">📏</span>Línea</button>
-    <button class="tool-btn" id="tool-arrow" data-tool="arrow"><span class="ico">↔️</span>Flecha</button>
-    <button class="tool-btn" id="tool-text" data-tool="text"><span class="ico">🔤</span>Texto</button>
+    <button class="tool-btn" id="tool-line" data-tool="line"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="9" width="19" height="6.5" rx="1"/><path d="M7 9v3"/><path d="M11.5 9v3"/><path d="M16 9v3"/></svg></span><span data-i18n="toolLine">Línea</span></button>
+    <button class="tool-btn" id="tool-arrow" data-tool="arrow"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 8l-4 4 4 4"/><path d="M17 8l4 4-4 4"/></svg></span><span data-i18n="toolArrow">Flecha</span></button>
+    <button class="tool-btn" id="tool-text" data-tool="text"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5.5h14"/><path d="M12 5.5V19"/><path d="M9.5 19h5"/></svg></span><span data-i18n="toolText">Texto</span></button>
     <span class="tool-sep"></span>
-    <button class="tool-btn" id="btn-undo"><span class="ico">↩️</span>Deshacer</button>
+    <button class="tool-btn" id="btn-undo"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 6 5 9.5l3.5 3.5"/><path d="M5 9.5h9a5 5 0 0 1 0 10h-3.5"/></svg></span><span data-i18n="undo">Deshacer</span></button>
   </div>
 
   <div id="hint-bar"></div>
@@ -111,13 +119,13 @@
 
 <div id="label-modal" role="dialog" aria-modal="true" aria-labelledby="label-title">
   <div class="label-card">
-    <h3 id="label-title">Texto</h3>
+    <h3 id="label-title" data-i18n="textTitle">Texto</h3>
     <div class="quick-chips" id="quick-chips"></div>
-    <label class="sr-only" for="label-input">Texto de la etiqueta</label>
-    <input id="label-input" placeholder="Texto" maxlength="40" />
+    <label class="sr-only" for="label-input" data-i18n="labelInputLabel">Texto de la etiqueta</label>
+    <input id="label-input" placeholder="Texto" data-i18n-ph="textTitle" maxlength="40" />
     <div class="label-actions">
-      <button class="btn-cancel" id="btn-label-cancel">Cancelar</button>
-      <button class="btn-ok" id="btn-label-ok">Agregar</button>
+      <button class="btn-cancel" id="btn-label-cancel" data-i18n="cancel">Cancelar</button>
+      <button class="btn-ok" id="btn-label-ok" data-i18n="add">Agregar</button>
     </div>
   </div>
 </div>
@@ -130,12 +138,59 @@ import { auth } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { ensureFlowClaims, routeAfterGate } from './geo.js';
 
+// ── i18n: same resolution as the app (cookie nivelato-login-lang ->
+// localStorage nivelato-login-lang -> navigator.language); the head
+// boot script already resolved it into window.__photoLang + <html lang>.
+const LANG = (window.__photoLang === 'en' || window.__photoLang === 'es')
+  ? window.__photoLang
+  : (((navigator.language || 'es').toLowerCase().indexOf('es') === 0) ? 'es' : 'en');
+const L = (es, en) => (LANG === 'en' ? en : es);
+const I18N = {
+  es: {
+    docTitle: 'Nivelato - Foto con medidas', title: 'Foto con medidas',
+    subDefault: 'Alinea el marco con la abertura', resetFrame: 'Marco', usePhoto: 'Usar esta foto',
+    emptyText: 'Agrega una foto del hueco para marcar las medidas.',
+    takePhoto: 'Tomar foto', fromGallery: 'Elegir de galería',
+    canvasLabel: 'Foto del hueco con marco de medidas',
+    toolLine: 'Línea', toolArrow: 'Flecha', toolText: 'Texto', undo: 'Deshacer',
+    textTitle: 'Texto', labelInputLabel: 'Texto de la etiqueta', cancel: 'Cancelar', add: 'Agregar'
+  },
+  en: {
+    docTitle: 'Nivelato - Photo with measurements', title: 'Photo with measurements',
+    subDefault: 'Align the frame with the opening', resetFrame: 'Frame', usePhoto: 'Use this photo',
+    emptyText: 'Add a photo of the opening to mark the measurements.',
+    takePhoto: 'Take photo', fromGallery: 'Choose from gallery',
+    canvasLabel: 'Photo of the opening with measurement frame',
+    toolLine: 'Line', toolArrow: 'Arrow', toolText: 'Text', undo: 'Undo',
+    textTitle: 'Text', labelInputLabel: 'Label text', cancel: 'Cancel', add: 'Add'
+  }
+};
+function applyLang(lang) {
+  const dict = I18N[lang] || I18N.es;
+  document.documentElement.lang = lang;
+  document.title = dict.docTitle;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (dict[k] !== undefined) el.textContent = dict[k];
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const k = el.getAttribute('data-i18n-ph');
+    if (dict[k] !== undefined) el.setAttribute('placeholder', dict[k]);
+  });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+    const k = el.getAttribute('data-i18n-aria');
+    if (dict[k] !== undefined) el.setAttribute('aria-label', dict[k]);
+  });
+}
+
 const canvas = document.getElementById('photo-canvas');
 const ctx = canvas.getContext('2d');
 const stage = document.getElementById('stage');
 const hintBar = document.getElementById('hint-bar');
 const btnDone = document.getElementById('btn-done');
+const btnDoneLabel = document.getElementById('btn-done-label');
 const btnReset = document.getElementById('btn-reset');
+applyLang(LANG);
 const loupeCanvas = document.getElementById('loupe-canvas');
 const loupeCtx = loupeCanvas.getContext('2d');
 const LOUPE = 160;
@@ -154,9 +209,24 @@ let customStrokes = [];          // custom line/arrow/text annotations (image px
 let pendingLabel = null;         // { type, a, b } waiting on modal
 let quickLabels = [];
 let frameNorm = null;
+let offsetLabels = { paredIzq: '', paredDer: '', techo: '', piso: '' };
+// Dimension-label placement: pos = image-px center once the user drags
+// the label off its edge midpoint (null = follow the edge), scale =
+// label text size multiplier. Part of the saved annotations payload.
+let dimLabels = {
+  bottom: { pos: null, scale: 1 }, top: { pos: null, scale: 1 },
+  left: { pos: null, scale: 1 }, right: { pos: null, scale: 1 }
+};
+// Annotation selection / dragging (custom strokes + dimension labels)
+let selected = null;       // { kind: 'stroke', index } | { kind: 'dim', key }
+let annoDrag = null;       // active move/resize drag state
+let hitBoxes = { strokes: {}, dims: {} };  // label boxes from the last interactive render
+let pendingAnnotations = null;             // annotations handed in before a photo loads
 
 // ── helpers ──
 function setHint(t) { hintBar.textContent = t; }
+const HINT_DEFAULT = () => L('Arrastra los puntos de las esquinas para alinear el marco. Usa las herramientas para añadir líneas o texto.', 'Drag the corner points to align the frame. Use the tools to add lines or text.');
+const HINT_SELECTED = () => L('Seleccionado: arrastra para mover. Arrastra el punto de la esquina de la etiqueta para cambiar su tamaño.', 'Selected: drag to move. Drag the label corner handle to resize it.');
 
 function toImageCoords(e) {
   const rect = canvas.getBoundingClientRect();
@@ -179,47 +249,60 @@ function fmtInches(v) {
   return (whole > 0 || !s) ? (whole + (s ? ' ' + s : '')) : s;
 }
 
-// ── frame geometry (normalized 0..1, mirrors the main graph) ──
+// ── frame geometry ──
+// The draggable frame is the BASE rectangle: axis-aligned, with the
+// anchoBot x altoIzq aspect of the measurement. The OFFSET outline is a
+// second polygon derived from the base on every render (never baked
+// into the initial corners, which is what made the frame load skewed):
+// the same base+offsets polygon the Dimensions diagram computes, with
+// signed raw offsets in inches (paredIzq.raw = pI_A - pI_B, etc.):
+//   anchoTop = anchoBot - paredIzq.raw - paredDer.raw
+//   altoDer  = altoIzq  - techo.raw    - piso.raw
+// Offset shifts are drawn at TRUE inch scale (raw * px-per-inch of the
+// base rect), and each nonzero offset also gets a badge with its saved
+// label at the moved corner, so offsets are marked even when the true
+// shift is sub-pixel.
 function computeFrameNorm(m) {
   const pIv = m.paredIzq || 0, pDv = m.paredDer || 0, tcv = m.techo || 0, psv = m.piso || 0;
-  const padX = 0.13, padY = 0.15;
-  const bx = padX, by = padY, bw = 1 - 2*padX, bh = 1 - 2*padY;
-  const EXAG = Math.min(bw, bh) * 0.15;
-  const clamp = (v, lim) => Math.max(-lim, Math.min(lim, v));
-  const pIMax = Math.max(Math.abs(pIv), 1), pDMax = Math.max(Math.abs(pDv), 1), tMax = Math.max(Math.abs(tcv), 1), pMax = Math.max(Math.abs(psv), 1);
-  const leftOffsetTop   = clamp((pIv / pIMax) * EXAG, EXAG);
-  const rightOffsetTop  = -clamp((pDv / pDMax) * EXAG, EXAG);
-  const topOffsetRight  = clamp((tcv / tMax) * EXAG * (bh / bw), EXAG);
-  const bottomOffsetRight = -clamp((psv / pMax) * EXAG * (bh / bw), EXAG);
   const anchoBot = m.anchoBot || 36;
   const altoIzq  = m.altoIzq  || 84;
-  const anchoTop = m.anchoTop || Math.max(0, anchoBot - Math.abs(pIv) - Math.abs(pDv));
-  const altoDer  = m.altoDer  || Math.max(0, altoIzq - Math.abs(tcv) - Math.abs(psv));
-  return {
-    TL: { x: bx + leftOffsetTop, y: by },
-    TR: { x: bx + bw + rightOffsetTop, y: by + topOffsetRight },
-    BR: { x: bx + bw + rightOffsetTop, y: by + bh + bottomOffsetRight },
-    BL: { x: bx + leftOffsetTop, y: by + bh },
-    anchoBot, anchoTop, altoIzq, altoDer
-  };
+  const anchoTop = m.anchoTop || Math.max(0, anchoBot - pIv - pDv);
+  const altoDer  = m.altoDer  || Math.max(0, altoIzq - tcv - psv);
+  return { anchoBot, anchoTop, altoIzq, altoDer, pI: pIv, pD: pDv, t: tcv, p: psv };
 }
 
-function cornersFromNorm(g) {
-  const xs = [g.TL.x, g.TR.x, g.BR.x, g.BL.x];
-  const ys = [g.TL.y, g.TR.y, g.BR.y, g.BL.y];
-  const minX = Math.min(...xs), maxX = Math.max(...xs);
-  const minY = Math.min(...ys), maxY = Math.max(...ys);
-  const nw = maxX - minX, nh = maxY - minY;
-  const ratio = nw > 0 && nh > 0 ? nh / nw : 1;
+function rectCorners() {
+  const g = frameNorm || computeFrameNorm(measurements);
+  const ratio = (g.anchoBot > 0 && g.altoIzq > 0) ? (g.altoIzq / g.anchoBot) : 1;
   let w = baseW * 0.72;
   let h = w * ratio;
   if (h > baseH * 0.72) { h = baseH * 0.72; w = h / ratio; }
-  const scaleX = w / nw, scaleY = h / nh;
-  const cx = baseW / 2, cy = baseH / 2;
-  const offX = cx - (minX + maxX) / 2 * scaleX;
-  const offY = cy - (minY + maxY) / 2 * scaleY;
-  const map = (p) => ({ x: p.x * scaleX + offX, y: p.y * scaleY + offY });
-  return { TL: map(g.TL), TR: map(g.TR), BR: map(g.BR), BL: map(g.BL) };
+  const x = (baseW - w) / 2, y = (baseH - h) / 2;
+  return {
+    TL: { x: x, y: y }, TR: { x: x + w, y: y },
+    BR: { x: x + w, y: y + h }, BL: { x: x, y: y + h }
+  };
+}
+
+function offsetQuad(cn) {
+  const g = frameNorm;
+  if (!g) return { TL: cn.TL, TR: cn.TR, BR: cn.BR, BL: cn.BL };
+  const xs = [cn.TL.x, cn.TR.x, cn.BR.x, cn.BL.x];
+  const ys = [cn.TL.y, cn.TR.y, cn.BR.y, cn.BL.y];
+  const w = Math.max(...xs) - Math.min(...xs);
+  const h = Math.max(...ys) - Math.min(...ys);
+  const ppx = g.anchoBot > 0 ? w / g.anchoBot : 0;   // px per inch, horizontal
+  const ppy = g.altoIzq > 0 ? h / g.altoIzq : 0;     // px per inch, vertical
+  // sign convention matches the main graph / embedGraph: paredIzq raw>0
+  // moves the top-left corner right, paredDer raw>0 moves the top-right
+  // corner left, techo raw>0 moves the top-right corner down, piso
+  // raw>0 moves the bottom-right corner up.
+  return {
+    TL: { x: cn.TL.x + g.pI * ppx, y: cn.TL.y },
+    TR: { x: cn.TR.x - g.pD * ppx, y: cn.TR.y + g.t * ppy },
+    BR: { x: cn.BR.x, y: cn.BR.y - g.p * ppy },
+    BL: { x: cn.BL.x, y: cn.BL.y }
+  };
 }
 
 // ── rendering ──
@@ -253,6 +336,16 @@ function drawLabel(c, text, x, y, angle, size) {
   c.fillStyle = TEXT_COLOR;
   c.fillText(text, 0, 1);
   c.restore();
+  return { cx: x, cy: y, w: w + 16, h: size + 12, angle: angle || 0 };
+}
+
+// hit test against a (possibly rotated) label box returned by drawLabel
+function pointInBox(p, box) {
+  if (!box) return false;
+  const dx = p.x - box.cx, dy = p.y - box.cy;
+  const cos = Math.cos(-(box.angle || 0)), sin = Math.sin(-(box.angle || 0));
+  const lx = dx * cos - dy * sin, ly = dx * sin + dy * cos;
+  return Math.abs(lx) <= box.w / 2 && Math.abs(ly) <= box.h / 2;
 }
 
 // LABEL SIZE: a readable fixed size in image px, scaled to the photo.
@@ -261,8 +354,10 @@ function labelFontSize() {
   return Math.max(22, baseW * 0.026);
 }
 
-// dimension line with offset, label parallel & centered
-function drawDimLinePx(c, a, b, off, label) {
+// dimension line with offset, label parallel & centered on the edge
+// unless the user dragged it (dimKey entry in dimLabels carries the
+// override position and the text scale for that edge's label)
+function drawDimLinePx(c, a, b, off, label, dimKey) {
   const ang = Math.atan2(b.y - a.y, b.x - a.x);
   const perp = { x: -Math.sin(ang), y: Math.cos(ang) };
   const o = off * Math.hypot(baseW, baseH) * 0.035;
@@ -286,11 +381,15 @@ function drawDimLinePx(c, a, b, off, label) {
   }
   if (label) {
     const mid = { x: (a2.x + b2.x) / 2, y: (a2.y + b2.y) / 2 };
-    drawLabel(c, label, mid.x, mid.y, ang, labelFontSize());
+    const dl = dimKey ? dimLabels[dimKey] : null;
+    const center = (dl && dl.pos) ? dl.pos : mid;
+    const size = labelFontSize() * (dl ? dl.scale : 1);
+    const box = drawLabel(c, label, center.x, center.y, (dl && dl.pos) ? 0 : ang, size);
+    if (c === ctx && dimKey) hitBoxes.dims[dimKey] = box;
   }
 }
 
-function drawArrowLine(c, a, b, label, plain) {
+function drawArrowLine(c, a, b, label, plain, labelScale, recIndex) {
   const ang = Math.atan2(b.y - a.y, b.x - a.x);
   c.strokeStyle = LINE_COLOR;
   c.lineWidth = LINE_WIDTH;
@@ -311,37 +410,76 @@ function drawArrowLine(c, a, b, label, plain) {
   }
   if (label) {
     const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-    drawLabel(c, label, mid.x, mid.y, ang, labelFontSize());
+    const box = drawLabel(c, label, mid.x, mid.y, ang, labelFontSize() * (labelScale || 1));
+    if (c === ctx && recIndex != null) hitBoxes.strokes[recIndex] = box;
   }
 }
 
-function drawTextAnno(c, s) {
-  drawLabel(c, s.label, s.x, s.y, 0, labelFontSize());
+function drawTextAnno(c, s, recIndex) {
+  const box = drawLabel(c, s.label, s.x, s.y, 0, labelFontSize() * (s.labelScale || 1));
+  if (c === ctx && recIndex != null) hitBoxes.strokes[recIndex] = box;
 }
 
-function renderFrame(c, corners, opts) {
-  const pts = [corners.TL, corners.TR, corners.BR, corners.BL];
+function quadPath(c, q) {
+  const pts = [q.TL, q.TR, q.BR, q.BL];
   c.beginPath();
   c.moveTo(pts[0].x, pts[0].y);
   for (let i = 1; i < 4; i++) c.lineTo(pts[i].x, pts[i].y);
   c.closePath();
+}
+
+function renderFrame(c, cn, opts) {
+  const g = frameNorm || computeFrameNorm(measurements);
+  const oq = offsetQuad(cn);
+
+  // BASE outline: the level rectangle (dashed light gray, same
+  // reference treatment as the Dimensions diagram)
+  c.save();
+  c.setLineDash([Math.max(6, baseW * 0.008), Math.max(5, baseW * 0.006)]);
+  quadPath(c, cn);
+  c.strokeStyle = 'rgba(230,230,235,0.85)';
+  c.lineWidth = Math.max(2, LINE_WIDTH * 0.6);
+  c.lineJoin = 'round';
+  c.stroke();
+  c.restore();
+
+  // OFFSET outline: the actual opening after the saved offsets
+  quadPath(c, oq);
   c.fillStyle = FILL_COLOR;
   c.fill();
   c.strokeStyle = LINE_COLOR;
   c.lineWidth = LINE_WIDTH;
   c.lineJoin = 'round';
-  c.beginPath();
-  c.moveTo(pts[0].x, pts[0].y);
-  for (let i = 1; i < 4; i++) c.lineTo(pts[i].x, pts[i].y);
-  c.closePath();
   c.stroke();
 
-  const g = frameNorm;
-  const o = 0;  // dimension lines exactly ON the frame borders
-  drawDimLinePx(c, corners.BL, corners.BR,  o, fmtInches(g.anchoBot) + '"');
-  drawDimLinePx(c, corners.TL, corners.TR, -o, fmtInches(g.anchoTop) + '"');
-  drawDimLinePx(c, corners.TL, corners.BL, -o, fmtInches(g.altoIzq) + '"');
-  drawDimLinePx(c, corners.TR, corners.BR,  o, fmtInches(g.altoDer) + '"');
+  // Offset badges: a connector from the base corner to the moved
+  // corner plus the offset's saved label, for every nonzero offset.
+  const badge = (basePt, offPt, raw, label, dx, dy) => {
+    if (!raw || !label || label === 'Nivel') return;
+    c.save();
+    c.strokeStyle = LINE_COLOR;
+    c.lineWidth = 3;
+    c.beginPath();
+    c.moveTo(basePt.x, basePt.y);
+    c.lineTo(offPt.x, offPt.y);
+    c.stroke();
+    drawLabel(c, label, offPt.x + dx, offPt.y + dy, 0, labelFontSize() * 0.82);
+    c.restore();
+  };
+  const bd = labelFontSize() * 1.1;
+  badge(cn.TL, oq.TL, g.pI, offsetLabels.paredIzq, 0, -bd);
+  badge(cn.TR, oq.TR, g.pD, offsetLabels.paredDer, bd, -bd);
+  badge(cn.TR, oq.TR, g.t, offsetLabels.techo, bd, bd);
+  badge(cn.BR, oq.BR, g.p, offsetLabels.piso, bd, 0);
+
+  // Dimension labels on ALL four edges, each with its actual value:
+  // base bottom = anchoBot, offset top = anchoTop, base left =
+  // altoIzq, offset right = altoDer. Lines sit just outside the edge.
+  const dimLabel = (v) => { const s = fmtInches(v); return (s === null || v <= 0) ? null : s + '"'; };
+  drawDimLinePx(c, cn.BL, cn.BR, 1, dimLabel(g.anchoBot), 'bottom');
+  drawDimLinePx(c, oq.TL, oq.TR, -1, dimLabel(g.anchoTop), 'top');
+  drawDimLinePx(c, cn.TL, cn.BL, 1, dimLabel(g.altoIzq), 'left');
+  drawDimLinePx(c, oq.TR, oq.BR, -1, dimLabel(g.altoDer), 'right');
 
   if (opts && opts.handles) drawHandles(c);
 }
@@ -369,26 +507,155 @@ function drawHandles(c) {
   }
 }
 
+function drawStrokes(c, interactive) {
+  customStrokes.forEach((s, i) => {
+    if (s.type === 'line' || s.type === 'arrow') drawArrowLine(c, s.a, s.b, s.label, s.type === 'line', s.labelScale || 1, interactive ? i : null);
+    else if (s.type === 'text') drawTextAnno(c, s, interactive ? i : null);
+  });
+}
+
+// the label box of the current selection, from the last render
+function selectedBox() {
+  if (!selected) return null;
+  if (selected.kind === 'stroke') return hitBoxes.strokes[selected.index] || null;
+  if (selected.kind === 'dim') return hitBoxes.dims[selected.key] || null;
+  return null;
+}
+
+// resize handle anchor: the label box's bottom-right corner, in the
+// box's rotated frame
+function resizeHandlePoint(box) {
+  const cos = Math.cos(box.angle || 0), sin = Math.sin(box.angle || 0);
+  return {
+    x: box.cx + (box.w / 2) * cos - (box.h / 2) * sin,
+    y: box.cy + (box.w / 2) * sin + (box.h / 2) * cos
+  };
+}
+
+function drawSelectionOverlay() {
+  const box = selectedBox();
+  if (!box) return;
+  ctx.save();
+  ctx.translate(box.cx, box.cy);
+  ctx.rotate(box.angle || 0);
+  ctx.setLineDash([6, 4]);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(-box.w / 2 - 4, -box.h / 2 - 4, box.w + 8, box.h + 8);
+  ctx.setLineDash([]);
+  // resize handle (bottom-right)
+  ctx.beginPath();
+  ctx.arc(box.w / 2, box.h / 2, Math.max(7, labelFontSize() * 0.32), 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = LINE_COLOR;
+  ctx.stroke();
+  ctx.restore();
+}
+
 function redraw() {
+  hitBoxes = { strokes: {}, dims: {} };
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(img, 0, 0, baseW, baseH);
   if (corners) renderFrame(ctx, corners, { handles: true });
-  // custom strokes
-  for (const s of customStrokes) {
-    if (s.type === 'line' || s.type === 'arrow') drawArrowLine(ctx, s.a, s.b, s.label, s.type === 'line');
-    else if (s.type === 'text') drawTextAnno(ctx, s);
-  }
+  drawStrokes(ctx, true);
   // in-progress shape
   if (drawingShape) {
     drawArrowLine(ctx, drawingShape.a, drawingShape.b, null, drawingShape.type === 'line');
   }
+  drawSelectionOverlay();
 }
 
 // ── corner init / reset ──
 function resetCorners() {
   if (!frameNorm) frameNorm = computeFrameNorm(measurements);
-  corners = cornersFromNorm(frameNorm);
+  corners = rectCorners();
   redraw();
+}
+
+// ── annotation persistence ──
+// The marked-photo payload returned to the wizard keeps its original
+// { type, dataUrl } shape; annotations ride along as an extra field
+// the wizard may store and hand back on a later NIVELATO_MEASUREMENTS
+// message (payload.annotations) to restore placement and sizes.
+// Backward compatible both ways: old wizards ignore the extra field,
+// and a payload without annotations restores nothing.
+function serializeAnnotations() {
+  return JSON.parse(JSON.stringify({
+    v: 1,
+    strokes: customStrokes,
+    dimLabels: dimLabels,
+    corners: corners
+  }));
+}
+
+function restoreAnnotations(data) {
+  if (!data || typeof data !== 'object') return false;
+  let changed = false;
+  if (Array.isArray(data.strokes)) {
+    customStrokes = data.strokes.filter(s => {
+      if (!s || typeof s !== 'object') return false;
+      if (s.type === 'text') return typeof s.x === 'number' && typeof s.y === 'number' && typeof s.label === 'string';
+      if (s.type === 'line' || s.type === 'arrow') return s.a && s.b && typeof s.a.x === 'number' && typeof s.b.x === 'number';
+      return false;
+    }).map(s => {
+      const out = Object.assign({}, s);
+      out.labelScale = (typeof s.labelScale === 'number' && s.labelScale > 0) ? s.labelScale : 1;
+      return out;
+    });
+    changed = true;
+  }
+  if (data.dimLabels && typeof data.dimLabels === 'object') {
+    for (const k of ['bottom', 'top', 'left', 'right']) {
+      const d = data.dimLabels[k];
+      if (d && typeof d === 'object') {
+        dimLabels[k] = {
+          pos: (d.pos && typeof d.pos.x === 'number' && typeof d.pos.y === 'number') ? { x: d.pos.x, y: d.pos.y } : null,
+          scale: (typeof d.scale === 'number' && d.scale > 0) ? d.scale : 1
+        };
+      }
+    }
+    changed = true;
+  }
+  if (data.corners && img && data.corners.TL && data.corners.BR) {
+    corners = data.corners;
+    changed = true;
+  }
+  selected = null;
+  if (changed && img) redraw();
+  return changed;
+}
+
+// ── annotation hit testing (image px) ──
+function distToSegment(p, a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  let t = len2 ? ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+}
+
+function hitAnnotation(p) {
+  // resize handle of the current selection wins over everything
+  const box = selectedBox();
+  if (box) {
+    const hp = resizeHandlePoint(box);
+    if (Math.hypot(p.x - hp.x, p.y - hp.y) <= Math.max(14, 22 / scale)) return { mode: 'resize' };
+  }
+  // custom strokes, topmost (last drawn) first
+  for (let i = customStrokes.length - 1; i >= 0; i--) {
+    const s = customStrokes[i];
+    if (hitBoxes.strokes[i] && pointInBox(p, hitBoxes.strokes[i])) return { mode: 'move', sel: { kind: 'stroke', index: i } };
+    if ((s.type === 'line' || s.type === 'arrow') && distToSegment(p, s.a, s.b) <= Math.max(10, 20 / scale)) {
+      return { mode: 'move', sel: { kind: 'stroke', index: i } };
+    }
+  }
+  // dimension labels
+  for (const k of ['bottom', 'top', 'left', 'right']) {
+    if (hitBoxes.dims[k] && pointInBox(p, hitBoxes.dims[k])) return { mode: 'move', sel: { kind: 'dim', key: k } };
+  }
+  return null;
 }
 
 // ── image loading ──
@@ -439,27 +706,27 @@ function clearLoadError() {
     // accept="image/*" is advisory — validate client-side before buffering
     // the whole file into memory as base64 (~1.37x the file size).
     if (f.type && !f.type.startsWith('image/')) {
-      showLoadError('No se pudo leer la foto: el archivo no es una imagen (' + f.type + ').');
+      showLoadError(L('No se pudo leer la foto: el archivo no es una imagen (', 'Could not read the photo: the file is not an image (') + f.type + ').');
       return;
     }
     if (f.size > MAX_FILE_BYTES) {
-      showLoadError('No se pudo leer la foto: el archivo pesa más de 25 MB (' + Math.round(f.size / 1048576) + ' MB).');
+      showLoadError(L('No se pudo leer la foto: el archivo pesa más de 25 MB (', 'Could not read the photo: the file is larger than 25 MB (') + Math.round(f.size / 1048576) + ' MB).');
       return;
     }
     const reader = new FileReader();
     reader.onload = (ev) => loadImage(ev.target.result);
-    reader.onerror = () => showLoadError('No se pudo leer la foto: error al abrir el archivo.');
+    reader.onerror = () => showLoadError(L('No se pudo leer la foto: error al abrir el archivo.', 'Could not read the photo: error opening the file.'));
     try {
       reader.readAsDataURL(f);
     } catch (err) {
-      showLoadError('No se pudo leer la foto: ' + (err && err.message ? err.message : err));
+      showLoadError(L('No se pudo leer la foto: ', 'Could not read the photo: ') + (err && err.message ? err.message : err));
     }
   });
 });
 
 function loadImage(dataUrl) {
   const im = new Image();
-  im.onerror = () => showLoadError('No se pudo leer la foto: el archivo está dañado o usa un formato no compatible (p. ej. HEIC).');
+  im.onerror = () => showLoadError(L('No se pudo leer la foto: el archivo está dañado o usa un formato no compatible (p. ej. HEIC).', 'Could not read the photo: the file is damaged or uses an unsupported format (e.g. HEIC).'));
   im.onload = () => {
     clearLoadError();
     img = im;
@@ -480,20 +747,29 @@ function loadImage(dataUrl) {
     btnDone.disabled = false;
     btnReset.disabled = false;
     resetCorners();
-    setHint('Arrastra los puntos de las esquinas para alinear el marco. Usa las herramientas para añadir líneas o texto.');
+    // annotations handed in with the measurements (restore path)
+    if (pendingAnnotations) { restoreAnnotations(pendingAnnotations); pendingAnnotations = null; }
+    setHint(HINT_DEFAULT());
   };
   im.src = dataUrl;
 }
 
-// ── canvas fit: recompute on load, resize and rotation so the CSS size ──
-// ── never goes stale ──
+// ── canvas fit: CONTAIN fit inside the stage. The canvas backing store
+// is the (capped) photo pixel size and the CSS size is the same aspect
+// scaled by min(availW/baseW, availH/baseH), so the photo is never
+// stretched: portrait and landscape both letterbox. Pointer mapping in
+// toImageCoords divides by the canvas's displayed rect, so overlay and
+// frame coordinates stay true to the displayed photo. ──
 function fitCanvas() {
   if (!img) return;
   const stageRect = stage.getBoundingClientRect();
   const pad = 8;
-  scale = Math.min((stageRect.width - pad) / baseW, (stageRect.height - pad) / baseH);
+  const availW = Math.max(1, stageRect.width - pad);
+  const availH = Math.max(1, stageRect.height - pad);
+  scale = Math.min(availW / baseW, availH / baseH);
   canvas.style.width = (baseW * scale) + 'px';
   canvas.style.height = (baseH * scale) + 'px';
+  canvas.style.aspectRatio = baseW + ' / ' + baseH;
 }
 window.addEventListener('resize', fitCanvas);
 window.addEventListener('orientationchange', () => setTimeout(fitCanvas, 100));
@@ -563,6 +839,55 @@ function hideLoupe() {
   loupeCanvas.style.display = 'none';
 }
 
+// ── annotation drag helpers ──
+function currentLabelScale(sel) {
+  if (!sel) return 1;
+  if (sel.kind === 'dim') return dimLabels[sel.key].scale;
+  const s = customStrokes[sel.index];
+  return s ? (s.labelScale || 1) : 1;
+}
+
+function snapshotSelection(sel) {
+  if (sel.kind === 'dim') {
+    const d = dimLabels[sel.key];
+    const box = hitBoxes.dims[sel.key];
+    return {
+      pos: d.pos ? { x: d.pos.x, y: d.pos.y } : (box ? { x: box.cx, y: box.cy } : null),
+      scale: d.scale
+    };
+  }
+  const s = customStrokes[sel.index];
+  if (!s) return null;
+  if (s.type === 'text') return { x: s.x, y: s.y, labelScale: s.labelScale || 1 };
+  return {
+    a: { x: s.a.x, y: s.a.y }, b: { x: s.b.x, y: s.b.y },
+    labelScale: s.labelScale || 1
+  };
+}
+
+function applyAnnoDrag(p) {
+  if (!annoDrag) return;
+  const dx = p.x - annoDrag.start.x, dy = p.y - annoDrag.start.y;
+  const sel = annoDrag.sel, orig = annoDrag.orig;
+  if (annoDrag.mode === 'resize') {
+    const ns = Math.max(0.5, Math.min(3, annoDrag.origScale + dx / (labelFontSize() * 5)));
+    if (sel.kind === 'dim') dimLabels[sel.key].scale = ns;
+    else { const s = customStrokes[sel.index]; if (s) s.labelScale = ns; }
+    redraw();
+    return;
+  }
+  if (!orig) return;
+  if (sel.kind === 'dim') {
+    if (orig.pos) dimLabels[sel.key].pos = { x: orig.pos.x + dx, y: orig.pos.y + dy };
+  } else {
+    const s = customStrokes[sel.index];
+    if (!s) return;
+    if (s.type === 'text') { s.x = orig.x + dx; s.y = orig.y + dy; }
+    else { s.a = { x: orig.a.x + dx, y: orig.a.y + dy }; s.b = { x: orig.b.x + dx, y: orig.b.y + dy }; }
+  }
+  redraw();
+}
+
 // ── pointer handlers ──
 canvas.addEventListener('pointerdown', (e) => {
   if (!img) return;
@@ -577,8 +902,30 @@ canvas.addEventListener('pointerdown', (e) => {
   }
   if (currentTool === 'text') {
     pendingLabel = { type: 'text', a: p };
-    openLabelModal('Texto', []);
+    openLabelModal(L('Texto', 'Text'), []);
     return;
+  }
+  // annotation select / move / resize (no drawing tool active):
+  // annotations were previously baked into the redraw with no
+  // hit-testing, so placed items could never be selected or moved.
+  if (currentTool === 'none') {
+    const hit = hitAnnotation(p);
+    if (hit && hit.mode === 'resize' && selected) {
+      annoDrag = { mode: 'resize', sel: selected, start: p, origScale: currentLabelScale(selected) };
+      activePointer = e.pointerId;
+      canvas.setPointerCapture(e.pointerId);
+      return;
+    }
+    if (hit && hit.sel) {
+      selected = hit.sel;
+      annoDrag = { mode: 'move', sel: hit.sel, start: p, orig: snapshotSelection(hit.sel) };
+      activePointer = e.pointerId;
+      canvas.setPointerCapture(e.pointerId);
+      setHint(HINT_SELECTED());
+      redraw();
+      return;
+    }
+    if (selected) { selected = null; redraw(); }
   }
   // frame corner drag (default)
   const h = hitHandle(e);
@@ -586,13 +933,18 @@ canvas.addEventListener('pointerdown', (e) => {
     dragging = h;
     activePointer = e.pointerId;
     canvas.setPointerCapture(e.pointerId);
-    setHint('Arrastra para mover la esquina');
+    setHint(L('Arrastra para mover la esquina', 'Drag to move the corner'));
     showLoupe(e.clientX, e.clientY);
   }
 });
 
 canvas.addEventListener('pointermove', (e) => {
   if (!img) return;
+  if (annoDrag && e.pointerId === activePointer) {
+    e.preventDefault();
+    applyAnnoDrag(toImageCoords(e));
+    return;
+  }
   if (drawingShape && e.pointerId === activePointer) {
     e.preventDefault();
     drawingShape.b = toImageCoords(e);
@@ -612,11 +964,19 @@ function endPointer(e) {
   if (e.pointerId !== activePointer) return;
   activePointer = null;
   hideLoupe();
+  if (annoDrag) {
+    // placement/size now live in customStrokes / dimLabels, which
+    // serializeAnnotations() includes in the saved payload
+    annoDrag = null;
+    redraw();
+    setHint(HINT_DEFAULT());
+    return;
+  }
   if (drawingShape) {
     const len = Math.hypot(drawingShape.b.x - drawingShape.a.x, drawingShape.b.y - drawingShape.a.y);
     if (len > 8) {
       pendingLabel = { type: drawingShape.type, a: drawingShape.a, b: drawingShape.b };
-      openLabelModal(drawingShape.type === 'arrow' ? 'Etiqueta de flecha' : 'Etiqueta de línea', quickLabels);
+      openLabelModal(drawingShape.type === 'arrow' ? L('Etiqueta de flecha', 'Arrow label') : L('Etiqueta de línea', 'Line label'), quickLabels);
     }
     drawingShape = null;
     redraw();
@@ -624,7 +984,7 @@ function endPointer(e) {
   }
   if (dragging) {
     dragging = null;
-    setHint('Arrastra los puntos de las esquinas para alinear el marco. Usa las herramientas para añadir líneas o texto.');
+    setHint(HINT_DEFAULT());
   }
 }
 canvas.addEventListener('pointerup', endPointer);
@@ -657,6 +1017,9 @@ function closeLabelModal() {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && document.getElementById('label-modal').classList.contains('open')) {
     closeLabelModal();
+  } else if (e.key === 'Escape' && selected) {
+    selected = null;
+    redraw();
   }
 });
 
@@ -669,10 +1032,10 @@ document.getElementById('btn-label-ok').addEventListener('click', () => {
   if (pl.type === 'text') {
     // text without content is pointless — drop it
     if (!val) { redraw(); return; }
-    customStrokes.push({ type: 'text', x: pl.a.x, y: pl.a.y, label: val });
+    customStrokes.push({ type: 'text', x: pl.a.x, y: pl.a.y, label: val, labelScale: 1 });
   } else {
     // line/arrow persist even without a label
-    customStrokes.push({ type: pl.type, a: pl.a, b: pl.b, label: val || null });
+    customStrokes.push({ type: pl.type, a: pl.a, b: pl.b, label: val || null, labelScale: 1 });
   }
   redraw();
 });
@@ -683,30 +1046,32 @@ document.getElementById('btn-label-cancel').addEventListener('click', () => {
 // ── toolbar ──
 document.querySelectorAll('.tool-btn[data-tool]').forEach(b => {
   b.addEventListener('click', () => {
+    selected = null;
+    if (img) redraw();
     if (currentTool === b.dataset.tool) {
       currentTool = 'none';
       b.classList.remove('active');
-      setHint('Arrastra los puntos de las esquinas para alinear el marco. Usa las herramientas para añadir líneas o texto.');
+      setHint(HINT_DEFAULT());
       return;
     }
     currentTool = b.dataset.tool;
     document.querySelectorAll('.tool-btn[data-tool]').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
     setHint({
-      line: 'Arrastra para dibujar una línea de medida',
-      arrow: 'Arrastra para dibujar una flecha',
-      text: 'Toca la foto para agregar texto'
+      line: L('Arrastra para dibujar una línea de medida', 'Drag to draw a measurement line'),
+      arrow: L('Arrastra para dibujar una flecha', 'Drag to draw an arrow'),
+      text: L('Toca la foto para agregar texto', 'Tap the photo to add text')
     }[currentTool]);
   });
 });
 document.getElementById('btn-undo').addEventListener('click', () => {
-  if (customStrokes.length) { customStrokes.pop(); redraw(); }
+  if (customStrokes.length) { customStrokes.pop(); selected = null; redraw(); }
 });
 
 btnReset.addEventListener('click', () => {
   if (!img) return;
   resetCorners();
-  setHint('Marco restablecido');
+  setHint(L('Marco restablecido', 'Frame reset'));
 });
 
 // ── done → composite + send back ──
@@ -715,39 +1080,40 @@ let doneAckTimer = null;
 
 function restoreDoneButton() {
   btnDone.disabled = false;
-  btnDone.textContent = '✓ Usar esta foto';
+  if (btnDoneLabel) btnDoneLabel.textContent = L('Usar esta foto', 'Use this photo'); else btnDone.textContent = L('Usar esta foto', 'Use this photo');
   if (doneAckTimer) { clearTimeout(doneAckTimer); doneAckTimer = null; }
 }
 
 btnDone.addEventListener('click', () => {
   if (!img) return;
   btnDone.disabled = true;
-  btnDone.textContent = 'Generando…';
+  if (btnDoneLabel) btnDoneLabel.textContent = L('Generando…', 'Generating…'); else btnDone.textContent = L('Generando…', 'Generating…');
   const out = document.createElement('canvas');
   out.width = baseW; out.height = baseH;
   const octx = out.getContext('2d');
   octx.drawImage(img, 0, 0, baseW, baseH);
   if (corners) renderFrame(octx, corners, { handles: false });
-  for (const s of customStrokes) {
-    if (s.type === 'line' || s.type === 'arrow') drawArrowLine(octx, s.a, s.b, s.label, s.type === 'line');
-    else if (s.type === 'text') drawTextAnno(octx, s);
-  }
+  drawStrokes(octx, false);
   const dataUrl = out.toDataURL('image/jpeg', 0.9);
+  // annotations extension: placement + sizes of every label/annotation
+  // and the frame corners, so the wizard can persist them with the
+  // photo and hand them back for a later edit (see restoreAnnotations)
+  const annotations = serializeAnnotations();
   try {
     // The payload carries the annotated photo (measurements + customer
     // context), so the target origin is pinned to the app origin instead
     // of '*', which would leak it to any embedding origin.
     const targetOrigin = location.origin;
     if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'NIVELATO_ANNOTATED_PHOTO', dataUrl }, targetOrigin);
+      window.parent.postMessage({ type: 'NIVELATO_ANNOTATED_PHOTO', dataUrl, annotations }, targetOrigin);
       // without a parent listener the button would stick on "Generando…"
       // forever — restore it on ack, or on timeout
       doneAckTimer = setTimeout(() => {
         restoreDoneButton();
-        setHint('Parece que la foto no llegó al destino. Toca "✓ Usar esta foto" para reintentar.');
+        setHint(L('Parece que la foto no llegó al destino. Toca "Usar esta foto" para reintentar.', 'It looks like the photo did not reach its destination. Tap "Use this photo" to try again.'));
       }, DONE_ACK_TIMEOUT_MS);
     } else if (window.opener) {
-      window.opener.postMessage({ type: 'NIVELATO_ANNOTATED_PHOTO', dataUrl }, targetOrigin);
+      window.opener.postMessage({ type: 'NIVELATO_ANNOTATED_PHOTO', dataUrl, annotations }, targetOrigin);
       window.close();
     } else {
       const a = document.createElement('a');
@@ -758,7 +1124,7 @@ btnDone.addEventListener('click', () => {
     }
   } catch (e) {
     restoreDoneButton();
-    alert('Error al enviar la foto: ' + e.message);
+    alert(L('Error al enviar la foto: ', 'Error sending the photo: ') + e.message);
   }
 });
 
@@ -772,16 +1138,39 @@ window.addEventListener('message', (e) => {
     return;
   }
   if (e.data && e.data.type === 'NIVELATO_MEASUREMENTS') {
+    // Offset values: the wizard already sends the four offset labels
+    // (paredIzq/paredDer/techo/piso, e.g. '→ 1/4"'), whose arrow sign +
+    // magnitude give the signed raw inches. EXTENSION (backward
+    // compatible, all optional): numeric raws win over label parsing
+    // when present, as e.data.offsets.{paredIzq,paredDer,techo,piso},
+    // e.data.paredes.{izq,der,techo,piso}.desnivel (the saved-job
+    // shape), or flat e.data.paredIzqRaw / paredDerRaw / techoRaw /
+    // pisoRaw. e.data.annotations restores a saved annotations payload.
+    const numRaw = (flat, offKey, paredKey) => {
+      if (typeof e.data[flat] === 'number') return e.data[flat];
+      if (e.data.offsets && typeof e.data.offsets[offKey] === 'number') return e.data.offsets[offKey];
+      if (e.data.paredes && e.data.paredes[paredKey] && typeof e.data.paredes[paredKey].desnivel === 'number') return e.data.paredes[paredKey].desnivel;
+      return null;
+    };
+    const rawOrLabel = (num, label, negCh) => (num !== null ? num : labelSign(label, negCh) * parseLabel(label));
     measurements = {
       anchoBot: e.data.anchoBot,
       anchoTop: e.data.anchoTop,
       altoIzq: e.data.altoIzq,
       altoDer: e.data.altoDer,
-      paredIzq: labelSign(e.data.paredIzq, '←') * parseLabel(e.data.paredIzq),
-      paredDer: labelSign(e.data.paredDer, '→') * parseLabel(e.data.paredDer),
-      techo: labelSign(e.data.techo, '↑') * parseLabel(e.data.techo),
-      piso: labelSign(e.data.piso, '↓') * parseLabel(e.data.piso)
+      paredIzq: rawOrLabel(numRaw('paredIzqRaw', 'paredIzq', 'izq'), e.data.paredIzq, '←'),
+      paredDer: rawOrLabel(numRaw('paredDerRaw', 'paredDer', 'der'), e.data.paredDer, '→'),
+      techo: rawOrLabel(numRaw('techoRaw', 'techo', 'techo'), e.data.techo, '↑'),
+      piso: rawOrLabel(numRaw('pisoRaw', 'piso', 'piso'), e.data.piso, '↓')
     };
+    offsetLabels = {
+      paredIzq: e.data.paredIzq || '', paredDer: e.data.paredDer || '',
+      techo: e.data.techo || '', piso: e.data.piso || ''
+    };
+    if (e.data.annotations) {
+      if (img) restoreAnnotations(e.data.annotations);
+      else pendingAnnotations = e.data.annotations;
+    }
     quickLabels = [];
     const push = (v) => { if (v) quickLabels.push(v); };
     push(e.data.anchoBot ? fmtInches(e.data.anchoBot) + '"' : null);
@@ -790,9 +1179,15 @@ window.addEventListener('message', (e) => {
     push(e.data.altoDer ? fmtInches(e.data.altoDer) + '"' : null);
     push(e.data.paredIzq); push(e.data.paredDer); push(e.data.techo); push(e.data.piso);
     if (e.data.customer) quickLabels.push(e.data.customer);
-    document.getElementById('header-sub').textContent = 'Medidas cargadas - alinea el marco';
+    document.getElementById('header-sub').textContent = L('Medidas cargadas - alinea el marco', 'Measurements loaded - align the frame');
     frameNorm = computeFrameNorm(measurements);
-    if (img) { resetCorners(); setHint('Arrastra los puntos de las esquinas para alinear el marco. Usa las herramientas para añadir líneas o texto.'); }
+    if (img) {
+      // a restored annotations payload carries its own frame corners;
+      // only re-derive the initial rectangle when none arrived
+      if (e.data.annotations && corners) redraw();
+      else resetCorners();
+      setHint(HINT_DEFAULT());
+    }
   }
 });
 
@@ -814,8 +1209,13 @@ window.__photoTestState = () => ({
   baseW, baseH,
   hasFrame: !!corners,
   measurements: Object.assign({}, measurements),
-  corners: corners ? Object.assign({}, corners) : null,
-  customStrokes: customStrokes.length
+  corners: corners ? JSON.parse(JSON.stringify(corners)) : null,
+  offsetQuad: corners ? offsetQuad(corners) : null,
+  frameDims: frameNorm ? Object.assign({}, frameNorm) : null,
+  offsetLabels: Object.assign({}, offsetLabels),
+  customStrokes: customStrokes.length,
+  selected: selected ? Object.assign({}, selected) : null,
+  lang: LANG
 });
 
 window.__hitTest = (clientX, clientY) => {
@@ -823,6 +1223,19 @@ window.__hitTest = (clientX, clientY) => {
   const e = { clientX, clientY };
   const hit = hitHandle(e);
   return { hit, toImg: toImageCoords(e), scale };
+};
+
+window.__photoAnnotationsTest = {
+  serializeAnnotations,
+  restoreAnnotations,
+  // select whatever annotation sits at a client point (same hit path
+  // as pointerdown); returns the selection descriptor or null
+  selectAt: (clientX, clientY) => {
+    const hit = hitAnnotation(toImageCoords({ clientX, clientY }));
+    if (hit && hit.sel) { selected = hit.sel; return Object.assign({}, hit.sel); }
+    return null;
+  },
+  getSelected: () => (selected ? Object.assign({}, selected) : null)
 };
 </script>
 </body>

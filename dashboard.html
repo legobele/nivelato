@@ -496,6 +496,26 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
 
   /* join code section */
   #join-code-section, .join-code-card { background: #17171a; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; }
+  /* v1.2.17: home enrollment tile (spec section 2.5 language, dashboard
+     tokens): the QR tile is the card's enrollment surface */
+  .home-enroll { width: 100%; }
+  .home-enroll-title { font-size: 16px; font-weight: 700; color: var(--niv-text, #f5f5f7); margin-bottom: 10px; }
+  .home-enroll-label { display: block; font-size: 12px; font-weight: 600; color: var(--niv-text-dim, #a7a7ad); margin-bottom: 6px; }
+  .home-enroll-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .home-enroll-row input { flex: 1 1 220px; min-width: 0; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); background: var(--niv-surface-2, #1e1e22); color: var(--niv-text, #f5f5f7); font-size: 14px; font-family: inherit; outline: none; }
+  .home-enroll-row input:focus { border-color: var(--niv-text-dim, #a7a7ad); }
+  .home-enroll-row button { padding: 11px 20px; border: none; border-radius: 999px; background: linear-gradient(135deg, #fafafa, #c9c9ce); color: #050505; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .home-enroll-row button:disabled { opacity: 0.55; cursor: default; }
+  .home-enroll-error { margin-top: 10px; padding: 10px 14px; border-radius: 10px; background: rgba(229,72,77,0.14); border: 1px solid rgba(229,72,77,0.45); color: #ffb4b8; font-size: 13px; }
+  .home-enroll-tile { border: 1.5px solid var(--niv-border-soft, rgba(255,255,255,0.14)); border-radius: 28px; background: var(--niv-surface, #101013); padding: 22px 20px 18px; margin-top: 16px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .home-enroll-tile .tile-qr { background: #fff; border-radius: 12px; padding: 10px; line-height: 0; width: 52%; max-width: 240px; box-sizing: border-box; }
+  .home-enroll-tile .tile-qr svg { width: 100%; height: auto; display: block; }
+  .home-enroll-tile .tile-headline { font-size: 16px; font-weight: 700; line-height: 1.4; margin-top: 16px; color: var(--niv-text, #f5f5f7); }
+  .home-enroll-tile .tile-sub { font-size: 13px; color: var(--niv-text-dim, #a7a7ad); line-height: 1.5; margin-top: 4px; }
+  .home-enroll-tile .tile-expiry { font-size: 12px; color: var(--niv-text-dim, #a7a7ad); margin-top: 10px; }
+  .home-enroll-tile .tile-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; justify-content: center; }
+  .home-enroll-tile .tile-actions button { padding: 9px 18px; border-radius: 999px; border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); background: var(--niv-surface-2, #1e1e22); color: var(--niv-text, #f5f5f7); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .home-join-fallback { width: 100%; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--niv-border-soft, rgba(255,255,255,0.10)); padding-top: 14px; margin-top: 18px; }
 
   /* job cards */
   .job-card { background: #17171a; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; box-shadow: none; }
@@ -543,14 +563,16 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
 
 
 
+  /* v1.2.17: ghost header-row treatment (see .niv-sec-chev): no circle,
+     no border; the button reads as part of the header row it sits in */
   .niv-plus-btn {
-    width: 26px; height: 26px; border-radius: 50%;
-    border: 1px solid var(--niv-border); background: transparent;
+    width: 26px; height: 26px; border-radius: 8px;
+    border: none; background: transparent;
     color: var(--niv-text-dim); font-size: 18px; line-height: 1;
     cursor: pointer; font-family: inherit; padding: 0;
     display: inline-flex; align-items: center; justify-content: center;
   }
-  .niv-plus-btn:hover { color: var(--niv-text); border-color: var(--niv-text); }
+  .niv-plus-btn:hover { color: var(--niv-text); background: var(--niv-surface-2, #1e1e22); }
 
   /* measurement detail view */
   .niv-back-btn {
@@ -561,9 +583,14 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     font-family: inherit; flex: none;
   }
   .niv-back-btn:hover { background: var(--niv-surface-2); }
-  .niv-measure-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  .niv-measure-grid { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+  /* v1.2.17: Diagram | Photo tabs inside the media card, same pill
+     language as the top bar (track surface, active = light pill) */
+  .niv-media-tabs { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 16px; background: var(--niv-surface-2, #1e1e22); border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); border-radius: 999px; }
+  .niv-media-tab { border: none; background: transparent; color: var(--niv-text-dim, #a7a7ad); font-family: inherit; font-size: 14px; font-weight: 600; padding: 7px 18px; border-radius: 999px; cursor: pointer; }
+  .niv-media-tab:hover { color: var(--niv-text, #f5f5f7); }
+  .niv-media-tab.active { background: linear-gradient(135deg, #fafafa, #c9c9ce); color: #050505; }
   #measure-photo-wrap .niv-panel-empty { padding: 28px 16px; }
-  @media (max-width: 700px) { .niv-measure-grid { grid-template-columns: 1fr; } }
   .niv-detail-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; font-size: 14px; min-width: 0; }
   .niv-detail-row .k { color: var(--niv-text); font-weight: 500; flex: none; }
   .niv-detail-row .v { color: var(--niv-text-dim); text-align: right; min-width: 0; overflow-wrap: anywhere; }
@@ -674,9 +701,10 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   font-family: inherit; font-size: 14px; font-weight: 600;
   padding: 8px 18px; border-radius: 999px; cursor: pointer; white-space: nowrap;
   display: inline-flex; align-items: center; gap: 8px;
-  /* item 33: the label color runs on the indicator's own clock (same
-     duration and easing) so it never sits dark on the dark bar while
-     the pill is still travelling */
+  /* v1.2.17: no color choreography on labels anymore (the item-33
+     timed flip was the illegibility bug); legibility comes from the
+     indicator's clipped clone layer. This transition only covers the
+     pre-indicator fallback state and hover. */
   transition: color 0.38s cubic-bezier(0.25, 1.35, 0.35, 1);
 }
 .niv-tab:hover { color: var(--niv-text, #f5f5f7); }
@@ -797,18 +825,31 @@ body.has-sidebar #niv-panel.collapsed #niv-panel-expand-handle { display: block;
 }
 #niv-panel { position: relative; }
 .niv-panel-sec-title { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; padding-right: 12px; }
-/* item 15: the Clientes tools row (the + button) keeps clear of the
-   panel scrollbar in expanded and collapsed states alike */
-#panel-customer-tools { padding-right: 12px; box-sizing: border-box; }
+/* item 15 (superseded in v1.2.17): the Clientes + button no longer
+   lives on its own tools row under the header (that row is what made
+   it a second stacked orb); it sits in the section title row itself,
+   placed there by refreshFloatPanel. The title row's padding-right
+   keeps the header controls clear of the panel scrollbar. */
+/* v1.2.17: section-header controls are one header row, not floating
+   orbs: the chevron and the add button are borderless ghost controls
+   sitting inline at the title row's right edge, vertically centered
+   with the title text. The old treatment (a bordered 22px circle for
+   the chevron plus a second bordered circle on its own tools row
+   below) rendered as two stacked circular buttons floating at the
+   header's right edge (Giulia, Oct 29: "This sorcery"). */
 .niv-sec-chev {
-  margin-left: auto; width: 22px; height: 22px; border-radius: 50%;
-  border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
+  margin-left: auto; width: 26px; height: 26px; border-radius: 8px;
+  border: none;
   background: transparent; color: var(--niv-text-dim, #a7a7ad);
   font-size: 12px; line-height: 1; cursor: pointer; font-family: inherit;
   display: inline-flex; align-items: center; justify-content: center; flex: none;
-  transition: transform 0.18s;
+  transition: transform 0.18s, background 0.15s, color 0.15s;
 }
-.niv-sec-chev:hover { color: var(--niv-text, #f5f5f7); }
+.niv-sec-chev:hover { color: var(--niv-text, #f5f5f7); background: var(--niv-surface-2, #1e1e22); }
+/* when the add button sits in the header row it owns the auto margin;
+   the chevron follows it directly so the two read as one control group */
+.niv-panel-sec-title .niv-plus-btn { margin-left: auto; }
+.niv-panel-sec-title .niv-plus-btn + .niv-sec-chev { margin-left: 0; }
 .niv-panel-sec.sec-collapsed .niv-sec-chev { transform: rotate(-90deg); }
 .niv-panel-sec.sec-collapsed .niv-sec-body { display: none; }
 
@@ -1125,14 +1166,35 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 }
 .niv-tab-indicator.dragging { transition: none; }
 .niv-topbar-tabs.ind-on .niv-tab.active { background: transparent; }
-/* item 33: the incoming label leans late (it flips as the pill
-   arrives); a label losing the pill gets no delay and lightens as the
-   pill departs */
-.niv-topbar-tabs.ind-on .niv-tab.active { transition-delay: 0.15s; }
-/* item 34: while dragging, the committed item's label returns to the
-   resting color (the pill has left it) and the previewed item takes
-   the dark label (the pill is under it); both respond fast */
-.niv-topbar-tabs.drag-preview .niv-tab { transition-duration: 0.08s; transition-delay: 0s; }
+/* v1.2.17 (item 33 family, root-caused): the item-33/34 choreography
+   flipped the ACTIVE label's color on a timer (0.15s delay + the
+   pill's 0.38s easing). Measured in a real browser, the incoming
+   label reaches near-black while the pill is still travelling over
+   the previous tab: dark text on the dark track, illegible on every
+   switch, and the pill's overshoot straddles the neighbouring label
+   at settle-adjacent frames (Giulia's "same issue pre-prod" shot).
+   Legibility is now structural instead of timed: the real labels
+   keep the resting dim color at all times, and a clipped clone layer
+   inside the pill paints the same labels in dark text exactly where
+   the pill currently is. Wherever the pill is, at any frame, the
+   label under it reads dark-on-light; everywhere else it reads
+   dim-on-dark. No color transition on labels remains to race. */
+.niv-topbar-tabs.ind-on .niv-tab { transition: none; }
+/* the real active label stays at the resting dim color while the
+   indicator lives; the dark reading of it comes from the clone layer */
+.niv-topbar-tabs.ind-on .niv-tab.active { color: var(--niv-text-dim, #a7a7ad); }
+.niv-tab-indicator-labels {
+  position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; z-index: 2;
+  border-radius: 999px; pointer-events: none; opacity: 0; overflow: hidden;
+  transition: left 0.38s cubic-bezier(0.25, 1.35, 0.35, 1), width 0.38s cubic-bezier(0.25, 1.35, 0.35, 1), opacity 0.18s ease;
+}
+.niv-tab-indicator-labels.dragging { transition: none; }
+.niv-tab-indicator-labels-inner { position: absolute; top: 0; bottom: 0; left: 0; will-change: transform; }
+.niv-tab-clone {
+  position: absolute; top: 0; bottom: 0; display: flex; align-items: center;
+  color: #050505; font-size: 14px; font-weight: 600; white-space: nowrap;
+  font-family: 'Inter', system-ui, sans-serif;
+}
 .niv-topbar-tabs.drag-preview .niv-tab.active { color: var(--niv-text-dim, #a7a7ad); }
 .niv-topbar-tabs.drag-preview .niv-tab.preview { color: #050505; }
 @media (prefers-reduced-motion: reduce) {
@@ -1559,10 +1621,26 @@ try {
     document.body.classList.add('niv-compact');
     var _cp = document.getElementById('niv-panel');
     if (_cp) {
-      _cp.classList.add('collapsed');
-      document.body.classList.add('sidebar-collapsed');
-      var _cb = document.getElementById('niv-panel-collapse');
-      if (_cb) { _cb.textContent = '›'; _cb.title = 'Expandir'; }
+      // v1.2.17: compact mode used to collapse the panel UNCONDITIONALLY
+      // at boot, and the manual-state restore further down explicitly
+      // skipped compact mode, so a user who uncollapsed the sidebar got
+      // it back collapsed on every navigation/reload (Giulia, Oct 29:
+      // "Sidebar shows up collapsed after I uncollapse it"). The
+      // persisted manual choice ('niv-panel-collapsed', written by
+      // _nivSetPanelCollapsed through the same settings store) now
+      // governs here too: '0' boots expanded; '1' or unset keeps the
+      // compact default (collapsed).
+      var _storedCollapsed = null;
+      try {
+        if (window.NivSettings && typeof window.NivSettings.get === 'function') _storedCollapsed = window.NivSettings.get('niv-panel-collapsed');
+        if (_storedCollapsed === null || _storedCollapsed === undefined) _storedCollapsed = localStorage.getItem('niv-panel-collapsed');
+      } catch (_) {}
+      if (_storedCollapsed !== '0') {
+        _cp.classList.add('collapsed');
+        document.body.classList.add('sidebar-collapsed');
+        var _cb = document.getElementById('niv-panel-collapse');
+        if (_cb) { _cb.textContent = '›'; _cb.title = 'Expandir'; }
+      }
     }
   }
 } catch (_) {}
@@ -1600,10 +1678,25 @@ try {
   </div>
   <div class="subtitle" id="home-subtitle"></div>
   <div class="join-code-card" id="join-code-section-home">
-    <span class="join-code-label" style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
-    <span class="join-code-code" style="font-size:24px; font-weight:700; color:#fafafa; letter-spacing:0.15em; font-family:'JetBrains Mono', monospace; margin-left:8px;">--</span>
-    <button onclick="copyJoinCode(this)" class="join-code-copy" style="margin-left:auto; background:#fafafa; color:#050505; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;"><span class="copy-btn-label">📋 Copiar</span></button>
-    <span class="join-code-hint" style="font-size:11px; color:#888; width:100%; margin-top:2px;">Dáselo a tus empleados para que se registren en Nivelato</span>
+    <!-- v1.2.17: the enrollment surface of this card is the §2.5 QR
+         tile (single-use token), as in the Add User flow. The workshop
+         code stays underneath as the text fallback, not the headline. -->
+    <div class="home-enroll">
+      <div class="home-enroll-title" id="home-enroll-title">Inscribir a un empleado</div>
+      <label class="home-enroll-label" id="home-enroll-label" for="home-enroll-email">Correo del empleado</label>
+      <div class="home-enroll-row">
+        <input type="email" id="home-enroll-email" autocomplete="email" placeholder="empleado@empresa.com" />
+        <button type="button" id="home-enroll-btn" onclick="window._homeEnrollGenerate()">Generar código QR</button>
+      </div>
+      <div class="home-enroll-error" id="home-enroll-error" style="display:none;" role="alert"></div>
+      <div id="home-enroll-slot"></div>
+    </div>
+    <div class="home-join-fallback">
+      <span class="join-code-label" style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
+      <span class="join-code-code" style="font-size:20px; font-weight:700; color:#fafafa; letter-spacing:0.15em; font-family:'JetBrains Mono', monospace; margin-left:8px;">--</span>
+      <button onclick="copyJoinCode(this)" class="join-code-copy" style="margin-left:auto; background:#fafafa; color:#050505; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;"><span class="copy-btn-label">Copiar</span></button>
+      <span class="join-code-hint" style="font-size:11px; color:#888; width:100%; margin-top:2px;">Dáselo a tus empleados para que se registren en Nivelato</span>
+    </div>
   </div>
   <div class="niv-stats-row">
     <div class="stat-card"><div class="stat-num" id="home-stat-projects"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-projects-label">Proyectos</div></div>
@@ -1682,7 +1775,7 @@ try {
   <div id="join-code-section" class="join-code-card">
     <span id="join-code-label" class="join-code-label" style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
     <span id="join-code-display" class="join-code-code" style="font-size:24px; font-weight:700; color:#fafafa; letter-spacing:0.15em; font-family:'JetBrains Mono', monospace; margin-left:8px;">--</span>
-    <button onclick="copyJoinCode(this)" id="copy-btn" style="margin-left:auto; background:#fafafa; color:#050505; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;"><span id="copy-btn-label" class="copy-btn-label">📋 Copiar</span></button>
+    <button onclick="copyJoinCode(this)" id="copy-btn" style="margin-left:auto; background:#fafafa; color:#050505; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;"><span id="copy-btn-label" class="copy-btn-label">Copiar</span></button>
     <span id="join-code-hint" class="join-code-hint" style="font-size:11px; color:#888; width:100%; margin-top:2px;">Dáselo a tus empleados para que se registren en Nivelato</span>
   </div>
 
@@ -1707,7 +1800,7 @@ try {
       <div class="filters-menu-panel" id="filters-menu-panel" role="group" aria-label="Filtros" hidden>
         <div class="date-input-wrap">
           <input type="date" id="filter-date" onchange="applyFilters()" aria-label="Filtrar por fecha" />
-          <span class="date-placeholder" id="date-placeholder">📅 Filtrar por fecha · dd/mm/aaaa</span>
+          <span class="date-placeholder" id="date-placeholder">Filtrar por fecha · dd/mm/aaaa</span>
         </div>
         <select id="filter-installer" onchange="applyFilters()" aria-label="Filtrar por técnico">
           <option value="" id="filter-installer-all">Todos los técnicos</option>
@@ -1734,7 +1827,7 @@ try {
     <label class="pl-inactive-toggle"><input type="checkbox" id="pl-show-inactive" onchange="renderPriceList()" /> Mostrar inactivos</label>
   </div>
   <div id="pl-list"><div class="loading">Cargando lista de precios…</div></div>
-  <button class="btn-close" onclick="togglePriceListView()">📊 Volver a medidas</button>
+  <button class="btn-close" onclick="togglePriceListView()">Volver a medidas</button>
  </div>
  <div id="view-quotes" style="display:none">
   <div style="display:flex; align-items:center; gap:12px;">
@@ -1752,7 +1845,7 @@ try {
     </select>
   </div>
   <div class="job-list" id="qt-list"><div class="loading">Cargando cotizaciones…</div></div>
-  <button class="btn-close" onclick="toggleQuotesView()">📊 Volver a medidas</button>
+  <button class="btn-close" onclick="toggleQuotesView()">Volver a medidas</button>
  </div>
  <div id="view-builder" style="display:none">
   <button class="btn-cancel" style="width:auto;padding:8px 16px;margin:0 0 12px" onclick="showDashView('quotes')">← Volver a cotizaciones</button>
@@ -1810,7 +1903,7 @@ try {
   <label class="modal-edit-label" for="qb-notas">Notas visibles al cliente</label>
   <textarea class="modal-edit-input" id="qb-notas" style="min-height:56px;resize:vertical" maxlength="1000"></textarea>
   <div class="pl-error" id="qb-error" style="display:none"></div>
-  <button class="btn-save" onclick="saveQuote()">💾 Guardar borrador</button>
+  <button class="btn-save" onclick="saveQuote()">Guardar borrador</button>
  </div>
  <div id="view-project" style="display:none">
   <button class="btn-cancel" id="proj-back-btn" style="width:auto;padding:8px 16px;margin:0 0 12px" onclick="window.projectBack()">← Volver</button>
@@ -1871,15 +1964,23 @@ try {
     <button class="niv-back-btn" id="measure-back-btn" onclick="measureBack()">◁</button>
     <h1 id="measure-title" style="margin:0;">Measure</h1>
   </div>
+  <!-- v1.2.17: the photo lives INSIDE the diagram area as a tab
+       (Giulia's ruling: "Photo should be shown inside the measurement
+       diagram area inside a tab"), not in a standalone side panel.
+       One media card, two panes; the No-photo state lives in the tab. -->
   <div class="niv-measure-grid">
     <div class="niv-card">
-      <div class="niv-card-title" id="measure-dims-title" style="font-size:20px;margin-bottom:16px;">Dimensions</div>
-      <canvas id="measure-canvas" width="340" height="420" style="width:100%;border-radius:10px;display:block;"></canvas>
-      <div class="niv-panel-empty" id="measure-nodims" style="display:none;">Sin dimensiones registradas para esta medida.</div>
-    </div>
-    <div class="niv-card">
-      <div class="niv-card-title" id="measure-photo-title" style="font-size:20px;margin-bottom:16px;">Photo</div>
-      <div id="measure-photo-wrap"><div class="niv-panel-empty">Sin foto</div></div>
+      <div class="niv-media-tabs" role="tablist" aria-label="Measure media">
+        <button type="button" class="niv-media-tab active" id="measure-dims-title" role="tab" aria-selected="true" onclick="window._measureTab('diagram')">Diagram</button>
+        <button type="button" class="niv-media-tab" id="measure-photo-title" role="tab" aria-selected="false" onclick="window._measureTab('photo')">Photo</button>
+      </div>
+      <div id="measure-diagram-pane">
+        <canvas id="measure-canvas" width="340" height="420" style="width:100%;border-radius:10px;display:block;"></canvas>
+        <div class="niv-panel-empty" id="measure-nodims" style="display:none;">Sin dimensiones registradas para esta medida.</div>
+      </div>
+      <div id="measure-photo-pane" style="display:none;">
+        <div id="measure-photo-wrap"><div class="niv-panel-empty">Sin foto</div></div>
+      </div>
     </div>
   </div>
   <div class="niv-card" style="margin-top:16px;">
@@ -1898,17 +1999,17 @@ try {
       <div class="modal-details">
         <div id="modal-body"></div>
         <div id="modal-edit-fields" style="display:none;"></div>
-        <button class="btn-delete" id="modal-delete-btn" onclick="deleteCurrentJob()">🗑 Eliminar medida</button>
-        <button class="btn-edit" id="modal-edit-btn" onclick="editCurrentJob()" style="display:none;">✏️ Editar</button>
+        <button class="btn-delete" id="modal-delete-btn" onclick="deleteCurrentJob()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span id="modal-delete-label">Eliminar medida</span></button>
+        <button class="btn-edit" id="modal-edit-btn" onclick="editCurrentJob()" style="display:none;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg><span id="modal-edit-label">Editar</span></button>
         <div id="modal-edit-actions" style="display:none;">
-          <button class="btn-save" onclick="saveEdit()">💾 Guardar cambios</button>
+          <button class="btn-save" onclick="saveEdit()"><span id="modal-save-label">Guardar cambios</span></button>
           <button class="btn-cancel" onclick="cancelEdit()">Cancelar</button>
         </div>
-        <button class="btn-share-modal" id="modal-share-btn" onclick="toggleSharePanel()" style="display:none;margin-top:8px;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;">🔗 Compartir medida</button>
+        <button class="btn-share-modal" id="modal-share-btn" onclick="toggleSharePanel()" style="display:none;margin-top:8px;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span id="modal-share-label">Compartir medida</span></button>
         <div id="share-panel" class="niv-share-panel" style="display:none;margin-top:8px;padding:12px;border-radius:8px;">
-          <div class="niv-share-title" style="font-size:12px;font-weight:600;margin-bottom:8px;">Compartir con:</div>
+          <div class="niv-share-title" id="share-panel-title" style="font-size:12px;font-weight:600;margin-bottom:8px;">Compartir con:</div>
           <div id="share-member-list"></div>
-          <button class="niv-share-save" onclick="saveShare()" style="margin-top:8px;padding:6px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Guardar</button>
+          <button class="niv-share-save" id="share-save-btn" onclick="saveShare()" style="margin-top:8px;padding:6px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Guardar</button>
           <span id="share-status" style="font-size:12px;margin-left:8px;display:none;">✓</span>
         </div>
       </div>
@@ -1962,7 +2063,7 @@ try {
     <input class="modal-edit-input" id="pl-precio" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
     <label class="pl-check"><input type="checkbox" id="pl-activo" checked /> Activo</label>
     <div class="pl-error" id="pl-form-error" style="display:none"></div>
-    <button class="btn-save" onclick="savePriceItem()">💾 Guardar</button>
+    <button class="btn-save" onclick="savePriceItem()">Guardar</button>
     <button class="btn-cancel" onclick="closePriceItemModal()">Cancelar</button>
   </div>
 </div>
@@ -1984,7 +2085,7 @@ try {
     <div id="qt-line-body"></div>
     <div class="qt-line-sub" id="qt-line-subtotal" style="margin:14px 0 4px"></div>
     <div class="pl-error" id="qt-line-error" style="display:none"></div>
-    <button class="btn-save" onclick="saveLineModal()">💾 Guardar línea</button>
+    <button class="btn-save" onclick="saveLineModal()">Guardar línea</button>
     <button class="btn-cancel" onclick="closeLineModal()">Cancelar</button>
   </div>
 </div>
@@ -2238,7 +2339,7 @@ const showMissingProfileScreen = () => {
   window._pendingShown = true;
   window._missingRetry = () => window.location.reload();
   window._missingSignOut = async () => { await _clearSharedSession(); await signOut(auth); window.location.href = 'https://login.nivelatolabs.com/'; };
-  document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⚠️</div><h2 style="color:#fafafa">No se encontró tu perfil</h2><p style="color:#a8a8b0;max-width:340px">Tu sesión es válida pero no hay un perfil de usuario asociado. Si acabas de registrarte, espera unos segundos y reintenta; si no, cierra sesión y pide a tu administrador un enlace de registro nuevo.</p><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button onclick="window._missingRetry()" style="padding:12px 28px;background:#fafafa;color:#050505;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer">Reintentar</button><button onclick="window._missingSignOut()" style="padding:12px 28px;background:rgba(255,255,255,.08);color:#fafafa;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div></div>';
+  document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#f5c518" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><h2 style="color:#fafafa">No se encontró tu perfil</h2><p style="color:#a8a8b0;max-width:340px">Tu sesión es válida pero no hay un perfil de usuario asociado. Si acabas de registrarte, espera unos segundos y reintenta; si no, cierra sesión y pide a tu administrador un enlace de registro nuevo.</p><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button onclick="window._missingRetry()" style="padding:12px 28px;background:#fafafa;color:#050505;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer">Reintentar</button><button onclick="window._missingSignOut()" style="padding:12px 28px;background:rgba(255,255,255,.08);color:#fafafa;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div></div>';
 };
 
 // ─── Huella del equipo web ───
@@ -2379,7 +2480,7 @@ const showUpgradeModal = async () => {
     '<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto">'
     + '<div id="upgrade-card" style="position:relative;background:var(--niv-surface);border:1px solid var(--niv-border);color:var(--niv-text);border-radius:16px;padding:32px 28px;max-width:360px;width:100%;max-height:calc(100dvh - 40px);overflow-y:auto;text-align:center;font-family:Inter,sans-serif;box-shadow:0 24px 60px rgba(0,0,0,.35)">'
     + '<button type="button" onclick="window._upgradeClose()" aria-label="' + escapeHtml(L('Cerrar', 'Close')) + '" style="position:absolute;top:10px;right:10px;background:transparent;border:none;color:var(--niv-text-dim);font-size:20px;line-height:1;padding:6px 10px;border-radius:8px;cursor:pointer">✕</button>'
-    + '<div style="font-size:44px;margin-bottom:8px">📊</div>'
+    + '<div style="margin-bottom:8px;color:var(--niv-text-dim)"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div>'
     + '<h2 style="color:var(--niv-text);margin:0 0 8px;font-size:20px">' + escapeHtml(L('Mejora tu plan', 'Upgrade your plan')) + '</h2>'
     + '<p style="color:var(--niv-text-dim);font-size:14px;margin:0 0 6px;line-height:1.5">' + escapeHtml(L('Para ver las opciones de compra escanea este código QR con tu teléfono', 'To see purchase options scan this QR code using your phone')) + '</p>'
     + '<p style="color:var(--niv-text-dim);font-size:13px;margin:0 0 16px;line-height:1.5"><em>' + escapeHtml(L('Debes tener la app instalada', 'Must have app installed')) + '</em></p>'
@@ -2751,6 +2852,12 @@ let currentUser;
         return canViewOthers;
       });
       refreshJobFiltersAndRender();
+      // v1.2.17: if the measurement open in the detail view vanished
+      // from the snapshot (deleted anywhere), exit the detail view
+      // instead of leaving the deleted record on screen.
+      if (window._dashView === 'measure' && window._currentMeasureId && !allJobs.some((j) => j.id === window._currentMeasureId)) {
+        if (window.measureBack) window.measureBack();
+      }
     };
 
     // realtime subscription - the list live-updates on add/edit/delete
@@ -2887,16 +2994,25 @@ let currentUser;
     const custEl = document.getElementById('niv-panel-customers');
     if (custEl) {
       _loadStoredCustomers();
-      // one-time toolbar row (new customer only; item 16 removed the
-      // per-section search input), injected as a sibling so the list
-      // re-renders below never wipe it
-      const sec = custEl.parentElement;
-      if (sec && !document.getElementById('panel-customer-tools')) {
-        const tools = document.createElement('div');
-        tools.id = 'panel-customer-tools';
-        tools.style.cssText = 'display:flex;gap:8px;align-items:center;justify-content:flex-end;margin:2px 0 8px;';
-        tools.innerHTML = '<button type="button" class="niv-plus-btn" id="panel-customer-new" onclick="window._panelNewCustomer()">+</button>';
-        sec.insertBefore(tools, custEl);
+      // v1.2.17: the new-customer + lives IN the section title row,
+      // before the collapse chevron, so the header reads as one row of
+      // controls (title, +, chevron). It is appended to the title div
+      // (never the span: the count writer sets the span's textContent,
+      // and the chevron wiring appends to the div for the same reason),
+      // so list re-renders below never wipe it.
+      if (!document.getElementById('panel-customer-new')) {
+        const sec = custEl.parentElement;
+        const titleRow = sec ? sec.querySelector('.niv-panel-sec-title') : null;
+        if (titleRow) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'niv-plus-btn';
+          btn.id = 'panel-customer-new';
+          btn.textContent = '+';
+          btn.addEventListener('click', (e) => { e.stopPropagation(); window._panelNewCustomer(); });
+          const chev = titleRow.querySelector('.niv-sec-chev');
+          if (chev) titleRow.insertBefore(btn, chev); else titleRow.appendChild(btn);
+        }
       }
       const newBtn = document.getElementById('panel-customer-new');
       if (newBtn) { newBtn.title = L('Nuevo cliente', 'New customer'); newBtn.setAttribute('aria-label', L('Nuevo cliente', 'New customer')); }
@@ -2913,7 +3029,7 @@ let currentUser;
     if (measEl) {
       const recent = jobs.slice(0, 5);
       measEl.innerHTML = recent.length
-        ? recent.map((j, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="openMeasure('${j.id}', 'measures')"><span>${esc(window.nivJobTitle(j))}${j.annotatedPhoto ? ' 📷' : ''}</span>${dashDotsBtn('measure', j.id, window.nivJobTitle(j))}</div>`).join('')
+        ? recent.map((j, i) => `<div class="niv-panel-item${i === 0 ? ' first' : ''}" onclick="openMeasure('${j.id}', 'measures')"><span>${esc(window.nivJobTitle(j))}${j.annotatedPhoto ? '<span class="niv-photo-badge"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>' : ''}</span>${dashDotsBtn('measure', j.id, window.nivJobTitle(j))}</div>`).join('')
         : '<div class="niv-panel-empty">' + L('Sin medidas', 'No measurements') + '</div>';
     }
   };
@@ -3018,7 +3134,7 @@ let currentUser;
       const timeStr = d.toLocaleTimeString(_loc, { timeZone: 'America/Puerto_Rico', hour: '2-digit', minute: '2-digit', hour12: true });
       const hasWarn = job.warnings && job.warnings.length > 0;
       const tag = hasWarn
-        ? `<span class="job-tag tag-warn">⚠ Advertencias</span>`
+        ? `<span class="job-tag tag-warn"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Advertencias</span>`
         : `<span class="job-tag tag-ok">✓ OK</span>`;
       const hueco = job.hueco ? `${(job.hueco.anchoBot||job.hueco.anchoBottom||job.hueco.ancho||'?')}" × ${(job.hueco.altoIzq||job.hueco.altoLeft||job.hueco.alto||'?')}"` : '-';
       const notasPreview = job.notas ? (job.notas.length > 30 ? job.notas.slice(0,30) + '…' : job.notas) : '';
@@ -3042,7 +3158,7 @@ let currentUser;
           <span class="niv-tl-time">${escapeHtml(timeStr)}</span>
           <div class="niv-tl-main">
             <div class="niv-tl-title">${displayTitleHtml} ${tag}</div>
-            <div class="niv-tl-sub">${subContext ? `<span>${subContext}</span>` : ''}<span class="niv-tl-dims">📐 ${escapeHtml(hueco)}</span><span>👤 ${escapeHtml(job.installerName) || '-'}</span>${notasPreview ? `<span>📝 ${escapeHtml(notasPreview)}</span>` : ''}</div>
+            <div class="niv-tl-sub">${subContext ? `<span>${subContext}</span>` : ''}<span class="niv-tl-dims"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M21.3 8.7 15.3 2.7a1 1 0 0 0-1.4 0L2.7 13.9a1 1 0 0 0 0 1.4l6 6a1 1 0 0 0 1.4 0L21.3 10.1a1 1 0 0 0 0-1.4Z"/><path d="m7.5 10.5 2 2"/><path d="m10.5 7.5 2 2"/><path d="m13.5 4.5 2 2"/></svg>${escapeHtml(hueco)}</span><span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${escapeHtml(job.installerName) || '-'}</span>${notasPreview ? `<span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>${escapeHtml(notasPreview)}</span>` : ''}</div>
           </div>
           <span class="niv-tl-chev" aria-hidden="true">›</span>
         </div>`;
@@ -3096,9 +3212,9 @@ let currentUser;
     html += row('Techo',      dval(desn.techo));
     html += row('Piso',       dval(desn.piso));
     if (job.warnings && job.warnings.length > 0) {
-      html += `<div class="niv-warn-box" style="margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px">${job.warnings.map(w=>`⚠ ${escapeHtml(w)}`).join('<br>')}</div>`;
+      html += `<div class="niv-warn-box" style="margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px">${WARN_SVG}${job.warnings.map(w=>escapeHtml(String(w).replace(/^\u26A0\uFE0F?\s*/, ''))).join('<br>')}</div>`;
     }
-    if (job.notas) html += `<div class="modal-notes">📝 ${escapeHtml(job.notas)}</div>`;
+    if (job.notas) html += `<div class="modal-notes">${escapeHtml(job.notas)}</div>`;
     document.getElementById('modal-body').innerHTML = html;
     // gate delete button by edit permission
     const delBtn = document.getElementById('modal-delete-btn');
@@ -3343,7 +3459,7 @@ let currentUser;
       const status = document.getElementById('share-status');
       if (status) {
         status.style.display = 'inline';
-        status.textContent = '✓ Guardado';
+        status.textContent = L('Guardado', 'Saved');
         setTimeout(() => status.style.display = 'none', 2000);
       }
     } catch(e) {
@@ -3355,7 +3471,7 @@ let currentUser;
     const i = window._currentJobIdx;
     if (i === null || i === undefined) return;
     const job = window._jobs[i];
-    if (!confirm(`¿Eliminar la medida de ${job.installerName || 'este técnico medidor'}? Esta acción no se puede deshacer.`)) return;
+    if (!confirm(L('¿Eliminar la medida de ', 'Delete the measurement by ') + (job.installerName || L('este técnico medidor', 'this measurer')) + L('? Esta acción no se puede deshacer.', '? This cannot be undone.'))) return;
     try {
       await deleteDoc(doc(db, 'orgs', window._orgId, 'jobs', job.id));
       window._closeModalDialog();
@@ -3363,8 +3479,10 @@ let currentUser;
       allJobs = allJobs.filter(j => j.id !== job.id);
       window._currentJobIdx = null;
       applyFilters();
+      if (window.refreshFloatPanel) window.refreshFloatPanel(allJobs);
+      if (window._exitMeasureIfDeleted) window._exitMeasureIfDeleted(job.id);
     } catch(e) {
-      alert('Error al eliminar: ' + e.message);
+      alert(L('Error al eliminar: ', 'Could not delete: ') + e.message);
     }
   };
 
@@ -3398,7 +3516,7 @@ let currentUser;
       await updateDoc(doc(db, 'orgs', window._orgId, 'jobs', job.id), { sharedWith: uids });
       const status = document.getElementById('share-status');
       status.style.display = 'inline';
-      status.textContent = '✓ Guardado';
+      status.textContent = L('Guardado', 'Saved');
       setTimeout(() => status.style.display = 'none', 2000);
     } catch(e) {
       alert('Error al guardar: ' + e.message);
@@ -3454,12 +3572,74 @@ let currentUser;
     }
   });
 
+  // v1.2.17: home-card enrollment tile (spec section 2.5). Mints a
+  // FRESH single-use enrollment token for the entered email through
+  // the same createEnrollmentToken callable the Add User flow uses
+  // (v1.2.16 machinery, untouched): the token requires the email to be
+  // a pending invitee or an existing member, so an unknown email first
+  // gets the same pending invite the Add User flow creates by default
+  // (role 'medidor', no permission overrides). Minting supersedes any
+  // previous live token for that email. The tile copy lines are the
+  // spec's verbatim lines, in English in both UI languages, exactly
+  // as in add-user.js.
+  window._homeEnrollGenerate = async () => {
+    const input = document.getElementById('home-enroll-email');
+    const slot = document.getElementById('home-enroll-slot');
+    const errEl = document.getElementById('home-enroll-error');
+    const btn = document.getElementById('home-enroll-btn');
+    if (!input || !slot || !btn) return;
+    const email = (input.value || '').trim().toLowerCase();
+    const fail = (msg) => { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } };
+    if (errEl) errEl.style.display = 'none';
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { fail(L('Escribe un correo válido para generar su código QR.', 'Enter a valid email to generate its QR code.')); return; }
+    const orgId = window._orgId || window._currentOrgId;
+    if (!orgId) { fail(L('La organización aún no cargó. Espera un momento y reintenta.', 'The organization has not loaded yet. Wait a moment and try again.')); return; }
+    const btnLabel = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = L('Generando…', 'Generating…');
+    try {
+      const isMember = (window._orgMembers || []).some((m) => String(m.email || '').toLowerCase() === email);
+      if (!isMember) {
+        const invRef = doc(db, 'orgs', orgId, 'invites', email);
+        const invSnap = await getDoc(invRef);
+        if (!invSnap.exists()) {
+          await setDoc(invRef, {
+            email, role: 'medidor', permissions: {}, status: 'pending',
+            createdBy: (window._currentUserData && window._currentUserData.uid) || null,
+            createdAt: serverTimestamp()
+          });
+        }
+      }
+      const { data } = await _callable('createEnrollmentToken')({ orgId, email });
+      const when = data.expiresAt ? new Date(data.expiresAt).toLocaleDateString(NIV_LANG === 'en' ? 'en-US' : 'es-PR') : '';
+      slot.innerHTML = '<div class="home-enroll-tile">'
+        + (data.qrSvg ? '<div class="tile-qr">' + data.qrSvg + '</div>' : '<p style="font-size:13px;word-break:break-all;">' + escapeHtml(data.url || '') + '</p>')
+        + '<div class="tile-headline">Use this QR code to enroll your employees.</div>'
+        + '<div class="tile-sub">This QR code is unique and can only be used once.</div>'
+        + (when ? '<div class="tile-expiry">' + escapeHtml(L('Vence el ', 'Expires on ') + when) + '</div>' : '')
+        + '<div class="tile-actions">'
+        + '<button type="button" id="home-enroll-copylink">' + escapeHtml(L('Copiar enlace', 'Copy link')) + '</button>'
+        + '<button type="button" id="home-enroll-regen">' + escapeHtml(L('Generar otro', 'Generate another')) + '</button>'
+        + '</div></div>';
+      const copyBtn = document.getElementById('home-enroll-copylink');
+      if (copyBtn) copyBtn.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(data.url); copyBtn.textContent = L('Enlace copiado', 'Link copied'); } catch (_) {}
+      });
+      const regenBtn = document.getElementById('home-enroll-regen');
+      if (regenBtn) regenBtn.addEventListener('click', () => window._homeEnrollGenerate());
+    } catch (e) {
+      fail(L('No se pudo generar el código. ', 'Could not generate the code. ') + ((e && e.message) || ''));
+    }
+    btn.disabled = false;
+    btn.textContent = btnLabel;
+  };
+
   window.copyJoinCode = async (btnEl) => {
     const btn = btnEl || document.getElementById('copy-btn');
     const show = (txt) => {
       if (!btn) return;
       btn.textContent = txt;
-      setTimeout(() => { btn.textContent = '📋 Copiar'; }, 2000);
+      setTimeout(() => { btn.textContent = L('Copiar', 'Copy'); }, 2000);
     };
     const code = (document.querySelector('.join-code-code')?.textContent || '').trim();
     try {
@@ -3812,8 +3992,8 @@ let currentUser;
     });
     const btnPl = document.getElementById('btn-pricelist');
     const btnQ = document.getElementById('btn-quotes');
-    if (btnPl) btnPl.textContent = name === 'pricelist' ? '📊 Medidas' : '📋 Precios';
-    if (btnQ) btnQ.textContent = (name === 'quotes' || name === 'builder') ? '📊 Medidas' : '💲 Cotizaciones';
+    if (btnPl) btnPl.textContent = name === 'pricelist' ? L('Medidas', 'Measurements') : L('Precios', 'Prices');
+    if (btnQ) btnQ.textContent = (name === 'quotes' || name === 'builder') ? L('Medidas', 'Measurements') : L('Cotizaciones', 'Quotes');
     // sidebar nav active state
     if (btnPl) btnPl.classList.toggle('active', name === 'pricelist');
     if (btnQ) btnQ.classList.toggle('active', name === 'quotes' || name === 'builder');
@@ -3898,7 +4078,7 @@ let currentUser;
         '<div class="job-card-top"><div class="job-title">' + escapeHtml(q.numero || 'Sin número') +
         ' <span class="qt-badge qt-est-' + escapeHtml(q.estado || 'borrador') + '">' + escapeHtml(QT_ESTADOS[q.estado] || q.estado || '') + '</span></div>' +
         '<div class="job-date">' + escapeHtml(qDateStr(q.creadoEl)) + '</div></div>' +
-        '<div class="job-meta"><span>👤 ' + ((q.cliente && q.cliente.nombre) ? '<span class="cust-link" onclick="event.stopPropagation();window.openCustomer(decodeURIComponent(\'' + custEnc(q.cliente.nombre) + '\'))">' + escapeHtml(q.cliente.nombre) + '</span>' : 'Sin cliente') + '</span>' +
+        '<div class="job-meta"><span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + ((q.cliente && q.cliente.nombre) ? '<span class="cust-link" onclick="event.stopPropagation();window.openCustomer(decodeURIComponent(\'' + custEnc(q.cliente.nombre) + '\'))">' + escapeHtml(q.cliente.nombre) + '</span>' : 'Sin cliente') + '</span>' +
         '<span class="qt-total">' + plMoney(total) + '</span></div></div>';
     }).join('');
   };
@@ -3950,20 +4130,20 @@ let currentUser;
     html += row('Válida por', (q.validezDias || '-') + ' días');
     if (q.emitidaEl) html += row('Emitida', qDateStr(q.emitidaEl));
     if (q.validaHasta) html += row('Válida hasta', qDateStr(q.validaHasta));
-    if (q.notas) html += '<div class="modal-notes">📝 ' + escapeHtml(q.notas) + '</div>';
+    if (q.notas) html += '<div class="modal-notes">' + escapeHtml(q.notas) + '</div>';
     document.getElementById('qt-modal-body').innerHTML = html;
 
     // Acciones según estado y rol (matriz QUOTING_SCHEMA §1).
     let actions = '';
     const btn = (fn, cls, label) => '<button class="' + cls + '" onclick="' + fn + '(\'' + q.id + '\')">' + label + '</button>';
     actions += btn('qPdfQuote', 'btn-edit', '🖨️ Imprimir / PDF');
-    if (qCanEditQuote(q)) actions += btn('openQuoteBuilder', 'btn-edit', '✏️ Editar borrador');
+    if (qCanEditQuote(q)) actions += btn('openQuoteBuilder', 'btn-edit', 'Editar borrador');
     if (qCanSendQuote(q)) actions += btn('qtSendQuote', 'btn-save', '📤 Marcar como enviada');
     if (q.estado === 'enviada' && qCanApproveQuote(q)) {
-      actions += btn('qtApproveQuote', 'btn-save', '✅ Aprobar');
+      actions += btn('qtApproveQuote', 'btn-save', 'Aprobar');
       actions += btn('qtRejectQuote', 'btn-delete', '❌ Rechazar');
     }
-    if (qCanApproveQuote(q)) actions += btn('qtDeleteQuote', 'btn-delete', '🗑 Eliminar cotización');
+    if (qCanApproveQuote(q)) actions += btn('qtDeleteQuote', 'btn-delete', 'Eliminar cotización');
     document.getElementById('qt-modal-actions').innerHTML = actions;
   }
 
@@ -4255,7 +4435,7 @@ let currentUser;
         detail += ' · ' + escapeHtml(qFormaLabel(l.forma)) + escapeHtml(qDimStr(l));
         if (l.posicion && l.posicion.etiqueta) detail += ' · ' + escapeHtml(l.posicion.etiqueta);
       }
-      const med = l.medicionRef ? '<span class="qt-med-badge">📐 Medida vinculada</span>' : '';
+      const med = l.medicionRef ? '<span class="qt-med-badge"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M21.3 8.7 15.3 2.7a1 1 0 0 0-1.4 0L2.7 13.9a1 1 0 0 0 0 1.4l6 6a1 1 0 0 0 1.4 0L21.3 10.1a1 1 0 0 0 0-1.4Z"/><path d="m7.5 10.5 2 2"/><path d="m10.5 7.5 2 2"/><path d="m13.5 4.5 2 2"/></svg>Medida vinculada</span>' : '';
       return '<div class="qt-line"><div class="qt-line-top"><div><div class="qt-line-desc">' +
         escapeHtml(l.descripcion || 'Línea') + med + '</div><div class="qt-line-detail">' + detail + '</div></div>' +
         '<div class="qt-line-sub">' + plMoney(l.subtotalLinea) + '</div></div>' +
@@ -4328,9 +4508,9 @@ let currentUser;
       '<label class="modal-edit-label" for="ql-cantidad">Cantidad *</label>' +
       '<input class="modal-edit-input" id="ql-cantidad" type="number" min="1" step="1" inputmode="numeric" value="' + (d.line.cantidad || 1) + '" oninput="recalcLineDraft()" />' +
       '<div id="ql-dims-wrap">' + (perSqft ? lineDimsHtml(d) : '') + '</div>' +
-      '<div style="margin-top:12px"><button class="pl-btn" type="button" onclick="openMedPicker()">📐 Usar medida guardada</button> ' +
+      '<div style="margin-top:12px"><button class="pl-btn" type="button" onclick="openMedPicker()"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M21.3 8.7 15.3 2.7a1 1 0 0 0-1.4 0L2.7 13.9a1 1 0 0 0 0 1.4l6 6a1 1 0 0 0 1.4 0L21.3 10.1a1 1 0 0 0 0-1.4Z"/><path d="m7.5 10.5 2 2"/><path d="m10.5 7.5 2 2"/><path d="m13.5 4.5 2 2"/></svg>Usar medida guardada</button> ' +
       '<span id="ql-med-badge">' + (d.line.medicionRef
-        ? '<span class="qt-med-badge">📐 Medida vinculada</span> <button class="pl-btn pl-btn-off" type="button" onclick="clearMedRef()">Quitar</button>'
+        ? '<span class="qt-med-badge"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M21.3 8.7 15.3 2.7a1 1 0 0 0-1.4 0L2.7 13.9a1 1 0 0 0 0 1.4l6 6a1 1 0 0 0 1.4 0L21.3 10.1a1 1 0 0 0 0-1.4Z"/><path d="m7.5 10.5 2 2"/><path d="m10.5 7.5 2 2"/><path d="m13.5 4.5 2 2"/></svg>Medida vinculada</span> <button class="pl-btn pl-btn-off" type="button" onclick="clearMedRef()">Quitar</button>'
         : '') + '</span></div>';
   };
 
@@ -4603,7 +4783,7 @@ let currentUser;
         return '<div class="qt-med-card" tabindex="0" role="button" onclick="attachMeasurement(\'' + escapeHtml(j.id) + '\')" ' +
           'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();attachMeasurement(\'' + escapeHtml(j.id) + '\')}">' +
           '<div class="job-title">' + escapeHtml(title) + '</div>' +
-          '<div class="job-meta"><span>📐 ' + escapeHtml(dims) + '</span><span>👤 ' + escapeHtml(j.installerName || '-') + '</span></div></div>';
+          '<div class="job-meta"><span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M21.3 8.7 15.3 2.7a1 1 0 0 0-1.4 0L2.7 13.9a1 1 0 0 0 0 1.4l6 6a1 1 0 0 0 1.4 0L21.3 10.1a1 1 0 0 0 0-1.4Z"/><path d="m7.5 10.5 2 2"/><path d="m10.5 7.5 2 2"/><path d="m13.5 4.5 2 2"/></svg>' + escapeHtml(dims) + '</span><span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + escapeHtml(j.installerName || '-') + '</span></div></div>';
       }).join('');
     }
     document.getElementById('qt-med-modal-overlay').classList.add('open');
@@ -4836,6 +5016,7 @@ let currentUser;
           if (window.refreshFloatPanel) window.refreshFloatPanel(allJobs);
           if (window._dashView === 'home' && window.renderHomeOverview) window.renderHomeOverview();
           if (window._dashView === 'project' && _currentProject) window.openProject(_currentProject.id);
+          if (window._exitMeasureIfDeleted) window._exitMeasureIfDeleted(id);
         }
         return;
       }
@@ -4899,7 +5080,7 @@ let currentUser;
     const meas = allJobs.filter(j => j.projectId === projectId);
     const measEl = document.getElementById('proj-measures');
     measEl.innerHTML = meas.length
-      ? meas.map(j => `<div class="niv-proj-measure" onclick="openMeasure('${j.id}', 'project')"><span>${escapeHtml(window.nivJobTitle(j))}${j.annotatedPhoto ? '<span class="niv-photo-badge">📷</span>' : ''}</span>${dashDotsBtn('measure', j.id, window.nivJobTitle(j))}</div>`).join('')
+      ? meas.map(j => `<div class="niv-proj-measure" onclick="openMeasure('${j.id}', 'project')"><span>${escapeHtml(window.nivJobTitle(j))}${j.annotatedPhoto ? '<span class="niv-photo-badge"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>' : ''}</span>${dashDotsBtn('measure', j.id, window.nivJobTitle(j))}</div>`).join('')
       : '<div class="niv-panel-empty">' + L('Sin medidas en este proyecto.', 'No measurements in this project.') + '</div>';
     // assigned users
     renderProjectUsers(p);
@@ -4942,9 +5123,22 @@ let currentUser;
   // ---- measurement detail view ----
   let _measureReturnView = 'measures';
 
+  window._measureTab = (which) => {
+    const diagram = which !== 'photo';
+    const dp = document.getElementById('measure-diagram-pane');
+    const pp = document.getElementById('measure-photo-pane');
+    const dt = document.getElementById('measure-dims-title');
+    const pt = document.getElementById('measure-photo-title');
+    if (dp) dp.style.display = diagram ? '' : 'none';
+    if (pp) pp.style.display = diagram ? 'none' : '';
+    if (dt) { dt.classList.toggle('active', diagram); dt.setAttribute('aria-selected', diagram ? 'true' : 'false'); }
+    if (pt) { pt.classList.toggle('active', !diagram); pt.setAttribute('aria-selected', diagram ? 'false' : 'true'); }
+  };
+
   window.openMeasure = (jobId, returnView) => {
     const job = allJobs.find(j => j.id === jobId);
     if (!job) return;
+    window._currentMeasureId = jobId;
     _measureReturnView = returnView || 'measures';
     // M13: draw the graph only from real dimensions. A measure with no
     // recorded dimensions gets an explicit no-dimensions state, never a
@@ -4963,11 +5157,15 @@ let currentUser;
         noDims.style.display = 'block';
       }
     }
-    // photo
+    // photo (inside the media card's Photo tab; the No-photo state
+    // lives in the tab too). Land on the diagram normally; if the
+    // measurement has no dimensions but does have a photo, open on
+    // the photo so the user is not staring at an empty state.
     const pw = document.getElementById('measure-photo-wrap');
     pw.innerHTML = job.annotatedPhoto
       ? `<img src="${escapeHtml(job.annotatedPhoto)}" alt="Foto con medidas" />`
       : '<div class="niv-panel-empty">' + escapeHtml(L('Sin foto', 'No photo')) + '</div>';
+    window._measureTab(!_jobHasDims(job) && job.annotatedPhoto ? 'photo' : 'diagram');
     // M14: the detail view shows the measurement itself, at parity with
     // the openJob modal: customer, the four dimensions in text, offsets,
     // warnings and notes (previously only date/location/project/by).
@@ -5002,15 +5200,29 @@ let currentUser;
     let html = rows.map(([k, v]) =>
       `<div class="niv-detail-row"><span class="k">${escapeHtml(k)}</span><span class="v">${escapeHtml(v)}</span></div>`).join('');
     if (job.warnings && job.warnings.length > 0) {
-      html += `<div class="niv-warn-box" style="margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px">${job.warnings.map(w=>`⚠ ${escapeHtml(w)}`).join('<br>')}</div>`;
+      html += `<div class="niv-warn-box" style="margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px">${WARN_SVG}${job.warnings.map(w=>escapeHtml(String(w).replace(/^\u26A0\uFE0F?\s*/, ''))).join('<br>')}</div>`;
     }
-    if (job.notas) html += `<div class="modal-notes">📝 ${escapeHtml(job.notas)}</div>`;
+    if (job.notas) html += `<div class="modal-notes">${escapeHtml(job.notas)}</div>`;
     document.getElementById('measure-details').innerHTML = html;
     window.showDashView('measure');
   };
 
   window.measureBack = () => {
+    window._currentMeasureId = null;
     window.showDashView(_measureReturnView === 'measure' ? 'measures' : _measureReturnView);
+  };
+
+  // v1.2.17: a deleted measurement must disappear from EVERY surface
+  // at once. The lists and sidebar re-render from the jobs snapshot,
+  // but the detail view is rendered once into static HTML: deleting
+  // the open measurement (sidebar dots menu, modal, another device)
+  // left it on screen in full (Giulia, Oct 29: "Deleted measurement
+  // still shows inside here"). Any delete path funnels here: if the
+  // detail view is showing the deleted job, leave it.
+  window._exitMeasureIfDeleted = (id) => {
+    if (window._dashView === 'measure' && window._currentMeasureId && window._currentMeasureId === id) {
+      window.measureBack();
+    }
   };
 
 
@@ -5376,17 +5588,17 @@ let currentUser;
     setText('stat-warn-label', L('Con advertencias', 'With warnings'));
     setText('btn-new-measure', L('+ Nueva medida', '+ New measurement'));
     setText('join-code-label', L('CÓDIGO DEL TALLER:', 'WORKSHOP CODE:'));
-    setText('copy-btn-label', L('📋 Copiar', '📋 Copy'));
+    setText('copy-btn-label', L('Copiar', 'Copy'));
     setText('join-code-hint', L('Dáselo a tus empleados para que se registren en Nivelato', 'Give it to your employees so they can sign up for Nivelato'));
     // la copia de la tarjeta del codigo que vive en el Panel (ids unicos
     // por tarjeta: se localiza por clase dentro de la copia)
     document.querySelectorAll('#join-code-section-home .join-code-label').forEach((el) => { el.textContent = L('CÓDIGO DEL TALLER:', 'WORKSHOP CODE:'); });
-    document.querySelectorAll('#join-code-section-home .copy-btn-label').forEach((el) => { el.textContent = L('📋 Copiar', '📋 Copy'); });
+    document.querySelectorAll('#join-code-section-home .copy-btn-label').forEach((el) => { el.textContent = L('Copiar', 'Copy'); });
     document.querySelectorAll('#join-code-section-home .join-code-hint').forEach((el) => { el.textContent = L('Dáselo a tus empleados para que se registren en Nivelato', 'Give it to your employees so they can sign up for Nivelato'); });
     // leyenda del riel de la linea de dias (Medidas)
     setText('tl-legend-ok', L('Sin advertencias', 'No warnings'));
     setText('tl-legend-warn', L('Con advertencias', 'With warnings'));
-    setText('date-placeholder', L('📅 Filtrar por fecha · dd/mm/aaaa', '📅 Filter by date · mm/dd/yyyy'));
+    setText('date-placeholder', L('Filtrar por fecha · dd/mm/aaaa', 'Filter by date · mm/dd/yyyy'));
     setText('filter-installer-all', L('Todos los técnicos', 'All technicians'));
     setText('filter-customer-all', L('Todos los clientes', 'All customers'));
     setText('btn-clear-filters', L('Limpiar filtros', 'Clear filters'));
@@ -5394,6 +5606,15 @@ let currentUser;
     const _filtersPanel = document.getElementById('filters-menu-panel');
     if (_filtersPanel) _filtersPanel.setAttribute('aria-label', L('Filtros', 'Filters'));
     setText('modal-close-btn', L('Cerrar', 'Close'));
+    setText('modal-delete-label', L('Eliminar medida', 'Delete measurement'));
+    setText('modal-edit-label', L('Editar', 'Edit'));
+    setText('modal-save-label', L('Guardar cambios', 'Save changes'));
+    setText('modal-share-label', L('Compartir medida', 'Share measurement'));
+    setText('share-panel-title', L('Compartir con:', 'Share with:'));
+    setText('share-save-btn', L('Guardar', 'Save'));
+    setText('home-enroll-title', L('Inscribir a un empleado', 'Enroll an employee'));
+    setText('home-enroll-btn', L('Generar código QR', 'Generate QR code'));
+    setText('home-enroll-label', L('Correo del empleado', 'Employee email'));
     // M27: project + measure detail views localize too
     setText('proj-measures-title', L('Medidas', 'Measurements'));
     setText('proj-users-title', L('Usuarios asignados', 'Users assigned'));
@@ -5401,7 +5622,7 @@ let currentUser;
     setText('proj-back-btn', L('← Volver', '← Back'));
     setText('proj-new-btn', L('+ Nuevo proyecto', '+ New project'));
     setText('measure-title', L('Medida', 'Measure'));
-    setText('measure-dims-title', L('Dimensiones', 'Dimensions'));
+    setText('measure-dims-title', L('Diagrama', 'Diagram'));
     setText('measure-photo-title', L('Foto', 'Photo'));
     setText('measure-details-title', L('Detalles', 'Details'));
     if (window._localizeAbout) window._localizeAbout();
@@ -5752,7 +5973,7 @@ let currentUser;
           const dateStr = _fmtJobDateTime(job.createdAt);
           const hasWarn = job.warnings && job.warnings.length > 0;
           const tag = hasWarn
-            ? `<span class="job-tag tag-warn">⚠ Advertencias</span>`
+            ? `<span class="job-tag tag-warn"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Advertencias</span>`
             : `<span class="job-tag tag-ok">✓ OK</span>`;
           const hueco = job.hueco ? `${(job.hueco.anchoBot || job.hueco.anchoBottom || job.hueco.ancho || '?')}" × ${(job.hueco.altoIzq || job.hueco.altoLeft || job.hueco.alto || '?')}"` : '-';
           const notasPreview = job.notas ? (job.notas.length > 30 ? job.notas.slice(0, 30) + '…' : job.notas) : '';
@@ -5766,9 +5987,9 @@ let currentUser;
             <div class="job-date">${escapeHtml(dateStr)}</div>
           </div>
           <div class="job-meta">
-            <span>📐 ${escapeHtml(hueco)}</span>
-            <span>👤 ${escapeHtml(job.installerName) || '-'}</span>
-            ${notasPreview ? `<span>📝 ${escapeHtml(notasPreview)}</span>` : ''}
+            <span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M21.3 8.7 15.3 2.7a1 1 0 0 0-1.4 0L2.7 13.9a1 1 0 0 0 0 1.4l6 6a1 1 0 0 0 1.4 0L21.3 10.1a1 1 0 0 0 0-1.4Z"/><path d="m7.5 10.5 2 2"/><path d="m10.5 7.5 2 2"/><path d="m13.5 4.5 2 2"/></svg>${escapeHtml(hueco)}</span>
+            <span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${escapeHtml(job.installerName) || '-'}</span>
+            ${notasPreview ? `<span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>${escapeHtml(notasPreview)}</span>` : ''}
           </div>
         </div>`;
         }).join('');
@@ -5950,20 +6171,54 @@ let currentUser;
     ind.className = 'niv-tab-indicator';
     ind.setAttribute('aria-hidden', 'true');
     tabsEl.appendChild(ind);
+    // v1.2.17: clipped dark-label clone layer (see the CSS note). The
+    // layer shares the pill's geometry; its inner strip lives in the
+    // track's own coordinate space (translated by -left), so each
+    // clone sits exactly over its real label and only the part under
+    // the pill is visible.
+    const labelsEl = document.createElement('div');
+    labelsEl.className = 'niv-tab-indicator-labels';
+    labelsEl.setAttribute('aria-hidden', 'true');
+    const labelsInner = document.createElement('div');
+    labelsInner.className = 'niv-tab-indicator-labels-inner';
+    labelsEl.appendChild(labelsInner);
+    tabsEl.appendChild(labelsEl);
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let dragging = false;
     let suppressClick = false;
     const pills = () => Array.from(tabsEl.querySelectorAll('.niv-tab'));
     const activePill = () => tabsEl.querySelector('.niv-tab.active');
+    function syncClones() {
+      labelsInner.innerHTML = '';
+      labelsInner.style.width = tabsEl.scrollWidth + 'px';
+      pills().forEach((tab) => {
+        const span = tab.querySelector('.niv-tab-label');
+        if (!span) return;
+        const clone = document.createElement('span');
+        clone.className = 'niv-tab-clone';
+        clone.textContent = span.textContent;
+        clone.style.left = (tab.offsetLeft + span.offsetLeft) + 'px';
+        clone.style.width = span.offsetWidth + 'px';
+        labelsInner.appendChild(clone);
+      });
+    }
+    function setInd(left, width, opacity) {
+      ind.style.left = left + 'px';
+      ind.style.width = width + 'px';
+      ind.style.opacity = opacity;
+      labelsEl.style.left = left + 'px';
+      labelsEl.style.width = width + 'px';
+      labelsEl.style.opacity = opacity;
+      labelsInner.style.transform = 'translateX(' + (-left) + 'px)';
+    }
     function settle(el, animate) {
-      if (!el) { ind.style.opacity = '0'; return; }
+      if (!el) { setInd(0, 0, '0'); return; }
       const instant = !animate || reduceMotion.matches;
-      if (instant) ind.classList.add('dragging');
-      ind.style.left = el.offsetLeft + 'px';
-      ind.style.width = el.offsetWidth + 'px';
-      ind.style.opacity = '1';
+      if (instant) { ind.classList.add('dragging'); labelsEl.classList.add('dragging'); }
+      syncClones();
+      setInd(el.offsetLeft, el.offsetWidth, '1');
       tabsEl.classList.add('ind-on');
-      if (instant) requestAnimationFrame(() => ind.classList.remove('dragging'));
+      if (instant) requestAnimationFrame(() => { ind.classList.remove('dragging'); labelsEl.classList.remove('dragging'); });
     }
     function place(animate) { if (!dragging) settle(activePill(), animate); }
     const origChange = window._onDashViewChange;
@@ -5978,6 +6233,34 @@ let currentUser;
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => place(false));
     if (window.ResizeObserver) {
       try { new ResizeObserver(() => place(false)).observe(tabsEl); } catch (_) {}
+      // v1.2.17: watch each TAB as well as the track. A label relabel
+      // (ES->EN after auth) or the notification badge appearing changes
+      // tab widths; when the flex header clamps the track's own box,
+      // the track does not resize, the old observer never fired, and
+      // the pill stayed parked on stale geometry between items.
+      try {
+        const tabRO = new ResizeObserver(() => place(false));
+        pills().forEach((t) => tabRO.observe(t));
+      } catch (_) {}
+    }
+    // v1.2.17: label text and badge visibility are mutations, not
+    // resizes; watch the tabs themselves and re-place a frame later.
+    if (window.MutationObserver) {
+      try {
+        let queued = false;
+        const mo = new MutationObserver((records) => {
+          // The .active class toggle on a tab itself is the view-change
+          // hook's own signal (it already placed the pill, animated);
+          // reacting to it here would snap the pill and kill the slide.
+          // What needs a corrective place is CONTENT changing inside a
+          // tab: label text (relabel) or the badge appearing.
+          const relevant = records.some((r) => !(r.target.classList && r.target.classList.contains('niv-tab') && r.type === 'attributes'));
+          if (!relevant || queued) return;
+          queued = true;
+          requestAnimationFrame(() => { queued = false; place(false); });
+        });
+        pills().forEach((t) => mo.observe(t, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class', 'style'] }));
+      } catch (_) {}
     }
     // arrastre con topes: un tope por boton, en su centro
     let dragId = null, downX = 0, dragTab = null;
@@ -5993,6 +6276,7 @@ let currentUser;
         dragging = true;
         try { tabsEl.setPointerCapture(dragId); } catch (_) {}
         ind.classList.add('dragging');
+        labelsEl.classList.add('dragging');
         tabsEl.classList.add('drag-preview');
       }
       const list = pills();
@@ -6002,9 +6286,9 @@ let currentUser;
       const lo = list[0], hi = list[list.length - 1];
       const cur = dragTab || activePill() || lo;
       const w = cur.offsetWidth;
-      ind.style.left = Math.max(lo.offsetLeft, Math.min(x - w / 2, hi.offsetLeft + hi.offsetWidth - w)) + 'px';
-      ind.style.width = w + 'px';
-      ind.style.opacity = '1';
+      const dragLeft = Math.max(lo.offsetLeft, Math.min(x - w / 2, hi.offsetLeft + hi.offsetWidth - w));
+      syncClones();
+      setInd(dragLeft, w, '1');
       tabsEl.classList.add('ind-on');
       let near = lo, nd = Infinity;
       list.forEach((el) => { const d = Math.abs(centerOf(el) - x); if (d < nd) { nd = d; near = el; } });
@@ -6013,7 +6297,7 @@ let currentUser;
         // commits on release (see endDrag). The old code clicked the
         // item mid-drag, so the view changed under the pointer.
         dragTab = near;
-        ind.style.width = near.offsetWidth + 'px';
+        setInd(dragLeft, near.offsetWidth, '1');
         list.forEach((el) => el.classList.toggle('preview', el === near));
       }
     });
@@ -6027,6 +6311,7 @@ let currentUser;
       tabsEl.classList.remove('drag-preview');
       pills().forEach((el) => el.classList.remove('preview'));
       ind.classList.remove('dragging');
+      labelsEl.classList.remove('dragging');
       if (!wasDragging) return;
       // item 34: commit only when the pointer is released over the
       // bar itself. A release outside it, or a pointercancel, returns
@@ -6079,7 +6364,7 @@ let currentUser;
     const hm = document.getElementById('home-measures');
     if (hm) {
       hm.innerHTML = allJobs.length
-        ? allJobs.slice(0, 6).map((j) => `<div class="niv-home-row" onclick="openMeasure('${j.id}', 'home')"><span>${escapeHtml(window.nivJobTitle(j))}${j.annotatedPhoto ? '<span class="niv-photo-badge">📷</span>' : ''}</span>${dashDotsBtn('measure', j.id, window.nivJobTitle(j))}</div>`).join('')
+        ? allJobs.slice(0, 6).map((j) => `<div class="niv-home-row" onclick="openMeasure('${j.id}', 'home')"><span>${escapeHtml(window.nivJobTitle(j))}${j.annotatedPhoto ? '<span class="niv-photo-badge"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>' : ''}</span>${dashDotsBtn('measure', j.id, window.nivJobTitle(j))}</div>`).join('')
         : '<div class="niv-panel-empty">' + L('Sin medidas', 'No measurements') + '</div>';
     }
     // clientes: conteo derivado de las medidas (misma derivacion que el

@@ -481,12 +481,18 @@ html, body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--white);
+  /* v1.2.17: this sticky footer painted var(--white) while the Neue
+     button pair is light text on transparent/dark surfaces, so Atrás
+     and Omitir rendered white-on-white on the photo step (Giulia's
+     audit). It now uses the same dark surface as every other step's
+     panel, so the footer pairing is dark-surface/light-text by
+     construction on all 8 steps. */
+  background: var(--niv-surface, #17171a);
   z-index: 5;
   padding: 8px 20px;
   margin: 0;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
-  border-top: 1px solid var(--grey-200);
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.25);
+  border-top: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
 }
 
 /* ─── APP SHELL ──────────────────────────────────────────────────────────── */
