@@ -375,6 +375,16 @@
     content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
     background: linear-gradient(180deg, rgba(5,5,5,.62), rgba(5,5,5,.82));
   }
+  /* Attribution for the backdrop photo (CC BY-SA requires it; the login
+     surface carries the same credit, added here 2026-10-28). */
+  .photo-credit {
+    position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+    z-index: 2; font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    letter-spacing: .14em; color: rgba(255,255,255,.45); white-space: nowrap;
+  }
+  .photo-credit a { color: rgba(255,255,255,.62); text-decoration: none; }
+  .photo-credit a:hover { color: #fff; }
+  @media (max-width: 640px) { .photo-credit { display: none; } }
   .flow-shell { position: relative; z-index: 1; }
   .flow-rail, .flow-card {
     background: linear-gradient(150deg, rgba(255,255,255,.085), rgba(255,255,255,.03) 55%, rgba(255,255,255,.05));
@@ -440,6 +450,7 @@
 </style>
 </head>
 <body data-envmark-interstitial>
+<div class="photo-credit">Foto: <a href="https://commons.wikimedia.org/wiki/File:20190725_Oeschinensee-Panorama,_Kandersteg_(06540-42_stitch).jpg" target="_blank" rel="noopener noreferrer">© Günter Seggebäing, Wikimedia Commons</a> · <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 3.0</a></div>
 <div class="flow-shell" id="flow-shell" style="display:none">
 
   <!-- ======== left rail ======== -->
