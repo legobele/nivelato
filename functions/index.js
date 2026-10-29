@@ -489,6 +489,14 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
     throw new HttpsError('failed-precondition', 'No user profile yet.');
   }
   let user = userSnap.data();
+  // Enrollment QR/OTP (spec: enrollment-qr-spec.md): the login flow
+  // presents the code it carried from /company/enroll?code= here. A
+  // redeemed joiner token skips the plain invite path (its acceptance
+  // already committed); an active member's presentation just burns
+  // their device-link token further below.
+  const enrollCode = typeof data.enrollCode === 'string' && data.enrollCode
+    ? data.enrollCode : null;
+  let enrollRedeemed = false;
   if (user.disabled) {
     // Add User invites: a pending joiner (disabled === true, exactly —
     // 'rejected' is a string and never auto-applies) whose sign-in email
@@ -496,14 +504,22 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
     // permission overrides applied here and is activated in place, so
     // invited users skip the manual approval queue. No invite (or any
     // error applying it) keeps the normal block below.
-    const applied = user.disabled === true
-      ? await applyPendingInvite(uid, user, request.auth.token)
-      : null;
+    let applied = null;
+    if (user.disabled === true) {
+      if (enrollCode) {
+        applied = await redeemEnrollmentForInvite(uid, user, request.auth.token, enrollCode);
+        if (applied) enrollRedeemed = true;
+      }
+      if (!applied) applied = await applyPendingInvite(uid, user, request.auth.token);
+    }
     if (!applied) {
       // Pending/rejected users get no claims and no geo verdict beyond this.
       return { verdict: 'block', reason: 'account-disabled', flow: null, geoOk: false, licenseStatus: null };
     }
     user = applied;
+  }
+  if (enrollCode && !enrollRedeemed) {
+    await burnEnrollmentForMember(uid, user, request.auth.token, enrollCode);
   }
   const orgId = user.orgId;
   if (!orgId) throw new HttpsError('failed-precondition', 'User has no org.');
@@ -2496,12 +2512,31 @@ exports.sendCompanyInviteEmail = onCall({ region: 'us-central1', memory: '256MiB
   const joinCode = String(org.joinCode || orgId);
   const roleLabel = INVITE_ROLE_LABELS[invite.role] || 'Técnico medidor';
 
+  // Optional personal enrollment link (enrollment-qr-spec.md section 2):
+  // when the Add User flow minted this invite's single-use token, the
+  // email carries the same link the tile's QR encodes. Shape-pinned to
+  // the one true enroll URL so the parameter can never become an open
+  // redirect or a foreign link in a Nivelato email.
+  let enrollUrl = '';
+  if (typeof data.enrollUrl === 'string' && data.enrollUrl.trim()) {
+    const m = data.enrollUrl.trim()
+      .match(/^https:\/\/login\.nivelatolabs\.com\/company\/enroll\?code=([0-9A-Z]{26})$/);
+    if (!m) throw new HttpsError('invalid-argument', 'Enlace de enrolamiento inválido.');
+    enrollUrl = data.enrollUrl.trim();
+  }
+
   const today = new Date().toISOString().slice(0, 10);
   await checkRateLimit(`invite:${orgId}:${email}:${today}`, 5);
 
+  const enrollHtml = enrollUrl ? `
+    <p>Tu enlace personal de registro (es único y de un solo uso):</p>
+    <p><a href="${esc(enrollUrl)}" style="display:inline-block;background:#1971C2;color:#fff;padding:12px 22px;border-radius:999px;text-decoration:none;font-weight:600;">Registrarme en ${esc(orgName)}</a></p>
+    <p>O abre este enlace en tu teléfono: <a href="${esc(enrollUrl)}" style="color:#1971C2;">${esc(enrollUrl)}</a></p>`
+    : '';
   const html = emailShell(`Invitación a ${esc(orgName)}`, `
     <p>Hola,</p>
     <p>Te invitaron a unirte a <b>${esc(orgName)}</b> en Nivelato con el rol de <b>${esc(roleLabel)}</b>.</p>
+    ${enrollHtml}
     <p>Crea tu cuenta con este mismo correo e ingresa el código del taller cuando te lo pida:</p>
     <p style="font-size:22px;font-weight:700;letter-spacing:0.12em;color:#1971C2;">${esc(joinCode)}</p>
     <p><a href="https://login.nivelatolabs.com/" style="color:#1971C2;">Crear mi cuenta en Nivelato</a></p>
@@ -2510,10 +2545,360 @@ exports.sendCompanyInviteEmail = onCall({ region: 'us-central1', memory: '256MiB
     to: email,
     subject: `Invitación a ${orgName} en Nivelato`,
     html,
-    text: `Te invitaron a unirte a ${orgName} en Nivelato con el rol de ${roleLabel}. Crea tu cuenta con este correo en https://login.nivelatolabs.com/ e ingresa el código del taller: ${joinCode}. Tu acceso se activa automáticamente al registrarte.`,
+    text: `Te invitaron a unirte a ${orgName} en Nivelato con el rol de ${roleLabel}. ${enrollUrl ? `Regístrate con tu enlace personal (único, de un solo uso): ${enrollUrl} ` : ''}Crea tu cuenta con este correo en https://login.nivelatolabs.com/ e ingresa el código del taller: ${joinCode}. Tu acceso se activa automáticamente al registrarte.`,
   });
   return { ok: true };
 });
+
+// ---------------------------------------------------------------------------
+// Enrollment tokens — the per-employee, single-use QR/OTP that enrolls an
+// invitee (or links a member's device). Spec:
+// nivelato-dashboard-batch/enrollment-qr-spec.md, Option A + section 2.6.
+//
+// Design, following the support-code precedent (section 1.3 of the spec):
+//   - A token is 26 chars from a 32-char unambiguous alphabet (130 bits).
+//     The plaintext is returned ONCE, by createEnrollmentToken; at rest
+//     only its SHA-256 hash lives, in the function-only collection
+//     `enrollmentTokens` (firestore.rules denies all client access).
+//   - The same token has two forms: a QR encoding
+//     https://login.nivelatolabs.com/company/enroll?code={code} and the
+//     typeable code itself (the "OTP"). They are one token: they burn
+//     together.
+//   - TTL: 7 days (the invite lifetime the spec proposes). Regenerating
+//     supersedes (burns) the previous live token; revoking the invite
+//     kills it (revokeEnrollmentToken, called by the Add User flow).
+//   - Redemption happens inside flowGate at first sign-in: for a pending
+//     joiner the token burn and the invite acceptance commit in ONE
+//     transaction (redeemEnrollmentForInvite), then applyPendingInvite's
+//     normal path is skipped. An email/org mismatch makes the token do
+//     NOTHING: no burn, no error — the account follows the base path and
+//     the token stays live for the real invitee. For an already-active
+//     member (the section 2.6 device-link case) presentation just burns
+//     the token and writes the audit entry.
+//   - Every create / supersede / revoke / redeem writes an entry to
+//     orgs/{orgId}/enrollmentAudit (Admin-only, like supportAudit).
+// ---------------------------------------------------------------------------
+const ENROLL_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const ENROLL_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // 32 chars, no 0/1/I/L/O
+const ENROLL_CODE_LEN = 26; // 26 * 5 bits = 130 bits of entropy
+
+function generateEnrollCode() {
+  const bytes = crypto.randomBytes(ENROLL_CODE_LEN);
+  let out = '';
+  for (let i = 0; i < ENROLL_CODE_LEN; i++) out += ENROLL_ALPHABET[bytes[i] & 31];
+  return out;
+}
+
+// Display grouping for the typeable form: XXXX XXXX XXXX XXXX XXXX XXXX XX
+function groupEnrollCode(code) {
+  return String(code || '').replace(/(.{4})/g, '$1 ').trim();
+}
+
+// Strict normalization: the printed alphabet has no ambiguous glyphs, so
+// anything outside it is stripped; a wrong-length result is invalid.
+function normalizeEnrollCode(input) {
+  const up = String(input || '').toUpperCase();
+  let out = '';
+  for (const ch of up) if (ENROLL_ALPHABET.includes(ch)) out += ch;
+  return out;
+}
+
+function hashEnrollCode(code) {
+  return crypto.createHash('sha256').update(code).digest('hex');
+}
+
+function enrollUrlFor(code) {
+  return `https://login.nivelatolabs.com/company/enroll?code=${code}`;
+}
+
+async function writeEnrollAudit(orgId, entry) {
+  try {
+    await db.collection(`orgs/${orgId}/enrollmentAudit`).add({
+      at: admin.firestore.FieldValue.serverTimestamp(), ...entry,
+    });
+  } catch (e) {
+    console.error('[enroll] audit write failed:', e && e.message);
+  }
+}
+
+// Who may mint/see/revoke enrollment tokens for an org: the org owner
+// (flowGate-style, role cross-checked against the org doc) or a member
+// whose permissions carry userManagement — the set the spec's flow
+// names (owner or userManagement). The caller must be acting inside
+// that org (their active orgId), matching how the Users surfaces call.
+async function requireEnrollManager(request, orgId) {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in first.');
+  const uid = request.auth.uid;
+  const callerSnap = await db.doc(`users/${uid}`).get();
+  if (!callerSnap.exists) {
+    throw new HttpsError('failed-precondition', 'No user profile yet.');
+  }
+  const caller = callerSnap.data();
+  if (caller.disabled || caller.orgId !== orgId) {
+    throw new HttpsError('permission-denied', 'You do not manage that company.');
+  }
+  const orgSnap = await db.doc(`orgs/${orgId}`).get();
+  if (!orgSnap.exists) throw new HttpsError('failed-precondition', 'Company not found.');
+  const org = orgSnap.data();
+  const isOwner = caller.role === 'owner' && org.ownerId === uid;
+  const canManage = isOwner
+    || (caller.permissions && caller.permissions.userManagement === true);
+  if (!canManage) {
+    throw new HttpsError('permission-denied', 'Only the owner or a user manager can do this.');
+  }
+  return { uid, caller, org };
+}
+
+// createEnrollmentToken - callable. Mints (or regenerates) the
+// enrollment token for one employee: a pending invitee (kind 'invite')
+// or an existing org member (kind 'member', the section 2.6 device-link
+// card). Regenerating supersedes every live token for that org+email.
+// The plaintext code is returned exactly once, in this response.
+exports.createEnrollmentToken = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  const data = request.data || {};
+  const orgId = String(data.orgId || '');
+  const email = cleanEmail(data.email);
+  if (!orgId) throw new HttpsError('invalid-argument', 'Falta la empresa.');
+  const { uid } = await requireEnrollManager(request, orgId);
+
+  const invSnap = await db.doc(`orgs/${orgId}/invites/${email}`).get();
+  const inv = invSnap.exists ? invSnap.data() : null;
+  let kind = null;
+  if (inv && inv.status === 'pending') {
+    kind = 'invite';
+  } else {
+    const memberQ = await db.collection('users')
+      .where('orgId', '==', orgId).where('email', '==', email).limit(1).get();
+    if (!memberQ.empty) kind = 'member';
+  }
+  if (!kind) {
+    throw new HttpsError('failed-precondition', 'There is no pending invite or member for that email.');
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  await checkRateLimit(`enroll-create:${orgId}:${email}:${today}`, 20);
+
+  // Supersede (burn) every live token for this org+email first, so a
+  // regenerated QR/OTP is the only live one.
+  const live = await db.collection('enrollmentTokens')
+    .where('orgId', '==', orgId).where('email', '==', email)
+    .where('status', '==', 'pending').get();
+  if (!live.empty) {
+    const batch = db.batch();
+    live.forEach((d) => batch.update(d.ref, {
+      status: 'superseded',
+      supersededAt: admin.firestore.FieldValue.serverTimestamp(),
+      supersededBy: uid,
+    }));
+    await batch.commit();
+  }
+
+  const code = generateEnrollCode();
+  const now = Date.now();
+  const expiresAt = admin.firestore.Timestamp.fromMillis(now + ENROLL_TTL_MS);
+  const ref = await db.collection('enrollmentTokens').add({
+    codeHash: hashEnrollCode(code),
+    orgId, email, kind, status: 'pending',
+    createdBy: uid,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    expiresAt, usedAt: null, usedByUid: null,
+  });
+  await writeEnrollAudit(orgId, {
+    action: live.empty ? 'created' : 'regenerated', actor: uid,
+    actorEmail: (request.auth.token && request.auth.token.email) || null,
+    email, tokenId: ref.id, kind,
+  });
+
+  const url = enrollUrlFor(code);
+  let qrSvg = null;
+  try {
+    const QRCode = require('qrcode');
+    qrSvg = await QRCode.toString(url, { type: 'svg', margin: 1, width: 240 });
+  } catch (e) {
+    console.error('[enroll] QR render failed', e);
+    qrSvg = null;
+  }
+  return {
+    code, codeDisplay: groupEnrollCode(code), url, qrSvg, kind,
+    expiresAt: new Date(now + ENROLL_TTL_MS).toISOString(),
+  };
+});
+
+// getEnrollmentTokenStatus - callable. The latest token's state for an
+// org+email, WITHOUT the plaintext (hash-only at rest means the code
+// can never be re-displayed; the card offers regenerate instead).
+exports.getEnrollmentTokenStatus = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  const data = request.data || {};
+  const orgId = String(data.orgId || '');
+  const email = cleanEmail(data.email);
+  if (!orgId) throw new HttpsError('invalid-argument', 'Falta la empresa.');
+  await requireEnrollManager(request, orgId);
+  const snap = await db.collection('enrollmentTokens')
+    .where('orgId', '==', orgId).where('email', '==', email).get();
+  if (snap.empty) return { status: 'none' };
+  let latest = null;
+  snap.forEach((d) => {
+    const x = d.data();
+    const createdMs = x.createdAt && x.createdAt.toMillis ? x.createdAt.toMillis() : 0;
+    if (!latest || createdMs > latest.createdMs) latest = { ...x, createdMs };
+  });
+  let status = latest.status || 'pending';
+  if (status === 'pending' && latest.expiresAt
+      && latest.expiresAt.toMillis() <= Date.now()) {
+    status = 'expired';
+  }
+  return {
+    status, kind: latest.kind || null,
+    createdAt: tsIso(latest.createdAt), expiresAt: tsIso(latest.expiresAt),
+    usedAt: tsIso(latest.usedAt),
+  };
+});
+
+// revokeEnrollmentToken - callable. Kills every live token for an
+// org+email (the Add User flow calls this when the invite is revoked;
+// revoking the invite alone must not leave a live token behind).
+exports.revokeEnrollmentToken = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  const data = request.data || {};
+  const orgId = String(data.orgId || '');
+  const email = cleanEmail(data.email);
+  if (!orgId) throw new HttpsError('invalid-argument', 'Falta la empresa.');
+  const { uid } = await requireEnrollManager(request, orgId);
+  const live = await db.collection('enrollmentTokens')
+    .where('orgId', '==', orgId).where('email', '==', email)
+    .where('status', '==', 'pending').get();
+  if (!live.empty) {
+    const batch = db.batch();
+    live.forEach((d) => batch.update(d.ref, {
+      status: 'revoked',
+      revokedAt: admin.firestore.FieldValue.serverTimestamp(),
+      revokedBy: uid,
+    }));
+    await batch.commit();
+    await writeEnrollAudit(orgId, {
+      action: 'revoked', actor: uid,
+      actorEmail: (request.auth.token && request.auth.token.email) || null,
+      email, tokenId: live.docs[0].id, kind: live.docs[0].data().kind || null,
+    });
+  }
+  return { ok: true, revoked: live.size };
+});
+
+// Transactional invite acceptance via token: the burn and the invite
+// application commit together (spec Option A). Returns the updated user
+// object when the token redeemed, null when it does not apply (absent,
+// used, expired, or bound to another email/org — in every mismatch case
+// the token is left exactly as it was: it does nothing).
+async function redeemEnrollmentForInvite(uid, user, authToken, rawCode) {
+  try {
+    const code = normalizeEnrollCode(rawCode);
+    if (code.length !== ENROLL_CODE_LEN) return null;
+    const email = String((authToken && authToken.email) || user.email || '')
+      .trim().toLowerCase();
+    const orgId = user.orgId;
+    if (!email || !orgId) return null;
+    const q = await db.collection('enrollmentTokens')
+      .where('codeHash', '==', hashEnrollCode(code)).limit(1).get();
+    if (q.empty) return null;
+    const tokRef = q.docs[0].ref;
+    const invRef = db.doc(`orgs/${orgId}/invites/${email}`);
+    const userRef = db.doc(`users/${uid}`);
+    const now = Date.now();
+    let applied = null;
+    await db.runTransaction(async (tx) => {
+      const [tokSnap, invSnap] = await Promise.all([tx.get(tokRef), tx.get(invRef)]);
+      if (!tokSnap.exists || !invSnap.exists) return;
+      const tok = tokSnap.data();
+      const inv = invSnap.data();
+      if (tok.status !== 'pending') return;
+      if (!tok.expiresAt || tok.expiresAt.toMillis() <= now) return;
+      if (tok.orgId !== orgId || tok.email !== email) return;
+      if (inv.status !== 'pending') return;
+      // Same application applyPendingInvite performs (role pinned to the
+      // invite set, permission overrides filtered to the known keys).
+      const patch = { disabled: false };
+      if (INVITE_ROLES.includes(inv.role)) patch.role = inv.role;
+      if (inv.permissions && typeof inv.permissions === 'object') {
+        const clean = {};
+        for (const k of INVITE_PERM_KEYS) {
+          if (typeof inv.permissions[k] === 'boolean') clean[k] = inv.permissions[k];
+        }
+        if (Object.keys(clean).length) patch.permissions = clean;
+      }
+      tx.update(userRef, patch);
+      const membershipEntry = {
+        role: patch.role || user.role || 'medidor',
+        joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      if (patch.permissions) membershipEntry.permissions = patch.permissions;
+      tx.set(userRef, { memberships: { [orgId]: membershipEntry } }, { merge: true });
+      tx.update(invRef, {
+        status: 'accepted',
+        acceptedAt: admin.firestore.FieldValue.serverTimestamp(),
+        acceptedUid: uid,
+      });
+      tx.update(tokRef, {
+        status: 'used',
+        usedAt: admin.firestore.FieldValue.serverTimestamp(),
+        usedByUid: uid,
+      });
+      applied = { ...user, ...patch };
+    });
+    if (applied) {
+      await writeEnrollAudit(orgId, {
+        action: 'redeemed', actor: uid, actorEmail: email,
+        email, tokenId: tokRef.id, kind: 'invite',
+      });
+      console.log('[enroll] token redeemed for', email, 'org', orgId);
+    }
+    return applied;
+  } catch (e) {
+    console.error('[enroll] redeem failed:', e && e.message);
+    return null;
+  }
+}
+
+// Active-member presentation (section 2.6 device link): the token just
+// burns, with its audit entry. Any mismatch leaves it untouched, and a
+// failure here never blocks a sign-in.
+async function burnEnrollmentForMember(uid, user, authToken, rawCode) {
+  try {
+    const code = normalizeEnrollCode(rawCode);
+    if (code.length !== ENROLL_CODE_LEN) return;
+    const email = String((authToken && authToken.email) || user.email || '')
+      .trim().toLowerCase();
+    const orgId = user.orgId;
+    if (!email || !orgId) return;
+    const q = await db.collection('enrollmentTokens')
+      .where('codeHash', '==', hashEnrollCode(code)).limit(1).get();
+    if (q.empty) return;
+    const tokRef = q.docs[0].ref;
+    const now = Date.now();
+    let burned = false;
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(tokRef);
+      if (!snap.exists) return;
+      const tok = snap.data();
+      if (tok.status !== 'pending') return;
+      if (!tok.expiresAt || tok.expiresAt.toMillis() <= now) return;
+      if (tok.orgId !== orgId || tok.email !== email) return;
+      tx.update(tokRef, {
+        status: 'used',
+        usedAt: admin.firestore.FieldValue.serverTimestamp(),
+        usedByUid: uid,
+      });
+      burned = true;
+    });
+    if (burned) {
+      await writeEnrollAudit(orgId, {
+        action: 'redeemed', actor: uid, actorEmail: email,
+        email, tokenId: tokRef.id, kind: 'member',
+      });
+      console.log('[enroll] member token burned for', email, 'org', orgId);
+    }
+  } catch (e) {
+    console.error('[enroll] member burn failed:', e && e.message);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Support surfaces (SUPPORT_SURFACES.md): version registry reads, beta

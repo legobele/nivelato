@@ -340,6 +340,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Enrollment tokens (enrollment QR/OTP) — function-only. Minted by
+    // createEnrollmentToken and redeemed inside flowGate via the Admin
+    // SDK; only the token's SHA-256 hash lives in the doc, and clients
+    // never get direct access (spec: enrollment-qr-spec.md).
+    match /enrollmentTokens/{tokenId} {
+      allow read, write: if false;
+    }
+
     // Notification prefs — notification_prefs/{uid}.
     // Cada usuario lee y escribe SOLO su propio doc. Las claves están
     // fijadas para que un cliente no pueda inyectar campos arbitrarios.

@@ -918,6 +918,7 @@
         btn_signup_busy: 'Creando cuenta...',
         forgot: '¿Olvidaste tu contraseña?',
         signup_note: 'Tu solicitud será revisada. Te avisaremos cuando tengas acceso.',
+        enroll_note: 'Tienes una invitación de Nivelato. Inicia sesión o crea tu cuenta con el correo de la invitación y tu acceso se activa automáticamente.',
         signup_note_qgi_html: 'Tu solicitud será revisada por <b>Quality Glass</b>. Te avisaremos cuando tengas acceso.',
         geo_note: 'No pudimos detectar tu ubicación; estás viendo la versión general de Nivelato.',
         pr_note_1: 'En Puerto Rico, el uso empresarial de Nivelato es exclusivo para empleados de Quality Glass. ',
@@ -1075,6 +1076,7 @@
         btn_signup_busy: 'Creating account...',
         forgot: 'Forgot your password?',
         signup_note: 'Your request will be reviewed. We will let you know when you have access.',
+        enroll_note: 'You have a Nivelato invitation. Sign in or create your account with the invited email and your access activates automatically.',
         signup_note_qgi_html: 'Your request will be reviewed by <b>Quality Glass</b>. We will let you know when you have access.',
         geo_note: 'We could not detect your location; you are seeing the general version of Nivelato.',
         pr_note_1: 'In Puerto Rico, business use of Nivelato is exclusive to Quality Glass employees. ',
@@ -1756,15 +1758,34 @@
     noticeHost(card).prepend(note);
   }
 
+  // Enrollment invitation notice. Shown when this page load carried an
+  // enrollment code (/company/enroll?code=, stashed by the init block at
+  // the bottom of this script). Generic by design (spec
+  // enrollment-qr-spec.md): it names Nivelato only — never the company
+  // or the role — so a photographed QR leaks nothing about the shop.
+  let enrollNoticeOn = false;
+  function showEnrollNotice() {
+    enrollNoticeOn = true;
+    const card = document.getElementById('app-card');
+    if (!card || document.getElementById('enroll-note')) return;
+    const note = document.createElement('div');
+    note.id = 'enroll-note';
+    note.className = 'geo-note';
+    note.setAttribute('role', 'alert');
+    note.textContent = window.nivT('enroll_note');
+    noticeHost(card).prepend(note);
+  }
+
   // Re-render the visible notices in the new language (renderForm wipes them).
   function refreshNotices() {
-    for (const id of ['pr-note', 'geo-note', 'profile-note']) {
+    for (const id of ['pr-note', 'geo-note', 'profile-note', 'enroll-note']) {
       const el = document.getElementById(id);
       if (el) el.remove();
     }
     if (prNoticeOn) showPrNotice();
     if (geoNoticeOn) showGeoNotice();
     if (profileNoticeOn) showMissingProfileNotice();
+    if (enrollNoticeOn) showEnrollNotice();
   }
 
   // Called by the classic script's setLang after applyLang: re-render every
@@ -3682,6 +3703,30 @@
   // Travel verification link (?travel_verify=<token>): redeemed below.
   var _travelToken = null;
   try { _travelToken = new URLSearchParams(location.search).get('travel_verify'); } catch (_) {}
+  // Enrollment link (/company/enroll?code=<token>): the worker serves
+  // this page for /company/*; 'enroll' lands in _deepLinkCompany below
+  // but matches no COMPANIES entry, so the normal form renders. Stash
+  // the code for the first flowGate call (geo.js ensureFlowClaims
+  // presents and clears it), strip it from the visible URL (a token
+  // never sits in the address bar, history, or logs), and flag the
+  // generic invitation notice.
+  var _enrollNoticeWanted = false;
+  try {
+    var _enrollStashed = sessionStorage.getItem('niv_enroll_code');
+    if (/^\/company\/enroll\/?$/.test(location.pathname)) {
+      var _enrollCodeParam = new URLSearchParams(location.search).get('code');
+      if (_enrollCodeParam) {
+        try { sessionStorage.setItem('niv_enroll_code', _enrollCodeParam); } catch (_) { /* storage off */ }
+        _enrollStashed = _enrollCodeParam;
+        try {
+          var _eu = new URL(location.href);
+          _eu.searchParams.delete('code');
+          history.replaceState({ nivelatoView: 'main' }, '', _eu.pathname + _eu.search);
+        } catch (_) { /* keep the URL as-is */ }
+      }
+    }
+    _enrollNoticeWanted = !!_enrollStashed;
+  } catch (_) {}
   // Company deep link (/company/XXXXXX): open that company's signin screen
   // directly. The worker serves login.html for /company/* paths.
   var _deepLinkCompany = null;
@@ -3732,6 +3777,7 @@
     currentView = 'main';
   }
   if (_initialCc === 'PR') showPrNotice();
+  if (_enrollNoticeWanted) showEnrollNotice();
   if (new URLSearchParams(location.search).get('missingProfile') === '1') showMissingProfileNotice();
 
   // Redeem a travel verification link in the background. On success the

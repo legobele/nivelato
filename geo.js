@@ -77,10 +77,22 @@ export async function ensureFlowClaims({ appVersionCode = 0 } = {}) {
     }
     const fns = getFunctions(auth.app, 'us-central1');
     const gate = httpsCallable(fns, 'flowGate');
-    const { data } = await gate({
+    // Enrollment QR/OTP: the login page stashes the code it carried in
+    // from /company/enroll?code= in sessionStorage. Present it once, on
+    // the first real gate call, and clear it whatever the verdict: the
+    // server burns it on a match and ignores it on a mismatch (the
+    // token itself stays live server-side for the real invitee).
+    let enrollCode = null;
+    try { enrollCode = window.sessionStorage.getItem('niv_enroll_code') || null; } catch (_) { /* storage off */ }
+    const payload = {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       appVersionCode,
-    });
+    };
+    if (enrollCode) payload.enrollCode = enrollCode;
+    const { data } = await gate(payload);
+    if (enrollCode) {
+      try { window.sessionStorage.removeItem('niv_enroll_code'); } catch (_) { /* ignore */ }
+    }
     await getIdToken(auth.currentUser, true);
     return { ok: true, ...data };
   } catch (e) {

@@ -92,7 +92,13 @@ const STR = {
     revoke: 'Revoke',
     invitedOn: 'Invited {date}',
     copyCode: 'Copy code',
-    copied: 'Copied'
+    copied: 'Copied',
+    copyLink: 'Copy enrollment link',
+    copiedLink: 'Link copied',
+    enrollExpires: 'This code is valid until {date}.',
+    qrBtn: 'QR code',
+    qrRegenNote: 'Showing the QR code generates a new one and voids the previous one.',
+    enrollFailed: 'The enrollment code could not be generated. The invite still works with the company join code.'
   },
   es: {
     addUser: 'Agregar usuario',
@@ -128,7 +134,13 @@ const STR = {
     revoke: 'Revocar',
     invitedOn: 'Invitado el {date}',
     copyCode: 'Copiar código',
-    copied: 'Copiado'
+    copied: 'Copiado',
+    copyLink: 'Copiar enlace de enrolamiento',
+    copiedLink: 'Enlace copiado',
+    enrollExpires: 'Este código es válido hasta el {date}.',
+    qrBtn: 'Código QR',
+    qrRegenNote: 'Al mostrar el código QR se genera uno nuevo y se anula el anterior.',
+    enrollFailed: 'No se pudo generar el código de enrolamiento. La invitación sigue funcionando con el código del taller.'
   }
 };
 
@@ -259,6 +271,23 @@ function injectCss() {
   .au-sum-row .k { flex: none; width: 110px; color: var(--muted, #9a9aa0); font-size: 13px; }
   .au-sum-row .v { min-width: 0; word-break: break-all; }
   .au-done-icon { font-size: 40px; text-align: center; margin: 8px 0 4px; }
+  /* Enrollment tile (spec section 2.5): one rounded card, the QR big
+     and centered on top (about half the tile's width), headline and
+     subtitle verbatim below it. House tokens, surface follows context. */
+  .au-tile {
+    border: 1.5px solid var(--line, #2a2a2e); border-radius: var(--radius-lg, 28px);
+    background: var(--card, #101013); padding: 22px 20px 18px; margin-top: 16px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+  }
+  .au-tile-qr {
+    background: #fff; border-radius: var(--radius-sm, 12px); padding: 10px;
+    line-height: 0; width: 52%; max-width: 240px; box-sizing: border-box;
+  }
+  .au-tile-qr svg { width: 100%; height: auto; display: block; }
+  .au-tile-headline { font-size: 16px; font-weight: 700; line-height: 1.4; margin-top: 16px; }
+  .au-tile-sub { font-size: 13px; color: var(--muted, #9a9aa0); line-height: 1.5; margin-top: 4px; }
+  .au-tile-expiry { font-size: 12px; color: var(--faint, #6d6d74); margin-top: 10px; }
+  .au-tile .au-actions { width: 100%; }
   `;
   document.head.appendChild(st);
 }
@@ -340,7 +369,7 @@ function openAddUserModal() {
   if (!ctx || ctx.userData.role !== 'owner') return;
   injectCss();
   closeModal();
-  modalState = { email: '', role: 'medidor', overrides: {}, existing: null };
+  modalState = { email: '', role: 'medidor', overrides: {}, existing: null, enroll: null };
   const orgName = (ctx.orgData && ctx.orgData.name) || 'Nivelato';
   const ov = document.createElement('div');
   ov.className = 'au-overlay';
@@ -454,6 +483,83 @@ function renderConfirm(warnText) {
   document.getElementById('au-send').addEventListener('click', sendInvite);
 }
 
+// ---- enrollment tile (spec sections 2 + 2.5) -------------------------
+// The tile presents ONE invite's single-use enrollment token: the QR
+// encodes https://login.nivelatolabs.com/company/enroll?code={code} and
+// the two copy lines are verbatim per the spec, in English in both UI
+// languages. enroll = { code, codeDisplay, url, qrSvg, expiresAt } as
+// returned once by createEnrollmentToken.
+const TILE_HEADLINE = 'Use this QR code to enroll your employees.';
+const TILE_SUB = 'This QR code is unique and can only be used once.';
+
+function enrollTileHtml(enroll) {
+  const when = enroll.expiresAt
+    ? new Date(enroll.expiresAt).toLocaleDateString() : '';
+  return `<div class="au-tile">
+    ${enroll.qrSvg
+      ? `<div class="au-tile-qr">${enroll.qrSvg}</div>`
+      : `<p class="au-note" style="text-align:center">${escapeHtml(enroll.url)}</p>`}
+    <div class="au-tile-headline">${escapeHtml(TILE_HEADLINE)}</div>
+    <div class="au-tile-sub">${escapeHtml(TILE_SUB)}</div>
+    ${when ? `<div class="au-tile-expiry">${escapeHtml(t('enrollExpires', { date: when }))}</div>` : ''}
+    <div class="au-actions">
+      <button type="button" class="au-btn" data-au-copylink="${escapeHtml(enroll.url)}">${escapeHtml(t('copyLink'))}</button>
+    </div>
+  </div>`;
+}
+
+function wireEnrollTile(root) {
+  if (!root) return;
+  root.querySelectorAll('[data-au-copylink]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(btn.getAttribute('data-au-copylink'));
+        btn.textContent = t('copiedLink');
+      } catch (_) { /* clipboard unavailable: the link is in the invite email */ }
+    });
+  });
+}
+
+// Mint (or regenerate) the token for an email and show its tile in a
+// standalone overlay. Used by the pending-invites list: opening it
+// regenerates, which voids the previous code (stated on the overlay).
+async function openEnrollTile(email) {
+  injectCss();
+  closeModal();
+  const ov = document.createElement('div');
+  ov.className = 'au-overlay';
+  ov.id = 'au-overlay';
+  ov.innerHTML = `
+  <div class="au-panel" role="dialog" aria-modal="true" aria-label="${escapeHtml(t('qrBtn'))}">
+    <div class="au-head">
+      <div class="au-title">${escapeHtml(email)}</div>
+      <button type="button" class="au-x" id="au-close" aria-label="${escapeHtml(t('close'))}">✕</button>
+    </div>
+    <p class="au-sub">${escapeHtml(t('qrRegenNote'))}</p>
+    <div id="au-tile-slot"><p class="au-note">...</p></div>
+    <div class="au-actions">
+      <button type="button" class="au-btn primary" id="au-done">${escapeHtml(t('doneBtn'))}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  document.addEventListener('keydown', auEsc);
+  ov.addEventListener('click', (e) => { if (e.target === ov) closeModal(); });
+  document.getElementById('au-close').addEventListener('click', closeModal);
+  document.getElementById('au-done').addEventListener('click', closeModal);
+  const slot = document.getElementById('au-tile-slot');
+  try {
+    const createTok = httpsCallable(centralFunctions, 'createEnrollmentToken');
+    const { data } = await createTok({ orgId: ctx.orgId, email });
+    if (!document.getElementById('au-tile-slot')) return; // closed while minting
+    slot.innerHTML = enrollTileHtml(data);
+    wireEnrollTile(slot);
+  } catch (_) {
+    if (document.getElementById('au-tile-slot')) {
+      slot.innerHTML = `<div class="au-error show">${escapeHtml(t('enrollFailed'))}</div>`;
+    }
+  }
+}
+
 async function sendInvite() {
   const sendBtn = document.getElementById('au-send');
   const err = document.getElementById('au-error-2');
@@ -481,10 +587,22 @@ async function sendInvite() {
     sendBtn.textContent = t('sendBtn');
     return;
   }
+  // Mint this invite's enrollment token BEFORE the email goes out, so
+  // the email can carry the same personal link the tile's QR encodes
+  // (spec section 2 step 2). A mint failure degrades to today's flow:
+  // invite + join-code email, no tile.
+  modalState.enroll = null;
+  try {
+    const createTok = httpsCallable(centralFunctions, 'createEnrollmentToken');
+    const { data } = await createTok({ orgId: ctx.orgId, email });
+    modalState.enroll = data;
+  } catch (_) { modalState.enroll = null; }
   let emailOk = true;
   try {
     const send = httpsCallable(centralFunctions, 'sendCompanyInviteEmail');
-    await send({ orgId: ctx.orgId, email });
+    const payload = { orgId: ctx.orgId, email };
+    if (modalState.enroll && modalState.enroll.url) payload.enrollUrl = modalState.enroll.url;
+    await send(payload);
   } catch (_) { emailOk = false; }
   renderDone(emailOk);
   refreshInvites();
@@ -494,21 +612,27 @@ function renderDone(emailOk) {
   document.getElementById('au-step-2').style.display = 'none';
   const step3 = document.getElementById('au-step-3');
   const joinCode = (ctx.orgData && ctx.orgData.joinCode) || ctx.orgId;
+  const tile = modalState.enroll ? enrollTileHtml(modalState.enroll) : '';
+  const noTileNote = !modalState.enroll
+    ? `<div class="au-error show">${escapeHtml(t('enrollFailed'))}</div>` : '';
   step3.style.display = '';
   step3.innerHTML = emailOk ? `
     <div class="au-done-icon">✅</div>
     <p class="au-sub" style="text-align:center">${escapeHtml(t('doneTitle'))}</p>
     <p class="au-note" style="text-align:center">${escapeHtml(t('doneBody', { email: modalState.email }))}</p>
+    ${noTileNote}${tile}
     <div class="au-actions"><button type="button" class="au-btn primary" id="au-done">${escapeHtml(t('doneBtn'))}</button></div>`
   : `
     <div class="au-done-icon">⚠️</div>
     <p class="au-sub" style="text-align:center">${escapeHtml(t('doneFailTitle'))}</p>
     <p class="au-note" style="text-align:center">${escapeHtml(t('doneFailBody', { email: modalState.email, code: joinCode }))}</p>
+    ${noTileNote}${tile}
     <div class="au-actions">
       <button type="button" class="au-btn" id="au-copy">${escapeHtml(t('copyCode'))}</button>
       <button type="button" class="au-btn primary" id="au-done">${escapeHtml(t('doneBtn'))}</button>
     </div>`;
   document.getElementById('au-done').addEventListener('click', closeModal);
+  wireEnrollTile(step3);
   const copyBtn = document.getElementById('au-copy');
   if (copyBtn) copyBtn.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(joinCode); copyBtn.textContent = t('copied'); }
@@ -544,6 +668,7 @@ async function refreshInvites() {
         <div class="au-invite-sub">${escapeHtml(roleLabel(inv.role))}${when ? ' · ' + escapeHtml(t('invitedOn', { date: when })) : ''}</div>
         <div class="au-invite-actions">
           <button type="button" class="au-mini-btn" data-resend="${escapeHtml(inv.id)}">${escapeHtml(t('resend'))}</button>
+          <button type="button" class="au-mini-btn" data-qr="${escapeHtml(inv.id)}">${escapeHtml(t('qrBtn'))}</button>
           <button type="button" class="au-mini-btn danger" data-revoke="${escapeHtml(inv.id)}">${escapeHtml(t('revoke'))}</button>
         </div>
       </div>`;
@@ -558,11 +683,21 @@ async function refreshInvites() {
       } catch (_) { btn.disabled = false; }
     });
   });
+  box.querySelectorAll('[data-qr]').forEach((btn) => {
+    btn.addEventListener('click', () => openEnrollTile(btn.getAttribute('data-qr')));
+  });
   box.querySelectorAll('[data-revoke]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       btn.disabled = true;
+      const email = btn.getAttribute('data-revoke');
       try {
-        await updateDoc(doc(db, 'orgs', ctx.orgId, 'invites', btn.getAttribute('data-revoke')), { status: 'revoked' });
+        await updateDoc(doc(db, 'orgs', ctx.orgId, 'invites', email), { status: 'revoked' });
+        // Revoking the invite kills its enrollment token too (spec
+        // section 3): a live QR for a revoked invite must not survive.
+        try {
+          const revokeTok = httpsCallable(centralFunctions, 'revokeEnrollmentToken');
+          await revokeTok({ orgId: ctx.orgId, email });
+        } catch (_) { /* token kill is best-effort next to the revoke */ }
         refreshInvites();
       } catch (_) { btn.disabled = false; }
     });

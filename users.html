@@ -110,6 +110,15 @@
   .dev-edit { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
   .dev-edit input { flex: 1; min-width: 140px; padding: 9px 12px; font-size: 13px; font-family: inherit; color: var(--niv-text); background: var(--niv-surface-2); border: 1px solid var(--niv-border-soft); border-radius: 10px; box-sizing: border-box; }
   .dev-edit button { padding: 9px 14px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border-radius: 10px; border: 1px solid var(--niv-border-soft); background: transparent; color: var(--niv-text); }
+  /* Enrollment card (spec section 2.6): QR + OTP, the same single-use
+     token in two forms, inside the employee's devices card area. */
+  .enroll-status { font-size: 13px; color: var(--niv-text-dim); line-height: 1.5; margin-bottom: 12px; }
+  .enroll-qr { background: #fff; border-radius: 12px; padding: 10px; line-height: 0; width: 52%; max-width: 240px; margin: 4px auto 14px; box-sizing: border-box; }
+  .enroll-qr svg { width: 100%; height: auto; display: block; }
+  .enroll-otp-label { text-align: center; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--niv-text-dim); }
+  .enroll-otp { text-align: center; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 17px; font-weight: 600; letter-spacing: .08em; margin: 6px 0 4px; word-break: break-all; }
+  .enroll-expiry { text-align: center; font-size: 12px; color: var(--niv-text-dim); margin-bottom: 12px; }
+  .enroll-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
   .ov-state { text-align: center; color: var(--niv-text-dim); font-size: 14px; padding: 48px 16px; }
   .ov-error {
     border: 1px solid rgba(229, 72, 77, 0.55); background: rgba(229, 72, 77, 0.12);
@@ -266,6 +275,20 @@ const STR = {
     updateAvailable: 'Actualización disponible', linked: 'Vinculado', rename: 'Renombrar',
     deviceName: 'Nombre del dispositivo', save: 'Guardar', cancel: 'Cancelar', saving: 'Guardando...',
     renameFailed: 'No se pudo renombrar el dispositivo: {msg}', viewMore: 'Ver más', showLess: 'Ver menos',
+    enrollTitle: 'Vincular un dispositivo',
+    enrollDesc: 'Un código de un solo uso para que este empleado inicie sesión en el móvil. El código QR y el código escrito son el mismo código: se queman juntos.',
+    enrollGenerate: 'Generar código', enrollRegenerate: 'Generar uno nuevo',
+    enrollWorking: 'Generando...',
+    enrollOtpLabel: 'Código (OTP)',
+    enrollActive: 'Hay un código activo, válido hasta el {date}. No se puede volver a mostrar: genera uno nuevo si lo necesitas.',
+    enrollExpires: 'Válido hasta el {date}.',
+    enrollUsed: 'El último código ya se usó.',
+    enrollRevoked: 'El último código fue revocado.',
+    enrollNone: 'Todavía no hay código de vinculación para este empleado.',
+    enrollFailed: 'No se pudo generar el código. Inténtalo de nuevo.',
+    linkAnother: 'Vincular otro dispositivo',
+    copyLink: 'Copiar enlace', copiedLink: 'Enlace copiado',
+    copyCode: 'Copiar código', copiedCode: 'Código copiado',
     loadingProjects: 'Cargando proyectos...', couldNotProjects: 'No se pudieron cargar los proyectos.',
     noProjects: 'Todavía no hay proyectos.', measuredSpace: 'espacio medido', measuredSpaces: 'espacios medidos',
     deniedTitle: 'Sin acceso',
@@ -311,6 +334,20 @@ const STR = {
     updateAvailable: 'Update available', linked: 'Linked', rename: 'Rename',
     deviceName: 'Device name', save: 'Save', cancel: 'Cancel', saving: 'Saving...',
     renameFailed: 'Could not rename device: {msg}', viewMore: 'View more', showLess: 'Show less',
+    enrollTitle: 'Link a device',
+    enrollDesc: 'A single-use code for this employee to sign in on mobile. The QR code and the typed code are the same code: they burn together.',
+    enrollGenerate: 'Generate code', enrollRegenerate: 'Generate a new one',
+    enrollWorking: 'Generating...',
+    enrollOtpLabel: 'Code (OTP)',
+    enrollActive: 'An active code exists, valid until {date}. It cannot be shown again: generate a new one if you need it.',
+    enrollExpires: 'Valid until {date}.',
+    enrollUsed: 'The last code was already used.',
+    enrollRevoked: 'The last code was revoked.',
+    enrollNone: 'No link code yet for this employee.',
+    enrollFailed: 'The code could not be generated. Try again.',
+    linkAnother: 'Link another device',
+    copyLink: 'Copy link', copiedLink: 'Link copied',
+    copyCode: 'Copy code', copiedCode: 'Code copied',
     loadingProjects: 'Loading projects...', couldNotProjects: 'Could not load projects.',
     noProjects: 'No projects yet.', measuredSpace: 'measured space', measuredSpaces: 'measured spaces',
     deniedTitle: 'No access',
@@ -557,6 +594,11 @@ function renderDetail() {
       + '<div class="niv-card-desc">' + escapeHtml(t('devicesDesc')) + '</div>'
       + '<div id="ov-devices-body"><div class="ov-empty">' + escapeHtml(t('loadingDevices')) + '</div></div></div>';
   }
+  if (canSeePerms(m) && _can('userManagement') && m.email) {
+    html += '<div class="niv-card"><div class="niv-card-title">' + escapeHtml(t('enrollTitle')) + '</div>'
+      + '<div class="niv-card-desc">' + escapeHtml(t('enrollDesc')) + '</div>'
+      + '<div id="ov-enroll-body"><div class="ov-empty">' + escapeHtml(t('loadingDevices')) + '</div></div></div>';
+  }
   detail.innerHTML = html;
   const editBtn = document.getElementById('ov-perms-edit');
   if (editBtn) editBtn.addEventListener('click', () => startPermEdit(m));
@@ -604,6 +646,7 @@ async function renderDevices(m) {
     if (!devices.length) {
       body.innerHTML = '<div class="ov-empty">' + escapeHtml(t('noDevices')) + '</div>';
       guardExit('devices:' + m.uid);
+      renderEnroll(m, 0);
       return;
     }
     guardExit('devices:' + m.uid);
@@ -634,9 +677,89 @@ async function renderDevices(m) {
     body.querySelectorAll('[data-rename]').forEach((btn) => {
       btn.addEventListener('click', () => openDeviceRename(btn, m));
     });
+    renderEnroll(m, devices.length);
   } catch (e) {
     guardExit('devices:' + m.uid);
     if (body.isConnected) body.innerHTML = '<div class="ov-empty">' + escapeHtml(t('couldNotDevices')) + '</div>';
+    renderEnroll(m, null);
+  }
+}
+
+// ---- enrollment card (spec section 2.6) -------------------------------
+// QR + OTP, the SAME single-use token in two presentation forms. Shown
+// prominent when the employee has no registered device; collapsed
+// behind a "link another device" button once devices exist. The token
+// itself is server-minted (createEnrollmentToken); this card never
+// stores or re-reads a code, so a fresh generate supersedes the old one
+// and the old one is gone from here the moment it does.
+async function renderEnroll(m, deviceCount) {
+  const body = document.getElementById('ov-enroll-body');
+  if (!body || !m.email) return;
+  if (!guardEnter('enroll:' + m.uid)) return;
+  try {
+    const statusFn = httpsCallable(getFunctions(auth.app, 'us-central1'), 'getEnrollmentTokenStatus');
+    const { data } = await statusFn({ orgId, email: m.email });
+    guardExit('enroll:' + m.uid);
+    if (!body.isConnected) return;
+    paintEnroll(body, m, (data && data.status) || 'none', data || {}, deviceCount === 0);
+  } catch (e) {
+    guardExit('enroll:' + m.uid);
+    if (body.isConnected) paintEnroll(body, m, 'none', {}, deviceCount === 0);
+  }
+}
+
+function paintEnroll(body, m, status, info, prominent) {
+  let statusText = t('enrollNone');
+  if (status === 'pending') {
+    statusText = info.expiresAt
+      ? t('enrollActive', { date: new Date(info.expiresAt).toLocaleDateString() })
+      : t('enrollActive', { date: '' });
+  } else if (status === 'used') statusText = t('enrollUsed');
+  else if (status === 'revoked') statusText = t('enrollRevoked');
+  const genLabel = prominent
+    ? (status === 'none' ? t('enrollGenerate') : t('enrollRegenerate'))
+    : t('linkAnother');
+  body.innerHTML = '<div class="enroll-status">' + escapeHtml(statusText) + '</div>'
+    + '<div class="enroll-actions"><button type="button" class="niv-btn-pill' + (prominent ? ' primary' : '') + '" id="ov-enroll-gen">'
+    + escapeHtml(genLabel) + '</button></div>'
+    + '<div id="ov-enroll-result"></div>';
+  const gen = document.getElementById('ov-enroll-gen');
+  if (gen) gen.addEventListener('click', function () { generateEnroll(m); });
+}
+
+async function generateEnroll(m) {
+  const result = document.getElementById('ov-enroll-result');
+  const gen = document.getElementById('ov-enroll-gen');
+  if (!result) return;
+  if (gen) { gen.disabled = true; gen.textContent = t('enrollWorking'); }
+  try {
+    const createTok = httpsCallable(getFunctions(auth.app, 'us-central1'), 'createEnrollmentToken');
+    const { data } = await createTok({ orgId, email: m.email });
+    if (!result.isConnected) return;
+    const when = data.expiresAt ? new Date(data.expiresAt).toLocaleDateString() : '';
+    result.innerHTML = '<div style="margin-top:14px">'
+      + (data.qrSvg ? '<div class="enroll-qr">' + data.qrSvg + '</div>' : '')
+      + '<div class="enroll-otp-label">' + escapeHtml(t('enrollOtpLabel')) + '</div>'
+      + '<div class="enroll-otp">' + escapeHtml(data.codeDisplay || data.code || '') + '</div>'
+      + (when ? '<div class="enroll-expiry">' + escapeHtml(t('enrollExpires', { date: when })) + '</div>' : '')
+      + '<div class="enroll-actions">'
+      + '<button type="button" class="niv-btn-pill" id="ov-enroll-copylink">' + escapeHtml(t('copyLink')) + '</button>'
+      + '<button type="button" class="niv-btn-pill" id="ov-enroll-copycode">' + escapeHtml(t('copyCode')) + '</button>'
+      + '</div></div>';
+    const cl = document.getElementById('ov-enroll-copylink');
+    if (cl) cl.addEventListener('click', async function () {
+      try { await navigator.clipboard.writeText(data.url); cl.textContent = t('copiedLink'); } catch (_) {}
+    });
+    const cc = document.getElementById('ov-enroll-copycode');
+    if (cc) cc.addEventListener('click', async function () {
+      try { await navigator.clipboard.writeText(data.codeDisplay || data.code || ''); cc.textContent = t('copiedCode'); } catch (_) {}
+    });
+  } catch (e) {
+    if (result.isConnected) {
+      result.innerHTML = '<div class="enroll-status" style="color:#f87171;margin-top:12px">' + escapeHtml(t('enrollFailed')) + '</div>';
+    }
+  } finally {
+    if (gen && gen.isConnected) { gen.disabled = false; gen.textContent = t('enrollRegenerate'); }
   }
 }
 
