@@ -64,6 +64,11 @@ async function handle(request) {
       return geoBlockedResponse();
     }
   }
+  // /dashboard.html lives on the dashboard subdomain (Giulia, 2026-10-29):
+  // bounce the file path there with a permanent redirect, query preserved.
+  if (path === "/dashboard.html") {
+    return Response.redirect("https://dashboard.nivelatolabs.com/" + url.search, 301);
+  }
   var target = null;
   if (Object.prototype.hasOwnProperty.call(ROUTES, path)) {
     target = RAW + "/" + DIR + ROUTES[path];
