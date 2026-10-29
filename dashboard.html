@@ -1546,7 +1546,7 @@ try {
  <div id="view-measures" style="display:none">
   <div class="measures-head" style="display:flex; align-items:center; gap:12px; min-width:0;">
     <h1 id="measures-title" style="margin:0; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Historial de medidas</h1>
-    <button id="btn-new-measure" onclick="window.location.href='https://app.nivelatolabs.com/'" style="display:none; margin-left:auto; flex-shrink:0; background:var(--niv-accent,#fafafa); color:#000; border:none; border-radius:6px; padding:10px 20px; font-size:15px; font-weight:600; cursor:pointer; font-family:'Inter',system-ui,sans-serif;">+ Nueva medida</button>
+    <button id="btn-new-measure" style="display:none; margin-left:auto; flex-shrink:0; background:var(--niv-accent,#fafafa); color:#000; border:none; border-radius:6px; padding:10px 20px; font-size:15px; font-weight:600; cursor:pointer; font-family:'Inter',system-ui,sans-serif;">+ Nueva medida</button>
   </div>
   <div class="subtitle" id="dash-subtitle">Cargando…</div>
   <script>
@@ -6400,6 +6400,16 @@ document.addEventListener('keydown', function(e) {
 <script src="./nav-referrer.js"></script>
 <script src="./press-yaoi.js"></script>
 <script src="./niv-drag.js"></script>
+<script type="module">
+  // Cross-origin session handoff for the "Nueva medida" entries: the wizard
+  // lives on app.nivelatolabs.com, so a raw navigation arrives session-less
+  // and its guard bounces to login (the double-login bug, fixed 2026-10-28).
+  // handoffOnClick preventDefaults and carries the session via sso.html;
+  // the anchor keeps its href as the no-JS fallback.
+  import { handoffOnClick } from "./sso-handoff.js";
+  handoffOnClick('btn-new-measure', 'https://app.nivelatolabs.com/');
+  handoffOnClick('home-act-new-measure', 'https://app.nivelatolabs.com/');
+</script>
 </body>
 </html>
 

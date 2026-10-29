@@ -2,7 +2,7 @@
 // precached file changes. A version bump is required for the update to take
 // effect — activate() deletes every cache whose name !== CACHE, so without a
 // new name the old precache survives and the changed list never installs.
-const CACHE = 'nivelato-v72';
+const CACHE = 'nivelato-v73';
 // App shell: every file that must exist for the app to work offline.
 // (Keep this list in sync with the repo — a missing file used to make
 // addAll() reject and silently skip the ENTIRE precache.)
@@ -34,6 +34,7 @@ const URLS = [
   './firebase-config.js',
   './permissions.js',
   './account-selector.js',
+  './sso-handoff.js',
   './autism.css',
   './manifest.json',
   './icon-192.png',

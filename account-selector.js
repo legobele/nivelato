@@ -3,6 +3,7 @@
 // window.initAccountSelector({ user, userData }) once Firebase auth resolves.
 import { signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { auth } from "./firebase-config.js";
+import { handoffTo } from "./sso-handoff.js";
 import { makePermChecker } from "./permissions.js";
 
 let _menuOpen = false;
@@ -190,7 +191,7 @@ function buildMenu({ user, userData }) {
           <div class="rl">${escapeHtml(roleLabel(userData?.role))}</div>
         </div>
       </div>
-      ${canDashboard ? `<button class="acct-item" id="acct-dashboard" role="menuitem" onclick="window.location.href='https://app.nivelatolabs.com/dashboard.html?view=home'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:2px;"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg> ${T.dashboard}</button>` : ""}
+      ${canDashboard ? `<button class="acct-item" id="acct-dashboard" role="menuitem"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:2px;"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg> ${T.dashboard}</button>` : ""}
       <button class="acct-item" id="acct-settings" role="menuitem" onclick="window.location.href='settings.html'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:2px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> ${T.settings}</button>
       <button class="acct-item danger" id="acct-signout" role="menuitem">${T.signOut}</button>
     </div>
@@ -212,6 +213,15 @@ function buildMenu({ user, userData }) {
     _menuOpen = !_menuOpen;
     dropdown.classList.toggle("open", _menuOpen);
     trigger.setAttribute("aria-expanded", String(_menuOpen));
+  });
+
+  const dashBtn = dropdown.querySelector("#acct-dashboard");
+  if (dashBtn) dashBtn.addEventListener("click", () => {
+    closeMenu();
+    // The dashboard lives on its own origin: hand the session off instead
+    // of a raw navigation, or the dashboard guard bounces to login and the
+    // user has to sign in a second time (see sso-handoff.js).
+    handoffTo('https://dashboard.nivelatolabs.com/?view=home');
   });
 
   dropdown.querySelector("#acct-signout").addEventListener("click", async () => {
