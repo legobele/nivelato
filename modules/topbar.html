@@ -37,9 +37,9 @@
     z-index: 50;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
     min-height: var(--niv-topbar-h);
-    padding: 10px 32px;
+    padding: 12px 32px;
     box-sizing: border-box;
     background: var(--niv-glass, linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.045)));
     -webkit-backdrop-filter: blur(16px) saturate(150%);
@@ -52,7 +52,7 @@
     align-items: center;
     gap: 4px;
     margin: 0 auto;
-    background: var(--niv-surface-2, #1e1e22);
+    background: var(--niv-surface-2, #16161a);
     border: 1px solid var(--niv-border-soft, rgba(255, 255, 255, 0.14));
     border-radius: 999px;
     padding: 4px;
@@ -64,11 +64,11 @@
   .niv-tab {
     border: none;
     background: transparent;
-    color: var(--niv-text-dim, #a7a7ad);
+    color: var(--niv-text-dim, #a8a8b0);
     font-family: inherit;
     font-size: 14px;
     font-weight: 600;
-    padding: 8px 18px;
+    padding: 8px 20px;
     border-radius: 999px;
     cursor: pointer;
     white-space: nowrap;
@@ -77,7 +77,7 @@
     align-items: center;
     gap: 8px;
   }
-  a.niv-tab:hover { color: var(--niv-text, #f5f5f7); }
+  a.niv-tab:hover { color: var(--niv-text, #fafafa); }
   .niv-tab.active {
     background: linear-gradient(135deg, #fafafa, #c9c9ce);
     color: #050505;
@@ -92,7 +92,7 @@
     margin-left: 0;
     font-size: 15px;
     font-weight: 600;
-    color: var(--niv-text, #f5f5f7);
+    color: var(--niv-text, #fafafa);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -100,8 +100,8 @@
   }
   header.niv-topbar { position: relative; }
   @media (max-width: 900px) {
-    .niv-topbar { padding: 10px 16px; }
-    .niv-tab { padding: 8px 13px; }
+    .niv-topbar { padding: 12px 16px; }
+    .niv-tab { padding: 8px 12px; }
     .niv-topbar-project { max-width: 22vw; font-size: 13px; right: 16px; }
   }
 </style>

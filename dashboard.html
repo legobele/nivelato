@@ -41,7 +41,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     }
     .header-logo { font-size: 20px; font-weight: 700; color: #fafafa; }
     .header-right { display: flex; align-items: center; gap: 12px; }
-    .org-badge { font-size: 12px; background: rgba(255,255,255,.10); color: #fafafa; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+    .org-badge { font-size: 12px; background: rgba(255,255,255,.10); color: #fafafa; padding: 4px 12px; border-radius: 999px; font-weight: 600; }
     .btn-logout { font-size: 13px; color: #868e96; background: none; border: none; cursor: pointer; font-family: inherit; }
     .btn-logout:hover { color: #c92a2a; }
 
@@ -65,31 +65,27 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     }
 
     /* MAIN */
-    main { padding: 24px 20px; max-width: 720px; margin: 0 auto; }
-    h1 { font-size: 22px; font-weight: 700; color: #212529; margin-bottom: 4px; }
-    .subtitle { font-size: 14px; color: #868e96; margin-bottom: 24px; }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .subtitle { font-size: 14px; margin-bottom: 24px; }
 
     /* JOIN CODE */
-    #join-code-section, .join-code-card { display: none; padding: 14px 20px; margin: 0 0 24px; align-items: center; gap: 16px; flex-wrap: wrap; }
+    #join-code-section, .join-code-card { display: none; padding: 16px 20px; margin: 0 0 24px; align-items: center; gap: 16px; flex-wrap: wrap; }
     #join-code-section.show, .join-code-card.show { display: flex; }
 
     /* STATS ROW */
     .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
-    .stat-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .stat-card { padding: 16px; }
     .stat-num { font-size: 28px; font-weight: 700; color: #fafafa; }
-    .stat-label { font-size: 12px; color: #868e96; margin-top: 2px; }
+    .stat-label { font-size: 12px; margin-top: 2px; }
 
     /* FILTERS */
-    .filter-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .filter-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
     .filter-row input, .filter-row select {
-      padding: 9px 14px;
-      border: 1.5px solid #dee2e6;
+      padding: 8px 16px;
       border-radius: 8px;
       font-size: 13px;
       font-family: inherit;
       outline: none;
-      background: #fff;
-      color: #495057;
       transition: border-color 0.15s, box-shadow 0.15s;
       height: 38px;
     }
@@ -97,31 +93,29 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       appearance: none;
       -webkit-appearance: none;
       -moz-appearance: none;
-      padding-right: 34px;
+      padding-right: 36px;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23868e96' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 12px center;
       cursor: pointer;
       min-width: 150px;
     }
-    .filter-row select:hover { border-color: #adb5bd; }
+    .filter-row select:hover { border-color: var(--niv-border); }
     .filter-row input:focus, .filter-row select:focus {
       border-color: #fafafa;
       box-shadow: 0 0 0 3px rgba(255,255,255,.25);
     }
-    .filter-row select:disabled { color: #adb5bd; background-color: #f8f9fa; cursor: default; }
+    .filter-row select:disabled { cursor: default; }
     .date-input-wrap {
       flex: 1 1 240px; min-width: 0; max-width: 100%; position: relative;
     }
     .date-input-wrap input[type="date"] {
-      width: 100%; padding: 9px 14px;
-      border: 1.5px solid #dee2e6;
+      width: 100%; padding: 8px 16px;
       border-radius: 8px;
       font-size: 13px; font-family: inherit;
-      outline: none; background: #fff;
-      color: #495057; height: 38px;
+      outline: none;
+      height: 38px;
       transition: border-color 0.15s, box-shadow 0.15s;
-      color-scheme: light;
     }
     .date-input-wrap input[type="date"]:focus {
       border-color: #fafafa;
@@ -129,7 +123,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     }
     .date-input-wrap .date-placeholder {
       position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-      font-size: 13px; color: #868e96;
+      font-size: 13px;
       pointer-events: none; white-space: nowrap;
       max-width: calc(100% - 28px); overflow: hidden; text-overflow: ellipsis;
       z-index: 1;
@@ -141,8 +135,6 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
        invisible until a value exists; on focus the native placeholder
        shows instead of the overlay, and with a value the date shows. */
     .date-input-wrap input[type="date"] { color: transparent; }
-    .date-input-wrap.has-value input[type="date"],
-    .date-input-wrap input[type="date"]:focus { color: #495057; }
     .date-input-wrap input[type="date"]::-webkit-calendar-picker-indicator {
       cursor: pointer; opacity: 0.5;
     }
@@ -160,7 +152,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     .filters-menu-btn {
       display: inline-flex; align-items: center; gap: 8px;
       height: 44px; min-width: 150px;
-      padding: 9px 12px 9px 14px;
+      padding: 8px 12px 8px 16px;
       background: var(--niv-surface-2);
       border: 1.5px solid var(--niv-border-soft);
       border-radius: 8px;
@@ -172,13 +164,13 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     .filters-menu-btn:focus-visible,
     .filters-menu-btn[aria-expanded="true"] {
       border-color: var(--niv-accent);
-      box-shadow: 0 0 0 3px rgba(25, 113, 194, 0.25);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
       outline: none;
     }
     .filters-menu-btn.has-active { border-color: var(--niv-accent); }
     .filters-menu-btn-label { flex: 1; text-align: left; white-space: nowrap; }
     .filters-menu-badge {
-      flex: none; min-width: 20px; height: 20px; padding: 0 6px;
+      flex: none; min-width: 20px; height: 20px; padding: 0 8px;
       border-radius: var(--niv-pill);
       background: var(--niv-accent); color: #fff;
       font-size: 11px; font-weight: 700; line-height: 20px; text-align: center;
@@ -192,7 +184,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     .filters-menu-panel {
       position: absolute; top: calc(100% + 6px); left: 0; z-index: 300;
       width: min(320px, calc(100vw - 24px));
-      display: flex; flex-direction: column; gap: 10px;
+      display: flex; flex-direction: column; gap: 12px;
       padding: 12px;
       background: var(--niv-surface-2);
       border: 1px solid var(--niv-border-soft);
@@ -211,7 +203,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     }
 
     /* JOB LIST */
-    .job-list { display: flex; flex-direction: column; gap: 10px; }
+    .job-list { display: flex; flex-direction: column; gap: 12px; }
     .job-card {
       background: #fff;
       border-radius: 12px;
@@ -226,7 +218,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     .job-date { font-size: 12px; color: #868e96; }
     .job-meta { font-size: 13px; color: #495057; }
     .job-meta span { margin-right: 12px; }
-    .job-tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-left: 6px; }
+    .job-tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-left: 8px; }
     .tag-ok { background: #ebfbee; color: #2f9e44; }
     .tag-warn { background: #fff3bf; color: #e67700; }
 
@@ -249,8 +241,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       pointer-events: auto;
     }
     .modal {
-      background: #fff;
-      border-radius: 16px;
+      border-radius: 14px;
       padding: 28px 24px;
       width: 100%; max-width: 820px;
       max-height: 90dvh;
@@ -287,7 +278,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       position: relative;
     }
     #modal-canvas {
-      border-radius: 10px;
+      border-radius: 8px;
       background: #f0f4ff;
       display: block;
       width: 100%;
@@ -325,9 +316,9 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
        the rest of the modal geometry unchanged. Scoped to these two modals. */
     #np-modal-overlay .btn-save, #np-modal-overlay .btn-cancel,
     #nc-modal-overlay .btn-save, #nc-modal-overlay .btn-cancel { padding-top: 16px; padding-bottom: 16px; }
-    .modal-edit-input { width: 100%; padding: 8px 10px; border: 1.5px solid #dee2e6; border-radius: 6px; font-size: 13px; font-family: inherit; color: #212529; margin-top: 2px; }
+    .modal-edit-input { width: 100%; padding: 8px 12px; border: 1.5px solid #dee2e6; border-radius: 6px; font-size: 13px; font-family: inherit; color: #212529; margin-top: 2px; }
     .modal-edit-input:focus { outline: none; border-color: #fafafa; box-shadow: 0 0 0 3px rgba(255,255,255,.25); }
-    .modal-edit-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #adb5bd; margin-top: 12px; display: block; }
+    .modal-edit-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--niv-text-dim); margin-top: 12px; display: block; }
     .modal-edit-label:first-of-type { margin-top: 0; }
 
     .empty-state { text-align: center; padding: 48px 20px; color: #868e96; font-size: 14px; }
@@ -345,7 +336,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       .filter-row input, .filter-row select, .date-input-wrap { width: 100%; }
       .job-card-top { flex-direction: column; gap: 4px; }
       .job-date { font-size: 11px; }
-      .modal { padding: 20px 16px; border-radius: 16px 16px 0 0; max-height: 85dvh; transform: translateY(100%); transition: transform 0.3s ease-out; }
+      .modal { padding: 20px 16px; border-radius: 14px 14px 0 0; max-height: 85dvh; transform: translateY(100%); transition: transform 0.3s ease-out; }
       .modal::before { content: ''; display: block; width: 36px; height: 4px; background: #ced4da; border-radius: 2px; margin: 0 auto 12px; }
       .modal-overlay.open .modal { transform: translateY(0); }
       .modal-overlay { align-items: flex-end; padding: 0; }
@@ -353,7 +344,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       #join-code-section, .join-code-card { flex-direction: column; align-items: flex-start; gap: 8px; }
       #join-code-section button, .join-code-card button { width: 100%; }
       .header-logo { font-size: 17px; }
-      .org-badge { font-size: 11px; padding: 3px 8px; }
+      .org-badge { font-size: 11px; padding: 4px 8px; }
     }
     @media (max-width: 480px) {
       .stats-row { grid-template-columns: repeat(2, 1fr); }
@@ -364,23 +355,23 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
 
     /* LISTA DE PRECIOS (Fase 2 quoting) */
     .pl-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
-    .pl-add { width: auto; padding: 10px 18px; margin-top: 0; }
-    .pl-inactive-toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #495057; cursor: pointer; }
+    .pl-add { width: auto; padding: 12px 20px; margin-top: 0; }
+    .pl-inactive-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--niv-text-dim); cursor: pointer; }
     .pl-inactive-toggle input { width: 16px; height: 16px; accent-color: #fafafa; cursor: pointer; }
     .pl-group { margin-bottom: 20px; }
-    .pl-group-title { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #868e96; margin: 0 0 8px; }
+    .pl-group-title { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--niv-text-dim); margin: 0 0 8px; }
     .pl-table-wrap { overflow-x: auto; background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
     .pl-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 560px; }
-    .pl-table th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #adb5bd; padding: 10px 12px; border-bottom: 1px solid #f1f3f5; }
-    .pl-table td { padding: 10px 12px; border-bottom: 1px solid #f8f9fa; color: #212529; vertical-align: middle; }
+    .pl-table th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #adb5bd; padding: 12px 12px; border-bottom: 1px solid #f1f3f5; }
+    .pl-table td { padding: 12px 12px; border-bottom: 1px solid #f8f9fa; color: #212529; vertical-align: middle; }
     .pl-table tr:last-child td { border-bottom: none; }
     .pl-table .pl-price { font-weight: 700; white-space: nowrap; }
     .pl-table .pl-model { color: #868e96; white-space: nowrap; }
     .pl-table .pl-actions { text-align: right; white-space: nowrap; }
     .pl-row-inactive td { color: #adb5bd; }
     .pl-row-inactive .pl-price { color: #adb5bd; }
-    .pl-tag-inactive { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: #f1f3f5; color: #868e96; margin-left: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
-    .pl-btn { border: 1.5px solid #dee2e6; background: #fff; border-radius: 6px; padding: 5px 10px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; margin-left: 6px; color: #495057; }
+    .pl-tag-inactive { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: #f1f3f5; color: #868e96; margin-left: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .pl-btn { border: 1.5px solid #dee2e6; background: #fff; border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; margin-left: 8px; color: #495057; }
     .pl-btn:hover { border-color: #adb5bd; }
     .pl-btn-edit { border-color: rgba(255,255,255,.28); color: #fafafa; }
     .pl-btn-edit:hover { background: rgba(255,255,255,.10); }
@@ -388,10 +379,10 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     .pl-btn-off:hover { background: #fff5f5; }
     .pl-btn-on { border-color: #b2d8b2; color: #2f9e44; }
     .pl-btn-on:hover { background: #ebfbee; }
-    .pl-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #495057; margin-top: 14px; cursor: pointer; }
+    .pl-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #495057; margin-top: 16px; cursor: pointer; }
     .pl-check input { width: 16px; height: 16px; accent-color: #fafafa; cursor: pointer; }
-    .pl-error { margin-top: 12px; padding: 10px 14px; background: #fff5f5; border: 1px solid #ffc9c9; border-radius: 8px; font-size: 13px; color: #c92a2a; }
-    .pl-hint { font-size: 12px; color: #868e96; margin-top: 6px; }
+    .pl-error { margin-top: 12px; padding: 12px 16px; background: #fff5f5; border: 1px solid #ffc9c9; border-radius: 8px; font-size: 13px; color: #c92a2a; }
+    .pl-hint { font-size: 12px; color: #868e96; margin-top: 8px; }
     @media (max-width: 600px) {
       .pl-toolbar { flex-direction: row; }
       .pl-add { flex: 1; }
@@ -399,8 +390,8 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
 
     /* COTIZACIONES (Fase 3 quoting) */
     .qt-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
-    .qt-add { width: auto; padding: 10px 18px; margin-top: 0; }
-    .qt-filter { padding: 9px 14px; border: 1.5px solid #dee2e6; border-radius: 8px; font-size: 13px; font-family: inherit; color: #495057; background: #fff; }
+    .qt-add { width: auto; padding: 12px 20px; margin-top: 0; }
+    .qt-filter { padding: 8px 16px; border: 1.5px solid var(--niv-border-soft); border-radius: 8px; font-size: 13px; font-family: inherit; color: var(--niv-text); background: var(--niv-surface-2); }
     .qt-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
     .qt-est-borrador { background: #f1f3f5; color: #868e96; }
     .qt-est-enviada { background: rgba(229,181,103,.13); color: #e5b567; }
@@ -409,20 +400,20 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     .qt-total { font-weight: 700; color: #212529; white-space: nowrap; }
     .qt-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
     .qt-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-    .qt-line { background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 10px; }
-    .qt-line-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+    .qt-line { background: #fff; border-radius: 12px; padding: 16px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 12px; }
+    .qt-line-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
     .qt-line-desc { font-size: 14px; font-weight: 600; color: #212529; }
     .qt-line-detail { font-size: 12px; color: #868e96; margin-top: 2px; }
     .qt-line-sub { font-size: 14px; font-weight: 700; color: #fafafa; white-space: nowrap; }
-    .qt-line-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .qt-line-actions { display: flex; gap: 8px; margin-top: 8px; }
     .qt-line-add-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 4px; }
-    .qt-med-badge { display: inline-block; font-size: 11px; font-weight: 600; background: rgba(255,255,255,.08); color: #a8a8b0; border-radius: 4px; padding: 2px 8px; margin-left: 6px; }
-    .qt-totals { background: #fff; border-radius: 12px; padding: 6px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 12px; }
+    .qt-med-badge { display: inline-block; font-size: 11px; font-weight: 600; background: rgba(255,255,255,.08); color: #a8a8b0; border-radius: 4px; padding: 2px 8px; margin-left: 8px; }
+    .qt-totals { background: #fff; border-radius: 12px; padding: 8px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 12px; }
     .qt-total-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #495057; border-bottom: 1px solid #f8f9fa; }
     .qt-total-row:last-child { border-bottom: none; }
     .qt-total-row.grand { font-size: 17px; font-weight: 700; color: #212529; }
     .qt-hint-inline { font-size: 12px; color: #868e96; }
-    .qt-med-card { background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 10px; cursor: pointer; }
+    .qt-med-card { background: #fff; border-radius: 12px; padding: 16px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 12px; cursor: pointer; }
     .qt-med-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
     @media (max-width: 600px) {
       .qt-form-grid { grid-template-columns: 1fr; }
@@ -462,7 +453,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
       .qpdf-tot .row { display: flex; justify-content: space-between; padding: 2.5pt 0; }
       .qpdf-tot .row.grand { font-size: 13pt; font-weight: 700; border-top: 2px solid #f5a524; margin-top: 4pt; padding-top: 6pt; }
       .qpdf-notas { font-size: 10pt; color: #333; background: #fff; border: 1px solid #e9ecef; border-radius: 4pt; padding: 7pt 10pt; margin-bottom: 10pt; }
-      .qpdf-validez { font-size: 9.5pt; color: #555; font-style: italic; margin-bottom: 16pt; }
+      .qpdf-validez { font-size: 9.5pt; color: #555; margin-bottom: 16pt; }
       .qpdf-sig { display: flex; gap: 40pt; margin: 22pt 0 12pt; }
       .qpdf-sig > div { flex: 1; font-size: 9.5pt; color: #333; }
       .qpdf-sigline { border-bottom: 1px solid #111; height: 26pt; margin-bottom: 3pt; }
@@ -471,88 +462,88 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   </style>
   <style>
   /* ============ NIVELATO DARK THEME (mockup) ============ */
-  body { background: #0e0e10; color: #f5f5f7; }
+  body { background: #0e0e10; color: #fafafa; }
   main { max-width: none; padding: 0; }
-  h1 { color: #f5f5f7; }
-  .subtitle { color: #a7a7ad; }
+  h1 { color: #fafafa; }
+  .subtitle { color: #a8a8b0; }
 
   /* stats */
-  .stat-card { background: #17171a; border: 1px solid rgba(255,255,255,0.14); box-shadow: none; border-radius: 18px; }
-  .stat-num { color: #f5f5f7; }
-  .stat-label { color: #a7a7ad; }
+  .stat-card { background: #0e0e10; border: 1px solid rgba(255,255,255,0.14); box-shadow: none; border-radius: 6px; }
+  .stat-num { color: #fafafa; font-variant-numeric: tabular-nums; }
+  .stat-label { color: #a8a8b0; }
 
   /* filters */
   .filter-row input, .filter-row select, .date-input-wrap input[type="date"] {
-    background: #1e1e22; border: 1.5px solid rgba(255,255,255,0.14); color: #f5f5f7; color-scheme: dark;
+    background: #16161a; border: 1.5px solid rgba(255,255,255,0.14); color: #fafafa; color-scheme: dark;
   }
   .filter-row input:focus, .filter-row select:focus, .date-input-wrap input[type="date"]:focus {
     border-color: #fafafa; box-shadow: 0 0 0 3px rgba(255,255,255,0.25);
   }
-  .filter-row select:disabled { color: #6c757d; background-color: #17171a; }
-  .date-input-wrap .date-placeholder { color: #a7a7ad; }
+  .filter-row select:disabled { color: #6c757d; background-color: #0e0e10; }
+  .date-input-wrap .date-placeholder { color: #a8a8b0; }
   .date-input-wrap input[type="date"] { color: transparent; }
   .date-input-wrap.has-value input[type="date"],
-  .date-input-wrap input[type="date"]:focus { color: #f5f5f7; }
+  .date-input-wrap input[type="date"]:focus { color: #fafafa; }
 
   /* join code section */
-  #join-code-section, .join-code-card { background: #17171a; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; }
+  #join-code-section, .join-code-card { background: #0e0e10; border: 1px solid rgba(255,255,255,0.14); border-radius: 6px; }
   /* v1.2.17: home enrollment tile (spec section 2.5 language, dashboard
      tokens): the QR tile is the card's enrollment surface */
   .home-enroll { width: 100%; }
-  .home-enroll-title { font-size: 16px; font-weight: 700; color: var(--niv-text, #f5f5f7); margin-bottom: 10px; }
-  .home-enroll-label { display: block; font-size: 12px; font-weight: 600; color: var(--niv-text-dim, #a7a7ad); margin-bottom: 6px; }
-  .home-enroll-row { display: flex; gap: 10px; flex-wrap: wrap; }
-  .home-enroll-row input { flex: 1 1 220px; min-width: 0; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); background: var(--niv-surface-2, #1e1e22); color: var(--niv-text, #f5f5f7); font-size: 14px; font-family: inherit; outline: none; }
-  .home-enroll-row input:focus { border-color: var(--niv-text-dim, #a7a7ad); }
-  .home-enroll-row button { padding: 11px 20px; border: none; border-radius: 999px; background: linear-gradient(135deg, #fafafa, #c9c9ce); color: #050505; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .home-enroll-title { font-size: 16px; font-weight: 700; color: var(--niv-text, #fafafa); margin-bottom: 12px; }
+  .home-enroll-label { display: block; font-size: 12px; font-weight: 600; color: var(--niv-text-dim, #a8a8b0); margin-bottom: 8px; }
+  .home-enroll-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .home-enroll-row input { flex: 1 1 220px; min-width: 0; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); background: var(--niv-surface-2, #16161a); color: var(--niv-text, #fafafa); font-size: 14px; font-family: inherit; outline: none; }
+  .home-enroll-row input:focus { border-color: var(--niv-text-dim, #a8a8b0); }
+  .home-enroll-row button { padding: 12px 20px; border: none; border-radius: 999px; background: linear-gradient(135deg, #fafafa, #c9c9ce); color: #050505; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
   .home-enroll-row button:disabled { opacity: 0.55; cursor: default; }
-  .home-enroll-error { margin-top: 10px; padding: 10px 14px; border-radius: 10px; background: rgba(229,72,77,0.14); border: 1px solid rgba(229,72,77,0.45); color: #ffb4b8; font-size: 13px; }
-  .home-enroll-tile { border: 1.5px solid var(--niv-border-soft, rgba(255,255,255,0.14)); border-radius: 28px; background: var(--niv-surface, #101013); padding: 22px 20px 18px; margin-top: 16px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-  .home-enroll-tile .tile-qr { background: #fff; border-radius: 12px; padding: 10px; line-height: 0; width: 52%; max-width: 240px; box-sizing: border-box; }
+  .home-enroll-error { margin-top: 12px; padding: 12px 16px; border-radius: 8px; background: rgba(229,72,77,0.14); border: 1px solid rgba(229,72,77,0.45); color: #ffb4b8; font-size: 13px; }
+  .home-enroll-tile { border: 1.5px solid var(--niv-border-soft, rgba(255,255,255,0.14)); border-radius: 12px; background: var(--niv-surface, #0e0e10); padding: 24px 20px 20px; margin-top: 16px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .home-enroll-tile .tile-qr { background: #fff; border-radius: 12px; padding: 12px; line-height: 0; width: 52%; max-width: 240px; box-sizing: border-box; }
   .home-enroll-tile .tile-qr svg { width: 100%; height: auto; display: block; }
-  .home-enroll-tile .tile-headline { font-size: 16px; font-weight: 700; line-height: 1.4; margin-top: 16px; color: var(--niv-text, #f5f5f7); }
-  .home-enroll-tile .tile-sub { font-size: 13px; color: var(--niv-text-dim, #a7a7ad); line-height: 1.5; margin-top: 4px; }
-  .home-enroll-tile .tile-expiry { font-size: 12px; color: var(--niv-text-dim, #a7a7ad); margin-top: 10px; }
-  .home-enroll-tile .tile-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; justify-content: center; }
-  .home-enroll-tile .tile-actions button { padding: 9px 18px; border-radius: 999px; border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); background: var(--niv-surface-2, #1e1e22); color: var(--niv-text, #f5f5f7); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
-  .home-join-fallback { width: 100%; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--niv-border-soft, rgba(255,255,255,0.10)); padding-top: 14px; margin-top: 18px; }
+  .home-enroll-tile .tile-headline { font-size: 16px; font-weight: 700; line-height: 1.4; margin-top: 16px; color: var(--niv-text, #fafafa); }
+  .home-enroll-tile .tile-sub { font-size: 13px; color: var(--niv-text-dim, #a8a8b0); line-height: 1.5; margin-top: 4px; }
+  .home-enroll-tile .tile-expiry { font-size: 12px; color: var(--niv-text-dim, #a8a8b0); margin-top: 12px; }
+  .home-enroll-tile .tile-actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; justify-content: center; }
+  .home-enroll-tile .tile-actions button { padding: 8px 20px; border-radius: 999px; border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); background: var(--niv-surface-2, #16161a); color: var(--niv-text, #fafafa); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .home-join-fallback { width: 100%; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--niv-border-soft, rgba(255,255,255,0.10)); padding-top: 16px; margin-top: 20px; }
 
   /* job cards */
-  .job-card { background: #17171a; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; box-shadow: none; }
+  .job-card { background: #0e0e10; border: 1px solid rgba(255,255,255,0.14); border-radius: 6px; box-shadow: none; }
   .job-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
-  .job-title { color: #f5f5f7; }
-  .job-date { color: #a7a7ad; }
+  .job-title { color: #fafafa; }
+  .job-date { color: #a8a8b0; }
   .job-meta { color: #c9c9cf; }
-  .tag-ok { background: rgba(47,158,68,0.2); color: #4ade80; }
-  .tag-warn { background: rgba(230,119,0,0.2); color: #fbbf24; }
+  .tag-ok { background: rgba(47,158,68,0.2); color: #22c55e; }
+  .tag-warn { background: rgba(230,119,0,0.2); color: #f59f00; }
 
   /* modals */
-  .modal { background: #17171a; border: 1px solid rgba(255,255,255,0.28); }
-  #modal .modal-close-bar { background: #17171a; border-top: 1px solid rgba(255,255,255,0.14); }
+  .modal { background: #0e0e10; border: 1px solid rgba(255,255,255,0.28); }
+  #modal .modal-close-bar { background: #0e0e10; border-top: 1px solid rgba(255,255,255,0.14); }
   .modal::before { background: rgba(255,255,255,0.3); }
-  .modal-title { color: #f5f5f7; }
+  .modal-title { color: #fafafa; }
   .detail-row { border-bottom: 1px solid rgba(255,255,255,0.08); }
-  .detail-label { color: #a7a7ad; }
-  .detail-val { color: #f5f5f7; }
-  .modal-notes { background: #1e1e22; color: #c9c9cf; }
-  .detail-section-title { color: #6c757d; }
-  .btn-close, .btn-cancel { background: #1e1e22; color: #f5f5f7; border: 1px solid rgba(255,255,255,0.14); }
+  .detail-label { color: #a8a8b0; }
+  .detail-val { color: #fafafa; }
+  .modal-notes { background: #16161a; color: #c9c9cf; }
+  .detail-section-title { color: var(--niv-text-dim); }
+  .btn-close, .btn-cancel { background: #16161a; color: #fafafa; border: 1px solid rgba(255,255,255,0.14); }
   .btn-delete { background: rgba(229,72,77,0.12); border-color: rgba(229,72,77,0.5); color: #f87171; }
   .btn-delete:hover { background: rgba(229,72,77,0.2); }
   .btn-edit { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.28); color: #fafafa; }
   .btn-edit:hover { background: rgba(255,255,255,0.25); }
   .btn-save { background: #fafafa; color: #050505; }
   .btn-save:hover { background: #dcdce0; }
-  .modal-edit-input { background: #1e1e22; border-color: rgba(255,255,255,0.14); color: #f5f5f7; }
+  .modal-edit-input { background: #16161a; border-color: rgba(255,255,255,0.14); color: #fafafa; }
   .modal-edit-input:focus { border-color: #fafafa; box-shadow: 0 0 0 3px rgba(255,255,255,0.25); }
-  .modal-edit-label { color: #6c757d; }
+  .modal-edit-label { color: var(--niv-text-dim); }
   /* GRAPH CANVAS: untouched by design. background stays as the graph system renders it. */
-  .empty-state, .loading { color: #a7a7ad; }
+  .empty-state, .loading { color: #a8a8b0; }
 
   /* pricelist / quotes */
-  .pl-toolbar, .qt-toolbar { color: #f5f5f7; }
+  .pl-toolbar, .qt-toolbar { color: #fafafa; }
   .btn-save.pl-add, .btn-save.qt-add { width: auto; }
-  #pl-list .job-card, #qt-list .job-card { background: #17171a; }
+  #pl-list .job-card, #qt-list .job-card { background: #0e0e10; }
 
   /* org badge in sidebar */
   .niv-sidebar .org-badge { background: rgba(255,255,255,0.08); color: #fafafa; border: 1px solid rgba(255,255,255,0.35); }
@@ -572,7 +563,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
     cursor: pointer; font-family: inherit; padding: 0;
     display: inline-flex; align-items: center; justify-content: center;
   }
-  .niv-plus-btn:hover { color: var(--niv-text); background: var(--niv-surface-2, #1e1e22); }
+  .niv-plus-btn:hover { color: var(--niv-text); background: var(--niv-surface-2, #16161a); }
 
   /* measurement detail view */
   .niv-back-btn {
@@ -586,15 +577,15 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   .niv-measure-grid { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
   /* v1.2.17: Diagram | Photo tabs inside the media card, same pill
      language as the top bar (track surface, active = light pill) */
-  .niv-media-tabs { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 16px; background: var(--niv-surface-2, #1e1e22); border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); border-radius: 999px; }
-  .niv-media-tab { border: none; background: transparent; color: var(--niv-text-dim, #a7a7ad); font-family: inherit; font-size: 14px; font-weight: 600; padding: 7px 18px; border-radius: 999px; cursor: pointer; }
-  .niv-media-tab:hover { color: var(--niv-text, #f5f5f7); }
+  .niv-media-tabs { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 16px; background: var(--niv-surface-2, #16161a); border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); border-radius: 999px; }
+  .niv-media-tab { border: none; background: transparent; color: var(--niv-text-dim, #a8a8b0); font-family: inherit; font-size: 14px; font-weight: 600; padding: 8px 20px; border-radius: 999px; cursor: pointer; }
+  .niv-media-tab:hover { color: var(--niv-text, #fafafa); }
   .niv-media-tab.active { background: linear-gradient(135deg, #fafafa, #c9c9ce); color: #050505; }
   #measure-photo-wrap .niv-panel-empty { padding: 28px 16px; }
-  .niv-detail-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; font-size: 14px; min-width: 0; }
+  .niv-detail-row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; font-size: 14px; min-width: 0; }
   .niv-detail-row .k { color: var(--niv-text); font-weight: 500; flex: none; }
   .niv-detail-row .v { color: var(--niv-text-dim); text-align: right; min-width: 0; overflow-wrap: anywhere; }
-  #measure-photo-wrap img { width: 100%; border-radius: 10px; display: block; }
+  #measure-photo-wrap img { width: 100%; border-radius: 8px; display: block; }
   .niv-photo-badge {
     display: inline-flex; align-items: center; justify-content: center;
     width: 24px; height: 24px; border-radius: 50%;
@@ -608,7 +599,7 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   .niv-proj-measure {
     display: flex; align-items: center; justify-content: space-between;
     border: 1px solid var(--niv-border); border-radius: 14px;
-    padding: 14px 16px; margin-bottom: 10px; cursor: pointer;
+    padding: 16px 16px; margin-bottom: 12px; cursor: pointer;
     background: var(--niv-surface);
   }
   .niv-proj-measure:hover { background: var(--niv-surface-2); }
@@ -619,33 +610,33 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   button.dots {
     background: transparent; border: none; font-family: inherit;
     font-size: 16px; font-weight: 700; line-height: 1;
-    color: var(--niv-text-dim, #a7a7ad); letter-spacing: 2px;
+    color: var(--niv-text-dim, #a8a8b0); letter-spacing: 2px;
     padding: 4px 8px; border-radius: 6px; cursor: pointer; flex: none;
     position: relative; z-index: 1;
     display: inline-flex; align-items: center; justify-content: center;
     min-width: 36px; min-height: 28px; box-sizing: border-box;
   }
-  button.dots:hover { background: var(--niv-surface-2, #1e1e22); color: var(--niv-text, #f5f5f7); }
+  button.dots:hover { background: var(--niv-surface-2, #16161a); color: var(--niv-text, #fafafa); }
   button.dots:focus-visible { outline: 2px solid var(--niv-accent, #fafafa); outline-offset: 1px; }
   .dash-row-menu {
     position: fixed; z-index: 1200; min-width: 180px;
-    background: var(--niv-surface, #17171a);
+    background: var(--niv-surface, #0e0e10);
     border: 1px solid var(--niv-border, rgba(255,255,255,0.28));
     border-radius: 12px; box-shadow: 0 10px 34px rgba(0,0,0,0.5);
-    padding: 6px; font-family: 'Inter', system-ui, sans-serif;
+    padding: 8px; font-family: 'Inter', system-ui, sans-serif;
   }
   .dash-row-menu-item {
     display: block; width: 100%; text-align: left; background: transparent;
-    border: none; color: var(--niv-text, #f5f5f7); font-size: 13px;
-    font-family: inherit; padding: 9px 12px; border-radius: 8px; cursor: pointer;
+    border: none; color: var(--niv-text, #fafafa); font-size: 13px;
+    font-family: inherit; padding: 8px 12px; border-radius: 8px; cursor: pointer;
   }
-  .dash-row-menu-item:hover { background: var(--niv-surface-2, #1e1e22); }
+  .dash-row-menu-item:hover { background: var(--niv-surface-2, #16161a); }
   .dash-row-menu-item:focus-visible { outline: 2px solid var(--niv-accent, #fafafa); outline-offset: -2px; }
   .dash-row-menu-item.danger { color: #f87171; }
   .dash-row-menu-item.danger:hover { background: rgba(229,72,77,0.12); }
   .cust-proj-row:focus-visible { outline: 2px solid var(--niv-accent, #fafafa); outline-offset: -2px; }
 
-  .niv-users-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .niv-users-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
   .niv-user-circle {
     aspect-ratio: 1; border-radius: 50%;
     border: 1px solid var(--niv-border);
@@ -678,9 +669,9 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
 /* ---- (1) top bar: full width, persistent, above sidebar + content ---- */
 .niv-topbar {
   position: sticky; top: 0; z-index: 640;
-  display: flex; align-items: center; gap: 14px;
+  display: flex; align-items: center; gap: 16px;
   min-height: var(--niv-topbar-h);
-  padding: 10px 32px;
+  padding: 12px 32px;
   /* item 31: the band is transparent; the pill track and the account
      chip carry their own surfaces, so scrolled content stays readable
      underneath exactly as with the floating panel chrome */
@@ -690,34 +681,34 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
 }
 .niv-topbar-tabs {
   display: flex; align-items: center; gap: 4px;
-  background: var(--niv-surface-2, #1e1e22);
+  background: var(--niv-surface-2, #16161a);
   border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
   border-radius: 999px; padding: 4px;
   max-width: 100%; overflow-x: auto; scrollbar-width: none;
 }
 .niv-topbar-tabs::-webkit-scrollbar { display: none; }
 .niv-tab {
-  border: none; background: transparent; color: var(--niv-text-dim, #a7a7ad);
+  border: none; background: transparent; color: var(--niv-text-dim, #a8a8b0);
   font-family: inherit; font-size: 14px; font-weight: 600;
-  padding: 8px 18px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  padding: 8px 20px; border-radius: 999px; cursor: pointer; white-space: nowrap;
   display: inline-flex; align-items: center; gap: 8px;
   /* v1.2.17: no color choreography on labels anymore (the item-33
      timed flip was the illegibility bug); legibility comes from the
      indicator's clipped clone layer. This transition only covers the
      pre-indicator fallback state and hover. */
-  transition: color 0.38s cubic-bezier(0.25, 1.35, 0.35, 1);
+  transition: color 0.38s cubic-bezier(.22, 1, .36, 1);
 }
-.niv-tab:hover { color: var(--niv-text, #f5f5f7); }
+.niv-tab:hover { color: var(--niv-text, #fafafa); }
 .niv-tab.active { background: linear-gradient(135deg, #fafafa, #c9c9ce); color: #050505; }
 .niv-notif-badge {
-  display: none; min-width: 20px; height: 20px; padding: 0 6px;
+  display: none; min-width: 20px; height: 20px; padding: 0 8px;
   border-radius: 999px; background: var(--niv-red, #e5484d); color: #fff;
   font-size: 11px; font-weight: 700; align-items: center; justify-content: center;
 }
 .niv-notif-badge.on { display: inline-flex; }
 .niv-topbar-project {
   margin-left: auto; font-size: 15px; font-weight: 600;
-  color: var(--niv-text, #f5f5f7); white-space: nowrap;
+  color: var(--niv-text, #fafafa); white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; max-width: 34vw;
 }
 
@@ -751,7 +742,7 @@ body.has-sidebar .niv-shell > main {
 @media (max-width: 1100px) { #view-home .niv-home-grid { grid-template-rows: none; } }
 .niv-stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
   .niv-skel {
-    display: inline-block; width: 46px; height: 24px; border-radius: 7px;
+    display: inline-block; width: 46px; height: 24px; border-radius: 8px;
     background: var(--niv-surface-2, #e9ecef); vertical-align: middle;
     animation: niv-skel-pulse 1.2s ease-in-out infinite alternate;
   }
@@ -821,7 +812,7 @@ body.has-sidebar #niv-panel.collapsed #niv-panel-expand-handle { display: block;
   background: transparent; transition: background 0.15s; border-radius: 2px;
 }
 #niv-panel-expand-handle:hover::after, #niv-panel-expand-handle.dragging::after {
-  background: var(--niv-text-dim, #a7a7ad);
+  background: var(--niv-text-dim, #a8a8b0);
 }
 #niv-panel { position: relative; }
 .niv-panel-sec-title { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; padding-right: 12px; }
@@ -840,12 +831,12 @@ body.has-sidebar #niv-panel.collapsed #niv-panel-expand-handle { display: block;
 .niv-sec-chev {
   margin-left: auto; width: 26px; height: 26px; border-radius: 8px;
   border: none;
-  background: transparent; color: var(--niv-text-dim, #a7a7ad);
+  background: transparent; color: var(--niv-text-dim, #a8a8b0);
   font-size: 12px; line-height: 1; cursor: pointer; font-family: inherit;
   display: inline-flex; align-items: center; justify-content: center; flex: none;
   transition: transform 0.18s, background 0.15s, color 0.15s;
 }
-.niv-sec-chev:hover { color: var(--niv-text, #f5f5f7); background: var(--niv-surface-2, #1e1e22); }
+.niv-sec-chev:hover { color: var(--niv-text, #fafafa); background: var(--niv-surface-2, #16161a); }
 /* when the add button sits in the header row it owns the auto margin;
    the chevron follows it directly so the two read as one control group */
 .niv-panel-sec-title .niv-plus-btn { margin-left: auto; }
@@ -874,7 +865,7 @@ body.has-sidebar #niv-panel.collapsed #niv-panel-expand-handle { display: block;
   cursor: pointer; font-size: 14px; min-width: 0;
 }
 .cust-proj-row:last-child { border-bottom: none; }
-.cust-proj-row:hover { background: var(--niv-surface-2, #1e1e22); }
+.cust-proj-row:hover { background: var(--niv-surface-2, #16161a); }
 .cust-proj-row .cust-proj-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cust-proj-row.static { cursor: default; }
 .cust-proj-row.static:hover { background: transparent; }
@@ -888,27 +879,27 @@ body.has-sidebar #niv-panel.collapsed #niv-panel-expand-handle { display: block;
   cursor: pointer; font-size: 14px;
 }
 .niv-home-row:last-child { border-bottom: none; }
-.niv-home-row:hover { background: var(--niv-surface-2, #1e1e22); }
-.niv-home-count { color: var(--niv-text-dim, #a7a7ad); font-size: 12px; flex: none; }
+.niv-home-row:hover { background: var(--niv-surface-2, #16161a); }
+.niv-home-count { color: var(--niv-text-dim, #a8a8b0); font-size: 12px; flex: none; }
 /* ---- notifications ---- */
 .niv-notif-item {
-  display: flex; gap: 14px; padding: 16px 18px;
+  display: flex; gap: 16px; padding: 16px 20px;
   border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); border-radius: 14px;
-  margin-bottom: 10px; background: var(--niv-surface, #17171a); cursor: pointer;
+  margin-bottom: 12px; background: var(--niv-surface, #0e0e10); cursor: pointer;
 }
-.niv-notif-item:hover { background: var(--niv-surface-2, #1e1e22); }
+.niv-notif-item:hover { background: var(--niv-surface-2, #16161a); }
 .niv-notif-item.unread { border-color: var(--niv-border, rgba(255,255,255,0.28)); }
-.niv-notif-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex: none; }
+.niv-notif-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 8px; flex: none; }
 .niv-notif-main { flex: 1; min-width: 0; }
 .niv-notif-title { font-weight: 600; font-size: 15px; }
-.niv-notif-body { color: var(--niv-text-dim, #a7a7ad); font-size: 13px; margin-top: 2px; }
-.niv-notif-date { color: var(--niv-text-dim, #a7a7ad); font-size: 12px; flex: none; }
+.niv-notif-body { color: var(--niv-text-dim, #a8a8b0); font-size: 13px; margin-top: 2px; }
+.niv-notif-date { color: var(--niv-text-dim, #a8a8b0); font-size: 12px; flex: none; }
 
 @media (max-width: 1100px) { .niv-home-grid { grid-template-columns: 1fr; } }
 @media (max-width: 600px) {
   #view-measures .filter-row {
     position: sticky; top: 0; z-index: 60;
-    background: var(--niv-bg, #0e0e10); padding: 10px 0; margin-top: -4px;
+    background: var(--niv-bg, #0e0e10); padding: 12px 0; margin-top: -4px;
   }
   /* p9: measures header wraps instead of ellipsizing the title away */
   #view-measures .measures-head { flex-wrap: wrap; }
@@ -916,7 +907,7 @@ body.has-sidebar #niv-panel.collapsed #niv-panel-expand-handle { display: block;
   #view-measures .measures-head #btn-new-measure { margin-left: 0; }
 }
 @media (max-width: 900px) {
-  .niv-topbar { padding: 10px 16px; }
+  .niv-topbar { padding: 12px 16px; }
   body.has-sidebar .niv-shell > main { padding: 20px 16px 32px; }
   body.has-sidebar .niv-float-panel {
     top: var(--niv-topbar-h); height: calc(100dvh - var(--niv-topbar-h));
@@ -943,14 +934,14 @@ body.has-sidebar .niv-shell {
 body.has-sidebar .niv-float-panel {
   top: auto; height: auto; min-height: 0; max-height: none;
   border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
-  border-radius: 18px;
+  border-radius: 6px;
   box-shadow: 0 10px 34px rgba(0,0,0,0.38);
 }
 body.has-sidebar .niv-shell > main {
   min-height: 0; overflow-y: auto;
-  background: var(--niv-surface, #17171a);
+  background: var(--niv-surface, #0e0e10);
   border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
-  border-radius: 18px;
+  border-radius: 6px;
   box-shadow: 0 10px 34px rgba(0,0,0,0.38);
 }
 /* Con la barra colapsada el asa desaparece (display:none) y con ella el
@@ -982,7 +973,7 @@ body.has-sidebar .niv-shell > main {
   }
   .niv-topbar > *:not(.niv-hamburger) { display: none !important; }
   .niv-topbar .niv-hamburger {
-    background: var(--niv-surface, #17171a);
+    background: var(--niv-surface, #0e0e10);
     box-shadow: 0 4px 16px rgba(0,0,0,0.35);
   }
   /* El documento es el que scrollea: la cascara de escritorio atrapa el
@@ -1000,29 +991,29 @@ body.has-sidebar .niv-shell > main {
 /* ---- navegacion principal dentro de la barra lateral ---- */
 .niv-side-nav {
   display: flex; flex-direction: column; gap: 4px;
-  padding: 8px 0 10px; margin-bottom: 4px;
+  padding: 8px 0 12px; margin-bottom: 4px;
   border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
 }
-.niv-navunit { border: 1px solid transparent; border-radius: 14px; padding: 3px; }
+.niv-navunit { border: 1px solid transparent; border-radius: 14px; padding: 4px; }
 .niv-navunit.active {
   background: rgba(255,255,255,0.03);
   border-color: var(--niv-border-soft, rgba(255,255,255,0.14));
 }
-.niv-snav-row { display: flex; align-items: center; gap: 6px; }
+.niv-snav-row { display: flex; align-items: center; gap: 8px; }
 .niv-snav {
-  flex: 1; min-width: 0; display: flex; align-items: center; gap: 11px;
-  padding: 8px 9px; border: none; border-radius: 10px; background: transparent;
-  color: var(--niv-text-dim, #a7a7ad); font-family: inherit; font-size: 14.5px; font-weight: 500;
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px;
+  padding: 8px 8px; border: none; border-radius: 8px; background: transparent;
+  color: var(--niv-text-dim, #a8a8b0); font-family: inherit; font-size: 14.5px; font-weight: 500;
   cursor: pointer; text-align: left; transition: background 0.15s, color 0.15s;
 }
-.niv-snav:hover { background: var(--niv-surface-2, #1e1e22); color: var(--niv-text, #f5f5f7); }
-.niv-navunit.active .niv-snav { color: var(--niv-text, #f5f5f7); font-weight: 700; }
+.niv-snav:hover { background: var(--niv-surface-2, #16161a); color: var(--niv-text, #fafafa); }
+.niv-navunit.active .niv-snav { color: var(--niv-text, #fafafa); font-weight: 700; }
 .niv-snav-ico { width: 24px; height: 24px; flex: none; display: inline-flex; }
 .niv-snav-ico svg { width: 24px; height: 24px; display: block; }
 .niv-snav-label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .niv-snav .niv-notif-badge { margin-left: auto; }
 .niv-snav-plus { flex: none; }
-.niv-snav-body { display: none; padding: 6px 2px 4px 14px; }
+.niv-snav-body { display: none; padding: 8px 2px 4px 16px; }
 .niv-navunit.expanded .niv-snav-body { display: block; max-height: 34vh; overflow-y: auto; }
 
 /* barra colapsada: riel de iconos. Botones de 40px centrados en el eje del
@@ -1039,7 +1030,7 @@ body.has-sidebar .niv-shell > main {
   width: 40px; height: 40px; padding: 0;
   justify-content: center; border-radius: 12px;
 }
-.niv-float-panel.collapsed .niv-navunit.active .niv-snav { background: var(--niv-surface-2, #1e1e22); }
+.niv-float-panel.collapsed .niv-navunit.active .niv-snav { background: var(--niv-surface-2, #16161a); }
 .niv-float-panel.collapsed .niv-snav-label,
 .niv-float-panel.collapsed .niv-snav-body,
 .niv-float-panel.collapsed .niv-snav-plus { display: none; }
@@ -1090,7 +1081,7 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
    pattern); visibility is the section collapse, not the old nav-unit
    accordion gate. The 'open' class the unit code still toggles is a
    harmless no-op. */
-.niv-projlist-title { font-size: 13px; color: var(--niv-text-dim, #a7a7ad); margin-bottom: 8px; padding-left: 4px; }
+.niv-projlist-title { font-size: 13px; color: var(--niv-text-dim, #a8a8b0); margin-bottom: 8px; padding-left: 4px; }
 
 /* iconos por token: la baldosa hereda currentColor del span y el glifo va
    en el token de texto pleno, legible sobre la baldosa oscura incluso en
@@ -1100,19 +1091,19 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
    invierten juntos, igual que en el modulo lateral compartido. El punto
    de notificaciones ya usaba el token de peligro (--niv-red en
    .niv-notif-badge) y se queda asi. */
-.niv-snav-ico { color: var(--niv-surface-2, #1e1e22); }
+.niv-snav-ico { color: var(--niv-surface-2, #16161a); }
 .niv-snav-ico svg path { fill: var(--niv-text, #fafafa); transition: fill 0.15s; }
-.niv-snav:hover .niv-snav-ico { color: var(--niv-surface, #17171a); }
+.niv-snav:hover .niv-snav-ico { color: var(--niv-surface, #0e0e10); }
 .niv-navunit.active .niv-snav-ico { color: var(--niv-accent, #fafafa); }
 .niv-navunit.active .niv-snav-ico svg path { fill: #050505; }
 
 /* vista Usuarios incrustada: el iframe llena la tarjeta y la pagina
    incrustada desplaza por dentro, sin doble barra de desplazamiento */
 #view-users { height: 100%; display: flex; flex-direction: column; }
-.niv-users-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.niv-users-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
 .niv-users-head h1 { margin: 0; flex: 1; min-width: 0; }
 #users-embed-frame { display: block; width: 100%; flex: 1; min-height: 0; border: 0; border-radius: 12px; background: transparent; }
-#users-embed-fallback { padding: 28px; text-align: center; color: var(--niv-text-dim, #a7a7ad); font-size: 14px; }
+#users-embed-fallback { padding: 28px; text-align: center; color: var(--niv-text-dim, #a8a8b0); font-size: 14px; }
 #users-embed-fallback a { color: var(--niv-accent, #fafafa); }
 
 /* Popover de empresa: tarjeta flotante anclada a la cabecera del panel
@@ -1123,11 +1114,11 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 .niv-company-pop {
   position: absolute; left: 0; top: calc(100% + 6px); width: 264px; z-index: 300;
   display: flex; flex-direction: column; gap: 2px;
-  background: var(--niv-surface, #17171a);
+  background: var(--niv-surface, #0e0e10);
   border: 1px solid var(--niv-border, rgba(255,255,255,0.14));
   border-radius: 14px;
   box-shadow: 0 16px 48px rgba(0,0,0,0.5);
-  padding: 6px;
+  padding: 8px;
   animation: nivPopIn 0.16s ease-out;
   transform-origin: top left;
 }
@@ -1137,19 +1128,19 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 }
 .niv-company-pop-title {
   font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
-  color: var(--niv-text-dim, #a7a7ad);
-  padding: 6px 10px 4px;
+  color: var(--niv-text-dim, #a8a8b0);
+  padding: 8px 12px 4px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .niv-company-pop-item {
-  display: flex; align-items: center; gap: 10px; width: 100%; height: 36px;
-  padding: 0 10px; border: none; background: transparent; border-radius: 9px;
-  color: var(--niv-text, #f5f5f7); font: inherit; font-size: 13.5px; font-weight: 500;
+  display: flex; align-items: center; gap: 12px; width: 100%; height: 36px;
+  padding: 0 12px; border: none; background: transparent; border-radius: 8px;
+  color: var(--niv-text, #fafafa); font: inherit; font-size: 13.5px; font-weight: 500;
   cursor: pointer; text-align: left;
 }
-.niv-company-pop-item:hover { background: var(--niv-surface-2, #1e1e22); }
+.niv-company-pop-item:hover { background: var(--niv-surface-2, #16161a); }
 .niv-company-pop-item:focus-visible { outline: 2px solid var(--niv-accent, #fafafa); outline-offset: -2px; }
-.niv-company-pop-item svg { width: 20px; height: 20px; flex: none; color: var(--niv-surface-2, #1e1e22); }
+.niv-company-pop-item svg { width: 20px; height: 20px; flex: none; color: var(--niv-surface-2, #16161a); }
 .niv-float-panel.collapsed .niv-company-pop { left: calc(100% + 10px); top: 0; transform-origin: top left; }
 
 /* barra superior: centrado + indicador deslizante con topes. La pastilla
@@ -1162,7 +1153,7 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
   border-radius: 999px; pointer-events: none; opacity: 0;
   background: linear-gradient(135deg, #fafafa, #c9c9ce);
   box-shadow: 0 6px 16px rgba(0,0,0,0.38), 0 2px 5px rgba(0,0,0,0.28);
-  transition: left 0.38s cubic-bezier(0.25, 1.35, 0.35, 1), width 0.38s cubic-bezier(0.25, 1.35, 0.35, 1), opacity 0.18s ease;
+  transition: left 0.38s cubic-bezier(.22, 1, .36, 1), width 0.38s cubic-bezier(.22, 1, .36, 1), opacity 0.18s ease;
 }
 .niv-tab-indicator.dragging { transition: none; }
 .niv-topbar-tabs.ind-on .niv-tab.active { background: transparent; }
@@ -1182,11 +1173,11 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 .niv-topbar-tabs.ind-on .niv-tab { transition: none; }
 /* the real active label stays at the resting dim color while the
    indicator lives; the dark reading of it comes from the clone layer */
-.niv-topbar-tabs.ind-on .niv-tab.active { color: var(--niv-text-dim, #a7a7ad); }
+.niv-topbar-tabs.ind-on .niv-tab.active { color: var(--niv-text-dim, #a8a8b0); }
 .niv-tab-indicator-labels {
   position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; z-index: 2;
   border-radius: 999px; pointer-events: none; opacity: 0; overflow: hidden;
-  transition: left 0.38s cubic-bezier(0.25, 1.35, 0.35, 1), width 0.38s cubic-bezier(0.25, 1.35, 0.35, 1), opacity 0.18s ease;
+  transition: left 0.38s cubic-bezier(.22, 1, .36, 1), width 0.38s cubic-bezier(.22, 1, .36, 1), opacity 0.18s ease;
 }
 .niv-tab-indicator-labels.dragging { transition: none; }
 .niv-tab-indicator-labels-inner { position: absolute; top: 0; bottom: 0; left: 0; will-change: transform; }
@@ -1195,7 +1186,7 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
   color: #050505; font-size: 14px; font-weight: 600; white-space: nowrap;
   font-family: 'Inter', system-ui, sans-serif;
 }
-.niv-topbar-tabs.drag-preview .niv-tab.active { color: var(--niv-text-dim, #a7a7ad); }
+.niv-topbar-tabs.drag-preview .niv-tab.active { color: var(--niv-text-dim, #a8a8b0); }
 .niv-topbar-tabs.drag-preview .niv-tab.preview { color: #050505; }
 @media (prefers-reduced-motion: reduce) {
   .niv-tab-indicator { transition: none; }
@@ -1222,7 +1213,7 @@ body.has-sidebar .niv-panel-bottom { margin-top: auto; }
 }
 @media (max-width: 900px) {
   .niv-topbar-tabs { touch-action: none; }
-  .niv-tab { padding: 8px 13px; }
+  .niv-tab { padding: 8px 12px; }
 }
 
 /* ============ NIVELATO NEUE (Oct 2026) ============
@@ -1274,12 +1265,12 @@ body.has-sidebar .niv-shell > main { border-radius: 14px; }
 /* content geometry: sharp */
 .stat-card, .job-card, #join-code-section, .join-code-card, .niv-notif-item,
 .niv-proj-measure { border-radius: 6px; }
-.niv-navunit { border-radius: 10px; }
+.niv-navunit { border-radius: 8px; }
 .niv-company-pop { border-radius: 12px; }
-.dash-row-menu { border-radius: 10px; }
+.dash-row-menu { border-radius: 8px; }
 #users-embed-frame { border-radius: 8px; }
 .modal { border-radius: 14px; }
-.niv-user-circle { border-radius: 10px; }
+.niv-user-circle { border-radius: 8px; }
 /* type: display face on view titles, mono HUD on readouts */
 body.has-sidebar main h1 {
   font-family: var(--niv-font-display);
@@ -1317,21 +1308,21 @@ body.has-sidebar main h1 {
   border-radius: 6px; background: var(--niv-surface, #0e0e10);
   overflow: hidden; margin-bottom: 16px;
 }
-.niv-hudcell { padding: 12px 16px 11px; border-left: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); min-width: 0; }
+.niv-hudcell { padding: 12px 16px 12px; border-left: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); min-width: 0; }
 .niv-hudcell:first-child { border-left: 0; }
 .niv-hud-label {
   display: block; font-family: var(--niv-font-mono); font-size: 0.68rem; font-weight: 500;
   text-transform: uppercase; letter-spacing: 0.18em; color: var(--niv-text-dim, #a8a8b0);
-  margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .niv-hud-label::before { content: "[ "; }
 .niv-hud-label::after { content: " ]"; }
 .niv-hud-num { font-size: 26px; line-height: 1; }
-.niv-hudcell.warncell .niv-hud-num { color: #fbbf24; }
+.niv-hudcell.warncell .niv-hud-num { color: #f59f00; }
 #view-measures #job-list { gap: 0; }
-.niv-tl-group { display: grid; grid-template-columns: 104px 1fr; margin-top: 26px; }
+.niv-tl-group { display: grid; grid-template-columns: 104px 1fr; margin-top: 28px; }
 .niv-tl-group:first-child { margin-top: 4px; }
-.niv-tl-rail { padding-right: 18px; text-align: right; min-width: 0; }
+.niv-tl-rail { padding-right: 20px; text-align: right; min-width: 0; }
 .niv-tl-glabel {
   font-family: var(--niv-font-mono); font-size: 10px; font-weight: 700;
   letter-spacing: 0.26em; text-transform: uppercase; color: var(--niv-text, #fafafa);
@@ -1339,20 +1330,20 @@ body.has-sidebar main h1 {
 }
 .niv-tl-daynum {
   font-family: var(--niv-font-display); font-weight: 700; font-size: 40px;
-  line-height: 1; margin-top: 5px; font-variant-numeric: tabular-nums;
+  line-height: 1; margin-top: 4px; font-variant-numeric: tabular-nums;
 }
 .niv-tl-dow {
   font-family: var(--niv-font-mono); font-size: 10px; letter-spacing: 0.14em;
-  text-transform: uppercase; color: var(--niv-text-dim, #a8a8b0); margin-top: 5px;
+  text-transform: uppercase; color: var(--niv-text-dim, #a8a8b0); margin-top: 4px;
 }
 .niv-tl-cnt {
   font-family: var(--niv-font-mono); font-size: 10px; letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--niv-text-dim, #a8a8b0); margin-top: 9px;
+  text-transform: uppercase; color: var(--niv-text-dim, #a8a8b0); margin-top: 8px;
 }
 /* Leyenda del riel de la linea de dias: cada nodo es una medida;
    el anillo ambar marca las que llevan advertencias (job.warnings). */
 .niv-tl-legend {
-  display: flex; align-items: center; gap: 7px; margin: 0 0 14px;
+  display: flex; align-items: center; gap: 8px; margin: 0 0 16px;
   font-family: var(--niv-font-mono); font-size: 10px; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--niv-text-dim, #a8a8b0);
 }
@@ -1360,13 +1351,13 @@ body.has-sidebar main h1 {
   width: 8px; height: 8px; border-radius: 50%; flex: none;
   background: var(--niv-bg, #050505); border: 2px solid var(--niv-text-dim, #a8a8b0);
 }
-.niv-tl-legend .niv-tl-dot.warn { border-color: #fbbf24; }
-.niv-tl-legend .niv-tl-dot + span { margin-right: 10px; }
-.niv-tl-items { border-left: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); padding-left: 22px; min-width: 0; display: flex; flex-direction: column; }
+.niv-tl-legend .niv-tl-dot.warn { border-color: #f59f00; }
+.niv-tl-legend .niv-tl-dot + span { margin-right: 12px; }
+.niv-tl-items { border-left: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); padding-left: 24px; min-width: 0; display: flex; flex-direction: column; }
 .niv-tl-row {
   flex: 1 0 auto;
   position: relative; display: grid; grid-template-columns: 84px 1fr auto;
-  gap: 2px 14px; align-items: center; min-height: 54px;
+  gap: 2px 16px; align-items: center; min-height: 54px;
   padding: 8px 8px 8px 2px; border-bottom: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14));
   cursor: pointer; border-radius: 0 6px 6px 0;
 }
@@ -1378,27 +1369,27 @@ body.has-sidebar main h1 {
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--niv-bg, #050505); border: 2px solid var(--niv-text-dim, #a8a8b0);
 }
-.niv-tl-row.warn::before { border-color: #fbbf24; }
+.niv-tl-row.warn::before { border-color: #f59f00; }
 .niv-tl-time { font-family: var(--niv-font-mono); font-size: 11.5px; color: var(--niv-text-dim, #a8a8b0); white-space: nowrap; }
 .niv-tl-title { font-weight: 600; font-size: 14.5px; min-width: 0; }
-.niv-tl-sub { display: flex; gap: 6px 14px; flex-wrap: wrap; color: var(--niv-text-dim, #a8a8b0); font-size: 12.5px; margin-top: 2px; }
+.niv-tl-sub { display: flex; gap: 8px 16px; flex-wrap: wrap; color: var(--niv-text-dim, #a8a8b0); font-size: 12.5px; margin-top: 2px; }
 .niv-tl-dims { font-family: var(--niv-font-mono); font-size: 12.5px; color: var(--niv-text, #fafafa); white-space: nowrap; }
 .niv-tl-chev { color: var(--niv-text-dim, #a8a8b0); font-size: 18px; }
 @media (max-width: 720px) {
   .niv-hudstrip { grid-template-columns: 1fr 1fr; }
-  .niv-hudcell { padding: 11px 13px 10px; }
+  .niv-hudcell { padding: 12px 12px 12px; }
   .niv-hudcell.warncell { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); }
   .niv-hud-num { font-size: 22px; }
-  .niv-tl-group { grid-template-columns: 60px 1fr; margin-top: 22px; }
-  .niv-tl-rail { padding-right: 11px; }
+  .niv-tl-group { grid-template-columns: 60px 1fr; margin-top: 24px; }
+  .niv-tl-rail { padding-right: 12px; }
   .niv-tl-glabel { font-size: 9px; letter-spacing: 0.16em; }
   .niv-tl-daynum { font-size: 28px; }
   .niv-tl-cnt { display: none; }
-  .niv-tl-items { padding-left: 15px; }
+  .niv-tl-items { padding-left: 16px; }
   .niv-tl-row {
     grid-template-columns: 1fr auto;
     grid-template-areas: "time chev" "main main";
-    row-gap: 3px; min-height: 56px; padding: 9px 4px 9px 0;
+    row-gap: 4px; min-height: 56px; padding: 8px 4px 8px 0;
   }
   .niv-tl-time { grid-area: time; }
   .niv-tl-main { grid-area: main; min-width: 0; }
@@ -1427,7 +1418,7 @@ body.has-sidebar main h1 {
     border-color: var(--niv-border-soft, rgba(255, 255, 255, 0.14));
   }
   body.has-sidebar #niv-panel.collapsed .niv-navunit {
-    padding: 3px; display: block;
+    padding: 4px; display: block;
     border-color: transparent; background: transparent;
   }
   body.has-sidebar #niv-panel.collapsed .niv-navunit.active {
@@ -1437,13 +1428,13 @@ body.has-sidebar main h1 {
   body.has-sidebar #niv-panel.collapsed .niv-snav-row { justify-content: flex-start; }
   body.has-sidebar #niv-panel.collapsed .niv-snav {
     position: static; flex: 1; width: 100%; height: auto;
-    padding: 8px 9px; justify-content: flex-start; border-radius: 10px;
+    padding: 8px 8px; justify-content: flex-start; border-radius: 8px;
   }
   body.has-sidebar #niv-panel.collapsed .niv-navunit.active .niv-snav { background: transparent; }
   body.has-sidebar #niv-panel.collapsed .niv-snav-plus { display: inline-flex; }
   body.has-sidebar #niv-panel.collapsed .niv-snav .niv-notif-badge {
     position: static; min-width: 20px; width: auto; height: 20px;
-    padding: 0 6px; border-radius: 999px; overflow: visible;
+    padding: 0 8px; border-radius: 999px; overflow: visible;
     color: #fff; font-size: 11px; line-height: 1;
   }
   body.has-sidebar #niv-panel.collapsed .niv-snav .niv-notif-badge.on { display: inline-flex; }
@@ -1465,7 +1456,7 @@ body.has-sidebar main h1 {
   /* quick actions: the primary spans the row, the rest form an
      even two-column grid of full-width, equal-height pills */
   .niv-home-actions {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
   }
   .niv-home-actions .niv-btn-pill {
     width: 100%; min-height: 48px;
@@ -1473,12 +1464,12 @@ body.has-sidebar main h1 {
     /* the desktop pill padding (12px 28px) leaves ~105px of text
        room in a phone column and the long labels wrap to two
        lines, which is what made the rows uneven */
-    padding: 10px 12px; white-space: nowrap;
+    padding: 12px 12px; white-space: nowrap;
   }
   .niv-home-actions #home-act-new-measure { grid-column: 1 / -1; }
   /* back buttons and builder controls: phone tap heights */
   .btn-cancel { min-height: 44px; }
-  .pl-btn { min-height: 40px; padding: 9px 12px; }
+  .pl-btn { min-height: 40px; padding: 8px 12px; }
   .modal-edit-input { min-height: 44px; }
 }
 @media (max-width: 480px) {
@@ -1492,7 +1483,7 @@ body.has-sidebar main h1 {
 
 <!-- TOP BAR: on top across ALL the dashboard (wireframe law #1) -->
 <header class="niv-topbar" id="niv-topbar">
-  <button class="niv-hamburger" id="niv-hamburger" onclick="document.body.classList.toggle('nav-open');this.setAttribute('aria-expanded', document.body.classList.contains('nav-open') ? 'true' : 'false')" aria-label="Menú" aria-expanded="false" aria-controls="niv-panel">☰</button>
+  <button class="niv-hamburger" id="niv-hamburger" onclick="document.body.classList.toggle('nav-open');this.setAttribute('aria-expanded', document.body.classList.contains('nav-open') ? 'true' : 'false')" aria-label="Menú" aria-expanded="false" aria-controls="niv-panel"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="display:block" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   <nav class="niv-topbar-tabs" aria-label="Vistas">
     <button class="niv-tab" id="tab-home" onclick="window.showDashView('home')"><span class="niv-tab-label">Panel</span></button>
     <button class="niv-tab" id="tab-measures" onclick="window.showDashView('measures')"><span class="niv-tab-label">Medidas</span></button>
@@ -1519,7 +1510,7 @@ body.has-sidebar main h1 {
   </div>
   </div>
   <div class="org-badge" id="tier-badge" style="display:none;">Pro</div>
-  <button class="btn-save" id="btn-upgrade-plan" onclick="window.showUpgradeModal && window.showUpgradeModal()" style="display:none;margin:10px 16px 0;">Mejorar plan</button>
+  <button class="btn-save" id="btn-upgrade-plan" onclick="window.showUpgradeModal && window.showUpgradeModal()" style="display:none;margin:12px 16px 0;">Mejorar plan</button>
   <nav class="niv-side-nav" aria-label="Navegación principal">
     <div class="niv-navunit" data-navunit="home">
       <button class="niv-snav" id="snav-home" title="Panel" onclick="window._sideNavGo('home')">
@@ -1694,7 +1685,7 @@ try {
     <div class="home-join-fallback">
       <span class="join-code-label" style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
       <span class="join-code-code" style="font-size:20px; font-weight:700; color:#fafafa; letter-spacing:0.15em; font-family:'JetBrains Mono', monospace; margin-left:8px;">--</span>
-      <button onclick="copyJoinCode(this)" class="join-code-copy" style="margin-left:auto; background:#fafafa; color:#050505; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;"><span class="copy-btn-label">Copiar</span></button>
+      <button onclick="copyJoinCode(this)" class="join-code-copy" style="margin-left:auto; background:#fafafa; color:#050505; border:none; border-radius:8px; padding:8px 20px; font-size:13px; font-weight:600; cursor:pointer;"><span class="copy-btn-label">Copiar</span></button>
       <span class="join-code-hint" style="font-size:11px; color:#888; width:100%; margin-top:2px;">Dáselo a tus empleados para que se registren en Nivelato</span>
     </div>
   </div>
@@ -1750,7 +1741,7 @@ try {
  <div id="view-measures" style="display:none">
   <div class="measures-head" style="display:flex; align-items:center; gap:12px; min-width:0;">
     <h1 id="measures-title" style="margin:0; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Historial de medidas</h1>
-    <button id="btn-new-measure" style="display:none; margin-left:auto; flex-shrink:0; background:var(--niv-accent,#fafafa); color:#000; border:none; border-radius:6px; padding:10px 20px; font-size:15px; font-weight:600; cursor:pointer; font-family:'Inter',system-ui,sans-serif;">+ Nueva medida</button>
+    <button id="btn-new-measure" style="display:none; margin-left:auto; flex-shrink:0; background:var(--niv-accent,#fafafa); color:#000; border:none; border-radius:6px; padding:12px 20px; font-size:15px; font-weight:600; cursor:pointer; font-family:'Inter',system-ui,sans-serif;">+ Nueva medida</button>
   </div>
   <div class="subtitle" id="dash-subtitle">Cargando…</div>
   <script>
@@ -1775,7 +1766,7 @@ try {
   <div id="join-code-section" class="join-code-card">
     <span id="join-code-label" class="join-code-label" style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
     <span id="join-code-display" class="join-code-code" style="font-size:24px; font-weight:700; color:#fafafa; letter-spacing:0.15em; font-family:'JetBrains Mono', monospace; margin-left:8px;">--</span>
-    <button onclick="copyJoinCode(this)" id="copy-btn" style="margin-left:auto; background:#fafafa; color:#050505; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;"><span id="copy-btn-label" class="copy-btn-label">Copiar</span></button>
+    <button onclick="copyJoinCode(this)" id="copy-btn" style="margin-left:auto; background:#fafafa; color:#050505; border:none; border-radius:8px; padding:8px 20px; font-size:13px; font-weight:600; cursor:pointer;"><span id="copy-btn-label" class="copy-btn-label">Copiar</span></button>
     <span id="join-code-hint" class="join-code-hint" style="font-size:11px; color:#888; width:100%; margin-top:2px;">Dáselo a tus empleados para que se registren en Nivelato</span>
   </div>
 
@@ -1808,7 +1799,7 @@ try {
         <select id="filter-customer" onchange="applyFilters()" aria-label="Filtrar por cliente">
           <option value="" id="filter-customer-all">Todos los clientes</option>
         </select>
-        <button type="button" id="btn-clear-filters" class="btn-cancel" style="width:100%;padding:9px 16px;margin:0;" onclick="window.clearMeasureFilters()">Limpiar filtros</button>
+        <button type="button" id="btn-clear-filters" class="btn-cancel" style="width:100%;padding:8px 16px;margin:0;" onclick="window.clearMeasureFilters()">Limpiar filtros</button>
       </div>
     </div>
   </div>
@@ -1823,7 +1814,7 @@ try {
   </div>
   <div class="subtitle" id="pl-subtitle">Cargando…</div>
   <div class="pl-toolbar">
-    <button class="btn-save pl-add" id="pl-add-btn" onclick="openPriceItemModal()" style="display:none">＋ Agregar ítem</button>
+    <button class="btn-save pl-add" id="pl-add-btn" onclick="openPriceItemModal()" style="display:none">+ Agregar ítem</button>
     <label class="pl-inactive-toggle"><input type="checkbox" id="pl-show-inactive" onchange="renderPriceList()" /> Mostrar inactivos</label>
   </div>
   <div id="pl-list"><div class="loading">Cargando lista de precios…</div></div>
@@ -1835,7 +1826,7 @@ try {
   </div>
   <div class="subtitle" id="qt-subtitle">Cargando…</div>
   <div class="qt-toolbar">
-    <button class="btn-save qt-add" id="qt-new-btn" onclick="openQuoteBuilder()" style="display:none">＋ Nueva cotización</button>
+    <button class="btn-save qt-add" id="qt-new-btn" onclick="openQuoteBuilder()" style="display:none">+ Nueva cotización</button>
     <select class="qt-filter" id="qt-filter-estado" onchange="renderQuotes()">
       <option value="">Todos los estados</option>
       <option value="borrador">Borrador</option>
@@ -1875,10 +1866,10 @@ try {
   <div class="detail-section-title">Líneas</div>
   <div id="qb-lines"></div>
   <div class="qt-line-add-row">
-    <button class="pl-btn" onclick="openLineModal('lista')">＋ Línea de lista</button>
-    <button class="pl-btn" onclick="openLineModal('personalizado')">＋ Personalizada</button>
-    <button class="pl-btn" onclick="openLineModal('sacabocados')">＋ Sacabocados</button>
-    <button class="pl-btn" onclick="openLineModal('barreno')">＋ Barreno</button>
+    <button class="pl-btn" onclick="openLineModal('lista')">+ Línea de lista</button>
+    <button class="pl-btn" onclick="openLineModal('personalizado')">+ Personalizada</button>
+    <button class="pl-btn" onclick="openLineModal('sacabocados')">+ Sacabocados</button>
+    <button class="pl-btn" onclick="openLineModal('barreno')">+ Barreno</button>
   </div>
   <div class="detail-section-title">Totales</div>
   <div class="qt-totals" id="qb-totals"></div>
@@ -1975,7 +1966,7 @@ try {
         <button type="button" class="niv-media-tab" id="measure-photo-title" role="tab" aria-selected="false" onclick="window._measureTab('photo')">Photo</button>
       </div>
       <div id="measure-diagram-pane">
-        <canvas id="measure-canvas" width="340" height="420" style="width:100%;border-radius:10px;display:block;"></canvas>
+        <canvas id="measure-canvas" width="340" height="420" style="width:100%;border-radius:8px;display:block;"></canvas>
         <div class="niv-panel-empty" id="measure-nodims" style="display:none;">Sin dimensiones registradas para esta medida.</div>
       </div>
       <div id="measure-photo-pane" style="display:none;">
@@ -1999,17 +1990,17 @@ try {
       <div class="modal-details">
         <div id="modal-body"></div>
         <div id="modal-edit-fields" style="display:none;"></div>
-        <button class="btn-delete" id="modal-delete-btn" onclick="deleteCurrentJob()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span id="modal-delete-label">Eliminar medida</span></button>
-        <button class="btn-edit" id="modal-edit-btn" onclick="editCurrentJob()" style="display:none;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg><span id="modal-edit-label">Editar</span></button>
+        <button class="btn-delete" id="modal-delete-btn" onclick="deleteCurrentJob()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:8px;"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span id="modal-delete-label">Eliminar medida</span></button>
+        <button class="btn-edit" id="modal-edit-btn" onclick="editCurrentJob()" style="display:none;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:8px;"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg><span id="modal-edit-label">Editar</span></button>
         <div id="modal-edit-actions" style="display:none;">
           <button class="btn-save" onclick="saveEdit()"><span id="modal-save-label">Guardar cambios</span></button>
           <button class="btn-cancel" onclick="cancelEdit()">Cancelar</button>
         </div>
-        <button class="btn-share-modal" id="modal-share-btn" onclick="toggleSharePanel()" style="display:none;margin-top:8px;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span id="modal-share-label">Compartir medida</span></button>
+        <button class="btn-share-modal" id="modal-share-btn" onclick="toggleSharePanel()" style="display:none;margin-top:8px;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:8px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span id="modal-share-label">Compartir medida</span></button>
         <div id="share-panel" class="niv-share-panel" style="display:none;margin-top:8px;padding:12px;border-radius:8px;">
           <div class="niv-share-title" id="share-panel-title" style="font-size:12px;font-weight:600;margin-bottom:8px;">Compartir con:</div>
           <div id="share-member-list"></div>
-          <button class="niv-share-save" id="share-save-btn" onclick="saveShare()" style="margin-top:8px;padding:6px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Guardar</button>
+          <button class="niv-share-save" id="share-save-btn" onclick="saveShare()" style="margin-top:8px;padding:8px 16px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Guardar</button>
           <span id="share-status" style="font-size:12px;margin-left:8px;display:none;">✓</span>
         </div>
       </div>
@@ -2083,7 +2074,7 @@ try {
   <div class="modal" id="qt-line-modal" tabindex="-1" style="max-width:560px">
     <div class="modal-title" id="qt-line-modal-title">Agregar línea</div>
     <div id="qt-line-body"></div>
-    <div class="qt-line-sub" id="qt-line-subtotal" style="margin:14px 0 4px"></div>
+    <div class="qt-line-sub" id="qt-line-subtotal" style="margin:16px 0 4px"></div>
     <div class="pl-error" id="qt-line-error" style="display:none"></div>
     <button class="btn-save" onclick="saveLineModal()">Guardar línea</button>
     <button class="btn-cancel" onclick="closeLineModal()">Cancelar</button>
@@ -2143,7 +2134,7 @@ import { ensureFlowClaims, routeAfterGate } from './geo.js';
 // paths interpolate WARN_SVG but the constant was never defined, so
 // rendering a job with warnings threw "ReferenceError: Can't find
 // variable: WARN_SVG" on click (Giulia's audit, Oct 29).
-const WARN_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+const WARN_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:8px"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
 // Escape ALL user-controlled strings before innerHTML interpolation (XSS).
 const escapeHtml = (s) => String(s ?? '')
   .replace(/&/g, '&amp;')
@@ -2285,7 +2276,7 @@ const _renderJobGraph = (job, surface) => {
   dc.__nvDefer = 0;
   if (sib) sib.style.display = 'none';
   if (dc.parentElement !== host) host.appendChild(dc);
-  dc.style.cssText = 'display:block;width:' + w + 'px;height:' + h + 'px;border-radius:10px;cursor:grab;';
+  dc.style.cssText = 'display:block;width:' + w + 'px;height:' + h + 'px;border-radius:8px;cursor:grab;';
   const dpr = window.devicePixelRatio || 1;
   dc.width = Math.round(w * dpr);
   dc.height = Math.round(h * dpr);
@@ -2483,17 +2474,17 @@ const showUpgradeModal = async () => {
   overlay.setAttribute('aria-label', L('Mejora tu plan', 'Upgrade your plan'));
   overlay.innerHTML =
     '<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto">'
-    + '<div id="upgrade-card" style="position:relative;background:var(--niv-surface);border:1px solid var(--niv-border);color:var(--niv-text);border-radius:16px;padding:32px 28px;max-width:360px;width:100%;max-height:calc(100dvh - 40px);overflow-y:auto;text-align:center;font-family:Inter,sans-serif;box-shadow:0 24px 60px rgba(0,0,0,.35)">'
-    + '<button type="button" onclick="window._upgradeClose()" aria-label="' + escapeHtml(L('Cerrar', 'Close')) + '" style="position:absolute;top:10px;right:10px;background:transparent;border:none;color:var(--niv-text-dim);font-size:20px;line-height:1;padding:6px 10px;border-radius:8px;cursor:pointer">✕</button>'
+    + '<div id="upgrade-card" style="position:relative;background:var(--niv-surface);border:1px solid var(--niv-border);color:var(--niv-text);border-radius:14px;padding:32px 28px;max-width:360px;width:100%;max-height:calc(100dvh - 40px);overflow-y:auto;text-align:center;font-family:Inter,sans-serif;box-shadow:0 24px 60px rgba(0,0,0,.35)">'
+    + '<button type="button" onclick="window._upgradeClose()" aria-label="' + escapeHtml(L('Cerrar', 'Close')) + '" style="position:absolute;top:10px;right:10px;background:transparent;border:none;color:var(--niv-text-dim);font-size:20px;line-height:1;padding:8px 12px;border-radius:8px;cursor:pointer">✕</button>'
     + '<div style="margin-bottom:8px;color:var(--niv-text-dim)"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div>'
     + '<h2 style="color:var(--niv-text);margin:0 0 8px;font-size:20px">' + escapeHtml(L('Mejora tu plan', 'Upgrade your plan')) + '</h2>'
-    + '<p style="color:var(--niv-text-dim);font-size:14px;margin:0 0 6px;line-height:1.5">' + escapeHtml(L('Para ver las opciones de compra escanea este código QR con tu teléfono', 'To see purchase options scan this QR code using your phone')) + '</p>'
+    + '<p style="color:var(--niv-text-dim);font-size:14px;margin:0 0 8px;line-height:1.5">' + escapeHtml(L('Para ver las opciones de compra escanea este código QR con tu teléfono', 'To see purchase options scan this QR code using your phone')) + '</p>'
     + '<p style="color:var(--niv-text-dim);font-size:13px;margin:0 0 16px;line-height:1.5"><em>' + escapeHtml(L('Debes tener la app instalada', 'Must have app installed')) + '</em></p>'
-    + '<div id="upgrade-qr-body" style="min-height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin-bottom:16px"><p style="color:var(--niv-text-dim);font-size:14px;margin:0">' + escapeHtml(L('Generando tu código…', 'Generating your code…')) + '</p></div>'
+    + '<div id="upgrade-qr-body" style="min-height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;margin-bottom:16px"><p style="color:var(--niv-text-dim);font-size:14px;margin:0">' + escapeHtml(L('Generando tu código…', 'Generating your code…')) + '</p></div>'
     + '<div id="upgrade-retry-status" role="status" style="color:var(--niv-text-dim);font-size:13px;line-height:1.5;margin-bottom:12px"></div>'
-    + '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'
-    + '<button onclick="window._upgradeRetry()" style="padding:10px 22px;background:var(--niv-accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">' + escapeHtml(L('Ya compré, reintentar', 'I already bought it, check again')) + '</button>'
-    + '<button onclick="window._upgradeClose()" style="padding:10px 22px;background:var(--niv-surface-2);color:var(--niv-text);border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">' + escapeHtml(L('Cerrar', 'Close')) + '</button>'
+    + '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">'
+    + '<button onclick="window._upgradeRetry()" style="padding:12px 24px;background:var(--niv-accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">' + escapeHtml(L('Ya compré, reintentar', 'I already bought it, check again')) + '</button>'
+    + '<button onclick="window._upgradeClose()" style="padding:12px 24px;background:var(--niv-surface-2);color:var(--niv-text);border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">' + escapeHtml(L('Cerrar', 'Close')) + '</button>'
     + '</div></div></div>';
   document.body.appendChild(overlay);
   // Backdrop click dismisses (clicks inside the card do not).
@@ -2509,13 +2500,13 @@ const showUpgradeModal = async () => {
     if (!document.getElementById('upgrade-qr-body')) return; // closed while generating
     body.innerHTML =
       (data.qrSvg
-        ? '<div style="background:#fff;border:1px solid #e9ecef;border-radius:12px;padding:10px;line-height:0">' + data.qrSvg + '</div>'
+        ? '<div style="background:#fff;border:1px solid #e9ecef;border-radius:12px;padding:12px;line-height:0">' + data.qrSvg + '</div>'
         : '')
       // No plain-text pairing URL: the token inside it is the pairing
       // credential. Mobile gets the same link as a tappable button
       // (the URL itself is still never displayed as text).
       + (isMobile && data.url
-        ? '<a href="' + escapeHtml(data.url) + '" style="display:inline-block;padding:10px 22px;background:var(--niv-accent);color:#fff;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none">' + escapeHtml(L('Abrir en la app', 'Open in the app')) + '</a>'
+        ? '<a href="' + escapeHtml(data.url) + '" style="display:inline-block;padding:12px 24px;background:var(--niv-accent);color:#fff;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none">' + escapeHtml(L('Abrir en la app', 'Open in the app')) + '</a>'
         : '<p style="color:var(--niv-text-dim);font-size:12px;margin:0">' + escapeHtml(L('El enlace seguro va dentro del código QR.', 'The secure link is inside the QR code.')) + '</p>')
       + '<p style="color:var(--niv-text-dim);font-size:12px;margin:0">' + escapeHtml(L('El código vence en 10 minutos. Si expira, cierra y vuelve a abrir.', 'The code expires in 10 minutes. If it expires, close and reopen.')) + '</p>';
   } catch (e) {
@@ -2523,7 +2514,7 @@ const showUpgradeModal = async () => {
     if (!document.getElementById('upgrade-qr-body')) return;
     body.innerHTML =
       '<p style="color:#f87171;font-size:14px;margin:0;line-height:1.5">' + escapeHtml(L('No se pudo generar el código. Revisa tu conexión y vuelve a intentarlo.', 'Could not generate the code. Check your connection and try again.')) + '</p>'
-      + '<button onclick="window._upgradeRegen()" style="padding:10px 22px;background:var(--niv-accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">' + escapeHtml(L('Reintentar', 'Try again')) + '</button>';
+      + '<button onclick="window._upgradeRegen()" style="padding:12px 24px;background:var(--niv-accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">' + escapeHtml(L('Reintentar', 'Try again')) + '</button>';
   }
 };
 window.showUpgradeModal = showUpgradeModal;
@@ -2588,19 +2579,19 @@ async function initCompanyView(user) {
   // carcasa has-sidebar y pinta su fondo y superficies con las variables
   // --niv-* en vez de los colores claros heredados (#fff, #212529, #f5a524).
   const rowStyle = 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--niv-border-soft, rgba(255,255,255,0.14))';
-  const cardStyle = 'background:var(--niv-surface, #17171a);border:1px solid var(--niv-border-soft, rgba(255,255,255,0.14));border-radius:var(--niv-radius, 18px);padding:4px 16px;box-shadow:0 10px 34px rgba(0,0,0,0.38);margin-bottom:24px';
-  const statCardStyle = 'background:var(--niv-surface, #17171a);border:1px solid var(--niv-border-soft, rgba(255,255,255,0.14));border-radius:var(--niv-radius, 18px);padding:16px;box-shadow:0 10px 34px rgba(0,0,0,0.38)';
-  const statNumStyle = 'font-size:28px;font-weight:700;color:var(--niv-text, #f5f5f7)';
-  const statLabelStyle = 'font-size:12px;color:var(--niv-text-dim, #a7a7ad);margin-top:2px';
-  const textStyle = 'color:var(--niv-text, #f5f5f7)';
-  const dimStyle = 'color:var(--niv-text-dim, #a7a7ad)';
+  const cardStyle = 'background:var(--niv-surface, #0e0e10);border:1px solid var(--niv-border-soft, rgba(255,255,255,0.14));border-radius:var(--niv-radius, 6px);padding:4px 16px;box-shadow:0 10px 34px rgba(0,0,0,0.38);margin-bottom:24px';
+  const statCardStyle = 'background:var(--niv-surface, #0e0e10);border:1px solid var(--niv-border-soft, rgba(255,255,255,0.14));border-radius:var(--niv-radius, 6px);padding:16px;box-shadow:0 10px 34px rgba(0,0,0,0.38)';
+  const statNumStyle = 'font-size:28px;font-weight:700;color:var(--niv-text, #fafafa)';
+  const statLabelStyle = 'font-size:12px;color:var(--niv-text-dim, #a8a8b0);margin-top:2px';
+  const textStyle = 'color:var(--niv-text, #fafafa)';
+  const dimStyle = 'color:var(--niv-text-dim, #a8a8b0)';
 
   const memberRows = members.map(m => {
     const rl = CO_ROLE_LABEL[m.role] || m.role || 'Sin rol';
     return '<div style="' + rowStyle + '">' +
       '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;' + textStyle + 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(m.name || 'Sin nombre') + '</div>' +
       '<div style="font-size:12px;' + dimStyle + 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(m.email || '') + '</div></div>' +
-      '<span style="flex:none;font-size:12px;font-weight:600;color:var(--niv-text, #f5f5f7);background:var(--niv-surface-2, #1e1e22);padding:4px 10px;border-radius:20px;white-space:nowrap">' + escapeHtml(rl) + '</span></div>';
+      '<span style="flex:none;font-size:12px;font-weight:600;color:var(--niv-text, #fafafa);background:var(--niv-surface-2, #16161a);padding:4px 12px;border-radius:999px;white-space:nowrap">' + escapeHtml(rl) + '</span></div>';
   }).join('');
 
   const recentRows = quotes.slice(0, 10).map(q => {
@@ -2609,14 +2600,14 @@ async function initCompanyView(user) {
     const total = '$' + (Number(q.totales && q.totales.total) || 0).toFixed(2);
     return '<div style="' + rowStyle + '">' +
       '<div><div style="font-size:14px;font-weight:600;' + textStyle + '">' + escapeHtml(q.numero || 'Sin folio') +
-      ' <span style="font-size:11px;font-weight:600;color:var(--niv-text-dim, #a7a7ad);background:var(--niv-surface-2, #1e1e22);padding:3px 8px;border-radius:20px;white-space:nowrap">' + escapeHtml(estadoLabel) + '</span></div>' +
+      ' <span style="font-size:11px;font-weight:600;color:var(--niv-text-dim, #a8a8b0);background:var(--niv-surface-2, #16161a);padding:4px 8px;border-radius:999px;white-space:nowrap">' + escapeHtml(estadoLabel) + '</span></div>' +
       '<div style="font-size:12px;' + dimStyle + '">' + escapeHtml((q.cliente && q.cliente.nombre) || 'Sin cliente') + '</div></div>' +
       '<div style="font-size:14px;font-weight:700;' + textStyle + ';white-space:nowrap">' + escapeHtml(total) + '</div></div>';
   }).join('');
 
   document.body.classList.remove('has-sidebar');
   document.body.style.background = 'var(--niv-bg, #0e0e10)';
-  document.body.style.color = 'var(--niv-text, #f5f5f7)';
+  document.body.style.color = 'var(--niv-text, #fafafa)';
   // M23: the dashboard's overflow-x:clip guard is scoped to .has-sidebar,
   // which this view removes; restore the guard on the body itself.
   document.body.style.overflowX = 'clip';
@@ -2635,10 +2626,10 @@ async function initCompanyView(user) {
   // half-empty 2-column grid (M29)
   const statsGridStyle = _hasQuotes ? 'grid-template-columns:repeat(2,1fr)' : 'grid-template-columns:1fr';
   document.body.innerHTML =
-    '<main style="padding:24px 20px;max-width:720px;margin:0 auto;background:var(--niv-bg, #0e0e10);color:var(--niv-text, #f5f5f7);font-family:Inter,system-ui,sans-serif;min-height:100dvh">' +
+    '<main style="padding:24px 20px;background:var(--niv-bg, #0e0e10);color:var(--niv-text, #fafafa);font-family:Inter,system-ui,sans-serif;min-height:100dvh">' +
     '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">' +
-      '<a href="/dashboard.html" style="color:var(--niv-text, #f5f5f7);text-decoration:none;font-size:14px;font-weight:600;background:var(--niv-surface-2, #1e1e22);border:1px solid var(--niv-border-soft, rgba(255,255,255,0.14));padding:9px 16px;border-radius:999px">' + escapeHtml(_coL('← Volver al panel', '← Back to dashboard')) + '</a>' +
-      '<button type="button" onclick="window._coSignOut()" style="margin-left:auto;color:var(--niv-text-dim, #a7a7ad);background:transparent;border:1px solid var(--niv-border-soft, rgba(255,255,255,0.14));padding:9px 16px;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">' + escapeHtml(_coL('Cerrar sesión', 'Sign out')) + '</button>' +
+      '<a href="/dashboard.html" style="color:var(--niv-text, #fafafa);text-decoration:none;font-size:14px;font-weight:600;background:var(--niv-surface-2, #16161a);border:1px solid var(--niv-border-soft, rgba(255,255,255,0.14));padding:8px 16px;border-radius:999px">' + escapeHtml(_coL('← Volver al panel', '← Back to dashboard')) + '</a>' +
+      '<button type="button" onclick="window._coSignOut()" style="margin-left:auto;color:var(--niv-text-dim, #a8a8b0);background:transparent;border:1px solid var(--niv-border-soft, rgba(255,255,255,0.14));padding:8px 16px;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">' + escapeHtml(_coL('Cerrar sesión', 'Sign out')) + '</button>' +
     '</div>' +
     '<h1 style="' + textStyle + '">' + escapeHtml(orgName) + '</h1>' +
     '<p class="subtitle" style="' + dimStyle + '">' + escapeHtml(_coL('Vista de compañía', 'Company view')) + '</p>' +
@@ -2775,7 +2766,7 @@ let currentUser;
     }
     // Personal accounts may not belong to an org yet; don't crash on it.
     if (!orgId) {
-      document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">🏢</div><h2 style="color:#212529">Sin organización</h2><p style="color:#868e96;max-width:320px">Tu cuenta no está vinculada a ninguna organización todavía.</p></div>';
+      document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="line-height:0"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#868e96" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 21v-3h6v3"/><path d="M8.5 7h2m3 0h2m-7 4h2m3 0h2"/></svg></div><h2 style="color:#212529">Sin organización</h2><p style="color:#868e96;max-width:320px">Tu cuenta no está vinculada a ninguna organización todavía.</p></div>';
       return;
     }
     // Nueva medida button - only if user can create measurements
@@ -3217,7 +3208,7 @@ let currentUser;
     html += row('Techo',      dval(desn.techo));
     html += row('Piso',       dval(desn.piso));
     if (job.warnings && job.warnings.length > 0) {
-      html += `<div class="niv-warn-box" style="margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px">${WARN_SVG}${job.warnings.map(w=>escapeHtml(String(w).replace(/^\u26A0\uFE0F?\s*/, ''))).join('<br>')}</div>`;
+      html += `<div class="niv-warn-box" style="margin-top:12px;padding:12px 16px;border-radius:8px;font-size:13px">${WARN_SVG}${job.warnings.map(w=>escapeHtml(String(w).replace(/^\u26A0\uFE0F?\s*/, ''))).join('<br>')}</div>`;
     }
     if (job.notas) html += `<div class="modal-notes">${escapeHtml(job.notas)}</div>`;
     document.getElementById('modal-body').innerHTML = html;
@@ -3259,7 +3250,7 @@ let currentUser;
     if (!photoImg) {
       photoImg = document.createElement('img');
       photoImg.id = 'modal-photo-img';
-      photoImg.style.cssText = 'border-radius:10px;display:none;width:100%;max-height:420px;object-fit:contain;background:#f0f4ff;';
+      photoImg.style.cssText = 'border-radius:8px;display:none;width:100%;max-height:420px;object-fit:contain;background:#f0f4ff;';
       photoImg.alt = 'Foto con medidas';
       if (cw) cw.appendChild(photoImg);
     }
@@ -3504,7 +3495,7 @@ let currentUser;
         .filter(m => m.uid !== currentUser.uid)
         .map(m => {
           const checked = shared.includes(m.uid);
-          return `<label class="niv-share-member" style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:4px;cursor:pointer;">
+          return `<label class="niv-share-member" style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:4px;cursor:pointer;">
             <input type="checkbox" class="share-check" data-uid="${escapeHtml(m.uid)}" ${checked ? 'checked' : ''} />
             ${escapeHtml(m.name || m.email || 'Usuario')}
           </label>`;
@@ -4141,12 +4132,12 @@ let currentUser;
     // Acciones según estado y rol (matriz QUOTING_SCHEMA §1).
     let actions = '';
     const btn = (fn, cls, label) => '<button class="' + cls + '" onclick="' + fn + '(\'' + q.id + '\')">' + label + '</button>';
-    actions += btn('qPdfQuote', 'btn-edit', '🖨️ Imprimir / PDF');
+    actions += btn('qPdfQuote', 'btn-edit', '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:8px" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/></svg>Imprimir / PDF');
     if (qCanEditQuote(q)) actions += btn('openQuoteBuilder', 'btn-edit', 'Editar borrador');
-    if (qCanSendQuote(q)) actions += btn('qtSendQuote', 'btn-save', '📤 Marcar como enviada');
+    if (qCanSendQuote(q)) actions += btn('qtSendQuote', 'btn-save', '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:8px" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>Marcar como enviada');
     if (q.estado === 'enviada' && qCanApproveQuote(q)) {
       actions += btn('qtApproveQuote', 'btn-save', 'Aprobar');
-      actions += btn('qtRejectQuote', 'btn-delete', '❌ Rechazar');
+      actions += btn('qtRejectQuote', 'btn-delete', '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:8px" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Rechazar');
     }
     if (qCanApproveQuote(q)) actions += btn('qtDeleteQuote', 'btn-delete', 'Eliminar cotización');
     document.getElementById('qt-modal-actions').innerHTML = actions;
@@ -5205,7 +5196,7 @@ let currentUser;
     let html = rows.map(([k, v]) =>
       `<div class="niv-detail-row"><span class="k">${escapeHtml(k)}</span><span class="v">${escapeHtml(v)}</span></div>`).join('');
     if (job.warnings && job.warnings.length > 0) {
-      html += `<div class="niv-warn-box" style="margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px">${WARN_SVG}${job.warnings.map(w=>escapeHtml(String(w).replace(/^\u26A0\uFE0F?\s*/, ''))).join('<br>')}</div>`;
+      html += `<div class="niv-warn-box" style="margin-top:12px;padding:12px 16px;border-radius:8px;font-size:13px">${WARN_SVG}${job.warnings.map(w=>escapeHtml(String(w).replace(/^\u26A0\uFE0F?\s*/, ''))).join('<br>')}</div>`;
     }
     if (job.notas) html += `<div class="modal-notes">${escapeHtml(job.notas)}</div>`;
     document.getElementById('measure-details').innerHTML = html;
@@ -5804,7 +5795,7 @@ let currentUser;
       (rows.length
         ? rows.map(([es, en, v]) => `<div class="niv-detail-row"><span class="k">${escapeHtml(L(es, en))}</span><span class="v">${escapeHtml(v)}</span></div>`).join('')
         : '<div class="niv-panel-empty">' + escapeHtml(L('Sin datos de contacto registrados.', 'No contact details on record.')) + '</div>')
-      + (editBtn ? `<div style="margin-top:10px;">${editBtn}</div><div style="color:var(--niv-text-dim);font-size:12px;margin-top:6px;">${escapeHtml(L('El nombre es la clave del registro: identifica al cliente en medidas, proyectos y cotizaciones, y no se puede cambiar aquí.', 'The name is the record key: it identifies this customer across measurements, projects and quotes, and cannot be changed here.'))}</div><div class="niv-status-line" id="cust-contact-status"></div>` : '');
+      + (editBtn ? `<div style="margin-top:12px;">${editBtn}</div><div style="color:var(--niv-text-dim);font-size:12px;margin-top:8px;">${escapeHtml(L('El nombre es la clave del registro: identifica al cliente en medidas, proyectos y cotizaciones, y no se puede cambiar aquí.', 'The name is the record key: it identifies this customer across measurements, projects and quotes, and cannot be changed here.'))}</div><div class="niv-status-line" id="cust-contact-status"></div>` : '');
     const btn = document.getElementById('cust-contact-edit');
     if (btn) btn.addEventListener('click', () => showCustomerContactForm(contactEl, key, c));
   };
@@ -5831,7 +5822,7 @@ let currentUser;
         <input type="text" id="cust-f-direccion" value="${escapeHtml(c.direccion || '')}" maxlength="200" /></div>
       <div class="niv-field"><label for="cust-f-notas">${escapeHtml(L('Notas', 'Notes'))}</label>
         <textarea id="cust-f-notas" maxlength="500" style="min-height:56px;resize:vertical;">${escapeHtml(c.notas || '')}</textarea></div>
-      <div style="display:flex;gap:10px;margin-top:8px;">
+      <div style="display:flex;gap:12px;margin-top:8px;">
         <button class="niv-btn-sm niv-btn-primary" type="submit" id="cust-contact-save">${escapeHtml(L('Guardar', 'Save'))}</button>
         <button class="niv-btn-sm" type="button" id="cust-contact-cancel">${escapeHtml(L('Cancelar', 'Cancel'))}</button>
       </div>
@@ -5949,7 +5940,7 @@ let currentUser;
         ? `<div class="niv-card-title" style="font-size:16px;margin-top:16px;margin-bottom:8px;color:var(--niv-text-dim);">${escapeHtml(L('Medidas sin proyecto', 'Measurements without a project'))}</div>` + looseGroups.map((g) => {
             const n = g.jobs.length;
             const firstIdx = jobs.indexOf(g.jobs[0]);
-            return `<div class="cust-proj-row" tabindex="0" role="button" onclick="window.openCustomerJob(${firstIdx})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openCustomerJob(${firstIdx});}"><span class="cust-proj-name" title="${escapeHtml(g.name)}">${escapeHtml(g.name)}</span><span style="display:flex;align-items:center;gap:10px;flex:none;"><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span><button class="niv-btn-sm" type="button" onclick="event.stopPropagation();window.custCreateProject('${encodeURIComponent(g.name)}','${encodeURIComponent(key)}')">${escapeHtml(L('Crear proyecto', 'Create project'))}</button></span></div>`;
+            return `<div class="cust-proj-row" tabindex="0" role="button" onclick="window.openCustomerJob(${firstIdx})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.openCustomerJob(${firstIdx});}"><span class="cust-proj-name" title="${escapeHtml(g.name)}">${escapeHtml(g.name)}</span><span style="display:flex;align-items:center;gap:12px;flex:none;"><span class="niv-home-count">${n} ${L('medidas', 'measurements')}</span><button class="niv-btn-sm" type="button" onclick="event.stopPropagation();window.custCreateProject('${encodeURIComponent(g.name)}','${encodeURIComponent(key)}')">${escapeHtml(L('Crear proyecto', 'Create project'))}</button></span></div>`;
           }).join('')
         : '';
     }
@@ -6506,7 +6497,7 @@ let currentUser;
       const chev = document.createElement('button');
       chev.className = 'niv-sec-chev';
       chev.type = 'button';
-      chev.textContent = '▾';
+      chev.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
       chev.title = L('Colapsar sección', 'Collapse section');
       title.appendChild(chev);
       if (saved[key]) sec.classList.add('sec-collapsed');

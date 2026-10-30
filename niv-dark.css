@@ -16,7 +16,7 @@
   --niv-red: #e5484d;
   --niv-radius: 6px;
   --niv-pill: 999px;
-  --niv-inset: 30px;
+  --niv-inset: 32px;
   /* Nivelato Neue (Oct 2026): display + mono faces and the Liquid
      Glass shell treatment. Loaded via each page's Google Fonts link;
      the stacks fall back cleanly when a face is unavailable. */
@@ -41,7 +41,7 @@
   padding: 28px 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   border-right: 1px solid var(--niv-border-soft);
   position: sticky;
   top: 0;
@@ -66,8 +66,8 @@
 .niv-company-top {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 6px;
+  gap: 16px;
+  margin-bottom: 8px;
   text-align: left;
 }
 .niv-company-avatar {
@@ -85,7 +85,7 @@
   overflow: hidden;
 }
 .niv-company-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.niv-company-name { font-weight: 700; font-size: 16px; }
+.niv-company-name { font-weight: 600; font-size: 16px; }
 .niv-company-ver { font-size: 13px; color: var(--niv-text-dim); text-decoration: underline; margin-top: 2px; }
 
 /* ---- nav pills ---- */
@@ -93,7 +93,7 @@
 .niv-nav-btn {
   display: block;
   width: 100%;
-  padding: 14px 18px;
+  padding: 16px 20px;
   border: 1px solid var(--niv-border);
   border-radius: 14px;
   background: transparent;
@@ -122,10 +122,10 @@
   border: 1px solid var(--niv-border);
   border-radius: var(--niv-radius);
   background: var(--niv-surface);
-  padding: 22px;
+  padding: 24px;
   margin-bottom: 16px;
 }
-.niv-card-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.niv-card-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
 .niv-card-desc { font-size: 13px; color: var(--niv-text-dim); margin-bottom: 16px; }
 
 /* ---- pill buttons ---- */
@@ -159,16 +159,16 @@
   border-color: transparent;
   color: #fff;
   width: 100%;
-  padding: 14px;
+  padding: 16px;
   font-size: 15px;
 }
 
 /* ---- form fields ---- */
 .niv-field { margin-bottom: 12px; }
-.niv-field label { display: block; font-size: 12px; font-weight: 600; color: var(--niv-text-dim); margin-bottom: 6px; }
+.niv-field label { display: block; font-size: 12px; font-weight: 600; color: var(--niv-text-dim); margin-bottom: 8px; }
 .niv-field input, .niv-field select, .niv-field textarea {
   width: 100%;
-  padding: 12px 14px;
+  padding: 12px 16px;
   /* 16px floor (p5): sub-16px inputs make iOS Safari auto-zoom on focus. */
   font-size: 16px;
   font-family: inherit;
@@ -214,10 +214,10 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 16px 16px;
   border: 1px solid var(--niv-border);
   border-radius: 14px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   cursor: pointer;
   background: var(--niv-surface);
 }
@@ -245,10 +245,10 @@
 .niv-user-row.selected .niv-user-name { color: #050505; }
 
 /* ---- misc ---- */
-.niv-page-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+.niv-page-title { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
 .niv-page-sub { font-size: 14px; color: var(--niv-text-dim); margin-bottom: 24px; }
-.niv-status { font-size: 13px; padding: 10px 14px; border-radius: 12px; margin-top: 12px; display: none; }
-.niv-status.ok { display: block; background: rgba(34,197,94,0.15); color: #4ade80; }
+.niv-status { font-size: 13px; padding: 12px 16px; border-radius: 12px; margin-top: 12px; display: none; }
+.niv-status.ok { display: block; background: rgba(34,197,94,0.15); color: #22c55e; }
 .niv-status.err { display: block; background: rgba(229,72,77,0.15); color: #f87171; }
 
 /* ---- settings shell: floating cards, same language as the dashboard ----
@@ -277,7 +277,7 @@ body:not(.has-sidebar) .niv-shell {
 .niv-sidebar .niv-company-card {
   border: none;
   background: transparent;
-  padding: 4px 6px 8px;
+  padding: 4px 8px 8px;
   text-align: left;
 }
 .niv-sidebar .niv-company-top { margin-bottom: 0; }
@@ -303,7 +303,7 @@ body:not(.has-sidebar) .niv-shell {
   font-size: 12px;
   font-weight: 500;
   color: var(--niv-text-dim);
-  margin-top: 3px;
+  margin-top: 4px;
 }
 .niv-nav-btn.active .nav-sub { color: rgba(5, 5, 5, 0.65); }
 .niv-nav-btn .dot {
@@ -328,7 +328,7 @@ body:not(.has-sidebar) .niv-shell {
   color: var(--niv-text-dim);
   border: 1px solid var(--niv-border-soft);
   border-radius: 999px;
-  padding: 1px 7px;
+  padding: 1px 8px;
 }
 
 /* ---- shared company sidebar (.niv-side) ----
@@ -338,7 +338,7 @@ body:not(.has-sidebar) .niv-shell {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 24px 18px;
+  padding: 24px 20px;
   background: var(--niv-surface);
   border: 1px solid var(--niv-border);
   border-radius: var(--niv-radius);
@@ -350,8 +350,8 @@ body:not(.has-sidebar) .niv-shell {
 .niv-side-head {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 4px 6px 8px;
+  gap: 16px;
+  padding: 4px 8px 8px;
 }
 .niv-side-head .niv-company-avatar { width: 56px; height: 56px; font-size: 18px; }
 .niv-side-head .niv-company-ver { text-decoration: none; }
@@ -401,7 +401,7 @@ body:not(.has-sidebar) .niv-shell {
   min-height: 0;
   overflow-y: auto;
   /* item 14: the first scroller section no longer sits flush */
-  padding-top: 14px;
+  padding-top: 16px;
 }
 .niv-panel-bottom {
   flex: none;
@@ -462,10 +462,10 @@ body:not(.has-sidebar) .niv-shell {
    transition runs invisibly underneath, so collapse snapped in one
    frame while expand animated. width: 76px alone lands the rail at
    exactly 76px and lets the transition interpolate every step. */
-.niv-float-panel.collapsed { width: 76px; min-width: 76px; max-width: none; resize: none; padding: 16px 10px; }
+.niv-float-panel.collapsed { width: 76px; min-width: 76px; max-width: none; resize: none; padding: 16px 12px; }
 .niv-float-panel.collapsed .niv-panel-head {
   flex-direction: column; align-items: center; justify-content: flex-start;
-  gap: 8px; padding: 2px 0 10px;
+  gap: 8px; padding: 2px 0 12px;
 }
 .niv-float-panel.collapsed .niv-panel-head .niv-company-avatar { width: 40px; height: 40px; font-size: 14px; }
 .niv-float-panel.collapsed .niv-panel-body,
@@ -541,7 +541,7 @@ body.has-sidebar .niv-float-panel.collapsed .niv-snav-label {
   font-family: inherit;
 }
 .niv-panel-collapse:hover { background: var(--niv-surface-2); }
-.niv-panel-sec { margin-bottom: 14px; }
+.niv-panel-sec { margin-bottom: 16px; }
 .niv-panel-sec-title { font-size: 13px; color: var(--niv-text-dim); margin-bottom: 8px; padding-left: 4px; }
 .niv-panel-item {
   display: flex; align-items: center; justify-content: space-between;
@@ -551,9 +551,9 @@ body.has-sidebar .niv-float-panel.collapsed .niv-snav-label {
 .niv-panel-item > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .niv-panel-item .dots { color: var(--niv-text-dim); letter-spacing: 2px; padding: 4px 8px; border-radius: 6px; }
 .niv-panel-item .dots:hover { background: #2a2a2f; color: var(--niv-text); }
-.niv-panel-empty { font-size: 13px; color: var(--niv-text-dim); padding: 4px 4px 8px; font-style: italic; }
+.niv-panel-empty { font-size: 13px; color: var(--niv-text-dim); padding: 4px 4px 8px; }
 .niv-panel-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--niv-border-soft); }
-.niv-panel-actions .niv-nav-btn { padding: 10px 14px; font-size: 13px; }
+.niv-panel-actions .niv-nav-btn { padding: 12px 16px; font-size: 13px; }
 /* ---- mobile: sidebar becomes hamburger drawer ---- */
 .niv-hamburger { display: none; }
 .niv-scrim { display: none; }
@@ -656,7 +656,7 @@ body .date-input-wrap input[type="date"]:focus-visible {
   /* Breathing room identical to the other form controls (the filter
      row input rule only reaches date inputs inside .filter-row; export
      sections and other wraps rely on this rule). */
-  padding: 9px 14px;
+  padding: 8px 16px;
 }
 .date-input-wrap input[type="date"]:focus {
   border-color: var(--niv-accent);
@@ -689,13 +689,13 @@ body .date-input-wrap input[type="date"]:focus-visible {
 .niv-share-member input[type="checkbox"] { accent-color: var(--niv-accent); }
 .niv-share-save { background: var(--niv-accent); color: #fff; }
 .niv-share-save:hover { filter: brightness(1.15); }
-#share-status { color: #4ade80; }
+#share-status { color: #22c55e; }
 
 /* job warnings box in the same modal: was #fff3bf / #e67700 (light theme);
    now mirrors the dark .tag-warn treatment. */
 .niv-warn-box {
   background: rgba(230, 119, 0, 0.18);
-  color: #fbbf24;
+  color: #f59f00;
 }
 
 /* ---- niv-select: custom dropdown component ----
@@ -737,7 +737,7 @@ body .date-input-wrap input[type="date"]:focus-visible {
   /* p2: 44px minimum touch height (was 38px). */
   height: 44px;
   min-width: 150px;
-  padding: 9px 12px 9px 14px;
+  padding: 8px 12px 8px 16px;
   background: var(--niv-surface-2);
   border: 1.5px solid var(--niv-border-soft);
   border-radius: 8px;
@@ -795,7 +795,7 @@ body .date-input-wrap input[type="date"]:focus-visible {
   /* p2: 44px minimum touch height (was ~33px). */
   min-height: 44px;
   box-sizing: border-box;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border-radius: 8px;
   font-size: 13px;
   color: var(--niv-text);
@@ -1075,7 +1075,7 @@ html::-webkit-scrollbar-thumb:hover {
 }
 .niv-tab-btn {
   flex: 1;
-  padding: 10px 16px;
+  padding: 12px 16px;
   min-height: 44px;
   border: none;
   border-radius: 12px;
@@ -1122,7 +1122,7 @@ html::-webkit-scrollbar-thumb:hover {
 /* ---- settings component kit: permission chips ---- */
 .niv-perm-member {
   border-bottom: 1px solid var(--niv-border-soft);
-  padding: 14px 0;
+  padding: 16px 0;
 }
 .niv-perm-member:last-child { border-bottom: none; }
 .niv-perm-member-header {
@@ -1144,12 +1144,12 @@ html::-webkit-scrollbar-thumb:hover {
 .niv-perm-grid label {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   font-size: 12px;
   font-weight: 500;
   color: var(--niv-text-dim);
   cursor: pointer;
-  padding: 4px 10px;
+  padding: 4px 12px;
   background: var(--niv-surface-2);
   border-radius: 8px;
   border: 1px solid var(--niv-border-soft);
@@ -1170,8 +1170,8 @@ html::-webkit-scrollbar-thumb:hover {
   background: var(--niv-surface);
   border: 1px solid var(--niv-border);
   border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1182,7 +1182,7 @@ html::-webkit-scrollbar-thumb:hover {
 .niv-request-email { font-size: 12px; color: var(--niv-text-dim); }
 .niv-request-actions { display: flex; gap: 8px; }
 .niv-btn-sm {
-  padding: 7px 16px;
+  padding: 8px 16px;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
@@ -1205,7 +1205,7 @@ html::-webkit-scrollbar-thumb:hover {
 .niv-btn-sm.approve {
   background: rgba(34, 197, 94, 0.15);
   border-color: var(--niv-green);
-  color: #4ade80;
+  color: #22c55e;
 }
 .niv-btn-sm.approve:hover { background: rgba(34, 197, 94, 0.25); }
 .niv-btn-sm.reject {
@@ -1218,7 +1218,7 @@ html::-webkit-scrollbar-thumb:hover {
 /* ---- settings component kit: info rows, setting rows, status ---- */
 .niv-info-row {
   display: flex;
-  padding: 10px 0;
+  padding: 12px 0;
   border-bottom: 1px solid var(--niv-border-soft);
   font-size: 14px;
 }
@@ -1247,18 +1247,18 @@ html::-webkit-scrollbar-thumb:hover {
 .niv-setting-desc { font-size: 12px; color: var(--niv-text-dim); margin-top: 2px; }
 .niv-status-line {
   font-size: 13px;
-  padding: 10px 14px;
+  padding: 12px 16px;
   border-radius: 12px;
   margin-top: 12px;
   display: none;
 }
 /* status tints mirror .niv-status, plus the warn tint from .niv-warn-box */
-.niv-status-line.ok { display: block; background: rgba(34, 197, 94, 0.15); color: #4ade80; }
-.niv-status-line.warn { display: block; background: rgba(230, 119, 0, 0.18); color: #fbbf24; }
+.niv-status-line.ok { display: block; background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+.niv-status-line.warn { display: block; background: rgba(230, 119, 0, 0.18); color: #f59f00; }
 .niv-status-line.err { display: block; background: rgba(229, 72, 77, 0.15); color: #f87171; }
 .niv-saved-msg {
   font-size: 13px;
-  color: #4ade80;
+  color: #22c55e;
   font-weight: 600;
   text-align: center;
   padding: 8px;
@@ -1272,7 +1272,7 @@ html::-webkit-scrollbar-thumb:hover {
   align-items: center;
   min-height: 44px;
   box-sizing: border-box;
-  padding: 10px 12px 10px 2px;
+  padding: 12px 12px 12px 2px;
   margin-bottom: 16px;
   font-size: 13px;
   color: var(--niv-accent);
@@ -1428,7 +1428,7 @@ body { animation: niv-mo-page-in var(--niv-mo-view) var(--niv-mo-ease); }
   border: 1px solid var(--line, var(--niv-border-soft));
   color: var(--muted, var(--niv-text-dim));
   border-radius: var(--niv-pill);
-  padding: 8px 14px;
+  padding: 8px 16px;
   font-size: 12px; font-weight: 600; font-family: inherit;
   cursor: pointer; line-height: 1;
   transition: border-color var(--niv-mo-micro) var(--niv-mo-ease),
@@ -1442,7 +1442,7 @@ body { animation: niv-mo-page-in var(--niv-mo-view) var(--niv-mo-ease); }
   position: absolute; top: calc(100% + 6px); right: 0; z-index: 60;
   min-width: 176px;
   display: flex; flex-direction: column; gap: 4px;
-  padding: 6px;
+  padding: 8px;
   background: rgba(16, 16, 20, .94);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
   backdrop-filter: blur(14px) saturate(140%);
@@ -1454,8 +1454,8 @@ body { animation: niv-mo-page-in var(--niv-mo-view) var(--niv-mo-ease); }
 .niv-lang-list:not([hidden]) { animation: niv-lang-in var(--niv-mo-view) var(--niv-mo-ease); }
 @keyframes niv-lang-in { from { opacity: 0; transform: translateY(-4px); } }
 .niv-lang-option {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  width: 100%; padding: 10px 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; padding: 12px 12px;
   background: transparent; border: 1px solid transparent; border-radius: 8px;
   color: var(--ink, var(--niv-text));
   font-size: 13px; font-weight: 600; font-family: inherit;
@@ -1656,7 +1656,7 @@ body { animation: niv-mo-page-in var(--niv-mo-view) var(--niv-mo-ease); }
      divider instead of sitting flush against it, and the scroll
      gesture stays inside the drawer */
   body.has-sidebar #niv-panel .niv-panel-body {
-    padding-bottom: 10px;
+    padding-bottom: 12px;
     overscroll-behavior: contain;
   }
   /* one scroller (Giulia, Oct 25): the panel itself was a second
@@ -1691,7 +1691,7 @@ body { animation: niv-mo-page-in var(--niv-mo-view) var(--niv-mo-ease); }
     align-items: stretch;
     gap: 4px;
     max-height: 64px;
-    padding: 6px 0 8px;
+    padding: 8px 0 8px;
   }
   body.has-sidebar #niv-panel:not(.collapsed).niv-nav-min .niv-navunit {
     flex: 1 1 0;

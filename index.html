@@ -16,21 +16,21 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-192.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="autism.css" />
 <style>
 /* Wizard validation errors (QA fix 2026-09-18) */
-.step-error{display:none;margin:10px 0 2px;padding:10px 12px;background:#ffe3e3;color:#c92a2a;border:1px solid #ffa8a8;border-radius:8px;font-size:13px;font-weight:600;line-height:1.4}
+.step-error{display:none;margin:12px 0 2px;padding:12px 12px;background:#ffe3e3;color:#c92a2a;border:1px solid #ffa8a8;border-radius:8px;font-size:13px;font-weight:600;line-height:1.4}
 .step-error.show{display:block}
 /* Toast liviano (QA fix 2026-09-18) */
-#nv-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--niv-surface);color:var(--niv-text);padding:10px 18px;border-radius:24px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;z-index:10002;box-shadow:0 4px 16px rgba(0,0,0,.25);max-width:86vw;text-align:center}
+#nv-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--niv-surface);color:var(--niv-text);padding:12px 20px;border-radius:24px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;z-index:10002;box-shadow:0 4px 16px rgba(0,0,0,.25);max-width:86vw;text-align:center}
 #nv-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* Modal de advertencias inline — reemplaza el confirm() nativo (QA fix 2026-09-18) */
 #nv-modal-overlay{position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px}
 #nv-modal{background:#fff;border-radius:14px;max-width:420px;width:100%;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.3)}
 #nv-modal-title{font-size:16px;font-weight:700;margin-bottom:8px;color:#171b21}
-#nv-modal-body{font-size:14px;line-height:1.6;color:#495057;margin-bottom:18px;white-space:pre-line}
-#nv-modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+#nv-modal-body{font-size:14px;line-height:1.6;color:#495057;margin-bottom:20px;white-space:pre-line}
+#nv-modal-actions{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap}
 </style>
 <link rel="stylesheet" href="./qgc-theme.css">
 <style>
@@ -68,47 +68,47 @@
 
 #wiz-sidebar {
   flex: 0 0 264px; width: 264px; min-height: 0; overflow-y: auto;
-  display: flex; flex-direction: column; gap: 14px;
+  display: flex; flex-direction: column; gap: 16px;
   background: var(--niv-surface); border-right: 1px solid var(--niv-border);
-  padding: 18px 16px; font-family: 'Inter', system-ui, sans-serif;
+  padding: 20px 16px; font-family: 'Inter', system-ui, sans-serif;
 }
 .wiz-watermark { font-family: var(--niv-font-mono, 'JetBrains Mono', monospace); font-size: 11px; color: #f87171; letter-spacing: 0.04em; }
 .wiz-brand { font-family: var(--niv-font-display, 'Space Grotesk', 'Inter', sans-serif); font-size: 22px; font-weight: 700; color: var(--niv-text); }
 .wiz-context { font-size: 13px; color: var(--niv-text); line-height: 1.5; overflow-wrap: anywhere; }
 .wiz-context .dim { color: var(--niv-text-dim); }
-.wiz-progress-row { display: flex; align-items: center; gap: 10px; }
+.wiz-progress-row { display: flex; align-items: center; gap: 12px; }
 .wiz-progress-row #progress-bar-wrap { flex: 1 1 auto; height: 6px; border-radius: 999px; overflow: hidden; }
 .wiz-progress-label { font-family: var(--niv-font-mono, 'JetBrains Mono', monospace); font-size: 11px; color: var(--niv-text-dim); white-space: nowrap; }
 .wiz-sections { display: flex; flex-direction: column; gap: 2px; }
-.wiz-section { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; border: none; border-radius: 10px; background: transparent; color: var(--niv-text-dim); font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.wiz-section { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 8px 12px; border: none; border-radius: 10px; background: transparent; color: var(--niv-text-dim); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .wiz-section:hover { background: var(--niv-surface-2); color: var(--niv-text); }
 .wiz-section.current { background: var(--niv-surface-2); color: var(--niv-text); }
 .wiz-ring { flex: none; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--niv-border); position: relative; }
-.wiz-ring.done { border-color: #4ade80; background: #4ade80; }
+.wiz-ring.done { border-color: #22c55e; background: #22c55e; }
 .wiz-ring.current { border-color: var(--niv-accent, #fafafa); }
 .wiz-ring.current::after { content: ''; position: absolute; inset: 2.5px; border-radius: 50%; background: var(--niv-accent, #fafafa); }
 .wiz-ring.group { border-radius: 4px; border-style: dotted; }
-.wiz-subsections { margin-left: 17px; padding-left: 12px; border-left: 1px solid var(--niv-border-soft); display: flex; flex-direction: column; gap: 2px; }
-.wiz-summary-nav { display: flex; flex-direction: column; gap: 2px; font-size: 13.5px; }
+.wiz-subsections { margin-left: 16px; padding-left: 12px; border-left: 1px solid var(--niv-border-soft); display: flex; flex-direction: column; gap: 2px; }
+.wiz-summary-nav { display: flex; flex-direction: column; gap: 2px; font-size: 14px; }
 .wiz-summary-nav[hidden] { display: none; }
 .wiz-summary-title { font-weight: 700; color: var(--niv-text); font-size: 15px; margin-bottom: 4px; }
-.wiz-summary-group { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--niv-text-dim); margin: 10px 0 2px; }
-.wiz-sum-row { display: flex; justify-content: space-between; gap: 10px; width: 100%; padding: 6px 10px; border: none; border-radius: 8px; background: transparent; color: var(--niv-text); font-family: inherit; font-size: 13.5px; cursor: pointer; text-align: left; }
+.wiz-summary-group { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--niv-text-dim); margin: 12px 0 2px; }
+.wiz-sum-row { display: flex; justify-content: space-between; gap: 12px; width: 100%; padding: 8px 12px; border: none; border-radius: 8px; background: transparent; color: var(--niv-text); font-family: inherit; font-size: 14px; cursor: pointer; text-align: left; }
 .wiz-sum-row:hover { background: var(--niv-surface-2); }
 .wiz-sum-row .k { color: var(--niv-text-dim); flex: none; }
 .wiz-sum-row .v { font-family: var(--niv-font-mono, 'JetBrains Mono', monospace); overflow-wrap: anywhere; text-align: right; }
-.wiz-maps-btn { display: inline-block; margin: 2px 0 0 10px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--niv-border); color: var(--niv-text); font-size: 12.5px; font-weight: 600; text-decoration: none; }
-.wiz-summary-note { font-size: 12px; color: var(--niv-text-dim); margin-top: 10px; line-height: 1.45; }
-.wiz-banner { border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.5; }
+.wiz-maps-btn { display: inline-block; margin: 2px 0 0 12px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--niv-border); color: var(--niv-text); font-size: 13px; font-weight: 600; text-decoration: none; }
+.wiz-summary-note { font-size: 12px; color: var(--niv-text-dim); margin-top: 12px; line-height: 1.45; }
+.wiz-banner { border-radius: 12px; padding: 12px 16px; font-size: 13px; line-height: 1.5; }
 .wiz-banner[hidden] { display: none; }
 .wiz-banner.free { background: var(--niv-surface-2); border: 1px solid var(--niv-border-soft); color: var(--niv-text); }
-.wiz-banner.free .plan { display: block; margin-top: 6px; color: var(--niv-text-dim); font-weight: 600; }
+.wiz-banner.free .plan { display: block; margin-top: 8px; color: var(--niv-text-dim); font-weight: 600; }
 .wiz-banner.dev { background: rgba(229, 72, 77, 0.14); border: 1px solid rgba(229, 72, 77, 0.55); color: #ffb4b8; font-weight: 700; }
-.wiz-banner.dev .sub { display: block; margin-top: 6px; font-weight: 500; color: var(--niv-text); }
-.wiz-user { margin-top: auto; display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid var(--niv-border-soft); }
+.wiz-banner.dev .sub { display: block; margin-top: 8px; font-weight: 500; color: var(--niv-text); }
+.wiz-user { margin-top: auto; display: flex; align-items: center; gap: 12px; padding-top: 12px; border-top: 1px solid var(--niv-border-soft); }
 .wiz-avatar { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--niv-surface-2); border: 1px solid var(--niv-border-soft); color: var(--niv-text); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
 .wiz-user-meta { display: flex; flex-direction: column; min-width: 0; }
-.wiz-user-name { font-size: 13.5px; font-weight: 600; color: var(--niv-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wiz-user-name { font-size: 14px; font-weight: 600; color: var(--niv-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wiz-user-email { font-size: 12px; color: var(--niv-text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wiz-user #estradiol-indicator { margin-left: auto; }
 
@@ -124,19 +124,19 @@
 
 /* summary + validation surfaces pair text with the dark tokens */
 .summary-grid { background: var(--niv-surface-2); border: 1px solid var(--niv-border-soft); box-shadow: none; }
-#validation-block { padding: 10px 14px; border-radius: 8px; font-size: 13.5px; font-weight: 600; border: 1px solid transparent; }
-#validation-block.val-ok { background: rgba(34, 197, 94, 0.13); color: #4ade80; border-color: rgba(34, 197, 94, 0.4); }
-#validation-block.val-warn { background: rgba(230, 119, 0, 0.13); color: #fbbf24; border-color: rgba(230, 119, 0, 0.4); white-space: pre-line; line-height: 1.55; }
-.verify-note { background: rgba(230, 119, 0, 0.13) !important; color: #fbbf24; border: 1px solid rgba(230, 119, 0, 0.4); }
+#validation-block { padding: 12px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; border: 1px solid transparent; }
+#validation-block.val-ok { background: rgba(34, 197, 94, 0.13); color: #22c55e; border-color: rgba(34, 197, 94, 0.4); }
+#validation-block.val-warn { background: rgba(230, 119, 0, 0.13); color: #f59f00; border-color: rgba(230, 119, 0, 0.4); white-space: pre-line; line-height: 1.55; }
+.verify-note { background: rgba(230, 119, 0, 0.13) !important; color: #f59f00; border: 1px solid rgba(230, 119, 0, 0.4); }
 
 @media (max-width: 900px) {
   #app-shell { flex-direction: column; }
-  #wiz-sidebar { flex: none; width: 100%; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 14px; border-right: none; border-bottom: 1px solid var(--niv-border); overflow: visible; }
+  #wiz-sidebar { flex: none; width: 100%; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 16px; border-right: none; border-bottom: 1px solid var(--niv-border); overflow: visible; }
   .wiz-brand { font-size: 18px; }
   .wiz-context, .wiz-banner { display: none; }
   .wiz-progress-row { flex: 1 1 140px; }
   .wiz-sections { flex-direction: row; overflow-x: auto; flex: 1 1 100%; order: 5; padding-bottom: 2px; }
-  .wiz-section { width: auto; white-space: nowrap; padding: 6px 9px; }
+  .wiz-section { width: auto; white-space: nowrap; padding: 8px 8px; }
   .wiz-subsections { flex-direction: row; margin-left: 0; padding-left: 0; border-left: none; }
   .wiz-summary-nav { flex: 1 1 100%; order: 5; }
   .wiz-user { margin: 0; padding: 0; border: none; }
@@ -198,7 +198,7 @@ html, body { background: var(--niv-bg); color: var(--niv-text); }
 .input-col.derived input,
 .input-col.derived select { background: var(--niv-surface); color: var(--niv-text-dim); }
 #derived-hueco-note { background: var(--niv-surface-2); color: var(--niv-text); }
-.verify-note { background: rgba(230, 119, 0, 0.15); color: #fbbf24; }
+.verify-note { background: rgba(230, 119, 0, 0.15); color: #f59f00; }
 .notas-block textarea {
   background: var(--niv-surface-2); border: 1px solid var(--niv-border-soft);
   color: var(--niv-text); border-radius: 10px;
@@ -454,18 +454,18 @@ html, body { background: var(--niv-bg); color: var(--niv-text); }
 <h2 class="step-title" data-i18n="s6Title">Foto con medidas</h2>
 <p class="step-hint" data-i18n="s6Hint">Opcional: agrega una foto del hueco y márcala con las medidas para que el taller la vea.</p>
 <div id="photo-panel">
-  <div id="photo-preview" style="display:none;margin-top:14px;background:var(--niv-surface-2);border:1px solid var(--niv-border-soft);border-radius:12px;padding:10px;">
+  <div id="photo-preview" style="display:none;margin-top:16px;background:var(--niv-surface-2);border:1px solid var(--niv-border-soft);border-radius:12px;padding:12px;">
     <img id="photo-preview-img" alt="Foto con medidas" style="width:100%;border-radius:8px;display:block;" />
-    <div style="display:flex;gap:10px;margin-top:10px;">
-      <button class="btn-secondary" style="flex:1;" onclick="openPhotoEditor()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg><span data-i18n="editPhoto">Editar</span></button>
-      <button class="btn-secondary" style="flex:1;" onclick="removePhoto()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span data-i18n="removePhoto">Quitar</span></button>
+    <div style="display:flex;gap:12px;margin-top:12px;">
+      <button class="btn-secondary" style="flex:1;" onclick="openPhotoEditor()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:8px;"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg><span data-i18n="editPhoto">Editar</span></button>
+      <button class="btn-secondary" style="flex:1;" onclick="removePhoto()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:8px;"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span data-i18n="removePhoto">Quitar</span></button>
     </div>
   </div>
 </div>
 <div class="step-error" role="alert"></div>
 <div class="btn-row">
 <button class="btn-secondary" onclick="prevStep()" style="flex:0 0 auto;" data-i18n="back">← Atrás</button>
-<button class="btn-primary" id="btn-open-photo" onclick="openPhotoEditor()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:6px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span data-i18n="addPhoto">Agregar foto</span></button>
+<button class="btn-primary" id="btn-open-photo" onclick="openPhotoEditor()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:8px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span data-i18n="addPhoto">Agregar foto</span></button>
 <button class="btn-secondary" onclick="skipPhoto()" style="flex:0 0 auto;" data-i18n="skip">Omitir</button>
 </div>
 </section>
@@ -474,7 +474,7 @@ html, body { background: var(--niv-bg); color: var(--niv-text); }
 <section class="step-panel" id="step-7">
 <h2 class="step-title" data-i18n="s7Title">Resumen</h2>
 <div id="validation-block" class="val-ok">Medidas OK</div>
-<div class="verify-note" style="margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:500;" data-i18n="verifyNote">
+<div class="verify-note" style="margin-top:12px;padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;" data-i18n="verifyNote">
 Verifique todas las medidas calculadas con mediciones manuales antes de cotizar o instalar.
 </div>
 <div class="summary-grid">
@@ -492,13 +492,13 @@ Verifique todas las medidas calculadas con mediciones manuales antes de cotizar 
 <button class="btn-secondary" onclick="prevStep()" data-i18n="back">← Atrás</button>
 <button class="btn-primary" id="btn-guardar" onclick="saveJob()"><span data-i18n="saveMeasure">Guardar medida</span></button>
 </div>
-<div id="post-save-actions" style="display:none;margin-top:10px;">
+<div id="post-save-actions" style="display:none;margin-top:12px;">
 <div class="btn-row">
 <button class="btn-secondary" id="btn-ver-dashboard" onclick="goToDashboard()"><span data-i18n="viewDashboard">Ver en dashboard</span></button>
-<button class="btn-primary" onclick="newMeasurement()" data-i18n="newMeasureBtn">＋ Nueva medida</button>
+<button class="btn-primary" onclick="newMeasurement()" data-i18n="newMeasureBtn">+ Nueva medida</button>
 </div>
 </div>
-<div id="save-status" style="text-align:center;font-size:12px;color:#4ade80;margin-top:8px;display:none;" data-i18n="savedCloud">Guardado en la nube</div>
+<div id="save-status" style="text-align:center;font-size:12px;color:#22c55e;margin-top:8px;display:none;" data-i18n="savedCloud">Guardado en la nube</div>
 </section>
 </div><!-- /bottom-panel -->
 </div><!-- /wiz-main -->
@@ -506,11 +506,11 @@ Verifique todas las medidas calculadas con mediciones manuales antes de cotizar 
 
 <!-- PHOTO EDITOR — in-app fullscreen modal (iframe, no popup tab) -->
 <div id="photo-editor-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#000;flex-direction:column;">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#171b21;color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;flex-shrink:0;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#16161a;color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;flex-shrink:0;">
     <span style="display:inline-flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span data-i18n="photoTitle">Foto con medidas</span></span>
-    <button onclick="window.closePhotoEditor()" aria-label="Cerrar" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 10px;">✕</button>
+    <button onclick="window.closePhotoEditor()" aria-label="Cerrar" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 12px;">✕</button>
   </div>
-  <iframe id="photo-editor-frame" src="about:blank" style="flex:1;width:100%;border:none;background:#0f1216;"></iframe>
+  <iframe id="photo-editor-frame" src="about:blank" style="flex:1;width:100%;border:none;background:#0e0e10;"></iframe>
 </div>
 <script src="adhd.js?v=2"></script>
 <script type="module" src="gay.js"></script>
@@ -523,8 +523,8 @@ Verifique todas las medidas calculadas con mediciones manuales antes de cotizar 
    L() helper in adhd.js). */
 (function () {
   var I18N = {
-    es: { stepOf1: 'Paso', stepOf2: 'de 8', noCustomer: 'Sin cliente todavía', noProject: 'Sin proyecto todavía', photoEmpty: 'Agrega una foto del hueco para marcar las medidas.', editPhoto: 'Editar', removePhoto: 'Quitar', addPhoto: 'Agregar foto', verifyNote: 'Verifique todas las medidas calculadas con mediciones manuales antes de cotizar o instalar.', saveMeasure: 'Guardar medida', viewDashboard: 'Ver en dashboard', savedCloud: 'Guardado en la nube', photoTitle: 'Foto con medidas', s0Title: 'Cliente / Proyecto', s1Title: 'Medidas del hueco', s2Title: 'Pared izquierda', s3Title: 'Pared derecha', s4Title: 'Arriba', s5Title: 'Abajo', s6Title: 'Foto con medidas', s7Title: 'Resumen', s0Hint: 'Ingresa el nombre del cliente y del proyecto antes de empezar a medir. La ubicación es opcional.', s1Hint: 'Ingresa las 2 medidas base: ancho abajo y alto izquierda. Las otras 2 se calculan automáticamente con los desniveles.', s2Hint: 'Mide del láser a la pared izquierda: punto A (abajo) y punto B (arriba).', s3Hint: 'Mide del láser a la pared derecha: punto A (abajo) y punto B (arriba).', s4Hint: 'Mide del láser arriba: punto A (izquierda) y punto B (derecha).', s5Hint: 'Mide del láser abajo: punto A (izquierda) y punto B (derecha).', s6Hint: 'Opcional: agrega una foto del hueco y márcala con las medidas para que el taller la vea.', customer: 'Cliente', project: 'Proyecto', location: 'Ubicación', area: 'Área', anchoBase: 'Ancho - Abajo (base)', altoBase: 'Alto - Izquierda (base)', aBottom: 'A - Abajo', bTop: 'B - Arriba', aLeft: 'A - Izquierda', bRight: 'B - Derecha', phCustomer: 'Nombre del cliente', phProject: 'Nombre del proyecto', phLocation: 'Ubicación / dirección', phArea: 'Ej.: Baño 1', notesPh: 'Observaciones adicionales...', next: 'Siguiente →', back: '← Atrás', skip: 'Omitir', newMeasureBtn: '＋ Nueva medida', sumOpening: 'Hueco', sumLeft: 'Pared Izq.', sumRight: 'Pared Der.', notes: 'Notas', resetZoom: 'Restablecer', secDetails: 'Datos del cliente y el proyecto', secDims: 'Dimensiones base', secOffsets: 'Desniveles', secOffL: 'Desnivel izquierdo', secOffR: 'Desnivel derecho', secOffT: 'Desnivel superior', secOffB: 'Desnivel inferior', secPhoto: 'Foto del área', doneSuffix: '% completado', sumTitle: 'Resumen final', sumBase: 'Base', sumWidth: 'Ancho', sumHeight: 'Alto', sumCustomer: 'Cliente', sumProject: 'Proyecto', sumArea: 'Área', sumLocation: 'Ubicación', sumMaps: 'Ver en Maps', sumClick: 'Toca cada detalle para ir a su paso.', freeBanner: 'Esta es una versión gratuita limitada de Nivelato', freePlan: 'Nivelato (Gratis)' },
-    en: { stepOf1: 'Step', stepOf2: 'of 8', noCustomer: 'No customer yet', noProject: 'No project yet', photoEmpty: 'Add a photo of the opening to mark the measurements.', editPhoto: 'Edit', removePhoto: 'Remove', addPhoto: 'Add photo', verifyNote: 'Verify all calculated measurements with manual measurements before quoting or installing.', saveMeasure: 'Save measurement', viewDashboard: 'View in dashboard', savedCloud: 'Saved to the cloud', photoTitle: 'Photo with measurements', s0Title: 'Customer / Project', s1Title: 'Base dimensions', s2Title: 'Left wall', s3Title: 'Right wall', s4Title: 'Top', s5Title: 'Bottom', s6Title: 'Photo with measurements', s7Title: 'Summary', s0Hint: 'Enter the customer and project names before you start measuring. Location is optional.', s1Hint: 'Enter the 2 base measurements: bottom width and left height. The other 2 are calculated automatically from the offsets.', s2Hint: 'Measure from the laser to the left wall: point A (bottom) and point B (top).', s3Hint: 'Measure from the laser to the right wall: point A (bottom) and point B (top).', s4Hint: 'Measure from the laser upward: point A (left) and point B (right).', s5Hint: 'Measure from the laser downward: point A (left) and point B (right).', s6Hint: 'Optional: add a photo of the opening and mark it with the measurements so the shop can see it.', customer: 'Customer', project: 'Project', location: 'Location', area: 'Area', anchoBase: 'Width - Bottom (base)', altoBase: 'Height - Left (base)', aBottom: 'A - Bottom', bTop: 'B - Top', aLeft: 'A - Left', bRight: 'B - Right', phCustomer: 'Customer name', phProject: 'Project name', phLocation: 'Location / address', phArea: 'E.g.: Bath 1', notesPh: 'Additional notes...', next: 'Next →', back: '← Back', skip: 'Skip', newMeasureBtn: '＋ New measurement', sumOpening: 'Opening', sumLeft: 'Left wall', sumRight: 'Right wall', notes: 'Notes', resetZoom: 'Reset', secDetails: 'Customer and project details', secDims: 'Base dimensions', secOffsets: 'Offsets', secOffL: 'Left offset', secOffR: 'Right offset', secOffT: 'Top offset', secOffB: 'Bottom offset', secPhoto: 'Photo of area', doneSuffix: '% done', sumTitle: 'Final summary', sumBase: 'Base', sumWidth: 'Width', sumHeight: 'Height', sumCustomer: 'Customer', sumProject: 'Project', sumArea: 'Area', sumLocation: 'Location', sumMaps: 'View on Maps', sumClick: 'Click on each detail to go to its step.', freeBanner: 'This is a limited free version of Nivelato', freePlan: 'Nivelato (Free)' }
+    es: { stepOf1: 'Paso', stepOf2: 'de 8', noCustomer: 'Sin cliente todavía', noProject: 'Sin proyecto todavía', photoEmpty: 'Agrega una foto del hueco para marcar las medidas.', editPhoto: 'Editar', removePhoto: 'Quitar', addPhoto: 'Agregar foto', verifyNote: 'Verifique todas las medidas calculadas con mediciones manuales antes de cotizar o instalar.', saveMeasure: 'Guardar medida', viewDashboard: 'Ver en dashboard', savedCloud: 'Guardado en la nube', photoTitle: 'Foto con medidas', s0Title: 'Cliente / Proyecto', s1Title: 'Medidas del hueco', s2Title: 'Pared izquierda', s3Title: 'Pared derecha', s4Title: 'Arriba', s5Title: 'Abajo', s6Title: 'Foto con medidas', s7Title: 'Resumen', s0Hint: 'Ingresa el nombre del cliente y del proyecto antes de empezar a medir. La ubicación es opcional.', s1Hint: 'Ingresa las 2 medidas base: ancho abajo y alto izquierda. Las otras 2 se calculan automáticamente con los desniveles.', s2Hint: 'Mide del láser a la pared izquierda: punto A (abajo) y punto B (arriba).', s3Hint: 'Mide del láser a la pared derecha: punto A (abajo) y punto B (arriba).', s4Hint: 'Mide del láser arriba: punto A (izquierda) y punto B (derecha).', s5Hint: 'Mide del láser abajo: punto A (izquierda) y punto B (derecha).', s6Hint: 'Opcional: agrega una foto del hueco y márcala con las medidas para que el taller la vea.', customer: 'Cliente', project: 'Proyecto', location: 'Ubicación', area: 'Área', anchoBase: 'Ancho - Abajo (base)', altoBase: 'Alto - Izquierda (base)', aBottom: 'A - Abajo', bTop: 'B - Arriba', aLeft: 'A - Izquierda', bRight: 'B - Derecha', phCustomer: 'Nombre del cliente', phProject: 'Nombre del proyecto', phLocation: 'Ubicación / dirección', phArea: 'Ej.: Baño 1', notesPh: 'Observaciones adicionales...', next: 'Siguiente →', back: '← Atrás', skip: 'Omitir', newMeasureBtn: '+ Nueva medida', sumOpening: 'Hueco', sumLeft: 'Pared Izq.', sumRight: 'Pared Der.', notes: 'Notas', resetZoom: 'Restablecer', secDetails: 'Datos del cliente y el proyecto', secDims: 'Dimensiones base', secOffsets: 'Desniveles', secOffL: 'Desnivel izquierdo', secOffR: 'Desnivel derecho', secOffT: 'Desnivel superior', secOffB: 'Desnivel inferior', secPhoto: 'Foto del área', doneSuffix: '% completado', sumTitle: 'Resumen final', sumBase: 'Base', sumWidth: 'Ancho', sumHeight: 'Alto', sumCustomer: 'Cliente', sumProject: 'Proyecto', sumArea: 'Área', sumLocation: 'Ubicación', sumMaps: 'Ver en Maps', sumClick: 'Toca cada detalle para ir a su paso.', freeBanner: 'Esta es una versión gratuita limitada de Nivelato', freePlan: 'Nivelato (Gratis)' },
+    en: { stepOf1: 'Step', stepOf2: 'of 8', noCustomer: 'No customer yet', noProject: 'No project yet', photoEmpty: 'Add a photo of the opening to mark the measurements.', editPhoto: 'Edit', removePhoto: 'Remove', addPhoto: 'Add photo', verifyNote: 'Verify all calculated measurements with manual measurements before quoting or installing.', saveMeasure: 'Save measurement', viewDashboard: 'View in dashboard', savedCloud: 'Saved to the cloud', photoTitle: 'Photo with measurements', s0Title: 'Customer / Project', s1Title: 'Base dimensions', s2Title: 'Left wall', s3Title: 'Right wall', s4Title: 'Top', s5Title: 'Bottom', s6Title: 'Photo with measurements', s7Title: 'Summary', s0Hint: 'Enter the customer and project names before you start measuring. Location is optional.', s1Hint: 'Enter the 2 base measurements: bottom width and left height. The other 2 are calculated automatically from the offsets.', s2Hint: 'Measure from the laser to the left wall: point A (bottom) and point B (top).', s3Hint: 'Measure from the laser to the right wall: point A (bottom) and point B (top).', s4Hint: 'Measure from the laser upward: point A (left) and point B (right).', s5Hint: 'Measure from the laser downward: point A (left) and point B (right).', s6Hint: 'Optional: add a photo of the opening and mark it with the measurements so the shop can see it.', customer: 'Customer', project: 'Project', location: 'Location', area: 'Area', anchoBase: 'Width - Bottom (base)', altoBase: 'Height - Left (base)', aBottom: 'A - Bottom', bTop: 'B - Top', aLeft: 'A - Left', bRight: 'B - Right', phCustomer: 'Customer name', phProject: 'Project name', phLocation: 'Location / address', phArea: 'E.g.: Bath 1', notesPh: 'Additional notes...', next: 'Next →', back: '← Back', skip: 'Skip', newMeasureBtn: '+ New measurement', sumOpening: 'Opening', sumLeft: 'Left wall', sumRight: 'Right wall', notes: 'Notes', resetZoom: 'Reset', secDetails: 'Customer and project details', secDims: 'Base dimensions', secOffsets: 'Offsets', secOffL: 'Left offset', secOffR: 'Right offset', secOffT: 'Top offset', secOffB: 'Bottom offset', secPhoto: 'Photo of area', doneSuffix: '% done', sumTitle: 'Final summary', sumBase: 'Base', sumWidth: 'Width', sumHeight: 'Height', sumCustomer: 'Customer', sumProject: 'Project', sumArea: 'Area', sumLocation: 'Location', sumMaps: 'View on Maps', sumClick: 'Click on each detail to go to its step.', freeBanner: 'This is a limited free version of Nivelato', freePlan: 'Nivelato (Free)' }
   };
   var LANG = 'es';
   try {
@@ -671,7 +671,7 @@ Verifique todas las medidas calculadas con mediciones manuales antes de cotizar 
   if (banner && devSignal) {
     banner.hidden = false; banner.className = 'wiz-banner dev';
     banner.innerHTML = '';
-    banner.appendChild(document.createTextNode('DEV ENVIRONMENT DETECTED!!!!'));
+    banner.appendChild(document.createTextNode('DEV ENVIRONMENT DETECTED'));
     var sub = document.createElement('span'); sub.className = 'sub'; sub.textContent = 'See support.nivelatolabs.com/dev for info and guidance';
     banner.appendChild(sub);
   } else if (banner) {

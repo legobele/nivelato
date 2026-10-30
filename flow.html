@@ -8,7 +8,7 @@
 <title>Nivelato - Nueva medida</title>
 <meta name="description" content="Nueva medida en Nivelato: captura las dimensiones del hueco, aplica el offset y deja la medida lista para cotizar en minutos.">
 <meta name="robots" content="noindex, nofollow">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/niv-dark.css" />
 <style>
   * { box-sizing: border-box; }
@@ -47,25 +47,25 @@
 
   /* ---------- left rail ---------- */
   .flow-rail {
-    width: 300px; flex: none;
+    width: 264px; flex: none;
     display: flex; flex-direction: column;
     background: var(--niv-surface);
     border: 1px solid var(--niv-border);
     border-radius: var(--niv-radius);
-    padding: 22px 20px;
+    padding: 24px 20px;
     min-height: 0;
   }
   .flow-watermark {
     display: none;
     color: #ff3b30;
     font-weight: 800; font-size: 13px; letter-spacing: .02em;
-    margin-bottom: 6px; word-break: break-all;
+    margin-bottom: 8px; word-break: break-all;
   }
   .flow-watermark.on { display: block; }
-  .flow-brand { font-size: 30px; font-weight: 800; line-height: 1.05; margin: 0 0 10px; }
-  .flow-context { font-size: 14.5px; line-height: 1.45; margin-bottom: 16px; word-break: break-word; }
+  .flow-brand { font-size: 30px; font-weight: 600; line-height: 1.05; margin: 0 0 12px; }
+  .flow-context { font-size: 14px; line-height: 1.45; margin-bottom: 16px; word-break: break-word; }
   .flow-context .dim { color: var(--niv-text-dim); }
-  .flow-context .ctx-id { color: var(--niv-text-dim); font-size: 12.5px; }
+  .flow-context .ctx-id { color: var(--niv-text-dim); font-size: 13px; }
 
   .flow-progress-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
   .flow-progress {
@@ -87,12 +87,12 @@
   }
   .flow-progress-label { font-size: 14px; font-weight: 600; white-space: nowrap; }
 
-  .flow-sections { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+  .flow-sections { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
   .flow-section {
     display: flex; align-items: center; gap: 12px; width: 100%;
     background: transparent; border: 1px solid transparent; border-radius: 12px;
     color: var(--niv-text); font: 500 15px 'Inter', system-ui, sans-serif;
-    text-align: left; padding: 9px 10px; cursor: pointer;
+    text-align: left; padding: 8px 12px; cursor: pointer;
   }
   .flow-section:hover { background: var(--niv-surface-2); }
   .flow-section.active { background: var(--niv-surface-2); border-color: var(--niv-border-soft); }
@@ -112,18 +112,18 @@
     display: none;
     background: var(--niv-surface-2); color: var(--niv-text);
     border: 1px solid var(--niv-border-soft); border-radius: 12px;
-    padding: 14px; margin: 0 0 10px; font-size: 13.5px; line-height: 1.55;
+    padding: 16px; margin: 0 0 12px; font-size: 14px; line-height: 1.55;
   }
   .flow-plan-card.on { display: block; }
-  .flow-plan-card strong { display: block; font-size: 14.5px; margin-bottom: 4px; }
-  .flow-plan-card .plan { color: var(--niv-text-dim); font-size: 12.5px; }
+  .flow-plan-card strong { display: block; font-size: 14px; margin-bottom: 4px; }
+  .flow-plan-card .plan { color: var(--niv-text-dim); font-size: 13px; }
 
   .flow-rail-spacer { flex: 1; }
 
   /* ---------- user chip + menu ---------- */
-  .flow-user { position: relative; margin-top: 14px; }
+  .flow-user { position: relative; margin-top: 16px; }
   .flow-chip {
-    display: flex; align-items: center; gap: 11px; width: 100%;
+    display: flex; align-items: center; gap: 12px; width: 100%;
     background: transparent; border: 1px solid transparent; border-radius: 12px;
     color: var(--niv-text); font-family: inherit; text-align: left;
     padding: 8px; cursor: pointer;
@@ -137,8 +137,8 @@
   }
   .flow-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .flow-chip-meta { min-width: 0; }
-  .flow-chip-name { font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .flow-chip-email { font-size: 12.5px; color: var(--niv-text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .flow-chip-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .flow-chip-email { font-size: 13px; color: var(--niv-text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .flow-menu {
     position: absolute; left: 0; right: 0; bottom: calc(100% + 8px);
     background: var(--niv-surface); border: 1px solid var(--niv-border);
@@ -151,7 +151,7 @@
     background: transparent; border: 1px solid var(--niv-border-soft);
     border-radius: var(--niv-pill); color: var(--niv-text);
     font: 600 14.5px 'Inter', system-ui, sans-serif;
-    padding: 11px 16px; margin-bottom: 8px; cursor: pointer;
+    padding: 12px 16px; margin-bottom: 8px; cursor: pointer;
   }
   .flow-menu button:last-child { margin-bottom: 0; }
   .flow-menu button:hover { background: var(--niv-surface-2); }
@@ -163,7 +163,7 @@
     background:
       linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px),
-      #101013;
+      #0e0e10;
     background-size: 28px 28px;
     border: 1px solid var(--niv-border); border-radius: var(--niv-radius);
     overflow: hidden;
@@ -173,29 +173,29 @@
     font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
     color: var(--niv-text-dim); background: rgba(14,14,16,.72);
     border: 1px solid var(--niv-border-soft); border-radius: var(--niv-pill);
-    padding: 3px 10px; pointer-events: none;
+    padding: 4px 12px; pointer-events: none;
   }
   #flow-graph-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 
   .flow-cards { display: grid; grid-template-columns: 1fr 1fr; gap: var(--niv-inset); align-items: start; }
   .flow-card {
     background: var(--niv-surface); border: 1px solid var(--niv-border);
-    border-radius: var(--niv-radius); padding: 22px;
+    border-radius: var(--niv-radius); padding: 24px;
   }
   .flow-card h2 { font-size: 19px; margin: 0 0 16px; text-align: center; }
   .flow-opt {
-    display: block; width: 100%; margin-bottom: 10px;
+    display: block; width: 100%; margin-bottom: 12px;
     background: transparent; border: 1px solid var(--niv-border);
     border-radius: var(--niv-pill); color: var(--niv-text);
     font: 500 15px 'Inter', system-ui, sans-serif;
-    padding: 12px 18px; cursor: pointer; text-align: center;
+    padding: 12px 20px; cursor: pointer; text-align: center;
   }
   .flow-opt:last-child { margin-bottom: 0; }
   .flow-opt:hover { background: var(--niv-surface-2); }
   .flow-opt.selected { border-color: var(--niv-accent); background: var(--niv-surface-2); font-weight: 600; }
   .flow-why { margin-top: 16px; border-top: 1px solid var(--niv-border-soft); padding-top: 12px; }
   .flow-why h3 { font-size: 14px; margin: 0 0 4px; }
-  .flow-why p { font-size: 13.5px; color: var(--niv-text-dim); line-height: 1.5; margin: 0; }
+  .flow-why p { font-size: 14px; color: var(--niv-text-dim); line-height: 1.5; margin: 0; }
 
   /* ---------- review summary (final step) ----------
      Label/value rows with design-system breathing room: a full
@@ -204,27 +204,27 @@
   .flow-summary { display: flex; flex-direction: column; margin: 20px 0 24px; font-size: 15px; }
   .flow-summary-row {
     display: flex; justify-content: space-between; align-items: baseline;
-    gap: 16px; padding: 11px 2px;
+    gap: 16px; padding: 12px 2px;
     border-bottom: 1px solid var(--niv-border-soft);
   }
   .flow-summary-row:last-child { border-bottom: none; padding-bottom: 2px; }
   .flow-summary-row .k { color: var(--niv-text-dim); }
   .flow-summary-row .v { font-weight: 600; text-align: right; }
 
-  .flow-projects { margin-top: 6px; display: none; }
+  .flow-projects { margin-top: 8px; display: none; }
   .flow-projects.open { display: block; }
-  .flow-projects .flow-opt { font-size: 14px; padding: 10px 14px; }
-  .flow-empty { font-size: 13.5px; color: var(--niv-text-dim); text-align: center; padding: 8px 0 2px; }
+  .flow-projects .flow-opt { font-size: 14px; padding: 12px 16px; }
+  .flow-empty { font-size: 14px; color: var(--niv-text-dim); text-align: center; padding: 8px 0 2px; }
 
   .flow-loc-input {
     width: 100%; background: transparent; border: 1px solid var(--niv-border);
     border-radius: var(--niv-pill); color: var(--niv-text);
-    font: 400 16px 'Inter', system-ui, sans-serif; padding: 12px 18px;
+    font: 400 16px 'Inter', system-ui, sans-serif; padding: 12px 20px;
     text-align: left; margin-bottom: 12px;
   }
   .flow-loc-input::placeholder { color: var(--niv-text-dim); }
   .flow-loc-input:focus { outline: none; border-color: var(--niv-accent); }
-  .flow-geo-status { font-size: 13px; color: var(--niv-text-dim); min-height: 18px; text-align: center; margin-top: 10px; }
+  .flow-geo-status { font-size: 13px; color: var(--niv-text-dim); min-height: 18px; text-align: center; margin-top: 12px; }
   .flow-geo-status.err { color: var(--flow-error); }
 
   /* ---------- base dimensions step ---------- */
@@ -232,30 +232,30 @@
   .flow-dims-wrap > * { min-width: 0; }
   .flow-card, .flow-why-panel { min-width: 0; }
   .flow-dims-card h2 { text-align: left; }
-  .flow-dims-unit { color: var(--niv-text-dim); font-size: 14px; margin: -8px 0 18px; }
-  .flow-dim-row { display: flex; align-items: flex-end; gap: 14px; }
+  .flow-dims-unit { color: var(--niv-text-dim); font-size: 14px; margin: -8px 0 20px; }
+  .flow-dim-row { display: flex; align-items: flex-end; gap: 16px; }
   .flow-dim-group { flex: 1; min-width: 0; }
-  .flow-dim-group label { display: block; font-size: 12.5px; font-weight: 600; color: var(--niv-text-dim); margin-bottom: 7px; }
+  .flow-dim-group label { display: block; font-size: 13px; font-weight: 600; color: var(--niv-text-dim); margin-bottom: 8px; }
   .flow-dim-pair { display: flex; gap: 8px; }
   .flow-whole {
     flex: 1; min-width: 0; background: var(--niv-surface-2);
     border: 1px solid var(--niv-border-soft); border-radius: 12px;
     color: var(--niv-text); font: 400 15px 'Inter', system-ui, sans-serif;
-    padding: 11px 13px;
+    padding: 12px 12px;
   }
   .flow-whole:focus { outline: none; border-color: var(--niv-accent); }
   .flow-frac {
     flex: none; width: 108px; background: var(--niv-surface-2);
     border: 1px solid var(--niv-border-soft); border-radius: 12px;
     color: var(--niv-text); font: 400 15px 'Inter', system-ui, sans-serif;
-    padding: 11px 10px; color-scheme: dark;
+    padding: 12px 12px; color-scheme: dark;
   }
   .flow-frac:focus { outline: none; border-color: var(--niv-accent); }
-  .flow-x { font-size: 20px; font-weight: 600; color: var(--niv-text-dim); padding-bottom: 10px; }
+  .flow-x { font-size: 20px; font-weight: 600; color: var(--niv-text-dim); padding-bottom: 12px; }
   .flow-step-error {
-    display: none; margin-top: 14px; font-size: 14px; color: var(--flow-error);
+    display: none; margin-top: 16px; font-size: 14px; color: var(--flow-error);
     border: 1px solid rgba(229,72,77,.5); background: rgba(229,72,77,.1);
-    border-radius: 12px; padding: 11px 14px;
+    border-radius: 12px; padding: 12px 16px;
   }
   .flow-step-error.on { display: block; }
   .flow-continue {
@@ -263,16 +263,16 @@
     background: var(--niv-accent); border: 1px solid transparent;
     border-radius: var(--niv-pill); color: #fff;
     font: 600 15.5px 'Inter', system-ui, sans-serif;
-    padding: 13px 18px; cursor: pointer;
+    padding: 12px 20px; cursor: pointer;
   }
   .flow-continue:hover { filter: brightness(1.12); }
   .flow-why-panel {
     background: var(--niv-surface); border: 1px solid var(--niv-border);
-    border-radius: var(--niv-radius); padding: 22px;
+    border-radius: var(--niv-radius); padding: 24px;
   }
   .flow-why-panel h3 { font-size: 17px; margin: 0 0 8px; }
-  .flow-why-panel p { font-size: 14.5px; color: var(--niv-text-dim); line-height: 1.6; margin: 0; }
-  @media (max-width: 900px) { .flow-dims-wrap { grid-template-columns: minmax(0, 1fr); gap: 14px; } }
+  .flow-why-panel p { font-size: 14px; color: var(--niv-text-dim); line-height: 1.6; margin: 0; }
+  @media (max-width: 900px) { .flow-dims-wrap { grid-template-columns: minmax(0, 1fr); gap: 16px; } }
   @media (max-width: 600px) {
     .flow-dim-row { flex-direction: column; align-items: stretch; gap: 12px; }
     .flow-x { display: none; }
@@ -283,8 +283,8 @@
   .flow-stub {
     display: none; margin-top: var(--niv-inset);
     background: var(--niv-surface); border: 1px dashed var(--niv-border);
-    border-radius: var(--niv-radius); padding: 18px 22px;
-    font-size: 14.5px; color: var(--niv-text-dim); line-height: 1.55;
+    border-radius: var(--niv-radius); padding: 20px 24px;
+    font-size: 14px; color: var(--niv-text-dim); line-height: 1.55;
   }
   .flow-stub.on { display: block; }
   .flow-stub strong { color: var(--niv-text); }
@@ -297,35 +297,35 @@
   .flow-gate-card {
     max-width: 520px; width: 100%;
     background: var(--niv-surface); border: 1px solid var(--niv-border);
-    border-radius: var(--niv-radius); padding: 30px; text-align: center;
+    border-radius: var(--niv-radius); padding: 32px; text-align: center;
   }
-  .flow-gate-card h1 { font-size: 23px; margin: 0 0 10px; }
+  .flow-gate-card h1 { font-size: 23px; margin: 0 0 12px; }
   .flow-gate-card p { color: var(--niv-text-dim); font-size: 15px; line-height: 1.6; margin: 0 0 20px; }
 
   /* ---------- exit guard dialog ---------- */
   .flow-guard {
     position: fixed; inset: 0; z-index: 100; display: none;
     align-items: center; justify-content: center;
-    background: rgba(0,0,0,.55); padding: 18px;
+    background: rgba(0,0,0,.55); padding: 20px;
   }
   .flow-guard.open { display: flex; }
   .flow-guard-card {
     width: 100%; max-width: 360px;
     background: var(--niv-surface); border: 1px solid var(--niv-border);
-    border-radius: var(--niv-radius); padding: 24px 22px; text-align: center;
+    border-radius: var(--niv-radius); padding: 24px 24px; text-align: center;
   }
-  .flow-guard-card p { font-size: 16.5px; line-height: 1.5; margin: 0 0 20px; }
+  .flow-guard-card p { font-size: 16px; line-height: 1.5; margin: 0 0 20px; }
   .flow-guard-go {
     display: block; width: 100%; border: none; border-radius: var(--niv-pill);
     background: var(--flow-salmon); color: #1c1210;
     font: 600 15.5px 'Inter', system-ui, sans-serif;
-    padding: 13px 18px; cursor: pointer; margin-bottom: 10px;
+    padding: 12px 20px; cursor: pointer; margin-bottom: 12px;
   }
   .flow-guard-cancel {
     display: block; width: 100%; background: transparent;
     border: 1px solid var(--niv-border); border-radius: var(--niv-pill);
     color: var(--niv-text); font: 600 15.5px 'Inter', system-ui, sans-serif;
-    padding: 13px 18px; cursor: pointer;
+    padding: 12px 20px; cursor: pointer;
   }
   .flow-guard-cancel:hover { background: var(--niv-surface-2); }
 
@@ -333,9 +333,9 @@
 
   @media (max-width: 900px) {
     body { overflow: auto; height: auto; }
-    .flow-shell { flex-direction: column; height: auto; padding: 14px; gap: 14px; }
+    .flow-shell { flex-direction: column; height: auto; padding: 16px; gap: 16px; }
     /* Compact rail: a slim header, not a full card above the form. */
-    .flow-rail { width: 100%; padding: 14px 16px; }
+    .flow-rail { width: 100%; padding: 16px 16px; }
     .flow-brand { font-size: 22px; margin-bottom: 4px; }
     .flow-context { font-size: 13px; margin-bottom: 8px; }
     .flow-progress-row { margin-bottom: 8px; }
@@ -344,13 +344,13 @@
     .flow-hint { flex-basis: 100%; }
     .flow-rail-spacer { display: none; }
     .flow-user { margin-top: 8px; }
-    .flow-main { gap: 14px; }
+    .flow-main { gap: 16px; }
     /* The form comes first on mobile; the graph moves below it. */
     .flow-step { order: 1; }
     .flow-graph-panel { order: 2; min-height: 180px; flex: none; height: 200px; }
-    .flow-cards { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .flow-cards { grid-template-columns: minmax(0, 1fr); gap: 16px; }
     .flow-cards > * { min-width: 0; }
-    .flow-stub { margin-top: 14px; }
+    .flow-stub { margin-top: 16px; }
     /* Primary action stays reachable: fixed bottom bar on mobile.
        The clearance system lives on the step CONTAINER (.flow-main),
        not on individual steps, so every step's last row or card —
@@ -468,11 +468,11 @@
   .flow-ring-group[data-state="done"], .flow-ring-group[data-state="error"] { border-style: solid; }
   .flow-ring-group[data-state="ongoing-section"] { border-style: dashed; }
   .flow-subsections {
-    margin: 2px 0 2px 20px; padding-left: 14px;
+    margin: 2px 0 2px 20px; padding-left: 16px;
     border-left: 2px solid var(--niv-border-soft);
-    display: flex; flex-direction: column; gap: 6px;
+    display: flex; flex-direction: column; gap: 8px;
   }
-  .flow-subsections .flow-section { font-size: 14px; padding: 7px 10px; }
+  .flow-subsections .flow-section { font-size: 14px; padding: 8px 12px; }
   .flow-subsections .flow-ring { width: 18px; height: 18px; border-width: 2.5px; }
   @media (max-width: 900px) {
     .flow-subsections { flex-basis: 100%; margin-left: 8px; }
@@ -486,49 +486,49 @@
   .flow-summary-nav[hidden] { display: none; }
   .flow-summary-title { font-size: 16px; font-weight: 700; margin: 2px 2px 8px; }
   .flow-summary-group {
-    font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-    color: var(--niv-text-dim); margin: 10px 2px 2px;
+    font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--niv-text-dim); margin: 12px 2px 2px;
   }
   .flow-summary-group:first-of-type { margin-top: 2px; }
   .flow-sum-row {
     display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
     width: 100%; background: transparent; border: 1px solid transparent; border-radius: 10px;
     color: var(--niv-text); font: 500 14.5px 'Inter', system-ui, sans-serif;
-    text-align: left; padding: 7px 10px; cursor: pointer;
+    text-align: left; padding: 8px 12px; cursor: pointer;
   }
   .flow-sum-row:hover { background: var(--niv-surface-2); }
   .flow-sum-row .k { color: var(--niv-text-dim); flex: none; }
   .flow-sum-row .v { font-weight: 600; text-align: right; word-break: break-word; }
-  .flow-sum-loc { display: flex; align-items: stretch; gap: 6px; }
+  .flow-sum-loc { display: flex; align-items: stretch; gap: 8px; }
   .flow-sum-loc .flow-sum-row { flex: 1; min-width: 0; }
   .flow-maps-btn {
     flex: none; align-self: center;
     border: 1px solid var(--niv-border); border-radius: var(--niv-pill);
     color: var(--niv-text); font: 600 12.5px 'Inter', system-ui, sans-serif;
-    padding: 7px 12px; text-decoration: none; white-space: nowrap;
+    padding: 8px 12px; text-decoration: none; white-space: nowrap;
   }
   .flow-maps-btn:hover { background: var(--niv-surface-2); }
-  .flow-summary-note { font-size: 12.5px; color: var(--niv-text-dim); margin: 12px 2px 0; line-height: 1.5; }
+  .flow-summary-note { font-size: 13px; color: var(--niv-text-dim); margin: 12px 2px 0; line-height: 1.5; }
 
   /* ---- photo step ---- */
   .flow-photo-preview {
     display: block; width: 100%; max-height: 320px; object-fit: contain;
     border-radius: 12px; border: 1px solid var(--niv-border-soft);
-    background: var(--niv-surface-2); margin-bottom: 14px;
+    background: var(--niv-surface-2); margin-bottom: 16px;
   }
-  .flow-photo-status { font-size: 13.5px; color: var(--niv-text-dim); min-height: 18px; text-align: center; margin: 10px 0 2px; }
+  .flow-photo-status { font-size: 14px; color: var(--niv-text-dim); min-height: 18px; text-align: center; margin: 12px 0 2px; }
   .flow-photo-status.err { color: var(--flow-error); }
-  .flow-photo-sure { margin-top: 6px; }
+  .flow-photo-sure { margin-top: 8px; }
 
   /* ---- send / saved ---- */
-  .flow-send { margin-top: 0; font-size: 16.5px; padding: 16px 18px; }
+  .flow-send { margin-top: 0; font-size: 16px; padding: 16px 20px; }
   .flow-send[disabled] { opacity: .6; cursor: default; }
-  .flow-saved-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .flow-saved-actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
   .flow-saved-actions button {
     flex: 1; min-width: 140px;
     background: transparent; border: 1px solid var(--niv-border); border-radius: var(--niv-pill);
     color: var(--niv-text); font: 600 14.5px 'Inter', system-ui, sans-serif;
-    padding: 11px 16px; cursor: pointer;
+    padding: 12px 16px; cursor: pointer;
   }
   .flow-saved-actions button:hover { background: var(--niv-surface-2); }
 </style>
@@ -832,7 +832,7 @@
         <h2 data-s="photoTitle">¿Quieres tomar una foto del área para finalizar?</h2>
         <img id="flow-photo-preview" class="flow-photo-preview" alt="" style="display:none" />
         <button type="button" class="flow-continue flow-photo-sure" id="flow-photo-sure" data-s="photoSure">Sí, agregar foto</button>
-        <button type="button" class="flow-opt" id="flow-photo-skip" data-s="photoSkip" style="margin-top:10px">Saltar</button>
+        <button type="button" class="flow-opt" id="flow-photo-skip" data-s="photoSkip" style="margin-top:12px">Saltar</button>
         <input type="file" id="flow-photo-input" accept="image/*" hidden />
         <div class="flow-photo-status" id="flow-photo-status"></div>
         <button type="button" class="flow-continue" id="flow-photo-continue" data-s="continueBtn" style="display:none">Continuar</button>
@@ -840,7 +840,7 @@
     </div>
 
     <div id="flow-step-summary" class="flow-step" style="display:none">
-      <div class="flow-step-error" id="flow-save-error" role="alert" style="margin:0 0 14px"></div>
+      <div class="flow-step-error" id="flow-save-error" role="alert" style="margin:0 0 16px"></div>
       <button type="button" class="flow-continue flow-send" id="flow-send" data-s="sendBtn">Enviar medida</button>
       <div class="flow-stub" id="flow-saved-panel">
         <strong data-s="savedTitle">Medida guardada.</strong> <span data-s="savedText">Ya aparece en el panel como cualquier otra medida.</span>

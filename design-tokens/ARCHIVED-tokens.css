@@ -1,3 +1,7 @@
+/* ARCHIVED 2026-10-30 (unslop pass, v1.2.19): legacy design system
+   (brand blue, light theme, 18px radii). No page loads this file;
+   niv-dark.css (Nivelato Neue) is the single live token source.
+   Kept for reference only. Do not link or hand-edit. */
 /* Nivelato Design Tokens — web entry point.
    Mirrors design-tokens/tokens.json exactly. Do NOT hand-edit values here;
    update tokens.json (the single source) and regenerate. */
