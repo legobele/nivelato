@@ -283,19 +283,34 @@ service cloud.firestore {
       // invite is applied server-side by flowGate on first sign-in, with
       // the owner approval path (company/settings) as a fallback. The
       // invitee never reads the invite directly.
-      // - read/list: org owner only (the pending-invites list in the
-      //   Users view).
-      // - create: org owner; doc id IS the invitee email; role can never
-      //   be 'owner'; permissions keys pinned to the known set
-      //   (permissions.js PERM_DEFS); status starts 'pending'.
+      // - read/list: org owner or a userManagement holder (the pending-
+      //   invites list in the Users view; the dashboard home enroll card
+      //   reads the single invite doc before creating it).
+      // - create: org owner or a userManagement holder; doc id IS the
+      //   invitee email; role can never be 'owner'; permissions keys
+      //   pinned to the known set (permissions.js PERM_DEFS); status
+      //   starts 'pending'.
       // - update: org owner; only the status field may change (revoke /
       //   mark accepted) — email and payload are immutable.
       // - delete: org owner.
       match /invites/{inviteId} {
+        // get/list + create: the org owner, or a member whose permissions
+        // carry userManagement — the same manager set the enrollment
+        // callables accept (requireEnrollManager in functions/index.js)
+        // and the same set the dashboard shows the enroll surfaces to.
+        // Before this, the rules were owner-only while the UI and the
+        // callable admitted userManagement holders, so a non-owner
+        // manager's invite write from the dashboard home card was denied
+        // even though the token callable would have accepted them.
+        // update/delete stay owner-only below.
         allow get, list: if isSignedIn() && isActive()
-          && myUser().role == 'owner' && myOrgId() == orgId;
+          && (myUser().role == 'owner'
+              || myUser().get('permissions', {}).get('userManagement', false))
+          && myOrgId() == orgId;
         allow create: if isSignedIn() && isActive()
-          && myUser().role == 'owner' && myOrgId() == orgId
+          && (myUser().role == 'owner'
+              || myUser().get('permissions', {}).get('userManagement', false))
+          && myOrgId() == orgId
           && request.resource.data.keys().hasOnly(
                ['email', 'role', 'permissions', 'status', 'createdBy', 'createdAt'])
           && request.resource.data.keys().hasAll(

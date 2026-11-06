@@ -490,6 +490,10 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   /* v1.2.17: home enrollment tile (spec section 2.5 language, dashboard
      tokens): the QR tile is the card's enrollment surface */
   .home-enroll { width: 100%; }
+  .home-workshop-qr { width: 100%; border-top: 1px solid var(--niv-border-soft, rgba(255,255,255,0.10)); padding-top: 16px; margin-top: 20px; }
+  .home-workshop-qr-title { font-size: 16px; font-weight: 700; color: var(--niv-text, #fafafa); margin-bottom: 4px; }
+  .home-workshop-qr-status { margin-top: 12px; padding: 12px 16px; border-radius: 8px; background: rgba(229,72,77,0.14); border: 1px solid rgba(229,72,77,0.45); color: #ffb4b8; font-size: 13px; }
+  .home-workshop-qr-note { font-size: 13px; color: var(--niv-text-dim, #a8a8b0); line-height: 1.5; margin-top: 12px; }
   .home-enroll-title { font-size: 16px; font-weight: 700; color: var(--niv-text, #fafafa); margin-bottom: 12px; }
   .home-enroll-label { display: block; font-size: 12px; font-weight: 600; color: var(--niv-text-dim, #a8a8b0); margin-bottom: 8px; }
   .home-enroll-row { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -1682,6 +1686,17 @@ try {
       <div class="home-enroll-error" id="home-enroll-error" style="display:none;" role="alert"></div>
       <div id="home-enroll-slot"></div>
     </div>
+    <!-- Rotating workshop QR: the email-agnostic variant. A one-time
+         token with no email binding (kind 'open', minted by
+         createWorkshopEnrollmentToken); whoever joins with it consumes
+         it, and this card polls its status and mints the next one on
+         its own. The text workshop code stays below as the fallback
+         for employees who cannot scan. -->
+    <div class="home-workshop-qr" id="home-workshop-qr" style="display:none;">
+      <div class="home-workshop-qr-title" id="home-workshop-qr-title">Código QR del taller</div>
+      <div class="home-workshop-qr-status" id="home-workshop-qr-status" style="display:none;" role="alert"></div>
+      <div id="home-workshop-qr-slot"></div>
+    </div>
     <div class="home-join-fallback">
       <span class="join-code-label" style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
       <span class="join-code-code" style="font-size:20px; font-weight:700; color:#fafafa; letter-spacing:0.15em; font-family:'JetBrains Mono', monospace; margin-left:8px;">--</span>
@@ -2817,6 +2832,9 @@ let currentUser;
       const _jc = orgDoc.data()?.joinCode || orgId;
       document.querySelectorAll('.join-code-card').forEach((el) => el.classList.add('show'));
       document.querySelectorAll('.join-code-code').forEach((el) => { el.textContent = _jc; });
+      // the rotating workshop QR lives on the home card only (one
+      // minter per org: two live cards would supersede each other)
+      if (window._initWorkshopQr) window._initWorkshopQr(orgId);
       // el camino a la administracion de usuarios solo existe para gerentes
       const uab = document.getElementById('users-admin-btn');
       if (uab) uab.style.display = '';
@@ -3601,7 +3619,15 @@ let currentUser;
         if (!invSnap.exists()) {
           await setDoc(invRef, {
             email, role: 'medidor', permissions: {}, status: 'pending',
-            createdBy: (window._currentUserData && window._currentUserData.uid) || null,
+            // The invites create rule pins createdBy == the caller's
+            // auth uid. This used to read _currentUserData.uid, but the
+            // user doc's data carries no uid field (the doc id IS the
+            // uid), so it always sent null and the rule denied the
+            // write for every manager, owner included: the "Missing or
+            // insufficient permissions" failure on this button. The
+            // Add User flow works because it passes the auth uid
+            // (add-user.js ctx.uid); do the same here.
+            createdBy: (window._currentUser && window._currentUser.uid) || null,
             createdAt: serverTimestamp()
           });
         }
@@ -3628,6 +3654,99 @@ let currentUser;
     }
     btn.disabled = false;
     btn.textContent = btnLabel;
+  };
+
+  // Rotating workshop QR (email-agnostic variant): the org's open
+  // enrollment token rendered on the home card. The plaintext exists
+  // only in the mint response and in this browser's sessionStorage
+  // (hash-only at rest server-side, like every enrollment token), so
+  // the card asks getWorkshopEnrollmentTokenStatus who is live:
+  //   - its own token (createdAt match) still 'pending': keep showing.
+  //   - its own token left 'pending' (an employee joined with it, it
+  //     expired, or it was revoked): mint the next one automatically.
+  //     That auto-mint IS the rotation Giulia asked for.
+  //   - a 'pending' token with a different createdAt: another manager
+  //     minted it (their browser holds the plaintext); leave it alone
+  //     and say so, with a button to take over by minting ours.
+  // Across browser restarts the plaintext is gone, so a fresh mint
+  // supersedes the leftover token: one live open token per org, ever.
+  window._initWorkshopQr = (orgId) => {
+    const wrap = document.getElementById('home-workshop-qr');
+    const slot = document.getElementById('home-workshop-qr-slot');
+    const statusEl = document.getElementById('home-workshop-qr-status');
+    if (!wrap || !slot || !orgId) return;
+    if (window._workshopQrOrgId === orgId && window._workshopQrTimer) return;
+    window._workshopQrOrgId = orgId;
+    wrap.style.display = '';
+    const storeKey = 'niv_workshop_qr_' + orgId;
+    const readStored = () => {
+      try { return JSON.parse(sessionStorage.getItem(storeKey) || 'null'); } catch (_) { return null; }
+    };
+    const writeStored = (d) => {
+      try { sessionStorage.setItem(storeKey, JSON.stringify(d)); } catch (_) {}
+    };
+    const fail = (msg) => { if (statusEl) { statusEl.textContent = msg; statusEl.style.display = 'block'; } };
+    const clearFail = () => { if (statusEl) statusEl.style.display = 'none'; };
+    const render = (d, noteText) => {
+      const when = d.expiresAt ? new Date(d.expiresAt).toLocaleDateString(NIV_LANG === 'en' ? 'en-US' : 'es-PR') : '';
+      slot.innerHTML = '<div class="home-enroll-tile">'
+        + (d.qrSvg ? '<div class="tile-qr">' + d.qrSvg + '</div>' : '<p style="font-size:13px;word-break:break-all;">' + escapeHtml(d.url || '') + '</p>')
+        + '<div class="tile-headline">Use this QR code to enroll your employees.</div>'
+        + '<div class="tile-sub">This QR code is unique and can only be used once.</div>'
+        + '<div class="tile-sub">' + escapeHtml(L('Sin correo: lo usa el primer empleado que se una con él.', 'No email needed: the first employee who joins with it uses it up.')) + '</div>'
+        + (when ? '<div class="tile-expiry">' + escapeHtml(L('Vence el ', 'Expires on ') + when) + '</div>' : '')
+        + '<div class="tile-actions">'
+        + '<button type="button" id="home-workshop-qr-copylink">' + escapeHtml(L('Copiar enlace', 'Copy link')) + '</button>'
+        + '<button type="button" id="home-workshop-qr-regen">' + escapeHtml(L('Generar otro', 'Generate another')) + '</button>'
+        + '</div></div>'
+        + (noteText ? '<div class="home-workshop-qr-note">' + escapeHtml(noteText) + '</div>' : '');
+      const copyBtn = document.getElementById('home-workshop-qr-copylink');
+      if (copyBtn) copyBtn.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(d.url); copyBtn.textContent = L('Enlace copiado', 'Link copied'); } catch (_) {}
+      });
+      const regenBtn = document.getElementById('home-workshop-qr-regen');
+      if (regenBtn) regenBtn.addEventListener('click', () => mint());
+    };
+    const mint = async () => {
+      try {
+        const { data } = await _callable('createWorkshopEnrollmentToken')({ orgId });
+        writeStored(data);
+        clearFail();
+        render(data);
+        return data;
+      } catch (e) {
+        fail(L('No se pudo generar el código. ', 'Could not generate the code. ') + ((e && e.message) || ''));
+        return null;
+      }
+    };
+    const check = async () => {
+      if (document.visibilityState === 'hidden') return;
+      let st;
+      try {
+        st = (await _callable('getWorkshopEnrollmentTokenStatus')({ orgId })).data;
+      } catch (_) { return; /* transient: keep showing what we have */ }
+      const stored = readStored();
+      if (!st || st.status === 'none') { await mint(); return; }
+      if (stored && st.createdAt && stored.createdAt
+          && new Date(st.createdAt).getTime() !== new Date(stored.createdAt).getTime()) {
+        // Someone else's token is the live one. Do not supersede it in
+        // a polling war: show the note, offer the takeover button.
+        if (!document.getElementById('home-workshop-qr-copylink')) {
+          render(stored, L('Otro administrador generó un código más reciente. Genera otro para mostrar el tuyo aquí.', 'Another admin generated a newer code. Generate another to show yours here.'));
+        }
+        return;
+      }
+      if (st.status === 'pending') {
+        if (stored && stored.qrSvg && !document.getElementById('home-workshop-qr-copylink')) render(stored);
+        if (!stored) await mint();
+        return;
+      }
+      // used / expired / superseded / revoked on OUR token: rotate.
+      await mint();
+    };
+    check();
+    if (window._workshopQrTimer) clearInterval(window._workshopQrTimer);
+    window._workshopQrTimer = setInterval(check, 20000);
   };
 
   window.copyJoinCode = async (btnEl) => {
@@ -5611,6 +5730,7 @@ let currentUser;
     setText('home-enroll-title', L('Inscribir a un empleado', 'Enroll an employee'));
     setText('home-enroll-btn', L('Generar código QR', 'Generate QR code'));
     setText('home-enroll-label', L('Correo del empleado', 'Employee email'));
+    setText('home-workshop-qr-title', L('Código QR del taller', 'Workshop QR code'));
     // M27: project + measure detail views localize too
     setText('proj-measures-title', L('Medidas', 'Measurements'));
     setText('proj-users-title', L('Usuarios asignados', 'Users assigned'));

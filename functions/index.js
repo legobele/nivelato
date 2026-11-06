@@ -510,6 +510,10 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
         applied = await redeemEnrollmentForInvite(uid, user, request.auth.token, enrollCode);
         if (applied) enrollRedeemed = true;
       }
+      if (!applied && enrollCode) {
+        applied = await redeemOpenEnrollment(uid, user, request.auth.token, enrollCode);
+        if (applied) enrollRedeemed = true;
+      }
       if (!applied) applied = await applyPendingInvite(uid, user, request.auth.token);
     }
     if (!applied) {
@@ -2551,8 +2555,11 @@ exports.sendCompanyInviteEmail = onCall({ region: 'us-central1', memory: '256MiB
 });
 
 // ---------------------------------------------------------------------------
-// Enrollment tokens — the per-employee, single-use QR/OTP that enrolls an
-// invitee (or links a member's device). Spec:
+// Enrollment tokens — single-use QR/OTP tokens, in two variants: the
+// per-employee token bound to one exact email (kind 'invite', or
+// 'member' for the device-link card), and the org's rotating workshop
+// token with no email binding (kind 'open', see
+// createWorkshopEnrollmentToken below). Spec:
 // nivelato-dashboard-batch/enrollment-qr-spec.md, Option A + section 2.6.
 //
 // Design, following the support-code precedent (section 1.3 of the spec):
@@ -2783,6 +2790,171 @@ exports.revokeEnrollmentToken = onCall({ region: 'us-central1', memory: '256MiB'
   return { ok: true, revoked: live.size };
 });
 
+// ---------------------------------------------------------------------------
+// Workshop open enrollment token — the SECOND invite-QR variant. Where
+// createEnrollmentToken mints a one-use token bound to one exact email,
+// this mints the org's rotating workshop code as a token with NO email
+// binding (kind 'open', email null): whoever scans it and completes a
+// join into this org consumes it, and the dashboard card then mints the
+// next one (it polls getWorkshopEnrollmentTokenStatus and regenerates
+// when the live token leaves 'pending'). Exactly one live open token
+// per org: minting supersedes the previous one, same discipline as the
+// bound kinds. Redemption is redeemOpenEnrollment below, called from
+// flowGate alongside redeemEnrollmentForInvite. An open redemption
+// activates the joiner as a plain 'medidor' with NO role or permission
+// grants: role and permission grants stay with email-bound invites.
+// ---------------------------------------------------------------------------
+
+// createWorkshopEnrollmentToken - callable. Mints (or regenerates) the
+// org's open workshop token. The plaintext code is returned exactly
+// once, in this response (hash-only at rest, like the bound kinds).
+exports.createWorkshopEnrollmentToken = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  const data = request.data || {};
+  const orgId = String(data.orgId || '');
+  if (!orgId) throw new HttpsError('invalid-argument', 'Falta la empresa.');
+  const { uid } = await requireEnrollManager(request, orgId);
+
+  const today = new Date().toISOString().slice(0, 10);
+  await checkRateLimit(`enroll-create-open:${orgId}:${today}`, 50);
+
+  // Supersede (burn) the previous live open token for this org first,
+  // so the QR on the workshop card is the only live one.
+  const live = await db.collection('enrollmentTokens')
+    .where('orgId', '==', orgId).where('kind', '==', 'open')
+    .where('status', '==', 'pending').get();
+  if (!live.empty) {
+    const batch = db.batch();
+    live.forEach((d) => batch.update(d.ref, {
+      status: 'superseded',
+      supersededAt: admin.firestore.FieldValue.serverTimestamp(),
+      supersededBy: uid,
+    }));
+    await batch.commit();
+  }
+
+  const code = generateEnrollCode();
+  const now = Date.now();
+  const expiresAt = admin.firestore.Timestamp.fromMillis(now + ENROLL_TTL_MS);
+  const ref = await db.collection('enrollmentTokens').add({
+    codeHash: hashEnrollCode(code),
+    orgId, email: null, kind: 'open', status: 'pending',
+    createdBy: uid,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    expiresAt, usedAt: null, usedByUid: null,
+  });
+  await writeEnrollAudit(orgId, {
+    action: live.empty ? 'created' : 'regenerated', actor: uid,
+    actorEmail: (request.auth.token && request.auth.token.email) || null,
+    email: null, tokenId: ref.id, kind: 'open',
+  });
+
+  const url = enrollUrlFor(code);
+  let qrSvg = null;
+  try {
+    const QRCode = require('qrcode');
+    qrSvg = await QRCode.toString(url, { type: 'svg', margin: 1, width: 240 });
+  } catch (e) {
+    console.error('[enroll] QR render failed', e);
+    qrSvg = null;
+  }
+  return {
+    code, codeDisplay: groupEnrollCode(code), url, qrSvg, kind: 'open',
+    createdAt: new Date(now).toISOString(),
+    expiresAt: new Date(now + ENROLL_TTL_MS).toISOString(),
+  };
+});
+
+// getWorkshopEnrollmentTokenStatus - callable. The org's latest open
+// token state, WITHOUT the plaintext. The workshop card polls this:
+// while its own minted token (matched by createdAt) is still 'pending'
+// it keeps showing it; the moment it flips to 'used' (an employee
+// joined), 'expired' or 'superseded', the card mints a fresh one, so
+// the displayed QR rotates on consumption with no admin action.
+exports.getWorkshopEnrollmentTokenStatus = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  const data = request.data || {};
+  const orgId = String(data.orgId || '');
+  if (!orgId) throw new HttpsError('invalid-argument', 'Falta la empresa.');
+  await requireEnrollManager(request, orgId);
+  const snap = await db.collection('enrollmentTokens')
+    .where('orgId', '==', orgId).where('kind', '==', 'open').get();
+  if (snap.empty) return { status: 'none' };
+  let latest = null;
+  snap.forEach((d) => {
+    const x = d.data();
+    const createdMs = x.createdAt && x.createdAt.toMillis ? x.createdAt.toMillis() : 0;
+    if (!latest || createdMs > latest.createdMs) latest = { ...x, createdMs };
+  });
+  let status = latest.status || 'pending';
+  if (status === 'pending' && latest.expiresAt
+      && latest.expiresAt.toMillis() <= Date.now()) {
+    status = 'expired';
+  }
+  return {
+    status, kind: 'open',
+    createdAt: tsIso(latest.createdAt), expiresAt: tsIso(latest.expiresAt),
+    usedAt: tsIso(latest.usedAt),
+  };
+});
+
+// Transactional open-token redemption: the burn and the activation
+// commit together, exactly like redeemEnrollmentForInvite, but there
+// is no invite and no email binding to check — the token's org must
+// match the joiner's pinned org, and that is the whole binding. Any
+// mismatch (absent, used, expired, bound kind, foreign org) leaves the
+// token exactly as it was: it does nothing. The joiner is activated as
+// their signup-pinned role ('medidor' by the rules) with no permission
+// overrides.
+async function redeemOpenEnrollment(uid, user, authToken, rawCode) {
+  try {
+    const code = normalizeEnrollCode(rawCode);
+    if (code.length !== ENROLL_CODE_LEN) return null;
+    const email = String((authToken && authToken.email) || user.email || '')
+      .trim().toLowerCase();
+    const orgId = user.orgId;
+    if (!orgId) return null;
+    const q = await db.collection('enrollmentTokens')
+      .where('codeHash', '==', hashEnrollCode(code)).limit(1).get();
+    if (q.empty) return null;
+    const tokRef = q.docs[0].ref;
+    const userRef = db.doc(`users/${uid}`);
+    const now = Date.now();
+    let applied = null;
+    await db.runTransaction(async (tx) => {
+      const tokSnap = await tx.get(tokRef);
+      if (!tokSnap.exists) return;
+      const tok = tokSnap.data();
+      if (tok.kind !== 'open') return;
+      if (tok.status !== 'pending') return;
+      if (!tok.expiresAt || tok.expiresAt.toMillis() <= now) return;
+      if (tok.orgId !== orgId) return;
+      const patch = { disabled: false };
+      tx.update(userRef, patch);
+      const membershipEntry = {
+        role: user.role || 'medidor',
+        joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      tx.set(userRef, { memberships: { [orgId]: membershipEntry } }, { merge: true });
+      tx.update(tokRef, {
+        status: 'used',
+        usedAt: admin.firestore.FieldValue.serverTimestamp(),
+        usedByUid: uid,
+      });
+      applied = { ...user, ...patch };
+    });
+    if (applied) {
+      await writeEnrollAudit(orgId, {
+        action: 'redeemed', actor: uid, actorEmail: email,
+        email, tokenId: tokRef.id, kind: 'open',
+      });
+      console.log('[enroll] open workshop token redeemed for', email, 'org', orgId);
+    }
+    return applied;
+  } catch (e) {
+    console.error('[enroll] open redeem failed:', e && e.message);
+    return null;
+  }
+}
+
 // Transactional invite acceptance via token: the burn and the invite
 // application commit together (spec Option A). Returns the updated user
 // object when the token redeemed, null when it does not apply (absent,
@@ -2880,7 +3052,14 @@ async function burnEnrollmentForMember(uid, user, authToken, rawCode) {
       const tok = snap.data();
       if (tok.status !== 'pending') return;
       if (!tok.expiresAt || tok.expiresAt.toMillis() <= now) return;
-      if (tok.orgId !== orgId || tok.email !== email) return;
+      // Email-bound tokens burn only for their exact email; the open
+      // workshop token (kind 'open', email null) carries no binding, so
+      // any active member of the same org presenting it burns it, the
+      // same one-presentation-one-use rule as the bound kinds.
+      const bindingOk = tok.kind === 'open'
+        ? tok.orgId === orgId
+        : (tok.orgId === orgId && tok.email === email);
+      if (!bindingOk) return;
       tx.update(tokRef, {
         status: 'used',
         usedAt: admin.firestore.FieldValue.serverTimestamp(),
