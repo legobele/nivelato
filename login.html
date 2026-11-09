@@ -1498,17 +1498,57 @@
   }
 
   // Travel grant: a QGC-trusted device outside PR can get 30 days of QGC
-  // mode via an email verification link. The grant is a localStorage
-  // timestamp; page load enables QGC mode when the device is trusted AND
-  // (the grant is still in the future OR geo says PR). Being back in PR
-  // makes the grant redundant, so it never needs explicit clearing.
+  // mode via an email verification link. The grant of record lives on the
+  // account (users/{uid}.travelGrant, written server-side by
+  // redeemTravelVerification); the localStorage timestamp is only a
+  // per-device cache of it, refreshed whenever the server value is read.
+  // Page load enables QGC mode when the device is trusted AND (the cached
+  // grant is still in the future OR geo says PR). The sign-in detour check
+  // (companyNeedsTravel) consults the server-side grant, so a grant earned
+  // on one device is honored on a new device or browser once the user
+  // signs in. Being back in PR makes the grant redundant, so it never
+  // needs explicit clearing. (Reworked 2026-11-09: the account, not the
+  // browser, is now the source of truth.)
   const QGC_TRAVEL_KEY = 'nivelato_qgc_travel_until';
+  var _travelGrantUntilCache = 0; // server-confirmed grant expiry (epoch ms), this page session
+  function grantMs(v) {
+    if (typeof v === 'number') return v;
+    if (v && typeof v.toMillis === 'function') { try { return v.toMillis(); } catch (_) { return 0; } }
+    return 0;
+  }
   function qgcTravelValid() {
+    if (_travelGrantUntilCache > Date.now()) return true;
     try { return parseInt(localStorage.getItem(QGC_TRAVEL_KEY) || '0', 10) > Date.now(); }
     catch (_) { return false; }
   }
   function storeTravelGrant(validUntilMs) {
-    try { localStorage.setItem(QGC_TRAVEL_KEY, String(validUntilMs)); } catch (_) { /* ignore */ }
+    var ms = grantMs(validUntilMs);
+    if (ms > _travelGrantUntilCache) _travelGrantUntilCache = ms;
+    try { localStorage.setItem(QGC_TRAVEL_KEY, String(ms)); } catch (_) { /* ignore */ }
+  }
+  // Server-side grant check for a signed-in user: reads their own user doc
+  // (the same getDoc path postAuthRedirect already uses). A valid server
+  // grant refreshes both local caches via storeTravelGrant and returns
+  // true. A read failure falls back to the local cache only (fail soft,
+  // like the rest of this page's doc reads). Checked at most once per uid
+  // per page session; a grant redeemed later in the session still lands
+  // through storeTravelGrant, which the cached path consults live.
+  var _serverGrantCheckedFor = null;
+  async function serverTravelGrantValid(uid) {
+    if (!uid) return false;
+    if (_serverGrantCheckedFor === uid) return qgcTravelValid();
+    _serverGrantCheckedFor = uid;
+    try {
+      var snap = await getDoc(doc(db, 'users', uid));
+      var data = snap && snap.exists() ? snap.data() : null;
+      var ms = data && data.travelGrant ? grantMs(data.travelGrant.validUntil) : 0;
+      if (ms > Date.now()) { storeTravelGrant(ms); return true; }
+    } catch (_) { /* ignore: local cache stands */ }
+    return qgcTravelValid();
+  }
+  async function travelGrantValidFor(uid) {
+    if (qgcTravelValid()) return true;
+    return serverTravelGrantValid(uid);
   }
 
   // ---- "Cuentas usadas" (used-accounts picker, mockup) ----
@@ -3487,11 +3527,14 @@
   }
 
   // True when a company signin should detour through the travel link flow:
-  // geo resolved outside PR, the company didn't opt out, and the device
-  // doesn't already hold a valid travel grant.
-  function companyNeedsTravel(company) {
-    return !!company && company.travelNotice !== false
-      && outsidePRState() === true && !qgcTravelValid();
+  // geo resolved outside PR, the company didn't opt out, and neither this
+  // device's cache nor the signed-in account's server-side travel grant
+  // (users/{uid}.travelGrant) is valid. The account check is what lets a
+  // new device or browser inherit a grant earned elsewhere (2026-11-09).
+  async function companyNeedsTravel(company, uid) {
+    if (!company || company.travelNotice === false) return false;
+    if (outsidePRState() !== true) return false;
+    return !(await travelGrantValidFor(uid));
   }
 
   // Company signin submit: email/password, then the shared QGC post-signin path
@@ -3522,7 +3565,7 @@
         if (area && company) renderCustomCompanyForm(area, company, pendingSpec, cred.user);
         return;
       }
-      if (companyNeedsTravel(company)) {
+      if (await companyNeedsTravel(company, cred.user && cred.user.uid)) {
         await routeCompanyTravelFlow(cred.user);
         return;
       }
@@ -3580,7 +3623,7 @@
         return;
       }
       const cred = await signInWithCustomToken(auth, res.customToken);
-      if (companyNeedsTravel(company)) {
+      if (await companyNeedsTravel(company, cred.user && cred.user.uid)) {
         await routeCompanyTravelFlow(cred.user);
         return;
       }

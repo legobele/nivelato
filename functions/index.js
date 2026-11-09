@@ -472,6 +472,26 @@ async function ipIntel(ip) {
 // Giulia (2026-09-19): relay egress on the QGI flow = hard block.
 
 // ---------------------------------------------------------------------------
+// Travel grant check (2026-11-09, Giulia's ruling). redeemTravelVerification
+// writes users/{uid}.travelGrant { validUntil, grantedAt, tokenId } with
+// validUntil as epoch ms (a Firestore Timestamp is also accepted here, in
+// case a future writer changes the storage shape). An ACTIVE grant lets a
+// QGI user whose IP intel is entirely MISSING pass the gate as allow
+// instead of parking in review: the trip case, where the provider cannot
+// resolve a hotel or airport egress IP at all. The grant never overrides
+// the untrusted-IP hard block: VPN / proxy / tor / relay flags still
+// block, grant or not. The 2026-09-19 no-carve-out ruling stands.
+// ---------------------------------------------------------------------------
+function travelGrantActive(userDocData) {
+  const g = userDocData && userDocData.travelGrant;
+  if (!g) return false;
+  const vu = g.validUntil;
+  const ms = typeof vu === 'number' ? vu
+    : (vu && typeof vu.toMillis === 'function' ? vu.toMillis() : 0);
+  return ms > Date.now();
+}
+
+// ---------------------------------------------------------------------------
 // flowGate — the authority for flow/geo/license. Callable, auth required.
 // ---------------------------------------------------------------------------
 exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
@@ -552,6 +572,11 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
   const country = intel.ok ? intel.country : null;
   const inPR = country === 'PR';
   const untrustedIp = intel.ok && intel.untrusted;
+  // Server-side travel grant on the account (see travelGrantActive). QGI
+  // flow only: travel verification is a QGC employee feature, and the
+  // external flow never parks on missing intel for grant holders either
+  // way (it reviews on no-intel regardless of grants, unchanged).
+  const grantActive = flow === 'qgi' && travelGrantActive(user);
 
   // 3. Timezone corroboration (client-reported, never decisive alone).
   //    Expected zones for a PR-geolocated client: America/Puerto_Rico AND
@@ -569,6 +594,7 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
   let reason = 'default-review';
   let geoOk = false;
   let tzMismatchLogged = false;
+  let travelGrantLogged = false;
 
   if (flow !== 'qgi' && flow !== 'external') {
     verdict = 'block'; reason = 'unknown-flow'; // fail closed on unclassified orgs
@@ -578,9 +604,21 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
     // FAIL CLOSED: any untrusted-IP signal on the QGI flow is a hard block.
     // No GPS downgrade, no review-first leniency, no relay carve-out.
     if (untrustedIp) {
+      // The travel grant does NOT soften this branch (2026-11-09 ruling,
+      // reaffirming 2026-09-19): a flagged egress IP blocks, grant or not.
       verdict = 'block'; reason = 'untrusted-ip-qgi';
     } else if (!intel.ok) {
-      verdict = 'review'; reason = `no-intel:${intel.reason}`;
+      if (grantActive) {
+        // Travel grant override (Giulia, 2026-11-09): the account holds a
+        // verified travel grant and the intel provider has no answer for
+        // this egress IP at all (missing intel, not bad intel). Allow with
+        // normal claims, and write a 'logged' geoReviews entry at step 6
+        // so the override stays visible after the fact.
+        verdict = 'allow'; reason = 'travel-grant-intel-missing'; geoOk = true;
+        travelGrantLogged = true;
+      } else {
+        verdict = 'review'; reason = `no-intel:${intel.reason}`;
+      }
     } else if (inPR) {
       if (tzMismatch) {
         // Log-only (policy 2026-10-12): reaching this branch means the IP
@@ -630,13 +668,18 @@ exports.flowGate = onCall({ region: 'us-central1', memory: '256MiB' }, async (re
   // 6. Review verdicts land in Giulia's triage queue. Log-only tz
   //    mismatches are written to the same collection with the same
   //    signals (the mismatch stays on record), but with status 'logged'
-  //    so they never enter the triage queue.
-  if (verdict === 'review' || tzMismatchLogged) {
+  //    so they never enter the triage queue. Travel grant overrides
+  //    (2026-11-09) are written the same 'logged' way, with the grant
+  //    expiry on record: an override that leaves no trace would repeat
+  //    the old block-verdict logging hole.
+  if (verdict === 'review' || tzMismatchLogged || travelGrantLogged) {
     await db.collection('geoReviews').add({
       uid, orgId, reason: tzMismatchLogged ? 'tz-mismatch' : reason,
       signals: {
         country, untrustedIp, flags: intel.flags || null,
         clientTimezone, tzMismatch: Boolean(tzMismatch), callerIpTruncated: callerIp ? 'present' : 'absent',
+        grantActive,
+        ...(travelGrantLogged ? { grantValidUntil: user.travelGrant.validUntil } : {}),
       },
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       status: verdict === 'review' ? 'open' : 'logged',
@@ -2317,6 +2360,8 @@ exports.pendingUpdateWatcher = onSchedule(
 //     - Validates and burns the token in a transaction, then returns
 //       { validUntil } where validUntil = Date.now() + 30 days (epoch ms).
 //     - Records the grant on users/{uid}.travelGrant for server-side audit.
+//       Since 2026-11-09 the grant is also a gate input: flowGate reads it
+//       via travelGrantActive (missing-intel override only; see GEO_FLOWS.md).
 // ---------------------------------------------------------------------------
 const TRAVEL_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 const TRAVEL_GRANT_MS = 30 * 24 * 60 * 60 * 1000; // 30 days

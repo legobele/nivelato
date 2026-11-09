@@ -59,6 +59,51 @@ Stripe Checkout + provisioning webhook + license sync + trial/past-due
 enforcement UI. The client currently self-provisions trial orgs (pinned
 `trialing` fields in the rules so a client can't mint a paid org).
 
+## Update 2026-11-09: travel grant reimplementation (Giulia's ruling, source only, NOT deployed)
+
+The 30-day travel grant is now an account-level input to the gate, not a
+browser artifact:
+
+- `redeemTravelVerification` already wrote the grant server-side to
+  `users/{uid}.travelGrant { validUntil, grantedAt, tokenId }`. That write
+  is unchanged, and `requestTravelVerification`'s `isQGC: true` requirement
+  is unchanged.
+- `flowGate` now reads the grant via `travelGrantActive()` in
+  `functions/index.js`. For the QGI flow only: when IP intel is entirely
+  missing (provider error, outage, unresolvable egress IP) and the account
+  holds an active grant (`validUntil` in the future), the verdict is
+  `allow` with reason `travel-grant-intel-missing` and normal claims,
+  instead of `review`. Each such override writes a `geoReviews` entry with
+  status `logged` and the grant expiry in its signals, so overrides stay
+  auditable after the fact.
+- The grant does NOT override the untrusted-IP hard block. VPN, proxy,
+  tor, and iCloud Private Relay flags still block a QGI user, grant or
+  not (reaffirms the 2026-09-19 no-carve-out ruling). Trusted intel
+  geolocating outside PR was already `allow` (`qgi-travel-logged`) and is
+  unchanged, as is the external flow.
+- `login.html`: the sign-in travel detour (`companyNeedsTravel`) now
+  consults the account grant (a `getDoc` on the signed-in user's own doc)
+  in addition to the device cache, so a grant earned on one device or
+  browser is honored on a new one at sign-in. `localStorage`
+  (`nivelato_qgc_travel_until`) remains as a per-device cache and is
+  refreshed from the server value whenever it is read; an expired grant
+  detours exactly as before. Page-boot mode selection still reads only the
+  local cache (no signed-in user exists yet at boot); the account check
+  happens at the detour decision point, where a user is signed in.
+
+Ship steps still pending Giulia's ship word (nothing below is done):
+1. Commit and push `main` (the workers serve GitHub raw, so the push is
+   the hosting deploy for `login.html`). The same commit must carry an
+   `sw.js` CACHE bump: `login.html` is in the precache list. Assign the
+   CACHE number at ship time per the deploy skill's sequencing rules,
+   never from a branch note.
+2. Deploy the function by name only:
+   `firebase deploy --only functions:flowGate`. Never a bare
+   `functions` deploy (deletion guard; orphan functions stay live).
+3. Stamp the backend version and run the live verification pass from the
+   deploy skill (raw marker checks plus a browser pass of the travel
+   detour on a fresh browser profile).
+
 ## Open items (still Giulia's call)
 - Travel grace: spec suggests 30 days of sustained non-PR presence → review case.
 - Price points: $29/major/org + $4/user/mo is Lux's proposal — veto/adjust anytime.
