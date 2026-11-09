@@ -846,6 +846,102 @@ exports.switchOrgContext = onCall({ region: 'us-central1', memory: '256MiB' }, a
   return { ok: true, orgId: target, flow };
 });
 
+// Creates the personal org (an org of one) for uid and returns its id.
+// Shared by createPersonalContext (existing profile, switcher path) and
+// ensurePersonalProfile (first personal sign-in, no profile yet). The
+// caller owns the users/{uid} writes that point at the org.
+async function _createPersonalOrg(uid, baseName) {
+  const orgRef = db.collection('orgs').doc();
+  const orgId = orgRef.id;
+  await orgRef.set({
+    name: baseName,
+    ownerId: uid,
+    joinCode: orgId,
+    flow: 'external',
+    versionPolicy: 'external-hybrid',
+    licenseStatus: 'active',
+    trialSavesUsed: 0,
+    isPersonal: true,
+    personalOwnerUid: uid,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  return orgId;
+}
+
+// ensurePersonalProfile: the post-auth bootstrap for personal sign-ins.
+//
+// Root cause it closes: profile docs are created CLIENT-side at signup,
+// and firestore.rules pin that create to an org that already exists
+// (orgId string + org doc + role checks). Company joiners fit that
+// shape (the org predates them); a personal sign-in does not. The
+// Google "Añadir cuenta personal" route (and any first personal sign-in
+// that never passed through a signup form) creates the Auth account
+// only, so the user lands on the dashboard with a valid session and no
+// users/{uid} doc, and the app's only answer was the "No se encontró tu
+// perfil" dead end. createPersonalContext cannot fill the gap either:
+// it refuses to run without an existing profile.
+//
+// This callable is the server-side half of the identify-once flow: a
+// signed-in user with no profile gets the personal profile AND its
+// personal org in one step, in the exact shape the rest of the data
+// plane already reads (owner of an external-flow org of one, free tier,
+// membership recorded server-side like everywhere else). An existing
+// profile is returned untouched, except that a profile stranded
+// without an orgId gets the personal context it was missing. It never
+// touches a profile that already has an org, so company accounts can
+// never be re-homed by calling it.
+exports.ensurePersonalProfile = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'ensurePersonalProfile requires a signed-in user.');
+  }
+  const uid = request.auth.uid;
+  const token = request.auth.token || {};
+  const email = String(token.email || '').trim().toLowerCase();
+  const ref = db.doc(`users/${uid}`);
+  const snap = await ref.get();
+  if (snap.exists) {
+    const user = snap.data();
+    if (user.orgId) return { ok: true, created: false, orgId: user.orgId };
+    // Interrupted bootstrap: the profile exists but no context does.
+    // Give it the personal org, reusing the recorded one when it is
+    // still there, and activate the user inside it (the same patch
+    // createPersonalContext applies to org-less accounts).
+    let orgId = user.personalOrgId || null;
+    if (orgId && !(await loadContextOrg(orgId))) orgId = null;
+    if (!orgId) {
+      const baseName = String(
+        user.name || user.displayName || (email || '').split('@')[0] || 'Personal'
+      ).slice(0, 80);
+      orgId = await _createPersonalOrg(uid, baseName);
+    }
+    const patch = { orgId, personalOrgId: orgId };
+    if (!user.role) patch.role = 'owner';
+    if (user.disabled === undefined) patch.disabled = false;
+    await ref.update(patch);
+    const memberRole = patch.role || user.role || 'owner';
+    await ref.set(
+      { memberships: { [orgId]: { role: memberRole, joinedAt: admin.firestore.FieldValue.serverTimestamp() } } },
+      { merge: true });
+    return { ok: true, created: false, repaired: true, orgId };
+  }
+  const name = String(token.name || (email || '').split('@')[0] || 'Personal').slice(0, 80);
+  const orgId = await _createPersonalOrg(uid, name);
+  await ref.set({
+    email,
+    name,
+    displayName: name,
+    role: 'owner',
+    orgId,
+    personalOrgId: orgId,
+    disabled: false,
+    tier: 'free',
+    geoStatus: 'pending',
+    memberships: { [orgId]: { role: 'owner', joinedAt: admin.firestore.FieldValue.serverTimestamp() } },
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  return { ok: true, created: true, orgId };
+});
+
 // createPersonalContext — the personal account is an org of one owned
 // by the user (the only shape the existing data plane can hold). If the
 // user had no org at all (the org-less personal account state the
@@ -871,25 +967,12 @@ exports.createPersonalContext = onCall({ region: 'us-central1', memory: '256MiB'
       return { ok: true, orgId: user.personalOrgId, created: false };
     }
   }
-  const orgRef = db.collection('orgs').doc();
-  const orgId = orgRef.id;
   const baseName = String(
     user.name || user.displayName
     || (request.auth.token.email || '').split('@')[0]
     || 'Personal'
   ).slice(0, 80);
-  await orgRef.set({
-    name: baseName,
-    ownerId: uid,
-    joinCode: orgId,
-    flow: 'external',
-    versionPolicy: 'external-hybrid',
-    licenseStatus: 'active',
-    trialSavesUsed: 0,
-    isPersonal: true,
-    personalOwnerUid: uid,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
+  const orgId = await _createPersonalOrg(uid, baseName);
   const hadNoOrg = !user.orgId;
   const patch = { personalOrgId: orgId };
   if (hadNoOrg) { patch.orgId = orgId; patch.role = 'owner'; patch.disabled = false; }
