@@ -926,7 +926,7 @@
         pr_note_2: 'Los demás pueden usar la app gratuita: ',
         pr_note_link: 'Descargar en Google Play',
         profile_note: 'No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.',
-        save_title: 'Sesión iniciada',
+        save_title: 'Inicio de sesión',
         save_q: '¿Guardar la sesión en este dispositivo?',
         save_yes: 'Guardar sesión',
         save_no: 'Solo esta vez',
@@ -1084,7 +1084,7 @@
         pr_note_2: 'Everyone else can use the free app: ',
         pr_note_link: 'Download on Google Play',
         profile_note: 'We could not find your user profile. Sign in again to fix it.',
-        save_title: 'Signed in',
+        save_title: 'Sign in',
         save_q: 'Stay signed in on this device?',
         save_yes: 'Stay signed in',
         save_no: 'Just this once',
@@ -2463,7 +2463,12 @@
   // the chosen persistence is set on the Auth instance first, and only
   // then does the pending sign-in action run, so the choice genuinely
   // governs the session that gets created (both sign-in paths, email
-  // and Google, pass through this gate).
+  // and Google, pass through this gate). Because the prompt precedes
+  // the auth result BY DESIGN, its copy must stay neutral about the
+  // outcome: it used to headline "Sesión iniciada" (save_title), so a
+  // rejected sign-in flashed a full success screen before bouncing
+  // back with the error. Never let this prompt claim success again;
+  // success copy belongs to postAuthRedirect and later.
   function showSaveLoginPrompt() {
     savePromptShown = true;
     const t = window.nivT;
