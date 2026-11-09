@@ -1713,7 +1713,11 @@ try {
     <div class="stat-card"><div class="stat-num" id="home-stat-notif"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-notif-label">Sin leer</div></div>
   </div>
   <div class="niv-home-actions" id="home-actions" role="group" aria-label="Acciones rápidas">
-    <a class="niv-btn-pill niv-btn-primary" id="home-act-new-measure" href="https://app.nivelatolabs.com/">+ Nueva medida</a>
+    <!-- Las tres acciones de creación de esta fila son paralelas y
+         llevan el mismo tratamiento (píldora secundaria): que una sola
+         fuera primaria sólida rompía la jerarquía del grupo. El
+         primario de medidas vive en la cabecera de la vista Medidas. -->
+    <a class="niv-btn-pill" id="home-act-new-measure" href="https://app.nivelatolabs.com/">+ Nueva medida</a>
     <button type="button" class="niv-btn-pill" id="home-act-new-project" onclick="openNewProject()">+ Nuevo proyecto</button>
     <button type="button" class="niv-btn-pill" id="home-act-new-customer" onclick="window._panelNewCustomer()">+ Nuevo cliente</button>
     <button type="button" class="niv-btn-pill" id="home-act-quotes" style="display:none" onclick="window.showDashView('quotes')">Cotizaciones</button>
@@ -2353,6 +2357,32 @@ const showMissingProfileScreen = () => {
   document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#f5c518" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><h2 style="color:#fafafa">No se encontró tu perfil</h2><p style="color:#a8a8b0;max-width:340px">Tu sesión es válida pero no hay un perfil de usuario asociado. Si acabas de registrarte, espera unos segundos y reintenta; si no, cierra sesión y pide a tu administrador un enlace de registro nuevo.</p><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button onclick="window._missingRetry()" style="padding:12px 28px;background:#fafafa;color:#050505;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer">Reintentar</button><button onclick="window._missingSignOut()" style="padding:12px 28px;background:rgba(255,255,255,.08);color:#fafafa;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div></div>';
 };
 
+// Pinta la tarjeta de cuenta de la barra lateral con la identidad que
+// haya a mano. El usuario de Auth solo (nombre, correo, foto) alcanza
+// para que la tarjeta nunca se vea como una píldora vacía con un cuadro
+// oscuro mientras los reads de perfil/organización están en vuelo; al
+// cargar el doc de perfil se repinta y sus campos mandan.
+const _paintAccountCard = (user, userData) => {
+  try {
+    const _an = document.getElementById('niv-account-name');
+    if (!_an) return;
+    const _ae = document.getElementById('niv-account-email');
+    const _aa = document.getElementById('niv-account-avatar');
+    const _dn = (userData && (userData.displayName || userData.name)) || (user && user.displayName) || '';
+    const _em = (user && user.email) || (userData && userData.email) || '';
+    _an.textContent = _dn || (_em ? _em.split('@')[0] : '') || 'Usuario';
+    if (_ae) _ae.textContent = _em;
+    // en el riel colapsado no se ven nombre ni correo: quedan en el tooltip
+    const _ac = document.getElementById('niv-account-card');
+    if (_ac) _ac.title = (_dn && _em) ? _dn + ' · ' + _em : (_dn || _em || '');
+    if (_aa) {
+      const _pu = (user && user.photoURL) || (userData && userData.photoURL);
+      if (_pu) { _aa.innerHTML = ''; const _img = document.createElement('img'); _img.src = _pu; _img.alt = ''; _aa.appendChild(_img); }
+      else _aa.textContent = ((_dn || _em || 'U')[0] || 'U').toUpperCase();
+    }
+  } catch (_) {}
+};
+
 // ─── Huella del equipo web ───
 // SHA-1 over this PC's stable signals (hardware + browser). The same PC
 // always produces the same hash, so it identifies the WEB MACHINE in the
@@ -2715,6 +2745,9 @@ let currentUser;
       m.applyResolvedLang(lang);
       if (window._applyDashLang) window._applyDashLang(lang);
     }).catch(() => {});
+    // La tarjeta de cuenta se pinta ya, solo con el usuario de Auth:
+    // ningún estado de carga posterior puede dejarla en blanco.
+    _paintAccountCard(user, null);
     // Mint flow claims before any org data read (rules require them).
     // If flowGate says block/review on a fresh call, route to the
     // geo-blocked page instead of failing silently with permission-denied
@@ -2736,7 +2769,28 @@ let currentUser;
     currentUser = user;
     // presencia realtime (presence.js la crea una tarea hermana; silencioso si el archivo falta)
     import('./presence.js').then(m => m.startPresence(user.uid)).catch(() => {});
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    let userDoc = await getDoc(doc(db, 'users', user.uid));
+    if (!userDoc.exists()) {
+      // Arranque personal: un inicio de sesión personal (p. ej. Google
+      // en "Añadir cuenta personal") crea la cuenta de Auth pero ningún
+      // camino de cliente escribe users/{uid} para esa ruta (las rules
+      // fijan la creación del doc a una organización que ya exista).
+      // Se pide al servidor el perfil personal + su organización
+      // personal (ensurePersonalProfile) y se relee; con el perfil ya
+      // creado se re-minten los claims de flujo, porque el flowGate de
+      // arriba corrió cuando el perfil aún no existía. Si el backend no
+      // está desplegado todavía, se cae a la pantalla de perfil no
+      // encontrado de siempre.
+      try {
+        const res = await httpsCallable(getFunctions(auth.app, 'us-central1'), 'ensurePersonalProfile')({});
+        if (res && res.data && res.data.ok) {
+          userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            try { await ensureFlowClaims(); } catch (_) { /* fails soft, rules decide */ }
+          }
+        }
+      } catch (e) { console.warn('[Nivelato] ensurePersonalProfile no disponible:', (e && (e.code || e.message)) || e); }
+    }
     if (!userDoc.exists()) {
       showMissingProfileScreen();
       return;
@@ -2781,6 +2835,15 @@ let currentUser;
     }
     // Personal accounts may not belong to an org yet; don't crash on it.
     if (!orgId) {
+      // La cuenta personal es un camino completo, no un callejón: se
+      // crea su contexto personal (el callable del propio switcher,
+      // que además activa a la usuaria dentro de él) y se recarga ya
+      // dentro del contexto. La pantalla de "Sin organización" queda
+      // solo como último recurso si ese callable no responde.
+      try {
+        const res = await httpsCallable(getFunctions(auth.app, 'us-central1'), 'createPersonalContext')({});
+        if (res && res.data && res.data.orgId) { window.location.reload(); return; }
+      } catch (e) { console.warn('[Nivelato] createPersonalContext no disponible:', (e && (e.code || e.message)) || e); }
       document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="line-height:0"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#868e96" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 21v-3h6v3"/><path d="M8.5 7h2m3 0h2m-7 4h2m3 0h2"/></svg></div><h2 style="color:#212529">Sin organización</h2><p style="color:#868e96;max-width:320px">Tu cuenta no está vinculada a ninguna organización todavía.</p></div>';
       return;
     }
@@ -2805,24 +2868,8 @@ let currentUser;
       const _sig = _words.filter(w => !_stop.has(w.toLowerCase()));
       _av.textContent = (_sig.length ? _sig : _words).slice(0, 2).map(w => w[0]).join('').toUpperCase();
     }
-    // account card: avatar + name + email
-    try {
-      const _an = document.getElementById('niv-account-name');
-      const _ae = document.getElementById('niv-account-email');
-      const _aa = document.getElementById('niv-account-avatar');
-      const _dn = user.displayName || userData.displayName || userData.name || '';
-      const _em = user.email || userData.email || '';
-      if (_an) _an.textContent = _dn || _em.split('@')[0] || 'Usuario';
-      if (_ae) _ae.textContent = _em;
-      // en el riel colapsado no se ven nombre ni correo: quedan en el tooltip
-      const _ac = document.getElementById('niv-account-card');
-      if (_ac) _ac.title = (_dn && _em) ? _dn + ' · ' + _em : (_dn || _em || '');
-      if (_aa) {
-        const _pu = user.photoURL || userData.photoURL;
-        if (_pu) { _aa.innerHTML = ''; const _img = document.createElement('img'); _img.src = _pu; _img.alt = ''; _aa.appendChild(_img); }
-        else _aa.textContent = ((_dn || _em || 'U')[0] || 'U').toUpperCase();
-      }
-    } catch (_) {}
+    // account card: repaint with the profile doc now that it loaded
+    _paintAccountCard(user, userData);
     window._currentOrgId = orgId;
     loadProjects();
     document.getElementById('dash-subtitle').textContent = `${orgName} · ${_can('userManagement') ? 'Administrador' : (hasQuotes ? 'Cotizaciones' : 'Medidas')}`;
@@ -2852,6 +2899,7 @@ let currentUser;
     const jobsRef = collection(db, 'orgs', orgId, 'jobs');
     const q = query(jobsRef, orderBy('createdAt', 'desc'));
     const applyJobsSnap = (snap) => {
+      window._dashJobsLive = true;
       // drafts are temp jobs mid-share - never show them
       let jobs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(j => j.status !== 'draft');
 
@@ -2888,6 +2936,23 @@ let currentUser;
       }
     });
     window.addEventListener('pagehide', () => { if (window._jobsUnsub) { window._jobsUnsub(); window._jobsUnsub = null; } if (window._plUnsub) { window._plUnsub(); window._plUnsub = null; } if (window._qUnsub) { window._qUnsub(); window._qUnsub = null; } if (window._userRefreshTimer) { clearInterval(window._userRefreshTimer); window._userRefreshTimer = null; } });
+
+    // Cargas acotadas: si el snapshot de medidas nunca aterriza (backend
+    // o rules en problemas), ningún loader puede quedarse en "Cargando…"
+    // para siempre. A los 12 s se resuelve todo a su estado vacío o de
+    // error: secciones de la barra lateral, tarjetas del Panel, las seis
+    // estadísticas y la lista de medidas. Un snapshot tardío simplemente
+    // repinta encima con los datos reales.
+    setTimeout(() => {
+      if (window._dashJobsLive) return;
+      try { if (window.refreshFloatPanel) window.refreshFloatPanel([]); } catch (_) {}
+      try { if (window.renderHomeOverview) window.renderHomeOverview(); } catch (_) {}
+      document.querySelectorAll('.stat-num').forEach((el) => {
+        if (el.querySelector('.niv-skel')) el.textContent = '0';
+      });
+      const _jl = document.querySelector('#job-list .loading');
+      if (_jl) _jl.textContent = 'No se pudieron cargar las medidas. Revisa tu conexión.';
+    }, 12000);
 
     // Releer el doc del usuario cada 5 min: si un admin desactiva la cuenta
     // mid-session, mostrar la pantalla de pendiente en vez de errores raros.
@@ -6535,6 +6600,11 @@ let currentUser;
         : '<div class="niv-panel-empty">' + L('No tienes notificaciones.', 'No notifications yet.') + '</div>';
     } catch (e) {
       el.innerHTML = '<div class="niv-panel-empty">' + L('No se pudieron cargar las notificaciones.', 'Could not load notifications.') + '</div>';
+      // La estadística "Sin leer" lee este mismo backend: si la llamada
+      // falla, su esqueleto se resuelve a 0 en vez de quedarse en blanco
+      // mientras las demás estadísticas ya pintaron su número.
+      const _hsn = document.getElementById('home-stat-notif');
+      if (_hsn && _hsn.querySelector('.niv-skel')) _hsn.textContent = '0';
     }
   };
 
@@ -6557,7 +6627,12 @@ let currentUser;
     try {
       const { data } = await _callable('listNotifications')({});
       _setNotifBadge((data && data.unreadCount) || 0);
-    } catch (_) { /* backend sin desplegar: falla suave, sin badge */ }
+    } catch (_) {
+      /* backend sin desplegar: falla suave, sin badge; la estadística
+         del Panel sí se resuelve (a 0) para no dejar su esqueleto fijo */
+      const _hsn = document.getElementById('home-stat-notif');
+      if (_hsn && _hsn.querySelector('.niv-skel')) _hsn.textContent = '0';
+    }
   };
   const _notifDotColor = (type) => ({ device: '#8e9bb5', update: '#e5b567', org: '#a8a8b0', account: '#a8a8b0' }[type] || '#a8a8b0');
   window.renderNotifications = async () => {
