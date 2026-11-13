@@ -540,7 +540,14 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   .home-enroll-collapsible { display: none; }
   .home-enroll-collapsible.open { display: block; margin-top: 20px; }
   .home-enroll-collapsible .home-enroll-title { margin-bottom: 12px; }
-  .home-join-fallback { width: 100%; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--niv-border-soft, rgba(255,255,255,0.10)); padding-top: 16px; margin-top: 20px; }
+  /* v1.2.22: home widgets use the QR card language: one border, big radius,
+     same surface. Scoped to #view-home so the sharp geometry law
+     everywhere else stands. The enrollment wrapper drops its own
+     box now that the fallback row is gone: the QR card is the
+     widget, there is no card inside a card. */
+  #join-code-section-home { background: transparent; border: none; padding: 0; }
+  #view-home .stat-card { border: 1.5px solid var(--niv-border-soft, rgba(255,255,255,0.14)); border-radius: 28px; padding: 20px; }
+  #view-home .niv-card { border: 1.5px solid var(--niv-border-soft, rgba(255,255,255,0.14)); border-radius: 28px; background: var(--niv-surface, #0e0e10); }
 
   /* job cards */
   .job-card { background: #0e0e10; border: 1px solid rgba(255,255,255,0.14); border-radius: 6px; box-shadow: none; }
@@ -1709,9 +1716,7 @@ try {
          createWorkshopEnrollmentToken) is the headline; the card
          polls its status and mints the next one on its own. The
          email flow sits behind the button below; the manual
-         regenerate lives in the tile actions. The text workshop
-         code stays underneath as the fallback for employees who
-         cannot scan. -->
+         regenerate lives in the tile actions. -->
     <div class="home-qr-card">
       <div class="home-workshop-qr" id="home-workshop-qr" style="display:none;">
         <div class="home-workshop-qr-title" id="home-workshop-qr-title">Código QR del taller</div>
@@ -1729,12 +1734,6 @@ try {
         <div class="home-enroll-error" id="home-enroll-error" style="display:none;" role="alert"></div>
         <div id="home-enroll-slot"></div>
       </div>
-    </div>
-    <div class="home-join-fallback">
-      <span class="join-code-label" style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
-      <span class="join-code-code" style="font-size:20px; font-weight:700; color:#fafafa; letter-spacing:0.15em; font-family:'JetBrains Mono', monospace; margin-left:8px;">--</span>
-      <button onclick="copyJoinCode(this)" class="join-code-copy" style="margin-left:auto; background:#fafafa; color:#050505; border:none; border-radius:8px; padding:8px 20px; font-size:13px; font-weight:600; cursor:pointer;"><span class="copy-btn-label">Copiar</span></button>
-      <span class="join-code-hint" style="font-size:11px; color:#888; width:100%; margin-top:2px;">Dáselo a tus empleados para que se registren en Nivelato</span>
     </div>
   </div>
   <div class="niv-stats-row">
@@ -5822,11 +5821,6 @@ let currentUser;
     setText('join-code-label', L('CÓDIGO DEL TALLER:', 'WORKSHOP CODE:'));
     setText('copy-btn-label', L('Copiar', 'Copy'));
     setText('join-code-hint', L('Dáselo a tus empleados para que se registren en Nivelato', 'Give it to your employees so they can sign up for Nivelato'));
-    // la copia de la tarjeta del codigo que vive en el Panel (ids unicos
-    // por tarjeta: se localiza por clase dentro de la copia)
-    document.querySelectorAll('#join-code-section-home .join-code-label').forEach((el) => { el.textContent = L('CÓDIGO DEL TALLER:', 'WORKSHOP CODE:'); });
-    document.querySelectorAll('#join-code-section-home .copy-btn-label').forEach((el) => { el.textContent = L('Copiar', 'Copy'); });
-    document.querySelectorAll('#join-code-section-home .join-code-hint').forEach((el) => { el.textContent = L('Dáselo a tus empleados para que se registren en Nivelato', 'Give it to your employees so they can sign up for Nivelato'); });
     // leyenda del riel de la linea de dias (Medidas)
     setText('tl-legend-ok', L('Sin advertencias', 'No warnings'));
     setText('tl-legend-warn', L('Con advertencias', 'With warnings'));
