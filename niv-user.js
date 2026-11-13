@@ -149,6 +149,66 @@ const alertStampKey = (uid) => 'niv-login-alert:' + uid;
  *          'deduped-session' | 'callable-failed' | server reasons
  *          ('deduped', 'pref-off', 'no-email', ...)
  */
+// Friendly device label for login alerts ("Edge on Windows"): the raw
+// user-agent string is unreadable in a notification. Order matters:
+// Edge and Opera UAs contain "Chrome", Chrome UAs contain "Safari".
+function friendlyDevice() {
+  let ua = '';
+  try { ua = String(navigator.userAgent || ''); } catch (_) { return ''; }
+  if (!ua) return '';
+  let browser = '';
+  if (/Edg\//.test(ua)) browser = 'Edge';
+  else if (/OPR\/|Opera/.test(ua)) browser = 'Opera';
+  else if (/Firefox\//.test(ua)) browser = 'Firefox';
+  else if (/Chrome\//.test(ua)) browser = 'Chrome';
+  else if (/Safari\//.test(ua)) browser = 'Safari';
+  let os = '';
+  if (/Windows NT/.test(ua)) os = 'Windows';
+  else if (/Mac OS X/.test(ua)) os = 'macOS';
+  else if (/Android/.test(ua)) os = 'Android';
+  else if (/iPhone|iPad/.test(ua)) os = 'iOS';
+  else if (/CrOS/.test(ua)) os = 'ChromeOS';
+  else if (/Linux/.test(ua)) os = 'Linux';
+  if (browser && os) return browser + ' on ' + os;
+  return browser || os || '';
+}
+
+// Approximate location for login alerts ("San Juan, Puerto Rico"),
+// from the same ipapi.co lookup the login page uses. Best-effort:
+// 2.5s cap, cached per session; any failure means no location rather
+// than a delayed or failed alert.
+async function approxLocation() {
+  try {
+    const cached = window.sessionStorage.getItem('niv_alert_geo');
+    if (cached) return cached;
+  } catch (_) { /* storage unavailable: fetch, don't cache */ }
+  try {
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 2500);
+    const res = await fetch('https://ipapi.co/json/', { signal: ctl.signal });
+    clearTimeout(t);
+    if (!res || !res.ok) return '';
+    const g = await res.json().catch(() => null);
+    if (!g) return '';
+    const loc = [g.city, g.country_name].filter(Boolean).join(', ');
+    if (loc) {
+      try { window.sessionStorage.setItem('niv_alert_geo', loc); } catch (_) {}
+    }
+    return loc;
+  } catch (_) { return ''; }
+}
+
+// The device string the alert carries: friendly device, plus approx
+// location when the lookup lands ("Edge on Windows in San Juan,
+// Puerto Rico"). The server interpolates this verbatim, so no
+// function change is needed for the new format.
+async function friendlyDeviceLabel() {
+  const d = friendlyDevice();
+  const loc = await approxLocation();
+  if (d && loc) return d + ' in ' + loc;
+  return d || loc || '';
+}
+
 export async function maybeSendLoginAlert(user, opts) {
   const u = user || (auth && auth.currentUser);
   if (!u || !u.uid) return { sent: false, reason: 'no-user' };
@@ -183,7 +243,7 @@ export async function maybeSendLoginAlert(user, opts) {
       sessionKey,
       lang,
       timezone: (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (_) { return ''; } })(),
-      device: (() => { try { return String(navigator.userAgent || '').slice(0, 120); } catch (_) { return ''; } })(),
+      device: await friendlyDeviceLabel(),
       ...(opts && opts.orgId ? { orgId: String(opts.orgId).slice(0, 128) } : {}),
     });
     return data || { sent: false, reason: 'empty-response' };

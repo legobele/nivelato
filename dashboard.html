@@ -10,6 +10,21 @@
   <script src="./niv-brandmark.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#050505" />
+  <style>
+    /* Auth veil (v1.2.21): covers first paint until the first auth +
+       session-bridge decision lands, so the shell never flashes
+       before a bounce to login. Lifted by the auth listeners; the
+       failsafe below lifts it regardless after 10s. */
+    #niv-auth-veil{position:fixed;inset:0;z-index:99999;background:#050505;display:flex;align-items:center;justify-content:center;}
+    #niv-auth-veil .niv-auth-veil-spin{width:32px;height:32px;border:3px solid #26262b;border-top-color:#fafafa;border-radius:50%;animation:niv-auth-veil-spin .8s linear infinite;}
+    @keyframes niv-auth-veil-spin{to{transform:rotate(360deg);}}
+  </style>
+  <script>
+    window.__nivLiftVeil = function () {
+      try { var v = document.getElementById('niv-auth-veil'); if (v) v.remove(); } catch (_) {}
+    };
+    setTimeout(window.__nivLiftVeil, 10000);
+  </script>
   <link rel="manifest" href="manifest.json" />
   <title>Nivelato - Dashboard</title>
 <meta name="description" content="Panel de Nivelato: proyectos, clientes y medidas de campo de tu taller de cristales en un solo lugar, sincronizado con tu compañía.">
@@ -510,6 +525,21 @@ console.log("%c🦀 nivelato: the measurements are leveled, the whimsy is load-b
   .home-enroll-tile .tile-expiry { font-size: 12px; color: var(--niv-text-dim, #a8a8b0); margin-top: 12px; }
   .home-enroll-tile .tile-actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; justify-content: center; }
   .home-enroll-tile .tile-actions button { padding: 8px 20px; border-radius: 999px; border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); background: var(--niv-surface-2, #16161a); color: var(--niv-text, #fafafa); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  /* v1.2.21: the enrollment surfaces live in ONE compact card: the
+     workshop QR is the headline, the email flow sits behind a
+     button, and the manual regenerate stays in the tile actions.
+     The card is the tall rounded rect from the sketch: narrow,
+     centered, big radius. The tile drops its own frame inside
+     the card so there is exactly one border. */
+  .home-qr-card { max-width: 400px; margin: 0 auto; border: 1.5px solid var(--niv-border-soft, rgba(255,255,255,0.14)); border-radius: 28px; background: var(--niv-surface, #0e0e10); padding: 24px 20px 20px; display: flex; flex-direction: column; align-items: stretch; }
+  .home-qr-card .home-workshop-qr-title { font-size: 16px; font-weight: 700; color: var(--niv-text, #fafafa); text-align: center; margin-bottom: 16px; }
+  .home-qr-card .home-enroll-tile { border: none; background: transparent; padding: 0; margin-top: 0; }
+  .home-qr-card .home-enroll-tile .tile-qr { width: 64%; max-width: 200px; }
+  .home-qr-email-toggle { margin-top: 16px; padding: 12px 20px; border-radius: 999px; border: 1px solid var(--niv-border-soft, rgba(255,255,255,0.14)); background: var(--niv-surface-2, #16161a); color: var(--niv-text, #fafafa); font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .home-qr-email-toggle:hover { border-color: var(--niv-text-dim, #a8a8b0); }
+  .home-enroll-collapsible { display: none; }
+  .home-enroll-collapsible.open { display: block; margin-top: 20px; }
+  .home-enroll-collapsible .home-enroll-title { margin-bottom: 12px; }
   .home-join-fallback { width: 100%; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--niv-border-soft, rgba(255,255,255,0.10)); padding-top: 16px; margin-top: 20px; }
 
   /* job cards */
@@ -1483,6 +1513,7 @@ body.has-sidebar main h1 {
 </style>
 </head>
 <body class="has-sidebar" data-envmark-interstitial>
+<div id="niv-auth-veil" aria-hidden="true"><div class="niv-auth-veil-spin"></div></div>
 <canvas id="drawing-canvas" style="display:none;width:340px;height:420px"></canvas>
 
 <!-- TOP BAR: on top across ALL the dashboard (wireframe law #1) -->
@@ -1673,29 +1704,31 @@ try {
   </div>
   <div class="subtitle" id="home-subtitle"></div>
   <div class="join-code-card" id="join-code-section-home">
-    <!-- v1.2.17: the enrollment surface of this card is the §2.5 QR
-         tile (single-use token), as in the Add User flow. The workshop
-         code stays underneath as the text fallback, not the headline. -->
-    <div class="home-enroll">
-      <div class="home-enroll-title" id="home-enroll-title">Inscribir a un empleado</div>
-      <label class="home-enroll-label" id="home-enroll-label" for="home-enroll-email">Correo del empleado</label>
-      <div class="home-enroll-row">
-        <input type="email" id="home-enroll-email" autocomplete="email" placeholder="empleado@empresa.com" />
-        <button type="button" id="home-enroll-btn" onclick="window._homeEnrollGenerate()">Generar código QR</button>
+    <!-- v1.2.21: ONE compact enrollment card. The rotating workshop
+         QR (email-agnostic, one-time token, kind 'open', minted by
+         createWorkshopEnrollmentToken) is the headline; the card
+         polls its status and mints the next one on its own. The
+         email flow sits behind the button below; the manual
+         regenerate lives in the tile actions. The text workshop
+         code stays underneath as the fallback for employees who
+         cannot scan. -->
+    <div class="home-qr-card">
+      <div class="home-workshop-qr" id="home-workshop-qr" style="display:none;">
+        <div class="home-workshop-qr-title" id="home-workshop-qr-title">Código QR del taller</div>
+        <div class="home-workshop-qr-status" id="home-workshop-qr-status" style="display:none;" role="alert"></div>
+        <div id="home-workshop-qr-slot"></div>
       </div>
-      <div class="home-enroll-error" id="home-enroll-error" style="display:none;" role="alert"></div>
-      <div id="home-enroll-slot"></div>
-    </div>
-    <!-- Rotating workshop QR: the email-agnostic variant. A one-time
-         token with no email binding (kind 'open', minted by
-         createWorkshopEnrollmentToken); whoever joins with it consumes
-         it, and this card polls its status and mints the next one on
-         its own. The text workshop code stays below as the fallback
-         for employees who cannot scan. -->
-    <div class="home-workshop-qr" id="home-workshop-qr" style="display:none;">
-      <div class="home-workshop-qr-title" id="home-workshop-qr-title">Código QR del taller</div>
-      <div class="home-workshop-qr-status" id="home-workshop-qr-status" style="display:none;" role="alert"></div>
-      <div id="home-workshop-qr-slot"></div>
+      <button type="button" class="home-qr-email-toggle" id="home-qr-email-toggle" aria-expanded="false" aria-controls="home-enroll-collapsible" onclick="window._homeQrToggleEmail()">Inscribir por correo</button>
+      <div class="home-enroll home-enroll-collapsible" id="home-enroll-collapsible">
+        <div class="home-enroll-title" id="home-enroll-title">Inscribir a un empleado</div>
+        <label class="home-enroll-label" id="home-enroll-label" for="home-enroll-email">Correo del empleado</label>
+        <div class="home-enroll-row">
+          <input type="email" id="home-enroll-email" autocomplete="email" placeholder="empleado@empresa.com" />
+          <button type="button" id="home-enroll-btn" onclick="window._homeEnrollGenerate()">Generar código QR</button>
+        </div>
+        <div class="home-enroll-error" id="home-enroll-error" style="display:none;" role="alert"></div>
+        <div id="home-enroll-slot"></div>
+      </div>
     </div>
     <div class="home-join-fallback">
       <span class="join-code-label" style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
@@ -2712,6 +2745,8 @@ if (NIV_ROUTE === 'company') {
       window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href);
       return;
     }
+    // Session resolved: lift the auth veil before the view renders.
+    if (typeof window.__nivLiftVeil === 'function') window.__nivLiftVeil();
     initCompanyView(user);
   });
 }
@@ -2735,6 +2770,9 @@ let currentUser;
       window.location.href = 'https://login.nivelatolabs.com/?next=' + encodeURIComponent(window.location.href);
       return;
     }
+    // Session resolved: lift the auth veil. Data loads below have
+    // their own skeletons; the veil only covers the auth decision.
+    if (typeof window.__nivLiftVeil === 'function') window.__nivLiftVeil();
     // Alerta de inicio de sesion (niv-user.js): disparo sin bloqueo en el
     // aterrizaje autenticado; nunca debe romper el inicio de sesion.
     import('./niv-user.js').then(m => m.maybeSendLoginAlert(user)).catch(() => {});
@@ -3650,6 +3688,20 @@ let currentUser;
       window.closeQuoteModal();
     }
   });
+
+  // v1.2.21: the email enroll flow lives behind the card's button.
+  // Collapsed by default; expanding focuses the email input.
+  window._homeQrToggleEmail = () => {
+    const panel = document.getElementById('home-enroll-collapsible');
+    const btn = document.getElementById('home-qr-email-toggle');
+    if (!panel || !btn) return;
+    const open = panel.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) {
+      const input = document.getElementById('home-enroll-email');
+      if (input) input.focus();
+    }
+  };
 
   // v1.2.17: home-card enrollment tile (spec section 2.5). Mints a
   // FRESH single-use enrollment token for the entered email through
@@ -5796,6 +5848,7 @@ let currentUser;
     setText('home-enroll-btn', L('Generar código QR', 'Generate QR code'));
     setText('home-enroll-label', L('Correo del empleado', 'Employee email'));
     setText('home-workshop-qr-title', L('Código QR del taller', 'Workshop QR code'));
+    setText('home-qr-email-toggle', L('Inscribir por correo', 'Enroll by email'));
     // M27: project + measure detail views localize too
     setText('proj-measures-title', L('Medidas', 'Measurements'));
     setText('proj-users-title', L('Usuarios asignados', 'Users assigned'));
@@ -5980,7 +6033,7 @@ let currentUser;
       (rows.length
         ? rows.map(([es, en, v]) => `<div class="niv-detail-row"><span class="k">${escapeHtml(L(es, en))}</span><span class="v">${escapeHtml(v)}</span></div>`).join('')
         : '<div class="niv-panel-empty">' + escapeHtml(L('Sin datos de contacto registrados.', 'No contact details on record.')) + '</div>')
-      + (editBtn ? `<div style="margin-top:12px;">${editBtn}</div><div style="color:var(--niv-text-dim);font-size:12px;margin-top:8px;">${escapeHtml(L('El nombre es la clave del registro: identifica al cliente en medidas, proyectos y cotizaciones, y no se puede cambiar aquí.', 'The name is the record key: it identifies this customer across measurements, projects and quotes, and cannot be changed here.'))}</div><div class="niv-status-line" id="cust-contact-status"></div>` : '');
+      + (editBtn ? `<div style="margin-top:12px;">${editBtn}</div><div class="niv-status-line" id="cust-contact-status"></div>` : '');
     const btn = document.getElementById('cust-contact-edit');
     if (btn) btn.addEventListener('click', () => showCustomerContactForm(contactEl, key, c));
   };
@@ -5998,7 +6051,6 @@ let currentUser;
     // notas field (m2): it merges alongside telefono/email/direccion.
     contactEl.innerHTML = `
       <form id="cust-contact-form" novalidate>
-      <div style="color:var(--niv-text-dim);font-size:12px;margin-bottom:8px;">${escapeHtml(L('El nombre es la clave del registro y no se puede cambiar aquí.', 'The name is the record key and cannot be changed here.'))}</div>
       <div class="niv-field"><label for="cust-f-telefono">${escapeHtml(L('Teléfono', 'Phone'))}</label>
         <input type="tel" id="cust-f-telefono" value="${escapeHtml(c.telefono || '')}" maxlength="40" /></div>
       <div class="niv-field"><label for="cust-f-email">Email</label>
