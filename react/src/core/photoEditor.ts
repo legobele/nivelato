@@ -839,7 +839,9 @@ canvas.addEventListener('pointermove', (e) => {
   if (!dragging || e.pointerId !== activePointer) return;
   e.preventDefault();
   const p = toImageCoords(e);
-  corners[dragging] = { x: Math.max(0, Math.min(baseW, p.x)), y: Math.max(0, Math.min(baseH, p.y)) };
+  // keep every handle fully visible and leave room for the dimension lines/labels that sit just outside the edges
+  const mg = Math.max(Math.max(10, baseW * 0.018) + 6, 0.042 * Math.hypot(baseW, baseH));
+  corners[dragging] = { x: Math.max(mg, Math.min(baseW - mg, p.x)), y: Math.max(mg, Math.min(baseH - mg, p.y)) };
   redraw();
   showLoupe(e.clientX, e.clientY);
 });
@@ -1078,7 +1080,7 @@ return {
   ack: () => handleMessage({ origin: location.origin, data: { type: 'NIVELATO_PHOTO_ACK' } }),
   original: () => (img ? img.src : null),
   loadDataUrl: (u: string) => loadImage(u),
-  state: () => ({ hasImage: !!img, baseW, baseH, hasFrame: !!corners, strokes: customStrokes.length, corners, frameNorm }),
+  state: () => ({ hasImage: !!img, baseW, baseH, hasFrame: !!corners, strokes: customStrokes.length, corners, frameNorm, annotations: serializeAnnotations() }),
   destroy: () => { offs.forEach((f) => f()); try { clearTimeout(doneAckTimer); } catch (e) {} },
 };
 }
