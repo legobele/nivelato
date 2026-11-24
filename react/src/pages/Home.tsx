@@ -4,6 +4,7 @@ import { useRepo } from '../App';
 import { useT } from '../i18n';
 import type { Job, Project } from '../data/types';
 import { JoinCode } from '../ui/JoinCode';
+import { WorkshopQr } from '../ui/WorkshopQr';
 import { IPlus } from '../ui/Icons';
 import { JobRow } from './Measures';
 export function Home() {
@@ -18,7 +19,7 @@ export function Home() {
   const today = jobs.filter((j) => j.createdAt >= day.getTime()).length;
   const stats: [number, string][] = [[projects.length, t('projects')], [jobs.length, t('measures')], [today, t('today')], ...(r.can('userManagement') ? [[members, t('users')] as [number, string]] : []), [n, t('customers')], [unread, t('unread')]];
   return (<>
-    <div className="head"><h1>{t('panel')}</h1></div><JoinCode />
+    <div className="head"><h1>{t('panel')}</h1></div><JoinCode /><WorkshopQr />
     <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", marginBottom: 16 }}>
       {stats.map(([v, l]) => <div className="card stat" key={l}><b>{v}</b><span className="mono">[ {l.toUpperCase()} ]</span></div>)}
     </div>
