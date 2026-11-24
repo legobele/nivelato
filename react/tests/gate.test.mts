@@ -1,0 +1,10 @@
+import assert from 'node:assert';
+import { validateApply } from '../src/core/apply.ts';
+assert.ok(Object.keys(validateApply({})).length >= 12);
+const good = { legalName: 'Taller Demo', bizType: 'glass', addrStreet: 'Calle 1 #2', addrCity: 'Ponce', addrZip: '00731', contactName: 'Ana Ruiz', contactRole: 'Dueña', contactPhone: '787-555-0100', contactEmail: 'a@b.co', employees: '10', technicians: '4', currentProcess: 'Cinta y papel', volume: 'lt10week', tier: 'pro', timeline: 'asap', hearAbout: 'search' };
+assert.deepStrictEqual(validateApply(good), {});
+assert.ok(validateApply({ ...good, addrZip: '731' }).addrZip);
+assert.ok(validateApply({ ...good, contactPhone: '555' }).contactPhone);
+assert.ok(validateApply({ ...good, bizType: 'other' }).bizTypeOther);
+assert.ok(validateApply({ ...good, employees: '0' }).employees);
+console.log('gate ok');
