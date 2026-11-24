@@ -41,6 +41,7 @@ export function demoRepo(): Repo {
     mode: 'demo', writable: true, joinCode: 'DEMO-4821', get orgName() { return orgName; },
     company: async () => ({ empresa: { nombre: orgName, direccion: 'Carr. 693, Dorado', telefono: '787-555-0142', email: 'taller@example.test' }, tasaIVU: 0.115, validezDias: 30 }),
     workshopQr: { status: async () => demoTok ? { status: 'pending', createdAt: demoTok.createdAt, expiresAt: demoTok.expiresAt } : { status: 'none' }, mint: async () => { const QR = await import('qrcode'); const id = Math.random().toString(36).slice(2, 10); const url = 'https://nivelatolabs.com/join?demo=' + id; demoTok = { url, qrSvg: await QR.toString(url, { type: 'svg', margin: 0 }), createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 7 * 864e5).toISOString() }; return demoTok; } },
+    setAnnotatedPhoto: async (id, dataUrl, annotations) => { jobs = jobs.map((j) => (j.id === id ? { ...j, annotatedPhoto: dataUrl, annotations } as any : j)); },
     invites: async () => (me.role === 'owner' ? inv : []),
     sendInvite: async (i) => { if (me.role !== 'owner') throw new Error('No permission'); const e = i.email.trim().toLowerCase(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) throw new Error('email'); if (team.some((m) => m.email.toLowerCase() === e)) throw new Error('member'); inv = [{ ...i, email: e, createdAt: Date.now() }, ...inv.filter((x) => x.email !== e)]; },
     revokeInvite: async (e) => { if (me.role !== 'owner') throw new Error('No permission'); inv = inv.filter((x) => x.email !== e); },

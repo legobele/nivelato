@@ -45,6 +45,7 @@ export async function liveRepo(user: User): Promise<Repo> {
     savePrice: async () => { throw new Error(RO); }, deletePrice: async () => { throw new Error(RO); },
     company: async () => { const d: any = (await getDoc(doc(db, 'companies', orgId))).data() || {}; const aj = d.ajustes || {}; return { empresa: { nombre: d.nombre || '', direccion: d.direccion || '', telefono: d.telefono || '', email: d.email || '', logoUrl: d.logoUrl || '' }, tasaIVU: aj.tasaIVU != null ? Number(aj.tasaIVU) : 0.115, validezDias: aj.validezDias != null ? Number(aj.validezDias) : 30, prefijo: aj.prefijoFolio }; },
     workshopQr: { status: async () => ((await httpsCallable(getFunctions(app!, 'us-central1'), 'getWorkshopEnrollmentTokenStatus')({ orgId })).data as any), mint: async () => { throw new Error('Unavailable in preview'); } },
+    setAnnotatedPhoto: async () => { throw new Error('Unavailable in preview'); },
     invites: async () => { if (!can('userManagement')) return []; return (await getDocs(collection(db, 'orgs', orgId, 'invites'))).docs.map((d) => ({ email: d.id, ...d.data(), createdAt: ts(d.data().createdAt) }) as any); },
     sendInvite: async () => { throw new Error(RO); }, revokeInvite: async () => { throw new Error(RO); },
     updateName: async () => { throw new Error(RO); }, updateOrgName: async () => { throw new Error(RO); },
