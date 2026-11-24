@@ -51,6 +51,6 @@ export function SettingsPage({ onLogout, refresh }: { onLogout: () => void; refr
     <EditRow key={'o' + r.orgName} label={t('company')} value={r.orgName} canEdit={r.me.role === 'owner'} writable={r.writable} onSave={async (v) => { await r.updateOrgName(v); refresh(); }} />
     <div className="row"><div className="t"><b>{t('ivuRate')}</b><span className="mono">11.5%</span></div></div>
     <div className="row"><div className="t"><b>{t('legal')}</b><span><a href="https://legobele.github.io/nivelato/privacy.html" target="_blank" rel="noopener noreferrer">{t('privacy')}</a> · <a href="https://support.nivelatolabs.com/" target="_blank" rel="noopener noreferrer">{t('helpCenter')}</a></span></div></div>
-    <div className="row"><div className="t"><b>{t('version')}</b><span className="mono">2.0.0-preview.9</span></div></div>
+    <div className="row"><div className="t"><b>{t('version')}</b><span className="mono">2.0.0-preview.10</span></div></div>
     <div className="row"><button className="btn" onClick={onLogout}>{t('logout')}</button></div></div></>);
 }

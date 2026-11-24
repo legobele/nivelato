@@ -34,6 +34,6 @@ export function MeasureDetail() {
     <div className="grid g2"><Graph g={jobGraph(j)} />
       <div className="card"><div className="wc">{walls.map(([n, k]) => { const p = j.paredes[k]; const ab = !legacy && p.desnivelAB ? ` (${p.desnivelAB > 0 ? '+' : '-'}${toFracStr(Math.abs(p.desnivelAB))})` : '';
         return <div className="wcard" key={k}><h3>{t(n)}</h3><dl><dt>A</dt><dd>{toFracStr(p.a)}</dd><dt>B</dt><dd>{toFracStr(p.b)}</dd><dt>{t('offset')}</dt><dd>{lab[k]}{ab}</dd></dl></div>; })}</div>
-      {(j.annotatedPhoto || j.photo) && <img src={(j.annotatedPhoto || j.photo)!} alt="" style={{ width: '100%', borderRadius: 10, marginTop: 12 }} />}
+      <Link className="btn sm" style={{ marginTop: 12 }} to={'/foto?job=' + j.id}>{t('photoMark')}</Link>{(j.annotatedPhoto || j.photo) && <img src={(j.annotatedPhoto || j.photo)!} alt="" style={{ width: '100%', borderRadius: 10, marginTop: 12 }} />}
       <p className="dim" style={{ marginBottom: 0 }}>{legacy ? t('legacy') : t('abTo')}</p></div></div></>);
 }
