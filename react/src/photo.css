@@ -1,0 +1,52 @@
+.photo-root{--niv-bg:#050505;--niv-surface:#0e0e10;--niv-surface-2:#16161a;--niv-border:rgba(255,255,255,.28);--niv-border-soft:rgba(255,255,255,.14);--niv-text:#fafafa;--niv-text-dim:#a8a8b0;--niv-accent:#fafafa;--niv-pill:999px;--niv-radius:6px;position:fixed;inset:0;z-index:50}
+
+.photo-root *, .photo-root *::before, .photo-root *::after{ box-sizing: border-box; margin: 0; padding: 0; }
+.photo-root, .photo-root{ height: 100%; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--niv-bg); color: var(--niv-text); overflow: hidden; }
+.photo-root #app-shell{ display: flex; flex-direction: column; height: 100dvh; }
+.photo-root header{ display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--niv-surface); border-bottom: 1px solid var(--niv-border-soft); flex-shrink: 0; gap: 10px; }
+.photo-root .header-titles{ min-width: 0; flex: 1 1 auto; }
+.photo-root .header-title{ font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.photo-root .header-sub{ font-size: 11px; color: var(--niv-text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.photo-root .header-btns{ display: flex; gap: 8px; flex-shrink: 0; }
+.photo-root .header-btn{ padding: 8px 14px; border: 1px solid var(--niv-border-soft); border-radius: var(--niv-pill); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; background: var(--niv-surface-2); color: var(--niv-text); }
+.photo-root .header-btn.primary{ background: linear-gradient(135deg, #fafafa, #c9c9ce); border-color: transparent; color: #050505; }
+.photo-root .header-btn svg{ width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px; }
+.photo-root .header-btn:hover{ filter: brightness(1.15); }
+.photo-root .header-btn:disabled{ opacity: 0.4; cursor: default; }
+.photo-root @media (max-width: 480px){.photo-root header{ padding: 8px 10px; gap: 8px; }
+.photo-root .header-title{ font-size: 14px; }
+.photo-root .header-btns{ gap: 6px; }
+.photo-root .header-btn{ padding: 8px 11px; font-size: 12.5px; white-space: nowrap; }
+.photo-root .header-btn svg{ margin-right: 4px; }
+  }
+.photo-root #stage{ flex: 1; position: relative; overflow: hidden; background: var(--niv-bg); display: flex; align-items: center; justify-content: center; touch-action: none; }
+.photo-root #photo-canvas{ position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #000; touch-action: none; }
+.photo-root #empty-state{ position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--niv-text-dim); text-align: center; padding: 24px; }
+.photo-root #empty-state .big{ line-height: 0; }
+.photo-root #empty-state .big svg{ width: 44px; height: 44px; display: block; }
+.photo-root .btn-photo{ padding: 14px 22px; border: 1px solid transparent; border-radius: var(--niv-pill); font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; background: linear-gradient(135deg, #fafafa, #c9c9ce); color: #050505; }
+.photo-root .btn-photo.ghost{ background: var(--niv-surface-2); border-color: var(--niv-border-soft); color: var(--niv-text); }
+.photo-root #toolbar{ display: flex; gap: 6px; align-items: center; padding: 8px 12px; background: var(--niv-surface); border-top: 1px solid var(--niv-border-soft); flex-shrink: 0; overflow-x: auto; flex-wrap: wrap; }
+.photo-root .tool-btn{ display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 44px; padding: 6px 10px; border: 1px solid var(--niv-border-soft); border-radius: 8px; background: transparent; color: var(--niv-text-dim); font-family: inherit; font-size: 10px; font-weight: 600; cursor: pointer; }
+.photo-root .tool-btn .ico{ line-height: 0; }
+.photo-root .tool-btn .ico svg{ width: 16px; height: 16px; display: block; }
+.photo-root .tool-btn.active{ background: rgba(25,113,194,0.22); border-color: var(--niv-accent); color: var(--niv-text); }
+.photo-root .tool-sep{ width: 1px; height: 26px; background: var(--niv-border-soft); flex-shrink: 0; }
+.photo-root #loupe-canvas{ display: none; position: fixed; width: 160px; height: 160px; border-radius: 50%; box-shadow: 0 4px 24px rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.7); pointer-events: none; z-index: 5; background:#000; }
+.photo-root #label-modal{ position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 50; padding: 24px; }
+.photo-root #label-modal.open{ display: flex; }
+.photo-root .label-card{ background: var(--niv-surface); border: 1px solid var(--niv-border-soft); border-radius: var(--niv-radius); padding: 20px; width: 100%; max-width: 340px; }
+.photo-root .label-card h3{ font-size: 15px; margin-bottom: 12px; }
+.photo-root .label-card input{ width: 100%; padding: 10px 12px; border: 1px solid var(--niv-border-soft); border-radius: 8px; background: var(--niv-surface-2); color: var(--niv-text); font-size: 15px; font-family: inherit; margin-bottom: 12px; outline: none; }
+.photo-root .label-card input:focus{ border-color: var(--niv-accent); }
+.photo-root button:focus-visible{ outline: 2px solid var(--niv-accent); outline-offset: 2px; }
+.photo-root .label-actions{ display: flex; gap: 8px; }
+.photo-root .label-actions button{ flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
+.photo-root .sr-only{ position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.photo-root #load-error{ display: none; color: #f87171; font-size: 13px; max-width: 320px; }
+.photo-root .btn-ok{ background: linear-gradient(135deg, #fafafa, #c9c9ce); color: #050505; }
+.photo-root .btn-cancel{ background: var(--niv-surface-2); color: var(--niv-text-dim); }
+.photo-root .quick-chips{ display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.photo-root .quick-chips button{ min-height: 44px; padding: 6px 12px; border: 1px solid var(--niv-border-soft); border-radius: 6px; background: transparent; color: var(--niv-text); font-size: 12px; font-family: inherit; cursor: pointer; }
+.photo-root .quick-chips button:hover{ border-color: var(--niv-accent); color: var(--niv-text); }
+.photo-root #hint-bar{ font-size: 11px; color: var(--niv-text-dim); text-align: center; padding: 8px 16px; background: var(--niv-surface); border-top: 1px solid var(--niv-border-soft); flex-shrink: 0; }

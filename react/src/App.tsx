@@ -1,3 +1,4 @@
+import { Photo } from './pages/Photo';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
 import type { Repo } from './data/types';
@@ -56,6 +57,7 @@ function Inner() {
             <Route path="/" element={<Home />} />
             <Route path="/medidas" element={<Measures />} />
             <Route path="/medidas/:id" element={<MeasureDetail />} />
+            <Route path="/foto" element={<Photo />} />
             <Route path="/nueva" element={<NewMeasurement />} />
             <Route path="/clientes" element={<Customers />} />
             <Route path="/proyectos" element={<Projects />} /><Route path="/proyectos/:id" element={<ProjectDetail />} />
