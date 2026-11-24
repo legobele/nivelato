@@ -1,6 +1,6 @@
 import type { Repo, Job, Customer } from './types';
 import { qLineSubtotal, qTotals, type QLine } from '../core/quotes';
-import type { Quote, Notif } from './types';
+import type { Quote, Notif, PriceItem } from './types';
 import { makePermChecker } from '../core/permissions';
 import { offsetResult, derivedDims, OFF_KEYS, type WallKey, type Reading } from '../core/leveling';
 
@@ -21,6 +21,10 @@ const seed: Job[] = [
 ];
 const L = (d: string, c: number, p: number, m: 'porUnidad' | 'porPieCuadrado', a?: number): QLine => { const l: QLine = { lineaId: Math.random().toString(36).slice(2, 8), descripcion: d, cantidad: c, precioUnitario: p, modeloPrecio: m, areaPie2: a }; l.subtotalLinea = qLineSubtotal(l); return l; };
 const mkq = (id: string, numero: string, cliente: string, estado: Quote['estado'], lineas: QLine[], days: number): Quote => ({ id, numero, cliente, estado, lineas, descuento: { tipo: 'ninguno', valor: 0 }, totales: qTotals(lineas, null, 0.115), validezDias: 30, notas: '', creadoEl: Date.now() - days * 864e5 });
+let prices: PriceItem[] = [
+  { id: 'p1', nombre: 'Vidrio templado 1/4"', unidad: 'pie²', precio: 14.5, activo: true },
+  { id: 'p2', nombre: 'Marco aluminio', unidad: 'pie', precio: 6.25, activo: true },
+  { id: 'p3', nombre: 'Instalación', unidad: 'hora', precio: 45, activo: true }];
 export function demoRepo(): Repo {
   let jobs = [...seed];
   let quotes: Quote[] = [mkq('q1', 'COT-0001', 'Residencia Ortiz', 'enviada', [L('Vidrio templado 1/4"', 2, 14.5, 'porPieCuadrado', 30), L('Instalación', 3, 45, 'porUnidad')], 2), mkq('q2', 'COT-0002', 'Farmacia Central', 'aprobada', [L('Vidrio templado 1/4"', 1, 14.5, 'porPieCuadrado', 80)], 8)];
@@ -45,10 +49,9 @@ export function demoRepo(): Repo {
       { uid: 'u3', name: 'Medidor demo', email: 'med@example.test', role: 'medidor' },
       { uid: 'u5', name: 'Cotizador demo', email: 'quote@example.test', role: 'cotizador' },
       { uid: 'u4', name: 'Nuevo ingreso', email: 'new@example.test', role: 'pending' }],
-    priceList: async () => [
-      { id: 'p1', nombre: 'Vidrio templado 1/4"', unidad: 'pie²', precio: 14.5, activo: true },
-      { id: 'p2', nombre: 'Marco aluminio', unidad: 'pie', precio: 6.25, activo: true },
-      { id: 'p3', nombre: 'Instalación', unidad: 'hora', precio: 45, activo: true }],
+    priceList: async () => prices.map((x) => ({ ...x })),
+    savePrice: async (p) => { if (!makePermChecker(me)('managePriceList')) throw new Error('No permission'); const i = prices.findIndex((x) => x.id === p.id); if (i >= 0) prices[i] = { ...p }; else prices.push({ ...p }); },
+    deletePrice: async (id) => { if (!makePermChecker(me)('managePriceList')) throw new Error('No permission'); prices = prices.filter((x) => x.id !== id); },
     saveJob: async (j) => { if (!makePermChecker(me)('createMeasurements')) throw new Error('No permission'); const id = 'j' + (jobs.length + 1); jobs = [{ ...j, id, createdAt: Date.now(), status: 'complete', installerUid: me.uid, installerName: 'Medidor demo' }, ...jobs]; return id; },
   };
 }

@@ -7,8 +7,10 @@ import { getFirestore, collection, getDocs, getDoc, doc, query, orderBy, limit, 
 import type { Repo, Job, Member } from './types';
 import { makePermChecker } from '../core/permissions';
 
+// Public Firebase web config, copied from the app's own firebase-config.js (web keys are not secrets; Firestore rules enforce access).
+const PUBLIC_WEB_KEY = "AIzaSyDLOcT2LkztypbqUNmAX6dEdNW9INMxkVw";
 const cfg = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY, authDomain: 'nivelato-app.firebaseapp.com', projectId: 'nivelato-app',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || PUBLIC_WEB_KEY, authDomain: 'nivelato-app.firebaseapp.com', projectId: 'nivelato-app',
   storageBucket: 'nivelato-app.firebasestorage.app', messagingSenderId: '759893408531', appId: '1:759893408531:web:696e2da5f004a3bac5f8e6',
 };
 export const liveEnabled = Boolean(cfg.apiKey);
@@ -39,6 +41,7 @@ export async function liveRepo(user: User): Promise<Repo> {
     markRead: async () => { throw new Error(RO); }, deleteNotif: async () => { throw new Error(RO); },
     members: async () => (await getDocs(collection(db, 'users'))).docs.map((d) => ({ uid: d.id, ...d.data() }) as Member).filter((m: any) => (m as any).orgId === orgId),
     priceList: async () => { const cid = org.data()?.companyId; if (!cid) return []; return (await getDocs(collection(db, 'companies', cid, 'priceList'))).docs.map((d) => ({ id: d.id, ...d.data() }) as any); },
+    savePrice: async () => { throw new Error(RO); }, deletePrice: async () => { throw new Error(RO); },
     saveJob: async () => { throw new Error('La vista previa React no escribe datos de producción.'); },
   };
 }

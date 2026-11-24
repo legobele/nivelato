@@ -28,6 +28,8 @@ export interface Repo {
   customers(): Promise<Customer[]>;
   members(): Promise<Member[]>;
   priceList(): Promise<PriceItem[]>;
+  savePrice(p: PriceItem): Promise<void>;
+  deletePrice(id: string): Promise<void>;
   projects(): Promise<Project[]>;
   quotes(): Promise<Quote[]>;
   saveQuote(q: Omit<Quote, 'id' | 'creadoEl' | 'numero' | 'estado'>): Promise<string>;
