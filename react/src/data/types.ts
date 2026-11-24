@@ -16,6 +16,7 @@ export interface PriceItem { id: string; nombre: string; unidad: string; precio:
 export interface Notif { id: string; type: string; title: string; body?: string; createdAt: number; read: boolean }
 export interface Quote { id: string; numero: string; cliente: string; estado: 'borrador' | 'enviada' | 'aprobada' | 'rechazada'; lineas: QLine[]; descuento: Descuento; totales: ReturnType<typeof qTotals>; validezDias: number; notas: string; creadoEl: number }
 export interface Project { id: string; name: string; customer: string; jobs: number }
+export interface Invite { email: string; role: 'owner' | 'supervisor' | 'medidor' | 'cotizador' | 'pending'; permissions: Record<string, boolean>; createdAt: number }
 export interface Repo {
   mode: 'demo' | 'live';
   writable: boolean;
@@ -40,6 +41,9 @@ export interface Repo {
   deleteNotif(id: string): Promise<void>;
   addCustomer(name: string): Promise<void>;
   addProject(customer: string, name: string): Promise<void>;
+  invites(): Promise<Invite[]>;
+  sendInvite(i: Omit<Invite, 'createdAt'>): Promise<void>;
+  revokeInvite(email: string): Promise<void>;
   updateName(name: string): Promise<void>;
   updateOrgName(name: string): Promise<void>;
   saveJob(j: Omit<Job, 'id' | 'createdAt' | 'status' | 'installerName'>): Promise<string>;

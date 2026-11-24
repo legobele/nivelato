@@ -26,12 +26,20 @@ let prices: PriceItem[] = [
   { id: 'p2', nombre: 'Marco aluminio', unidad: 'pie', precio: 6.25, activo: true },
   { id: 'p3', nombre: 'Instalación', unidad: 'hora', precio: 45, activo: true }];
 export function demoRepo(): Repo {
-  let orgName = 'Taller Demo'; let jobs = [...seed]; const xc: string[] = []; const xp: { customer: string; name: string }[] = [];
+  const team: import('./types').Member[] = [
+      { uid: 'u1', name: 'Dueño demo', email: 'owner@example.test', role: 'owner' },
+      { uid: 'u2', name: 'Supervisor demo', email: 'sup@example.test', role: 'supervisor' },
+      { uid: 'u3', name: 'Medidor demo', email: 'med@example.test', role: 'medidor' },
+      { uid: 'u5', name: 'Cotizador demo', email: 'quote@example.test', role: 'cotizador' },
+      { uid: 'u4', name: 'Nuevo ingreso', email: 'new@example.test', role: 'pending' }]; let orgName = 'Taller Demo'; let inv: import('./types').Invite[] = []; let jobs = [...seed]; const xc: string[] = []; const xp: { customer: string; name: string }[] = [];
   let quotes: Quote[] = [mkq('q1', 'COT-0001', 'Residencia Ortiz', 'enviada', [L('Vidrio templado 1/4"', 2, 14.5, 'porPieCuadrado', 30), L('Instalación', 3, 45, 'porUnidad')], 2), mkq('q2', 'COT-0002', 'Farmacia Central', 'aprobada', [L('Vidrio templado 1/4"', 1, 14.5, 'porPieCuadrado', 80)], 8)];
   let notifs: Notif[] = [{ id: 'n1', type: 'device', title: 'Nuevo inicio de sesión', body: 'Medidor demo inició sesión en un dispositivo nuevo.', createdAt: Date.now() - 36e5, read: false }, { id: 'n2', type: 'update', title: 'Nueva versión disponible', createdAt: Date.now() - 864e5, read: true }];
   const me: any = { uid: 'u3', name: 'Medidor demo', role: 'owner', tier: 'ultra', orgId: 'demo', permissions: {} };
   return {
     mode: 'demo', writable: true, joinCode: 'DEMO-4821', get orgName() { return orgName; },
+    invites: async () => (me.role === 'owner' ? inv : []),
+    sendInvite: async (i) => { if (me.role !== 'owner') throw new Error('No permission'); const e = i.email.trim().toLowerCase(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) throw new Error('email'); if (team.some((m) => m.email.toLowerCase() === e)) throw new Error('member'); inv = [{ ...i, email: e, createdAt: Date.now() }, ...inv.filter((x) => x.email !== e)]; },
+    revokeInvite: async (e) => { if (me.role !== 'owner') throw new Error('No permission'); inv = inv.filter((x) => x.email !== e); },
     updateName: async (n) => { n = n.trim(); if (!n) throw new Error('name'); me.name = n; },
     updateOrgName: async (n) => { if (me.role !== 'owner') throw new Error('No permission'); n = n.trim(); if (!n) throw new Error('name'); orgName = n; },
      me, setRole: (r) => { me.role = r; }, can: (k) => makePermChecker(me)(k),
@@ -49,12 +57,7 @@ export function demoRepo(): Repo {
     saveQuote: async (q) => { const id = 'q' + (quotes.length + 1); quotes = [{ ...q, id, numero: 'COT-' + String(quotes.length + 1).padStart(4, '0'), estado: 'borrador', creadoEl: Date.now() }, ...quotes]; return id; },
     setQuoteState: async (id, e) => { quotes = quotes.map((q) => (q.id === id ? { ...q, estado: e } : q)); },
     notifications: async () => notifs, markRead: async (id) => { notifs = notifs.map((n) => (n.id === id ? { ...n, read: true } : n)); }, deleteNotif: async (id) => { notifs = notifs.filter((n) => n.id !== id); },
-    members: async () => [
-      { uid: 'u1', name: 'Dueño demo', email: 'owner@example.test', role: 'owner' },
-      { uid: 'u2', name: 'Supervisor demo', email: 'sup@example.test', role: 'supervisor' },
-      { uid: 'u3', name: 'Medidor demo', email: 'med@example.test', role: 'medidor' },
-      { uid: 'u5', name: 'Cotizador demo', email: 'quote@example.test', role: 'cotizador' },
-      { uid: 'u4', name: 'Nuevo ingreso', email: 'new@example.test', role: 'pending' }],
+    members: async () => team,
     priceList: async () => prices.map((x) => ({ ...x })),
     savePrice: async (p) => { if (!makePermChecker(me)('managePriceList')) throw new Error('No permission'); const i = prices.findIndex((x) => x.id === p.id); if (i >= 0) prices[i] = { ...p }; else prices.push({ ...p }); },
     deletePrice: async (id) => { if (!makePermChecker(me)('managePriceList')) throw new Error('No permission'); prices = prices.filter((x) => x.id !== id); },

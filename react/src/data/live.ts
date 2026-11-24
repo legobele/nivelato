@@ -42,6 +42,8 @@ export async function liveRepo(user: User): Promise<Repo> {
     members: async () => (await getDocs(collection(db, 'users'))).docs.map((d) => ({ uid: d.id, ...d.data() }) as Member).filter((m: any) => (m as any).orgId === orgId),
     priceList: async () => { const cid = org.data()?.companyId; if (!cid) return []; return (await getDocs(collection(db, 'companies', cid, 'priceList'))).docs.map((d) => ({ id: d.id, ...d.data() }) as any); },
     savePrice: async () => { throw new Error(RO); }, deletePrice: async () => { throw new Error(RO); },
+    invites: async () => { if (!can('userManagement')) return []; return (await getDocs(collection(db, 'orgs', orgId, 'invites'))).docs.map((d) => ({ email: d.id, ...d.data(), createdAt: ts(d.data().createdAt) }) as any); },
+    sendInvite: async () => { throw new Error(RO); }, revokeInvite: async () => { throw new Error(RO); },
     updateName: async () => { throw new Error(RO); }, updateOrgName: async () => { throw new Error(RO); },
     addCustomer: async () => { throw new Error(RO); }, addProject: async () => { throw new Error(RO); },
     saveJob: async () => { throw new Error('La vista previa React no escribe datos de producción.'); },
