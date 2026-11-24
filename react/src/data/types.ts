@@ -50,6 +50,6 @@ export interface Repo {
   revokeInvite(email: string): Promise<void>;
   updateName(name: string): Promise<void>;
   updateOrgName(name: string): Promise<void>;
-  setAnnotatedPhoto(id: string, dataUrl: string, annotations: unknown): Promise<void>;
+  setAnnotatedPhoto(id: string, dataUrl: string, annotations: unknown, original?: string | null): Promise<void>;
   saveJob(j: Omit<Job, 'id' | 'createdAt' | 'status' | 'installerName'>): Promise<string>;
 }
