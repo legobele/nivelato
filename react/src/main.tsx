@@ -8,7 +8,7 @@ import '@fontsource/eb-garamond/latin-500.css';
 import '@fontsource/eb-garamond/latin-600.css';
 import '@fontsource/cormorant-garamond/latin-600.css';
 import './styles.css';
-const q = new URLSearchParams(location.search).get('serif'); document.documentElement.dataset.serif = q === 'eb' || q === 'cg' ? q : 'is';
+document.documentElement.dataset.serif = 'is';
 createRoot(document.getElementById('root')!).render(<HashRouter><App /></HashRouter>);
 
 if ('serviceWorker' in navigator && import.meta.env.PROD && !new URLSearchParams(location.search).has('nosw')) window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
