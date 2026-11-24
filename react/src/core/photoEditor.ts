@@ -170,6 +170,9 @@ function pillPath(c, x, y, w, h, r) {
   c.closePath();
 }
 
+let placed = [];
+function aabb(cx, cy, w, h, a) { const k = Math.abs(Math.cos(a || 0)), n = Math.abs(Math.sin(a || 0)); return { x0: cx - (w * k + h * n) / 2, x1: cx + (w * k + h * n) / 2, y0: cy - (w * n + h * k) / 2, y1: cy + (w * n + h * k) / 2 }; }
+function hits(a, b) { return a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0; }
 function drawLabel(c, text, x, y, angle, size) {
   c.save();
   c.translate(x, y);
@@ -184,6 +187,7 @@ function drawLabel(c, text, x, y, angle, size) {
   c.fillStyle = TEXT_COLOR;
   c.fillText(text, 0, 1);
   c.restore();
+  placed.push(aabb(x, y, w + 16, size + 12, angle));
   return { cx: x, cy: y, w: w + 16, h: size + 12, angle: angle || 0 };
 }
 
@@ -230,8 +234,13 @@ function drawDimLinePx(c, a, b, off, label, dimKey) {
   if (label) {
     const mid = { x: (a2.x + b2.x) / 2, y: (a2.y + b2.y) / 2 };
     const dl = dimKey ? dimLabels[dimKey] : null;
-    const center = (dl && dl.pos) ? dl.pos : mid;
     const size = labelFontSize() * (dl ? dl.scale : 1);
+    let center = (dl && dl.pos) ? dl.pos : mid;
+    if (!(dl && dl.pos)) {  // keep the auto-placed label fully inside the photo after corner moves
+      c.font = 'bold ' + size + 'px system-ui, sans-serif';
+      const hw = c.measureText(label).width / 2 + 8 + size * 0.4, hh = size / 2 + 6 + size * 0.5;
+      center = { x: Math.min(Math.max(mid.x, hw), baseW - hw), y: Math.min(Math.max(mid.y, hh), baseH - hh) };
+    }
     const box = drawLabel(c, label, center.x, center.y, (dl && dl.pos) ? 0 : ang, size);
     if (c === ctx && dimKey) hitBoxes.dims[dimKey] = box;
   }
@@ -277,6 +286,7 @@ function quadPath(c, q) {
 }
 
 function renderFrame(c, cn, opts) {
+  placed = [];
   const g = frameNorm || computeFrameNorm(measurements);
   const oq = offsetQuad(cn);
 
@@ -302,6 +312,8 @@ function renderFrame(c, cn, opts) {
 
   // Offset badges: a connector from the base corner to the moved
   // corner plus the offset's saved label, for every nonzero offset.
+  const bd = labelFontSize() * 1.1;
+  const badges = [];
   const badge = (basePt, offPt, raw, label, dx, dy) => {
     if (!raw || !label || label === 'Nivel') return;
     c.save();
@@ -311,19 +323,9 @@ function renderFrame(c, cn, opts) {
     c.moveTo(basePt.x, basePt.y);
     c.lineTo(offPt.x, offPt.y);
     c.stroke();
-    // Signed labels ("... (+2\")") are longer: for the right-edge badges
-    // (dx > 0) place them inside the frame, to the left of the corner, so
-    // they stay clear of the dimension line and the corner handle.
-    let px = offPt.x + dx, py = offPt.y + dy;
-    if (dx > 0 && label.indexOf('(') >= 0) {
-      c.font = 'bold ' + (labelFontSize() * 0.82) + 'px system-ui, sans-serif';
-      px = offPt.x - c.measureText(label).width / 2 - bd * 0.9;
-      py = offPt.y + (dy > 0 ? bd * 0.2 + dy : -bd * 1.6);
-    }
-    drawLabel(c, label, px, py, 0, labelFontSize() * 0.82);
     c.restore();
+    badges.push({ offPt, label, dx, dy });
   };
-  const bd = labelFontSize() * 1.1;
   badge(cn.TL, oq.TL, g.pI, offsetLabels.paredIzq, 0, -bd);
   badge(cn.TR, oq.TR, g.pD, offsetLabels.paredDer, bd, -bd);
   badge(cn.TR, oq.TR, g.t, offsetLabels.techo, bd, bd);
@@ -337,6 +339,41 @@ function renderFrame(c, cn, opts) {
   drawDimLinePx(c, oq.TL, oq.TR, -1, dimLabel(g.anchoTop), 'top');
   drawDimLinePx(c, cn.TL, cn.BL, 1, dimLabel(g.altoIzq), 'left');
   drawDimLinePx(c, oq.TR, oq.BR, -1, dimLabel(g.altoDer), 'right');
+
+  // Place the offset badges AFTER the dimension labels, trying candidate
+  // spots around the moved corner and taking the first one that overlaps
+  // no label, no corner handle and stays inside the photo.
+  {
+    const fs = labelFontSize() * 0.82;
+    const hr = Math.max(10, baseW * 0.018) + 6;
+    const handleBoxes = ['TL', 'TR', 'BR', 'BL'].map((k) => aabb(cn[k].x, cn[k].y, hr * 2, hr * 2, 0));
+    for (const bg of badges) {
+      c.font = 'bold ' + fs + 'px system-ui, sans-serif';
+      const w = c.measureText(bg.label).width + 16, h = fs + 12;
+      const o = bg.offPt;
+      const cand = [];
+      const sx = bg.dx > 0 ? -1 : 1;
+      const gapX = w / 2 + hr + 4, gapY = h / 2 + hr + 4;
+      for (const m of [1, 1.6, 2.2, 3]) {
+        cand.push([o.x + (bg.dx > 0 ? -gapX : 0) * 1, o.y + bg.dy * 0 + (bg.dy < 0 ? -gapY * m : bg.dy > 0 ? gapY * m : 0)]);
+        cand.push([o.x + sx * gapX * m, o.y + gapY * m]);
+        cand.push([o.x + sx * gapX * m, o.y - gapY * m]);
+        cand.push([o.x + sx * gapX * m, o.y]);
+        cand.push([o.x, o.y + gapY * m]);
+        cand.push([o.x, o.y - gapY * m]);
+      }
+      let best = null, bestScore = 1e9;
+      for (const [x, y] of cand) {
+        const bx = aabb(x, y, w, h, 0);
+        let sc = 0;
+        for (const q of placed) if (hits(bx, q)) sc += 1;
+        for (const q of handleBoxes) if (hits(bx, q)) sc += 1;
+        if (bx.x0 < 0 || bx.y0 < 0 || bx.x1 > baseW || bx.y1 > baseH) sc += 1;
+        if (sc < bestScore) { bestScore = sc; best = [x, y]; if (!sc) break; }
+      }
+      drawLabel(c, bg.label, best[0], best[1], 0, fs);
+    }
+  }
 
   if (opts && opts.handles) drawHandles(c);
 }
@@ -617,6 +654,8 @@ function fitCanvas() {
   canvas.style.aspectRatio = baseW + ' / ' + baseH;
 }
 on(window, 'resize', fitCanvas);
+if (typeof ResizeObserver !== 'undefined') { const ro = new ResizeObserver(() => fitCanvas()); ro.observe(stage); offs.push(() => ro.disconnect()); }
+setTimeout(fitCanvas, 60);
 on(window, 'orientationchange', () => setTimeout(fitCanvas, 100));
 
 // ── hit testing / dragging ──
@@ -1037,6 +1076,7 @@ function labelSign(s, negCh) { return (s && s.indexOf(negCh) !== -1) ? -1 : 1; }
 return {
   setMeasurements: (data: any) => handleMessage({ origin: location.origin, data: { type: 'NIVELATO_MEASUREMENTS', ...data } }),
   ack: () => handleMessage({ origin: location.origin, data: { type: 'NIVELATO_PHOTO_ACK' } }),
+  original: () => (img ? img.src : null),
   loadDataUrl: (u: string) => loadImage(u),
   state: () => ({ hasImage: !!img, baseW, baseH, hasFrame: !!corners, strokes: customStrokes.length, corners, frameNorm }),
   destroy: () => { offs.forEach((f) => f()); try { clearTimeout(doneAckTimer); } catch (e) {} },
