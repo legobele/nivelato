@@ -16,7 +16,7 @@
 // the client can lie, the token can't.
 
 const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
-const { onDocumentUpdated, onDocumentWritten } = require('firebase-functions/v2/firestore');
+const { onDocumentUpdated, onDocumentWritten, onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const functions = require('firebase-functions');
@@ -2746,27 +2746,89 @@ exports.setOrgMemberCap = onCall({ region: 'us-central1', memory: '256MiB' }, as
 });
 
 // Automatic provisioning at approval. Applications are reviewed in the
-// Firebase Console (rules: read/write console-only). When staff move an
-// application to status 'approved' AND record the company's org id on it
-// (field orgId), the default cap is applied with the same transaction
-// setOrgMemberCap uses. Fires only on that status transition, so the
-// result write-back below cannot retrigger it. An approval without an
-// orgId, or against a QGC org, writes a note instead of guessing a
-// company: nothing is capped. The result is recorded on the application
-// (capProvisioning) so staff can see it from the console.
+// Firebase Console (rules: read/write console-only). Staff approving an
+// application (status -> 'approved') is the gate; the public form's typed
+// contactEmail is NEVER proof of a company by itself. Which org gets the
+// cap is decided one of two ways:
+//   1. staff recorded the company's org id on the application (orgId), or
+//   2. no orgId: the org is resolved ONLY when it is unambiguous and
+//      verified: a Firebase Auth account exists for contactEmail with a
+//      verified email, and that account owns exactly one org (orgs.ownerId).
+// Anything else (no account, unverified email, no org, several orgs, QGC)
+// caps nothing and records a needs-manual reason on the application
+// (capProvisioning) so staff see it in the console. Same transaction as
+// setOrgMemberCap; a cap staff already set is never overwritten on the
+// automatic path. Fires only on the status transition, so the write-back
+// cannot retrigger it.
+async function _resolveApplicantOrg(emailRaw) {
+  const email = String(emailRaw || '').trim().toLowerCase();
+  if (!email || !email.includes('@')) return { reason: 'needs-manual: application has no usable contactEmail' };
+  let user;
+  try { user = await admin.auth().getUserByEmail(email); }
+  catch (e) { return { reason: 'needs-manual: no account yet for the contact email (cap again after the owner signs up, or paste orgId)' }; }
+  if (user.emailVerified !== true) return { reason: 'needs-manual: the account for the contact email is not email-verified' };
+  const owned = await db.collection('orgs').where('ownerId', '==', user.uid).limit(3).get();
+  if (owned.empty) return { reason: 'needs-manual: the verified account owns no company yet' };
+  if (owned.size > 1) return { reason: 'needs-manual: the verified account owns more than one company, paste orgId' };
+  return { orgId: owned.docs[0].id, uid: user.uid };
+}
+async function _capIfUncapped(orgId) {
+  const snap = await db.doc(`orgs/${orgId}`).get();
+  if (snap.exists && typeof snap.data().memberCap === 'number') {
+    return { ok: true, alreadyCapped: true, memberCap: snap.data().memberCap, orgId };
+  }
+  const r = await _provisionMemberCap(orgId, PR_DEFAULT_MEMBER_CAP);
+  return { ok: true, memberCap: r.memberCap, active: r.active, orgId };
+}
 exports.provisionCapOnApproval = onDocumentWritten('companyApplications/{appId}', async (event) => {
   const before = event.data && event.data.before && event.data.before.exists ? event.data.before.data() : null;
   const after = event.data && event.data.after && event.data.after.exists ? event.data.after.data() : null;
   if (!after || after.status !== 'approved' || (before && before.status === 'approved')) return;
   const ref = event.data.after.ref;
-  const orgId = typeof after.orgId === 'string' ? after.orgId.trim() : '';
+  let orgId = typeof after.orgId === 'string' ? after.orgId.trim() : '';
   const note = async (r) => { await ref.update({ capProvisioning: Object.assign({ at: FieldValue.serverTimestamp() }, r) }); };
-  if (!orgId || orgId.includes('/')) { await note({ ok: false, reason: 'no-org-id: set orgId on the application, then run setOrgMemberCap' }); return; }
+  let method = 'staff-org-id';
+  if (!orgId) {
+    try {
+      const res = await _resolveApplicantOrg(after.contactEmail);
+      if (!res.orgId) { await note({ ok: false, reason: res.reason }); return; }
+      orgId = res.orgId; method = 'verified-owner-email';
+    } catch (e) { await note({ ok: false, reason: ('needs-manual: lookup failed: ' + String((e && e.message) || e)).slice(0, 200) }); return; }
+  }
+  if (orgId.includes('/')) { await note({ ok: false, reason: 'bad-org-id', orgId: orgId.slice(0, 80) }); return; }
   try {
-    const r = await _provisionMemberCap(orgId, PR_DEFAULT_MEMBER_CAP);
-    await note({ ok: true, memberCap: r.memberCap, active: r.active, orgId });
+    const r = method === 'staff-org-id' ? await _provisionMemberCap(orgId, PR_DEFAULT_MEMBER_CAP).then((x) => ({ ok: true, memberCap: x.memberCap, active: x.active, orgId })) : await _capIfUncapped(orgId);
+    await note(Object.assign({ method }, r));
   } catch (e) {
-    await note({ ok: false, reason: String((e && e.message) || e).slice(0, 200), orgId });
+    await note({ ok: false, reason: String((e && e.message) || e).slice(0, 200), orgId, method });
+  }
+});
+
+// The other order: staff approved the application BEFORE the owner signed
+// up. When a company org is created, cap it only if the owner's account
+// email is verified and exactly one approved application carries that
+// contactEmail, and the owner owns just this org. Otherwise nothing is
+// capped and, when exactly one approved application matches, a needs-manual
+// note goes on it. QGC orgs are skipped. Never overwrites an existing cap.
+exports.provisionCapOnOrgCreate = onDocumentCreated('orgs/{orgId}', async (event) => {
+  const org = event.data && event.data.data ? event.data.data() : null;
+  const orgId = event.params && event.params.orgId;
+  if (!org || !orgId || orgId === 'qgc' || org.qgc === true || String(org.tier || '').toUpperCase() === 'QGC') return;
+  if (typeof org.ownerId !== 'string' || !org.ownerId || typeof org.memberCap === 'number') return;
+  try {
+    const user = await admin.auth().getUser(org.ownerId);
+    const email = String(user.email || '').trim().toLowerCase();
+    if (!email || user.emailVerified !== true) return;
+    const apps = await db.collection('companyApplications').where('contactEmail', '==', email).where('status', '==', 'approved').limit(3).get();
+    const open = apps.docs.filter((d) => !(d.data().capProvisioning && d.data().capProvisioning.ok === true));
+    if (open.length !== 1) return;
+    const appRef = open[0].ref;
+    const note = async (r) => { await appRef.update({ capProvisioning: Object.assign({ at: FieldValue.serverTimestamp(), method: 'org-created-after-approval' }, r) }); };
+    const owned = await db.collection('orgs').where('ownerId', '==', org.ownerId).limit(3).get();
+    if (owned.size !== 1) { await note({ ok: false, reason: 'needs-manual: the verified owner owns more than one company, paste orgId' }); return; }
+    await note(await _capIfUncapped(orgId));
+  } catch (e) {
+    console.error('[provisionCapOnOrgCreate] failed for org', orgId, e && e.message);
   }
 });
 
