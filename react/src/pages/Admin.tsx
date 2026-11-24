@@ -10,7 +10,7 @@ export function Team() {
     {m.map((x) => <div className="row" key={x.uid}><div className="t"><b>{x.name}</b><span>{x.email}</span></div><span className={'pill' + (x.role === 'pending' ? '' : ' ok')}>{t(x.role as K)}</span></div>)}</div></>);
 }
 export function Prices() {
-  const r = useRepo(); const { t } = useT(); const [p, setP] = useState<PriceItem[]>([]); const [err, setErr] = useState('');
+  const r = useRepo(); const { t } = useT(); const [p, setP] = useState<PriceItem[]>([]); const [err, setErr] = useState(''); const [bad, setBad] = useState<Record<string, string>>({}); const [draft, setDraft] = useState<Record<string, string>>({});
   const [nn, setNn] = useState({ nombre: '', unidad: 'pie²', precio: '' });
   const load = () => r.priceList().then(setP);
   useEffect(() => { load(); }, [r]);
@@ -18,7 +18,11 @@ export function Prices() {
   const ro = !r.writable;
   return (<><div className="head"><h1>{t('prices')}</h1></div>{err && <div className="banner">{err}</div>}<div className="card"><table><thead><tr><th>{t('price')}</th><th>{t('unit')}</th><th>{t('amount')}</th><th>{t('active')}</th><th /></tr></thead><tbody>
     {p.map((x) => <tr key={x.id}><td>{x.nombre}</td><td>{x.unidad}</td>
-      <td><input aria-label={t('amount')} className="mono" style={{ width: 90 }} disabled={ro} defaultValue={Number(x.precio).toFixed(2)} onFocus={(e) => e.target.select()} onBlur={(e) => { const raw = e.target.value.trim(); const v = raw === '' ? NaN : Number(raw); if (Number.isFinite(v) && v >= 0 && v !== x.precio) act(() => r.savePrice({ ...x, precio: v })); else e.target.value = Number(x.precio).toFixed(2); }} /></td>
+      <td><input aria-label={t('amount')} aria-invalid={bad[x.id] !== undefined} className="mono" style={{ width: 90, borderColor: bad[x.id] !== undefined ? 'var(--bad)' : undefined }} disabled={ro} value={bad[x.id] ?? draft[x.id] ?? Number(x.precio).toFixed(2)} inputMode="decimal"
+        onFocus={(e) => e.target.select()}
+        onChange={(e) => { const raw = e.target.value; setDraft({ ...draft, [x.id]: raw }); const ok = raw.trim() !== '' && /^\d+(\.\d{1,2})?$/.test(raw.trim()); const nb = { ...bad }; if (ok) delete nb[x.id]; else nb[x.id] = raw; setBad(nb); }}
+        onBlur={() => { const raw = (draft[x.id] ?? '').trim(); if (draft[x.id] === undefined || bad[x.id] !== undefined) return; const v = Number(raw); const nd = { ...draft }; delete nd[x.id]; setDraft(nd); if (v !== x.precio) act(() => r.savePrice({ ...x, precio: v })); }} />
+        {bad[x.id] !== undefined && <div role="alert" style={{ color: 'var(--bad)', fontSize: 12, marginTop: 4 }}>{t('badAmount')}</div>}</td>
       <td><input type="checkbox" aria-label={t('active')} disabled={ro} checked={x.activo} onChange={(e) => act(() => r.savePrice({ ...x, activo: e.target.checked }))} /></td>
       <td><button className="btn sm" disabled={ro} onClick={() => act(() => r.deletePrice(x.id))}>{t('remove')}</button></td></tr>)}</tbody></table>
     {!p.length && <p className="dim">{t('none')}</p>}
@@ -26,7 +30,7 @@ export function Prices() {
       <input aria-label={t('price')} placeholder={t('price')} style={{ flex: 2, minWidth: 140 }} disabled={ro} value={nn.nombre} onChange={(e) => setNn({ ...nn, nombre: e.target.value })} />
       <input aria-label={t('unit')} placeholder={t('unit')} style={{ width: 80 }} disabled={ro} value={nn.unidad} onChange={(e) => setNn({ ...nn, unidad: e.target.value })} />
       <input aria-label={t('amount')} placeholder="0.00" inputMode="decimal" style={{ width: 90 }} disabled={ro} value={nn.precio} onChange={(e) => setNn({ ...nn, precio: e.target.value })} />
-      <button className="btn pri" disabled={ro || !nn.nombre.trim() || !(Number(nn.precio) >= 0) || nn.precio.trim() === ''} onClick={() => act(async () => { await r.savePrice({ id: 'p' + Date.now(), nombre: nn.nombre.trim(), unidad: nn.unidad.trim() || 'pie²', precio: Number(nn.precio), activo: true }); setNn({ nombre: '', unidad: 'pie²', precio: '' }); })}>{t('addItem')}</button></div>
+      <button className="btn pri" disabled={ro || !nn.nombre.trim() || !/^\d+(\.\d{1,2})?$/.test(nn.precio.trim())} onClick={() => act(async () => { await r.savePrice({ id: 'p' + Date.now(), nombre: nn.nombre.trim(), unidad: nn.unidad.trim() || 'pie²', precio: Number(nn.precio), activo: true }); setNn({ nombre: '', unidad: 'pie²', precio: '' }); })}>{t('addItem')}</button></div>
     {ro && <p className="dim" style={{ marginTop: 10 }}>{t('readOnly')}</p>}</div></>);
 }
 export function SettingsPage({ onLogout, refresh }: { onLogout: () => void; refresh: () => void }) {
