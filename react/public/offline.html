@@ -1,0 +1,5 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#0b0b0d"><meta name="robots" content="noindex, nofollow"><title>Nivelato</title>
+<style>*{box-sizing:border-box;margin:0}body{font-family:system-ui,sans-serif;background:#0b0b0d;color:#f2f2f2;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;gap:14px}h2{font-size:22px}p{font-size:15px;color:#a0a0a8;max-width:360px;line-height:1.6}button{padding:12px 28px;background:#f2f2f2;color:#0b0b0d;border:0;border-radius:999px;font-size:15px;font-weight:600;cursor:pointer;min-height:44px}</style></head>
+<body><h2 id="h">Sin conexión</h2><p id="p">Estás offline. Reconecta a internet y vuelve a intentarlo, la app se cargará de nuevo.</p><button type="button" id="b" onclick="location.reload()">Reintentar</button>
+<script>if(/^en/i.test(navigator.language)){h.textContent='No connection';p.textContent='You are offline. Reconnect to the internet and try again, the app will load again.';b.textContent='Retry'}</script></body></html>
