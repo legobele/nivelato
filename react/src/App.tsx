@@ -32,6 +32,8 @@ function Inner() {
     if (demo) { sessionStorage.setItem('niv-demo', '1'); setRepo(demoRepo()); setBooting(false); return; }
     return watchAuth(async (u) => { setRepo(u ? await liveRepo(u) : null); setBooting(false); });
   }, [demo]);
+  const [online, setOnline] = useState(navigator.onLine);
+  useEffect(() => { const a = () => setOnline(true), b = () => setOnline(false); addEventListener('online', a); addEventListener('offline', b); return () => { removeEventListener('online', a); removeEventListener('offline', b); }; }, []);
   const out = useMemo(() => async () => { sessionStorage.removeItem('niv-demo'); if (liveEnabled) await logOut().catch(() => {}); setRepo(null); }, []);
   if (sso) return <Sso />;
   if (booting) return null;
@@ -47,6 +49,7 @@ function Inner() {
           <button className="nav" style={{ background: 'none', border: 0, cursor: 'pointer' }} onClick={out}>{t('logout')}</button>
         </aside>
         <main className="main">
+          {!online && <div className="banner" role="status">{t('offline')}</div>}
           {repo.mode === 'demo' && <div className="banner">{t('demoBanner')}</div>}
           {!repo.writable && repo.mode === 'live' && <div className="banner">{t('readOnly')}</div>}
           <Routes>
