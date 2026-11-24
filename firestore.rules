@@ -156,7 +156,13 @@ service cloud.firestore {
           && myOrgId() == resource.data.orgId
           && request.resource.data.orgId == resource.data.orgId
           && unchanged('memberships')
-          && unchanged('personalOrgId'))
+          && unchanged('personalOrgId')
+          // Member-cap invariant: a client may NEVER activate a member
+          // (disabled -> false). Activations reserve a seat inside the
+          // same transaction (functions: txReserveSeat); approvals go
+          // through the approveMember callable. pending -> 'rejected'
+          // stays allowed here so owners can still reject directly.
+          && (unchanged('disabled') || request.resource.data.disabled != false))
       );
       allow delete: if false;
 
@@ -202,7 +208,10 @@ service cloud.firestore {
         && request.resource.data.trialSavesUsed == 0
         && request.resource.data.keys().hasAll(
              ['name', 'ownerId', 'joinCode', 'flow', 'versionPolicy',
-              'licenseStatus', 'trialSavesUsed', 'createdAt']);
+              'licenseStatus', 'trialSavesUsed', 'createdAt'])
+        // memberCap is server-managed (set when a company application is
+        // approved): a client may never seed it on create...
+        && !request.resource.data.keys().hasAny(['memberCap']);
       allow get: if isSignedIn() && (
         !hasUserDoc() ||
         (canReadOrgData(orgId) && myOrgId() == orgId) ||
@@ -219,7 +228,10 @@ service cloud.firestore {
         && request.resource.data.versionPolicy == resource.data.versionPolicy
         && request.resource.data.licenseStatus == resource.data.licenseStatus
         && request.resource.data.get('dataVersion', '0.9')
-           == resource.data.get('dataVersion', '0.9');
+           == resource.data.get('dataVersion', '0.9')
+        // ...and may never change or remove it on update either.
+        && request.resource.data.get('memberCap', null)
+           == resource.data.get('memberCap', null);
 
       // Jobs.
       // - create/read: active org members with valid flow claims; read also

@@ -224,7 +224,9 @@ try{var c='; '+document.cookie;var cm=c.match(/; niv-compact-sidebar=([01])(?:;|
 </script>
 <!-- Referrer-aware Back: owned by nav-referrer.js (loaded below), which consumes for this page under its /company/settings entry: its own one-shot key, its allowlist, .niv-btn-back. -->
 <script type="module">
-import { auth, db } from '../firebase-config.js';
+import { auth, db, centralFunctions } from '../firebase-config.js';
+import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-functions.js";
+const approveMemberFn = httpsCallable(centralFunctions, 'approveMember');
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getDoc, doc, setDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { makePermChecker } from '../permissions.js';
@@ -608,30 +610,17 @@ window.approveRequest = async (uid, btn) => {
   setCardButtons(card, true);
   try {
     const m = orgMembers.find(x => x.uid === uid);
-    const patch = { disabled: false };
-    // Add User invite: if this member was invited (orgs/{orgId}/invites),
-    // the approval also applies the invite's role + permission overrides
-    // and closes the invite out. flowGate normally applies invites at
-    // first sign-in; this is the same application on the manual path.
-    let invRef = null;
-    if (m && m.email && m.orgId) {
-      const ref = doc(db, 'orgs', m.orgId, 'invites', String(m.email).trim().toLowerCase());
-      const invSnap = await getDoc(ref);
-      if (invSnap.exists() && invSnap.data().status === 'pending') {
-        const inv = invSnap.data();
-        if (['medidor', 'supervisor', 'cotizador'].includes(inv.role)) patch.role = inv.role;
-        if (inv.permissions && typeof inv.permissions === 'object') patch.permissions = inv.permissions;
-        invRef = ref;
-      }
-    }
-    await updateDoc(doc(db, 'users', uid), patch);
-    if (invRef) { try { await updateDoc(invRef, { status: 'accepted' }); } catch (_) {} }
+    // Approvals reserve a member-cap seat inside a transaction, so they
+    // run in the approveMember callable; the rules pin blocks clients
+    // from flipping disabled -> false directly. The callable also applies
+    // any pending invite (role + permission overrides) for this member.
+    await approveMemberFn({ uid });
     if (card) card.remove();
     if (m) {
       m.disabled = false;
-      if (patch.role) m.role = patch.role;
-      if (patch.permissions) m.permissions = patch.permissions;
     }
+    if (currentUserData && currentUserData.orgId) await loadOrgMembers(currentUserData.orgId);
+    renderPermissions();
     if (!document.querySelector('#requests-list .niv-request-card')) renderRequests();
   } catch(e) {
     coStatus('requests-status', 'err', t('approveErr') + e.message);

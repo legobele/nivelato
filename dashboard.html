@@ -778,9 +778,55 @@ body.has-sidebar .niv-shell > main {
    el alto); sin esto las tarjetas terminan a mitad de pantalla y el
    resto queda negro. En una columna las filas vuelven a su alto
    natural para no aplastar la tercera y cuarta tarjeta. */
-#view-home { display: flex; flex-direction: column; min-height: 100%; }
-#view-home .niv-home-grid { flex: 1 0 auto; grid-template-rows: 1fr 1fr; align-items: stretch; }
-@media (max-width: 1100px) { #view-home .niv-home-grid { grid-template-rows: none; } }
+/* Panel = widget board: 12 columns, every block is a widget the user can
+   move, resize (quarter / third / half / full) and hide. Order, spans and
+   hidden set persist per user (users/{uid}.prefs.homeWidgets, mirrored in
+   localStorage for instant paint). Default layout keeps stats and actions
+   full-width, then a recents row with the QR card aligned to its top. */
+#view-home { display: grid; min-height: 100%; gap: 20px; align-content: start; align-items: start;
+  grid-template-columns: repeat(12, minmax(0, 1fr)); }
+#view-home > .home-title-row, #view-home > #home-subtitle, #view-home > #home-widgets-tray { grid-column: 1 / -1; }
+#view-home > [data-widget] { grid-column: span var(--wspan, 12); min-width: 0; position: relative; }
+#view-home > .niv-stats-row { margin-bottom: 0; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+#view-home .stat-card { min-width: 0; }
+#view-home .niv-home-row { min-width: 0; }
+#view-home .niv-home-row > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#view-home .niv-home-row > .niv-home-count { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 1; text-align: right; }
+#view-home .stat-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 1100px) {
+  #view-home { grid-template-columns: minmax(0, 1fr); }
+  #view-home > [data-widget] { grid-column: 1 / -1; }
+  #view-home > .niv-stats-row { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  /* Mobile: labels WRAP (two lines max) instead of truncating the primary
+     meaning. Ellipsis stays only as the desktop backstop. */
+  #view-home .stat-label { font-size: 11px; white-space: normal; overflow: visible; text-overflow: clip;
+    line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+}
+#view-home .tile-qr-placeholder { width: 64%; max-width: 200px; aspect-ratio: 1; margin: 0 auto;
+  border: 1.5px dashed var(--niv-border-soft, rgba(255,255,255,0.14)); border-radius: 12px; box-sizing: border-box; }
+/* Edit mode */
+#view-home.hw-editing > [data-widget] { outline: 1.5px dashed var(--niv-border-soft, rgba(255,255,255,0.3)); outline-offset: 4px; }
+.hw-controls { display: none; position: absolute; top: -12px; right: 8px; gap: 4px; z-index: 5; }
+#view-home.hw-editing .hw-controls { display: flex; }
+.hw-controls button { width: 28px; height: 28px; border-radius: 8px; padding: 0; font-size: 14px; line-height: 1;
+  border: 1.5px solid var(--niv-border-soft, rgba(255,255,255,0.14)); background: var(--niv-surface, #0e0e10);
+  color: inherit; cursor: pointer; }
+.hw-controls button:disabled { opacity: 0.3; cursor: default; }
+.hw-grip { display: none; position: absolute; top: -12px; left: 8px; width: 28px; height: 28px; border-radius: 8px;
+  border: 1.5px solid var(--niv-border-soft, rgba(255,255,255,0.14)); background: var(--niv-surface, #0e0e10);
+  color: inherit; cursor: grab; font-size: 14px; line-height: 1; padding: 0; z-index: 5; touch-action: none; }
+#view-home.hw-editing .hw-grip { display: block; }
+.hw-grip:active { cursor: grabbing; }
+.hw-resize { display: none; position: absolute; top: 0; right: -10px; width: 20px; height: 100%;
+  cursor: ew-resize; z-index: 5; touch-action: none; }
+#view-home.hw-editing .hw-resize { display: block; }
+#view-home > [data-widget].hw-dragging { opacity: 0.55; }
+#view-home > [data-widget].hw-drop-target { outline: 2px solid var(--niv-accent, #7c5cff); outline-offset: 4px; }
+#view-home.hw-editing > [data-widget].hw-hidden { display: none; }
+#home-widgets-tray { display: none; padding: 14px 16px; }
+#view-home.hw-editing #home-widgets-tray { display: block; }
+#home-widgets-tray .hw-tray-title { font-weight: 600; margin-bottom: 8px; }
+#home-widgets-tray .hw-tray-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .niv-stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
   .niv-skel {
     display: inline-block; width: 46px; height: 24px; border-radius: 8px;
@@ -935,6 +981,15 @@ body.has-sidebar #niv-panel.collapsed #niv-panel-expand-handle { display: block;
 .niv-notif-title { font-weight: 600; font-size: 15px; }
 .niv-notif-body { color: var(--niv-text-dim, #a8a8b0); font-size: 13px; margin-top: 2px; }
 .niv-notif-date { color: var(--niv-text-dim, #a8a8b0); font-size: 12px; flex: none; }
+.niv-notif-del { flex: none; width: 28px; height: 28px; border-radius: 50%; border: 1px solid transparent; background: transparent; color: var(--niv-text-dim, #a8a8b0); font-size: 18px; line-height: 1; cursor: pointer; }
+.niv-notif-del:hover, .niv-notif-del:focus-visible { border-color: var(--niv-border, rgba(255,255,255,0.28)); color: var(--niv-text, #fff); }
+@media (max-width: 640px) {
+  .niv-notif-item { display: grid; grid-template-columns: 10px minmax(0, 1fr) 36px; column-gap: 12px; row-gap: 4px; padding: 14px 14px; align-items: start; }
+  .niv-notif-main { grid-column: 2; grid-row: 1; }
+  .niv-notif-date { grid-column: 2; grid-row: 2; }
+  #view-notifications .subtitle { margin-top: 10px; }
+  .niv-notif-del { grid-column: 3; grid-row: 1 / span 2; width: 36px; height: 36px; align-self: start; }
+}
 
 @media (max-width: 1100px) { .niv-home-grid { grid-template-columns: 1fr; } }
 @media (max-width: 600px) {
@@ -1568,12 +1623,22 @@ body.has-sidebar main h1 {
         </button>
         <button class="niv-plus-btn niv-snav-plus" onclick="openNewProject()" title="Nuevo proyecto" aria-label="Nuevo proyecto">+</button>
       </div>
+      <div class="niv-snav-body">
+        <div class="niv-projlist" id="niv-snav-projects-body">
+          <div id="niv-panel-projects"><div class="niv-panel-empty" id="panel-empty-projects">Sin proyectos</div></div>
+        </div>
+      </div>
     </div>
     <div class="niv-navunit" data-navunit="measures">
       <button class="niv-snav" id="snav-measures" title="Medidas" onclick="window._sideNavGo('measures')">
         <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="currentColor"/><path fill-rule="evenodd" d="M3.5 9.5h17V15h-17zM7 9.5h1.3v2.6H7zM11.35 9.5h1.3v2.6h-1.3zM15.7 9.5H17v2.6h-1.3z" fill="#fff"/></svg></span>
         <span class="niv-snav-label" id="snav-measures-label">Medidas</span>
       </button>
+      <div class="niv-snav-body">
+        <div class="niv-projlist" id="niv-snav-measures-body">
+          <div id="niv-panel-measures"><div class="niv-panel-empty" id="panel-empty-measures">Sin medidas</div></div>
+        </div>
+      </div>
     </div>
     <div class="niv-navunit" data-navunit="notifications">
       <button class="niv-snav" id="snav-notifications" title="Notificaciones" onclick="window._sideNavGo('notifications')">
@@ -1588,15 +1653,15 @@ body.has-sidebar main h1 {
         <span class="niv-snav-label" id="snav-users-label">Usuarios</span>
       </button>
     </div>
+    <div class="niv-navunit" data-navunit="settings">
+      <button class="niv-snav" id="snav-settings" title="Ajustes" onclick="window.location.href='/account/settings'">
+        <span class="niv-snav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="currentColor"/><path d="M10.2 4.6h3.6l.4 2.1c.5.2 1 .5 1.4.8l2-1 1.8 3.1-1.6 1.5c.1.4.1.8.1 1.2s0 .8-.1 1.2l1.6 1.5-1.8 3.1-2-1c-.4.3-.9.6-1.4.8l-.4 2.1h-3.6l-.4-2.1c-.5-.2-1-.5-1.4-.8l-2 1-1.8-3.1 1.6-1.5c-.1-.4-.1-.8-.1-1.2s0-.8.1-1.2L4.8 9.6l1.8-3.1 2 1c.4-.3.9-.6 1.4-.8l.2-2.1z" fill="#fff"/><circle cx="12" cy="12.3" r="2.4" fill="currentColor"/></svg></span>
+        <span class="niv-snav-label" id="snav-settings-label">Ajustes</span>
+      </button>
+    </div>
   </nav>
   </div><!-- /niv-panel-topzone -->
   <div class="niv-panel-body" id="niv-panel-body">
-    <div class="niv-panel-sec" data-seckey="projects">
-      <div class="niv-panel-sec-title"><span id="panel-projects-title">Proyectos</span></div>
-      <div class="niv-projlist niv-sec-body" id="niv-snav-projects-body">
-        <div id="niv-panel-projects"><div class="niv-panel-empty" id="panel-empty-projects">Sin proyectos</div></div>
-      </div>
-    </div>
     <div class="niv-panel-sec" data-seckey="customers">
       <!-- the title text lives in a span, same as Proyectos: the
            language pass and the customer-count writer set textContent
@@ -1604,10 +1669,6 @@ body.has-sidebar main h1 {
            section chevron away (Giulia, Oct 29 sidebar bundle) -->
       <div class="niv-panel-sec-title"><span id="panel-customers-title">Clientes</span></div>
       <div class="niv-sec-body" id="niv-panel-customers"><div class="niv-panel-empty" id="panel-empty-customers">Sin clientes</div></div>
-    </div>
-    <div class="niv-panel-sec" data-seckey="measures">
-      <div class="niv-panel-sec-title"><span id="panel-measures-title">Medidas</span></div>
-      <div class="niv-sec-body" id="niv-panel-measures"><div class="niv-panel-empty" id="panel-empty-measures">Sin medidas</div></div>
     </div>
     <div class="niv-panel-actions">
       <button class="niv-nav-btn" id="btn-pricelist" onclick="document.body.classList.remove('nav-open');togglePriceListView()" style="display:none">Precios</button>
@@ -1706,17 +1767,51 @@ try {
 
 <main>
  <div id="view-home">
-  <div style="display:flex; align-items:center; gap:12px;">
+  <div class="home-title-row" style="display:flex; align-items:center; gap:12px;">
     <h1 style="margin:0;" id="home-title">Panel</h1>
+    <button type="button" class="niv-btn-pill" id="home-customize-btn" style="margin-left:auto;" onclick="window._homeWidgetsToggleEdit()">Personalizar</button>
   </div>
   <div class="subtitle" id="home-subtitle"></div>
-  <div class="join-code-card" id="join-code-section-home">
-    <!-- v1.2.21: ONE compact enrollment card. The rotating workshop
-         QR (email-agnostic, one-time token, kind 'open', minted by
-         createWorkshopEnrollmentToken) is the headline; the card
-         polls its status and mints the next one on its own. The
-         email flow sits behind the button below; the manual
-         regenerate lives in the tile actions. -->
+  <div class="niv-stats-row" data-widget="stats">
+    <div class="stat-card"><div class="stat-num" id="home-stat-projects"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-projects-label">Proyectos</div></div>
+    <div class="stat-card"><div class="stat-num" id="home-stat-total"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-total-label">Medidas totales</div></div>
+    <div class="stat-card"><div class="stat-num" id="home-stat-today"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-today-label">Hoy</div></div>
+    <div class="stat-card"><div class="stat-num" id="home-stat-members"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-members-label">Miembros</div></div>
+    <div class="stat-card"><div class="stat-num" id="home-stat-customers"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-customers-label">Clientes</div></div>
+    <div class="stat-card"><div class="stat-num" id="home-stat-notif"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-notif-label">Sin leer</div></div>
+  </div>
+  <div class="niv-home-actions" data-widget="actions" id="home-actions" role="group" aria-label="Acciones rápidas">
+    <!-- Las tres acciones de creación de esta fila son paralelas y
+         llevan el mismo tratamiento (píldora secundaria): que una sola
+         fuera primaria sólida rompía la jerarquía del grupo. El
+         primario de medidas vive en la cabecera de la vista Medidas. -->
+    <a class="niv-btn-pill" id="home-act-new-measure" href="https://app.nivelatolabs.com/">+ Nueva medida</a>
+    <button type="button" class="niv-btn-pill" id="home-act-new-project" onclick="openNewProject()">+ Nuevo proyecto</button>
+    <button type="button" class="niv-btn-pill" id="home-act-new-customer" onclick="window._panelNewCustomer()">+ Nuevo cliente</button>
+    <button type="button" class="niv-btn-pill" id="home-act-quotes" style="display:none" onclick="window.showDashView('quotes')">Cotizaciones</button>
+  </div>
+  <div class="niv-card" data-widget="projects">
+      <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="home-recent-projects-title">Proyectos recientes</div>
+      <div id="home-projects"><div class="niv-panel-empty">Cargando…</div></div>
+    </div>
+  <div class="niv-card" data-widget="measures">
+      <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="home-recent-measures-title">Medidas recientes</div>
+      <div id="home-measures"><div class="niv-panel-empty">Cargando…</div></div>
+    </div>
+  <div class="niv-card" data-widget="customers">
+      <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="home-recent-customers-title">Clientes recientes</div>
+      <div id="home-customers"><div class="niv-panel-empty">Cargando…</div></div>
+    </div>
+  <div class="niv-card" data-widget="notifications">
+      <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="home-recent-notifications-title">Notificaciones recientes</div>
+      <div id="home-notifications"><div class="niv-panel-empty">Cargando…</div></div>
+    </div>
+  <div class="join-code-card" data-widget="enroll" id="join-code-section-home">
+    <!-- v1.2.23: the enrollment card moves to the end of Panel (side
+         rail on wide screens) so stats and recent work come first.
+         The workshop QR is minted ONLY on an explicit button press:
+         viewing this card never creates, rotates or supersedes a
+         token. The card still polls status to render what is live. -->
     <div class="home-qr-card">
       <div class="home-workshop-qr" id="home-workshop-qr" style="display:none;">
         <div class="home-workshop-qr-title" id="home-workshop-qr-title">Código QR del taller</div>
@@ -1736,47 +1831,13 @@ try {
       </div>
     </div>
   </div>
-  <div class="niv-stats-row">
-    <div class="stat-card"><div class="stat-num" id="home-stat-projects"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-projects-label">Proyectos</div></div>
-    <div class="stat-card"><div class="stat-num" id="home-stat-total"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-total-label">Medidas totales</div></div>
-    <div class="stat-card"><div class="stat-num" id="home-stat-today"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-today-label">Hoy</div></div>
-    <div class="stat-card"><div class="stat-num" id="home-stat-members"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-members-label">Miembros</div></div>
-    <div class="stat-card"><div class="stat-num" id="home-stat-customers"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-customers-label">Clientes</div></div>
-    <div class="stat-card"><div class="stat-num" id="home-stat-notif"><span class="niv-skel" aria-hidden="true"></span></div><div class="stat-label" id="home-stat-notif-label">Sin leer</div></div>
-  </div>
-  <div class="niv-home-actions" id="home-actions" role="group" aria-label="Acciones rápidas">
-    <!-- Las tres acciones de creación de esta fila son paralelas y
-         llevan el mismo tratamiento (píldora secundaria): que una sola
-         fuera primaria sólida rompía la jerarquía del grupo. El
-         primario de medidas vive en la cabecera de la vista Medidas. -->
-    <a class="niv-btn-pill" id="home-act-new-measure" href="https://app.nivelatolabs.com/">+ Nueva medida</a>
-    <button type="button" class="niv-btn-pill" id="home-act-new-project" onclick="openNewProject()">+ Nuevo proyecto</button>
-    <button type="button" class="niv-btn-pill" id="home-act-new-customer" onclick="window._panelNewCustomer()">+ Nuevo cliente</button>
-    <button type="button" class="niv-btn-pill" id="home-act-quotes" style="display:none" onclick="window.showDashView('quotes')">Cotizaciones</button>
-  </div>
-  <div class="niv-home-grid">
-    <div class="niv-card">
-      <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="home-recent-projects-title">Proyectos recientes</div>
-      <div id="home-projects"><div class="niv-panel-empty">Cargando…</div></div>
-    </div>
-    <div class="niv-card">
-      <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="home-recent-measures-title">Medidas recientes</div>
-      <div id="home-measures"><div class="niv-panel-empty">Cargando…</div></div>
-    </div>
-    <div class="niv-card">
-      <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="home-recent-customers-title">Clientes recientes</div>
-      <div id="home-customers"><div class="niv-panel-empty">Cargando…</div></div>
-    </div>
-    <div class="niv-card">
-      <div class="niv-card-title" style="font-size:20px;margin-bottom:8px;" id="home-recent-notifications-title">Notificaciones recientes</div>
-      <div id="home-notifications"><div class="niv-panel-empty">Cargando…</div></div>
-    </div>
-  </div>
+  <div class="niv-card" id="home-widgets-tray" style="display:none;" aria-label="Widgets ocultos"></div>
  </div><!-- /view-home -->
  <div id="view-notifications" style="display:none">
   <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
     <h1 style="margin:0;" id="notif-title">Notificaciones</h1>
     <button class="niv-btn-pill" id="notif-mark-all" style="margin-left:auto;" onclick="window.markAllNotificationsRead()">Marcar todas como leídas</button>
+    <button class="niv-btn-pill" id="notif-delete-all" onclick="window.deleteAllNotifications()">Eliminar todas</button>
   </div>
   <div class="subtitle" id="notif-subtitle"></div>
   <div id="notif-list"><div class="loading">Cargando notificaciones…</div></div>
@@ -3497,11 +3558,12 @@ let currentUser;
       },
       desniveles: { paredIzq: pI.label, paredDer: pD.label, techo: tc.label, piso: ps.label },
       paredes: {
-        izq:   { a: v.pI_A, b: v.pI_B, desnivel: pI.raw },
-        der:   { a: v.pD_A, b: v.pD_B, desnivel: pD.raw },
-        techo: { a: v.t_A,  b: v.t_B,  desnivel: tc.raw },
-        piso:  { a: v.p_A,  b: v.p_B,  desnivel: ps.raw },
+        izq:   { a: v.pI_A, b: v.pI_B, desnivel: pI.raw, desnivelAB: (window._signedFromRaw ? window._signedFromRaw(pI.raw).signed : null) },
+        der:   { a: v.pD_A, b: v.pD_B, desnivel: pD.raw, desnivelAB: (window._signedFromRaw ? window._signedFromRaw(pD.raw).signed : null) },
+        techo: { a: v.t_A,  b: v.t_B,  desnivel: tc.raw, desnivelAB: (window._signedFromRaw ? window._signedFromRaw(tc.raw).signed : null) },
+        piso:  { a: v.p_A,  b: v.p_B,  desnivel: ps.raw, desnivelAB: (window._signedFromRaw ? window._signedFromRaw(ps.raw).signed : null) },
       },
+      offsetConvention: 'end-minus-start-v1',
     };
   }
 
@@ -3557,6 +3619,7 @@ let currentUser;
       updates.hueco = derived.hueco;
       updates.desniveles = derived.desniveles;
       updates.paredes = derived.paredes;
+      updates.offsetConvention = derived.offsetConvention;
     }
     if (Object.keys(updates).length === 0) { cancelEdit(); return; }
     try {
@@ -3772,20 +3835,19 @@ let currentUser;
     btn.textContent = btnLabel;
   };
 
-  // Rotating workshop QR (email-agnostic variant): the org's open
-  // enrollment token rendered on the home card. The plaintext exists
-  // only in the mint response and in this browser's sessionStorage
-  // (hash-only at rest server-side, like every enrollment token), so
-  // the card asks getWorkshopEnrollmentTokenStatus who is live:
+  // Workshop QR (email-agnostic variant): the org's open enrollment
+  // token rendered on the home card. The plaintext exists only in the
+  // mint response and in this browser's sessionStorage (hash-only at
+  // rest server-side, like every enrollment token), so the card asks
+  // getWorkshopEnrollmentTokenStatus who is live:
   //   - its own token (createdAt match) still 'pending': keep showing.
-  //   - its own token left 'pending' (an employee joined with it, it
-  //     expired, or it was revoked): mint the next one automatically.
-  //     That auto-mint IS the rotation Giulia asked for.
-  //   - a 'pending' token with a different createdAt: another manager
-  //     minted it (their browser holds the plaintext); leave it alone
-  //     and say so, with a button to take over by minting ours.
-  // Across browser restarts the plaintext is gone, so a fresh mint
-  // supersedes the leftover token: one live open token per org, ever.
+  //   - 'pending' but not held here (another browser minted it, or
+  //     this one lost sessionStorage): say so and offer an explicit
+  //     takeover button. NEVER mint on view — a silent mint supersedes
+  //     the QR someone else may be showing or printing.
+  //   - no token, or ours was used/expired/revoked: placeholder with
+  //     an explicit generate button.
+  // Minting is always a button press; polling only reads status.
   window._initWorkshopQr = (orgId) => {
     const wrap = document.getElementById('home-workshop-qr');
     const slot = document.getElementById('home-workshop-qr-slot');
@@ -3835,6 +3897,21 @@ let currentUser;
         return null;
       }
     };
+    // Empty/placeholder state: a dashed box plus one explicit button.
+    // Minting is ALWAYS an explicit click from here on — opening Panel
+    // on a browser that holds no token must never create, rotate or
+    // supersede one (2026-11-24: a fresh browser viewing this card
+    // silently invalidated the QR another admin was showing).
+    const renderEmptyState = (noteText, btnLabel) => {
+      if (document.getElementById('home-workshop-qr-mint')) return;
+      slot.innerHTML = '<div class="home-enroll-tile">'
+        + '<div class="tile-qr-placeholder" aria-hidden="true"></div>'
+        + '<div class="home-workshop-qr-note">' + escapeHtml(noteText) + '</div>'
+        + '<div class="tile-actions"><button type="button" id="home-workshop-qr-mint">' + escapeHtml(btnLabel) + '</button></div>'
+        + '</div>';
+      const b = document.getElementById('home-workshop-qr-mint');
+      if (b) b.addEventListener('click', () => mint());
+    };
     const check = async () => {
       if (document.visibilityState === 'hidden') return;
       let st;
@@ -3842,23 +3919,31 @@ let currentUser;
         st = (await _callable('getWorkshopEnrollmentTokenStatus')({ orgId })).data;
       } catch (_) { return; /* transient: keep showing what we have */ }
       const stored = readStored();
-      if (!st || st.status === 'none') { await mint(); return; }
-      if (stored && st.createdAt && stored.createdAt
-          && new Date(st.createdAt).getTime() !== new Date(stored.createdAt).getTime()) {
-        // Someone else's token is the live one. Do not supersede it in
-        // a polling war: show the note, offer the takeover button.
-        if (!document.getElementById('home-workshop-qr-copylink')) {
-          render(stored, L('Otro administrador generó un código más reciente. Genera otro para mostrar el tuyo aquí.', 'Another admin generated a newer code. Generate another to show yours here.'));
-        }
+      if (!st || st.status === 'none') {
+        renderEmptyState(
+          L('No hay un código activo. Genera uno para inscribir empleados.', 'No active code. Generate one to enroll employees.'),
+          L('Generar código QR', 'Generate QR code'));
         return;
       }
       if (st.status === 'pending') {
-        if (stored && stored.qrSvg && !document.getElementById('home-workshop-qr-copylink')) render(stored);
-        if (!stored) await mint();
+        const ours = stored && stored.qrSvg && st.createdAt && stored.createdAt
+          && new Date(st.createdAt).getTime() === new Date(stored.createdAt).getTime();
+        if (ours) {
+          if (!document.getElementById('home-workshop-qr-copylink')) render(stored);
+        } else {
+          // A live token exists but this browser does not hold it.
+          // Offer the takeover; never supersede the live QR silently.
+          renderEmptyState(
+            L('El código activo se generó en otro navegador o dispositivo. Genera otro para mostrarlo aquí.', 'The active code was generated in another browser or device. Generate another to show it here.'),
+            L('Generar otro', 'Generate another'));
+        }
         return;
       }
-      // used / expired / superseded / revoked on OUR token: rotate.
-      await mint();
+      // used / expired / superseded / revoked: nothing live to protect,
+      // but rotation still waits for an explicit click.
+      renderEmptyState(
+        L('El código anterior ya se usó o venció. Genera otro cuando lo necesites.', 'The previous code was used or expired. Generate another when you need it.'),
+        L('Generar otro', 'Generate another'));
     };
     check();
     if (window._workshopQrTimer) clearInterval(window._workshopQrTimer);
@@ -5584,8 +5669,8 @@ let currentUser;
     }
     if (collapseBtn) {
       collapseBtn.textContent = on ? '›' : '‹';
-      collapseBtn.title = on ? 'Expandir' : 'Colapsar';
-      collapseBtn.setAttribute('aria-label', on ? 'Expandir' : 'Colapsar'); // m19
+      collapseBtn.title = on ? L('Expandir', 'Expand') : L('Colapsar', 'Collapse');
+      collapseBtn.setAttribute('aria-label', on ? L('Expandir', 'Expand') : L('Colapsar', 'Collapse')); // m19
     }
     // p31: persist the MANUAL collapsed state (applyAuto suppresses
     // itself via _nivSuppressCollapsePersist so window-size-driven
@@ -5761,8 +5846,9 @@ let currentUser;
     setText('snav-projects-label', L('Proyectos', 'Projects'));
     setText('snav-notifications-label', L('Notificaciones', 'Notifications'));
     setText('snav-users-label', L('Usuarios', 'Users'));
+    setText('snav-settings-label', L('Ajustes', 'Settings'));
     // m20: rail icon tooltips mirror the (localized) labels
-    [['snav-home','snav-home-label'],['snav-measures','snav-measures-label'],['snav-projects','snav-projects-label'],['snav-notifications','snav-notifications-label'],['snav-users','snav-users-label']].forEach(([b, l]) => { const btn = document.getElementById(b), lab = document.getElementById(l); if (btn && lab) btn.title = lab.textContent; });
+    [['snav-home','snav-home-label'],['snav-measures','snav-measures-label'],['snav-projects','snav-projects-label'],['snav-notifications','snav-notifications-label'],['snav-users','snav-users-label'],['snav-settings','snav-settings-label']].forEach(([b, l]) => { const btn = document.getElementById(b), lab = document.getElementById(l); if (btn && lab) btn.title = lab.textContent; });
     setText('home-title', L('Panel', 'Dashboard'));
     setText('home-stat-projects-label', L('Proyectos', 'Projects'));
     setText('home-stat-total-label', L('Medidas totales', 'Total measurements'));
@@ -5784,6 +5870,7 @@ let currentUser;
     if (_hud) _hud.setAttribute('aria-label', L('Resumen', 'Summary'));
     setText('notif-title', L('Notificaciones', 'Notifications'));
     setText('notif-mark-all', L('Marcar todas como leídas', 'Mark all as read'));
+    setText('notif-delete-all', L('Eliminar todas', 'Delete all'));
     setText('company-menu-settings-label', L('Ajustes de la empresa', 'Company settings'));
     setText('company-menu-users-label', L('Usuarios', 'Users'));
     setText('users-title', L('Usuarios', 'Users'));
@@ -5795,6 +5882,16 @@ let currentUser;
     setText('panel-empty-projects', L('Cargando…', 'Loading…'));
     setText('panel-empty-customers', L('Cargando…', 'Loading…'));
     setText('panel-empty-measures', L('Cargando…', 'Loading…'));
+    // Sidebar chrome: follow the active language instead of hardcoded ES.
+    const _navEl = document.querySelector('.niv-side-nav');
+    if (_navEl) _navEl.setAttribute('aria-label', L('Navegación principal', 'Main navigation'));
+    const _collapseEl = document.getElementById('niv-panel-collapse');
+    if (_collapseEl) { _collapseEl.title = L('Colapsar', 'Collapse'); _collapseEl.setAttribute('aria-label', L('Colapsar', 'Collapse')); }
+    const _resizeEl = document.getElementById('niv-resize-handle');
+    if (_resizeEl) _resizeEl.title = L('Arrastrar para redimensionar', 'Drag to resize');
+    document.querySelectorAll('.niv-sec-chev').forEach((c) => { c.setAttribute('aria-label', L('Colapsar sección', 'Collapse section')); });
+    const _plusEl = document.querySelector('.niv-snav-plus');
+    if (_plusEl) { _plusEl.title = L('Nuevo proyecto', 'New project'); _plusEl.setAttribute('aria-label', L('Nuevo proyecto', 'New project')); }
     setText('btn-upgrade-plan', L('Mejorar plan', 'Upgrade plan'));
     // Account menu trigger: localized accessible name; aria-expanded is
     // kept in sync by toggleAccountPopup (M43).
@@ -6295,16 +6392,22 @@ let currentUser;
       if (!u) return;
       u.classList.toggle('expanded', on);
       if (key === 'projects' && projBody) projBody.classList.toggle('open', on);
-      if (key === 'projects') { saved['nav-open'] = on ? 'projects' : null; store(); }
+      if (key === 'projects' || key === 'measures') { saved['nav-open'] = on ? key : null; store(); }
     };
     const expandOnly = (key) => { Object.keys(units).forEach((k) => setExpanded(k, k === key)); };
     // restaura la expansion guardada sin cambiar de vista
-    if (saved['nav-open'] === 'projects' && units.projects) units.projects.classList.add('expanded');
+    if (saved['nav-open'] && units[saved['nav-open']]) units[saved['nav-open']].classList.add('expanded');
     if (saved['nav-open'] === 'projects' && projBody) projBody.classList.add('open');
     window._sideNavGo = (key) => {
       document.body.classList.remove('nav-open');
       if (key === 'home') { expandOnly(null); window.showDashView('home'); return; }
-      if (key === 'measures') { expandOnly(null); window.showDashView('measures'); return; }
+      if (key === 'measures') {
+        const u = units.measures;
+        if (u && u.classList.contains('expanded') && window._dashView === 'measures') { setExpanded('measures', false); return; }
+        expandOnly('measures');
+        window.showDashView('measures');
+        return;
+      }
       if (key === 'notifications') { expandOnly(null); window.showDashView('notifications'); return; }
       if (key === 'users') { expandOnly(null); window.showDashView('users'); return; }
       if (key === 'projects') {
@@ -6326,6 +6429,7 @@ let currentUser;
       else if (name === 'measure' && typeof _measureReturnView !== 'undefined' && _measureReturnView === 'project') key = 'projects';
       Object.keys(units).forEach((k) => units[k].classList.toggle('active', k === key));
       if (key === 'projects') expandOnly('projects');
+      if (key === 'measures') expandOnly('measures');
     };
   })();
 
@@ -6608,7 +6712,7 @@ let currentUser;
       hc.innerHTML = _recents.length
         ? _recents.map(([name, j]) => {
             const n = allJobs.filter((x) => x.customer === name).length;
-            return `<div class="niv-home-row" onclick="window.openCustomer(decodeURIComponent('${custEnc(name)}'))"><span>${escapeHtml(name)}</span><span class="niv-home-count">${n} ${L('medidas', 'measurements')} · ${_fmtJobDate(j.createdAt)}</span></div>`;
+            return `<div class="niv-home-row" onclick="window.openCustomer(decodeURIComponent('${custEnc(name)}'))"><span>${escapeHtml(name)}</span><span class="niv-home-count">${n} ${n === 1 ? L('medida', 'measurement') : L('medidas', 'measurements')} · ${_fmtJobDate(j.createdAt)}</span></div>`;
           }).join('')
         : '<div class="niv-panel-empty">' + L('Sin clientes', 'No customers') + '</div>';
     }
@@ -6626,6 +6730,278 @@ let currentUser;
       _homeNotifFetchedAt = Date.now();
       if (window.renderHomeNotifications) window.renderHomeNotifications();
     }
+  };
+
+  // ---- Panel widgets: move / resize / hide, saved per user ----
+  // Layout lives in users/{uid}.prefs.homeWidgets (rules allow the user's
+  // own doc update; prefs is not a pinned field) with a localStorage mirror
+  // (nl_home_widgets) so the board paints correctly before the fetch lands.
+  const HW_LABELS = {
+    stats: ['Estadísticas', 'Stats'], actions: ['Acciones rápidas', 'Quick actions'],
+    projects: ['Proyectos recientes', 'Recent projects'], measures: ['Medidas recientes', 'Recent measurements'],
+    customers: ['Clientes recientes', 'Recent customers'], notifications: ['Notificaciones recientes', 'Recent notifications'],
+    enroll: ['Inscripción (QR)', 'Enrollment (QR)'],
+  };
+  const _hwLabel = (id) => { const pair = HW_LABELS[id]; return pair ? L(pair[0], pair[1]) : id; };
+  const HW_DEFAULT = {
+    v: 1,
+    order: ['stats', 'actions', 'projects', 'measures', 'enroll', 'customers', 'notifications'],
+    spans: { stats: 12, actions: 12, projects: 4, measures: 4, enroll: 4, customers: 6, notifications: 6 },
+    hidden: [],
+  };
+  const HW_SPAN_STEPS = [3, 4, 6, 12]; // quarter / third / half / full
+  // Smallest span before a widget's content breaks (measured on the live
+  // page at 1440px, 2026-11-24): stats cards unreadable below half,
+  // action pills wrap awkwardly below third, recents lists below quarter.
+  const HW_MIN_SPAN = { stats: 6, actions: 4, projects: 3, measures: 3, customers: 3, notifications: 3, enroll: 3 };
+  let _hwLayout = null, _hwEditing = false, _hwSaveT = null, _hwRemoteDone = false;
+
+  function _hwLoad() {
+    if (_hwLayout) return _hwLayout;
+    let l = null;
+    try { l = JSON.parse(localStorage.getItem('nl_home_widgets') || 'null'); } catch (_) {}
+    if (!l || !Array.isArray(l.order)) l = JSON.parse(JSON.stringify(HW_DEFAULT));
+    const known = Object.keys(HW_LABELS);
+    l.order = l.order.filter((id) => known.includes(id));
+    known.forEach((id) => { if (!l.order.includes(id)) l.order.push(id); });
+    if (!l.spans || typeof l.spans !== 'object') l.spans = {};
+    if (!Array.isArray(l.hidden)) l.hidden = [];
+    _hwLayout = l;
+    return l;
+  }
+
+  function _hwRenderTray() {
+    const tray = document.getElementById('home-widgets-tray');
+    if (!tray) return;
+    const l = _hwLoad();
+    tray.classList.toggle('hw-has-hidden', l.hidden.length > 0);
+    tray.setAttribute('aria-label', L('Widgets ocultos', 'Hidden widgets'));
+    tray.innerHTML =
+      (l.hidden.length
+        ? '<div class="hw-tray-title">' + L('Widgets ocultos', 'Hidden widgets') + '</div><div class="hw-tray-row">' +
+          l.hidden.map((id) =>
+            `<button type="button" class="niv-btn-pill" onclick="window._homeWidgetShow('${id}')">+ ${_hwLabel(id)}</button>`
+          ).join('') + '</div>'
+        : '')
+      + '<div class="hw-tray-row" style="margin-top:8px;">'
+      + '<button type="button" class="niv-btn-pill" onclick="window._homeWidgetsReset()">' + L('Restablecer diseño', 'Reset layout') + '</button>'
+      + '</div>';
+  }
+
+  function _hwApply() {
+    const home = document.getElementById('view-home');
+    if (!home) return;
+    const l = _hwLoad();
+    const tray = document.getElementById('home-widgets-tray');
+    l.order.forEach((id) => {
+      const el = home.querySelector(`[data-widget="${id}"]`);
+      if (el) home.insertBefore(el, tray);
+    });
+    l.order.forEach((id) => {
+      const el = home.querySelector(`[data-widget="${id}"]`);
+      if (!el) return;
+      el.style.setProperty('--wspan', l.spans[id] || 12);
+      const isHidden = l.hidden.includes(id);
+      el.classList.toggle('hw-hidden', isHidden);
+      el.style.display = isHidden ? 'none' : '';
+    });
+    _hwRenderTray();
+  }
+
+  // Pointer drag: grip reorders (works mouse + touch), right edge resizes
+  // through the span steps. The arrow/+/− buttons stay for keyboard access.
+  function _hwWireDrag(el, id) {
+    const home = document.getElementById('view-home');
+    const grip = document.createElement('button');
+    grip.type = 'button';
+    grip.className = 'hw-grip';
+    grip.textContent = '⠿';
+    grip.setAttribute('aria-label', L('Arrastrar para mover', 'Drag to move'));
+    grip.addEventListener('pointerdown', (ev) => {
+      if (!_hwEditing) return;
+      ev.preventDefault();
+      try { grip.setPointerCapture(ev.pointerId); } catch (_) {}
+      el.classList.add('hw-dragging');
+      let target = null;
+      const move = (e) => {
+        const under = document.elementFromPoint(e.clientX, e.clientY);
+        const w = under && under.closest ? under.closest('#view-home > [data-widget]') : null;
+        if (target && target !== w) target.classList.remove('hw-drop-target');
+        target = (w && w !== el) ? w : null;
+        if (target) target.classList.add('hw-drop-target');
+      };
+      const up = (e) => {
+        grip.removeEventListener('pointermove', move);
+        grip.removeEventListener('pointerup', up);
+        grip.removeEventListener('pointercancel', up);
+        el.classList.remove('hw-dragging');
+        if (target) {
+          target.classList.remove('hw-drop-target');
+          const l = _hwLoad();
+          const from = l.order.indexOf(id);
+          const to = l.order.indexOf(target.dataset.widget);
+          if (from >= 0 && to >= 0 && from !== to) {
+            l.order.splice(to, 0, l.order.splice(from, 1)[0]);
+            _hwApply();
+            _hwSave();
+          }
+        }
+        target = null;
+      };
+      grip.addEventListener('pointermove', move);
+      grip.addEventListener('pointerup', up);
+      grip.addEventListener('pointercancel', up);
+    });
+    el.appendChild(grip);
+
+    const rz = document.createElement('div');
+    rz.className = 'hw-resize';
+    rz.setAttribute('role', 'separator');
+    rz.setAttribute('aria-label', L('Arrastrar para redimensionar', 'Drag to resize'));
+    rz.addEventListener('pointerdown', (ev) => {
+      if (!_hwEditing) return;
+      ev.preventDefault();
+      try { rz.setPointerCapture(ev.pointerId); } catch (_) {}
+      const startX = ev.clientX;
+      const l = _hwLoad();
+      const startSpan = l.spans[id] || 12;
+      const colW = (home.getBoundingClientRect().width) / 12;
+      const move = (e) => {
+        const raw = startSpan + Math.round((e.clientX - startX) / colW);
+        const span = Math.max(HW_MIN_SPAN[id] || 3, Math.min(12, raw));
+        if (span !== (l.spans[id] || 12)) {
+          l.spans[id] = span;
+          _hwApply();
+        }
+      };
+      const up = () => {
+        rz.removeEventListener('pointermove', move);
+        rz.removeEventListener('pointerup', up);
+        rz.removeEventListener('pointercancel', up);
+        // snap to the nearest allowed step on release
+        const steps = HW_SPAN_STEPS.filter((sp) => sp >= (HW_MIN_SPAN[id] || 3));
+        const cur = l.spans[id] || 12;
+        l.spans[id] = steps.reduce((a, b) => Math.abs(b - cur) < Math.abs(a - cur) ? b : a, steps[steps.length - 1]);
+        _hwApply();
+        _hwSave();
+      };
+      rz.addEventListener('pointermove', move);
+      rz.addEventListener('pointerup', up);
+      rz.addEventListener('pointercancel', up);
+    });
+    el.appendChild(rz);
+  }
+
+  function _hwEnsureControls() {
+    document.querySelectorAll('#view-home > [data-widget]').forEach((el) => {
+      if (el.querySelector('.hw-controls')) return;
+      const id = el.dataset.widget;
+      _hwWireDrag(el, id);
+      const bar = document.createElement('div');
+      bar.className = 'hw-controls';
+      bar.innerHTML =
+        '<button type="button" data-act="up" aria-label="' + L('Subir', 'Move up') + '">↑</button>' +
+        '<button type="button" data-act="down" aria-label="' + L('Bajar', 'Move down') + '">↓</button>' +
+        '<button type="button" data-act="narrower" aria-label="' + L('Más estrecho', 'Narrower') + '">−</button>' +
+        '<button type="button" data-act="wider" aria-label="' + L('Más ancho', 'Wider') + '">+</button>' +
+        '<button type="button" data-act="hide" aria-label="' + L('Ocultar', 'Hide') + '">✕</button>';
+      bar.addEventListener('click', (ev) => {
+        const b = ev.target.closest('button');
+        if (b) _hwAction(id, b.dataset.act);
+      });
+      el.appendChild(bar);
+    });
+  }
+
+  function _hwAction(id, act) {
+    const l = _hwLoad();
+    const i = l.order.indexOf(id);
+    if (act === 'up' && i > 0) {
+      [l.order[i - 1], l.order[i]] = [l.order[i], l.order[i - 1]];
+    } else if (act === 'down' && i < l.order.length - 1) {
+      [l.order[i + 1], l.order[i]] = [l.order[i], l.order[i + 1]];
+    } else if (act === 'narrower' || act === 'wider') {
+      const steps = HW_SPAN_STEPS.filter((sp) => sp >= (HW_MIN_SPAN[id] || 3));
+      const si = steps.indexOf(l.spans[id] || 12);
+      const ni = si < 0
+        ? (act === 'narrower' ? 0 : steps.length - 1)
+        : Math.max(0, Math.min(steps.length - 1, si + (act === 'wider' ? 1 : -1)));
+      l.spans[id] = steps[ni];
+    } else if (act === 'hide') {
+      if (!l.hidden.includes(id)) l.hidden.push(id);
+    } else {
+      return;
+    }
+    _hwApply();
+    _hwSave();
+  }
+
+  function _hwSave() {
+    try { localStorage.setItem('nl_home_widgets', JSON.stringify(_hwLayout)); } catch (_) {}
+    clearTimeout(_hwSaveT);
+    _hwSaveT = setTimeout(async () => {
+      try {
+        const uid = window._currentUser && window._currentUser.uid;
+        if (!uid || !window._db) return;
+        await setDoc(doc(window._db, 'users', uid), { prefs: { homeWidgets: _hwLayout } }, { merge: true });
+      } catch (e) { console.warn('[home-widgets] save failed', e); }
+    }, 800);
+  }
+
+  async function _hwRemoteLoad() {
+    if (_hwRemoteDone) return;
+    _hwRemoteDone = true;
+    try {
+      const uid = window._currentUser && window._currentUser.uid;
+      if (!uid || !window._db) return;
+      const snap = await getDoc(doc(window._db, 'users', uid));
+      const remote = snap.exists() && snap.data().prefs && snap.data().prefs.homeWidgets;
+      if (remote && Array.isArray(remote.order)) {
+        const before = JSON.stringify(_hwLoad());
+        _hwLayout = null;
+        try { localStorage.setItem('nl_home_widgets', JSON.stringify(remote)); } catch (_) {}
+        if (JSON.stringify(_hwLoad()) !== before) _hwApply();
+      }
+    } catch (_) {}
+  }
+
+  window._homeWidgetsToggleEdit = function () {
+    const home = document.getElementById('view-home');
+    if (!home) return;
+    _hwEditing = !_hwEditing;
+    home.classList.toggle('hw-editing', _hwEditing);
+    const btn = document.getElementById('home-customize-btn');
+    if (btn) btn.textContent = _hwEditing ? L('Listo', 'Done') : L('Personalizar', 'Customize');
+    if (_hwEditing) _hwEnsureControls();
+    _hwApply();
+  };
+  window._homeWidgetShow = function (id) {
+    const l = _hwLoad();
+    l.hidden = l.hidden.filter((x) => x !== id);
+    _hwApply();
+    _hwSave();
+  };
+  window._homeWidgetsReset = function () {
+    _hwLayout = JSON.parse(JSON.stringify(HW_DEFAULT));
+    _hwApply();
+    _hwSave();
+  };
+
+  // Re-localize the widget chrome when the language resolves late
+  // (users/{uid}.language beats the local chain; see _applyDashLang).
+  const _applyDashLangWidgets = window._applyDashLang;
+  window._applyDashLang = (lang) => {
+    if (typeof _applyDashLangWidgets === 'function') _applyDashLangWidgets(lang);
+    const btn = document.getElementById('home-customize-btn');
+    if (btn) btn.textContent = _hwEditing ? L('Listo', 'Done') : L('Personalizar', 'Customize');
+    _hwRenderTray();
+  };
+
+  const _renderHomeOverviewWidgets = window.renderHomeOverview;
+  window.renderHomeOverview = () => {
+    _renderHomeOverviewWidgets();
+    _hwApply();
+    _hwRemoteLoad();
   };
 
   // notificaciones recientes del Panel: lista corta desde la misma
@@ -6706,25 +7082,62 @@ let currentUser;
             ${n.body ? `<div class="niv-notif-body">${escapeHtml(n.body)}</div>` : ''}
           </div>
           <div class="niv-notif-date">${escapeHtml(_fmtDateTime(n.createdAt))}</div>
+          <button type="button" class="niv-notif-del" data-notif-del aria-label="${escapeHtml(L('Eliminar notificación', 'Delete notification'))}" title="${escapeHtml(L('Eliminar', 'Delete'))}">&times;</button>
         </div>`).join('');
       list.querySelectorAll('.niv-notif-item').forEach((el) => {
-        el.addEventListener('click', () => window.openNotification(el.getAttribute('data-notif-id')));
+        el.addEventListener('click', (ev) => {
+          if (ev.target.closest('[data-notif-del]')) { ev.stopPropagation(); window.deleteNotification(el.getAttribute('data-notif-id')); return; }
+          window.openNotification(el.getAttribute('data-notif-id'));
+        });
       });
     } catch (e) {
       list.innerHTML = '<div class="niv-panel-empty">' + L('No se pudieron cargar las notificaciones.', 'Could not load notifications.') + '</div>';
     }
   };
+  // Interacciones en sitio: un clic ya no vuelve a pedir ni a pintar la
+  // lista (antes parecia "recargar" y perdia el scroll); el cambio se
+  // aplica al DOM y al contador de inmediato y el backend se confirma
+  // despues. Si el backend falla se repinta desde la fuente.
+  const _notifSubtitle = () => {
+    const sub = document.getElementById('notif-subtitle');
+    const unread = _notifItems.filter((x) => !x.read).length;
+    if (sub) sub.textContent = unread ? unread + ' ' + L('sin leer', 'unread') : '';
+    _setNotifBadge(unread);
+  };
+  const _notifEmptyIfNone = () => {
+    const list = document.getElementById('notif-list');
+    if (list && !_notifItems.length) list.innerHTML = '<div class="niv-panel-empty">' + L('No tienes notificaciones.', 'No notifications yet.') + '</div>';
+  };
   window.openNotification = async (id) => {
     const n = _notifItems.find((x) => x.id === id);
-    if (n && !n.read) {
-      try { await _callable('markNotificationRead')({ id }); } catch (_) { /* se reintenta al recargar */ }
-      n.read = true;
-    }
-    window.renderNotifications();
+    if (!n || n.read) return;
+    n.read = true;
+    const el = document.querySelector('.niv-notif-item[data-notif-id="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+    if (el) el.classList.remove('unread');
+    _notifSubtitle();
+    try { await _callable('markNotificationRead')({ id }); } catch (_) { window.renderNotifications(); }
   };
   window.markAllNotificationsRead = async () => {
-    try { await _callable('markNotificationRead')({ all: true }); } catch (_) { /* falla suave */ }
-    window.renderNotifications();
+    _notifItems.forEach((x) => { x.read = true; });
+    document.querySelectorAll('#notif-list .niv-notif-item.unread').forEach((el) => el.classList.remove('unread'));
+    _notifSubtitle();
+    try { await _callable('markNotificationRead')({ all: true }); } catch (_) { window.renderNotifications(); }
+  };
+  window.deleteNotification = async (id) => {
+    _notifItems = _notifItems.filter((x) => x.id !== id);
+    const el = document.querySelector('.niv-notif-item[data-notif-id="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+    if (el) el.remove();
+    _notifSubtitle();
+    _notifEmptyIfNone();
+    try { await _callable('deleteNotifications')({ id }); } catch (_) { window.renderNotifications(); }
+  };
+  window.deleteAllNotifications = async () => {
+    if (!_notifItems.length) return;
+    if (!window.confirm(L('¿Eliminar todas las notificaciones?', 'Delete all notifications?'))) return;
+    _notifItems = [];
+    _notifSubtitle();
+    _notifEmptyIfNone();
+    try { await _callable('deleteNotifications')({ all: true }); } catch (_) { window.renderNotifications(); }
   };
 
   // ---- sidebar: secciones colapsables individualmente (ley #2) ----
@@ -6740,6 +7153,7 @@ let currentUser;
       chev.type = 'button';
       chev.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
       chev.title = L('Colapsar sección', 'Collapse section');
+      chev.setAttribute('aria-label', L('Colapsar sección', 'Collapse section'));
       title.appendChild(chev);
       if (saved[key]) sec.classList.add('sec-collapsed');
       const toggle = () => {

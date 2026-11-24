@@ -862,7 +862,7 @@
         page_title: 'Nivelato - Iniciar sesión',
         photo_credit_label: 'Foto:',
         tagline: 'Mediciones de campo, niveladas, para todo panel que tiene que caber en un hueco.',
-        tagline_qgi: 'Nivelato, exclusivo de Quality Glass en Puerto Rico',
+        tagline_qgi: 'Nivelato, para Quality Glass en Puerto Rico',
         tablist_label: 'Iniciar sesión o solicitar acceso',
         tab_login: 'Iniciar sesión',
         tab_signup: 'Solicitar acceso',
@@ -921,8 +921,8 @@
         enroll_note: 'Tienes una invitación de Nivelato. Inicia sesión o crea tu cuenta con el correo de la invitación y tu acceso se activa automáticamente.',
         signup_note_qgi_html: 'Tu solicitud será revisada por <b>Quality Glass</b>. Te avisaremos cuando tengas acceso.',
         geo_note: 'No pudimos detectar tu ubicación; estás viendo la versión general de Nivelato.',
-        pr_note_1: 'En Puerto Rico, el uso empresarial de Nivelato es exclusivo para empleados de Quality Glass. ',
-        pr_notice_merged_1: 'En Puerto Rico, el uso empresarial de Nivelato es exclusivo para empleados de Quality Glass. Inicia sesión con Quality Glazing Contractors o usa una cuenta personal. Los demás pueden usar la app gratuita: ',
+        pr_note_1: 'Las empresas en Puerto Rico pueden usar Nivelato con hasta 5 usuarios por ahora: <a href="https://nivelatolabs.com/pr/">solicita acceso</a>. ',
+        pr_notice_merged_1: 'Las empresas en Puerto Rico pueden usar Nivelato con hasta 5 usuarios por ahora: <a href="https://nivelatolabs.com/pr/">solicita acceso</a>. Inicia sesión con Quality Glazing Contractors o usa una cuenta personal. Los demás pueden usar la app gratuita: ',
         pr_note_2: 'Los demás pueden usar la app gratuita: ',
         pr_note_link: 'Descargar en Google Play',
         profile_note: 'No encontramos tu perfil de usuario. Vuelve a iniciar sesión para repararlo.',
@@ -1020,7 +1020,7 @@
         page_title: 'Nivelato - Sign in',
         photo_credit_label: 'Photo:',
         tagline: 'Field measurements, leveled, for any panel that has to fit an opening.',
-        tagline_qgi: 'Nivelato, exclusive to Quality Glass in Puerto Rico',
+        tagline_qgi: 'Nivelato, for Quality Glass in Puerto Rico',
         tablist_label: 'Sign in or request access',
         tab_login: 'Sign in',
         tab_signup: 'Request access',
@@ -1079,8 +1079,8 @@
         enroll_note: 'You have a Nivelato invitation. Sign in or create your account with the invited email and your access activates automatically.',
         signup_note_qgi_html: 'Your request will be reviewed by <b>Quality Glass</b>. We will let you know when you have access.',
         geo_note: 'We could not detect your location; you are seeing the general version of Nivelato.',
-        pr_note_1: 'In Puerto Rico, business use of Nivelato is exclusive to Quality Glass employees. ',
-        pr_notice_merged_1: 'In Puerto Rico, business use of Nivelato is exclusive to Quality Glass employees. Sign in with Quality Glazing Contractors, or use a personal account. Everyone else can use the free app: ',
+        pr_note_1: 'Companies in Puerto Rico can use Nivelato with up to 5 users for now: <a href="https://nivelatolabs.com/pr/">request access</a>. ',
+        pr_notice_merged_1: 'Companies in Puerto Rico can use Nivelato with up to 5 users for now: <a href="https://nivelatolabs.com/pr/">request access</a>. Sign in with Quality Glazing Contractors, or use a personal account. Everyone else can use the free app: ',
         pr_note_2: 'Everyone else can use the free app: ',
         pr_note_link: 'Download on Google Play',
         profile_note: 'We could not find your user profile. Sign in again to fix it.',
@@ -1760,8 +1760,8 @@
     noticeHost(card).prepend(note);
   }
 
-  // PR company-use notice. In Puerto Rico only QGC employees
-  // may use Nivelato as a company; everyone else gets the free Play Store app.
+  // PR company-use notice. Puerto Rico companies can use Nivelato with up to
+  // 5 users for now (apply at /pr/); personal use gets the free Play Store app.
   function showPrNotice() {
     prNoticeOn = true;
     const card = document.getElementById('app-card');

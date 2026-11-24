@@ -159,7 +159,7 @@
   /* ---------- main column ---------- */
   .flow-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--niv-inset); min-height: 0; }
   .flow-graph-panel {
-    position: relative; flex: 1.25; min-height: 240px;
+    position: relative; flex: 1.25; min-height: 340px;
     background:
       linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px),
@@ -261,7 +261,7 @@
   .flow-continue {
     display: block; width: 100%; margin-top: 20px;
     background: var(--niv-accent); border: 1px solid transparent;
-    border-radius: var(--niv-pill); color: #fff;
+    border-radius: var(--niv-pill); color: #050505;
     font: 600 15.5px 'Inter', system-ui, sans-serif;
     padding: 12px 20px; cursor: pointer;
   }
@@ -347,7 +347,7 @@
     .flow-main { gap: 16px; }
     /* The form comes first on mobile; the graph moves below it. */
     .flow-step { order: 1; }
-    .flow-graph-panel { order: 2; min-height: 180px; flex: none; height: 200px; }
+    .flow-graph-panel { order: 2; min-height: 260px; flex: none; height: 280px; }
     .flow-cards { grid-template-columns: minmax(0, 1fr); gap: 16px; }
     .flow-cards > * { min-width: 0; }
     .flow-stub { margin-top: 16px; }
@@ -422,6 +422,7 @@
        after the glass assignment above to win the cascade. */
     .flow-card { -webkit-backdrop-filter: none; backdrop-filter: none; }
     .flow-continue {
+      color: #fff;
       background: linear-gradient(150deg, rgba(255,255,255,.13), rgba(255,255,255,.05));
       -webkit-backdrop-filter: blur(16px) saturate(140%);
       backdrop-filter: blur(16px) saturate(140%);
@@ -531,6 +532,33 @@
     padding: 12px 16px; cursor: pointer;
   }
   .flow-saved-actions button:hover { background: var(--niv-surface-2); }
+  /* Graph-first entry: on the direct screen the graph is the main surface,
+     bigger than the rest, and the card below is only a short helper. */
+  body.flow-graph-main .flow-graph-panel { flex: none; height: min(64svh, 620px); min-height: 380px; }
+  body.flow-graph-main .flow-dims-card .flow-direct-summary { margin-top: 8px; }
+  body.flow-gedit-open #flow-direct-continue { visibility: hidden; }
+  .flow-gedit {
+    position: absolute; z-index: 20; display: flex; flex-direction: column; gap: 8px;
+    min-width: 230px; max-width: calc(100% - 12px); box-sizing: border-box; padding: 12px; border-radius: 14px;
+    background: var(--niv-surface); border: 1px solid var(--niv-border);
+    box-shadow: 0 12px 32px rgba(0,0,0,.5);
+  }
+  .flow-gedit-f { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--niv-text-dim); }
+  .flow-gedit-row { display: flex; gap: 8px; }
+  .flow-gedit-row .flow-whole { flex: 1 1 90px; min-width: 0; }
+  .flow-gedit-row .flow-frac { flex: 0 0 80px; min-width: 0; }
+  .flow-gedit-done {
+    border: 1px solid var(--niv-border); background: var(--niv-surface-2); color: var(--niv-text);
+    border-radius: var(--niv-pill); padding: 8px 14px; font: 600 13px 'Inter', system-ui, sans-serif; cursor: pointer;
+  }
+  @media (max-width: 900px) {
+    body.flow-graph-main .flow-graph-panel { order: 1; height: 480px; min-height: 480px; }
+    body.flow-graph-main .flow-step { order: 2; }
+    body.flow-graph-main .flow-sections { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; gap: 6px; max-height: 52px; }
+    body.flow-graph-main .flow-section { flex: 0 0 auto; width: auto; white-space: nowrap; padding: 8px 12px; }
+    body.flow-graph-main .flow-subsections { display: contents; }
+    body.flow-graph-main .flow-user, body.flow-graph-main .flow-context { display: none; }
+  }
 </style>
 </head>
 <body data-envmark-interstitial>
@@ -695,10 +723,29 @@
           </div>
           <div class="flow-step-error" id="flow-dims-error" role="alert"></div>
           <button type="button" class="flow-continue" id="flow-dims-continue" data-s="continueBtn">Continuar</button>
+          <button type="button" class="flow-opt" id="flow-direct-open" data-s="directOpen" style="margin-top:12px">Ya tengo las lecturas: ingresarlas todas en una pantalla</button>
         </section>
         <aside class="flow-why-panel" aria-label="Why" data-s-aria="ariaWhy">
           <h3 data-s="whyTitle3">¿Por qué esto?</h3>
           <p data-s="dimsWhy">Esto nos permite medir los desniveles de la pieza dándonos una referencia con la que trabajar.</p>
+        </aside>
+      </div>
+    </div>
+
+    <div id="flow-step-direct" class="flow-step" style="display:none">
+      <div class="flow-dims-wrap">
+        <section class="flow-card flow-dims-card" aria-label="Direct entry" id="flow-direct-card">
+          <h2 data-s="directTitle">Ingresa todas las lecturas</h2>
+          <div class="flow-dims-unit" data-s="dimsUnit">(pulgadas)</div>
+          <p class="flow-dims-unit" data-s="directIntro" style="margin-top:0"></p>
+          <div id="flow-direct-rows" class="flow-direct-summary"></div>
+          <div class="flow-step-error" id="flow-direct-error" role="alert"></div>
+          <button type="button" class="flow-continue" id="flow-direct-continue" data-s="directContinue">Continuar a la foto</button>
+          <button type="button" class="flow-opt" id="flow-direct-guided" data-s="directGuided" style="margin-top:12px">Prefiero que me guíen paso a paso</button>
+        </section>
+        <aside class="flow-why-panel" aria-label="Why" data-s-aria="ariaWhy">
+          <h3 data-s="whyTitle3">¿Por qué esto?</h3>
+          <p data-s="directWhy"></p>
         </aside>
       </div>
     </div>
@@ -978,6 +1025,15 @@ const STR = {
     offRStuck: 'Simplemente coloca tu láser en algún punto a la derecha sobre el piso y mide desde ahí.',
     offWallStuck: 'Simplemente coloca tu láser en algún punto de cualquier pared y mide desde ahí.',
     pairBottom: 'Abajo', pairTop: 'Arriba', pairLeft: 'Izquierda', pairRight: 'Derecha',
+    directOpen: 'Ya tengo las lecturas: ingresarlas todas en una pantalla',
+    directTitle: 'Escribe sobre la gráfica',
+    directIntro: 'Toca un número en la gráfica y escríbelo ahí mismo: el ancho y alto base, y las lecturas A, B, C y D. El desnivel A a B se calcula solo: B menos A.',
+    chipW: 'Ancho', chipH: 'Alto', editDone: 'Listo',
+    directGuided: 'Prefiero que me guíen paso a paso',
+    directContinue: 'Continuar a la foto',
+    directBase: 'Dimensiones base',
+    directWhy: 'Es lo mismo que el modo guiado, pero con todas las lecturas a la vista. Puedes cambiar de modo cuando quieras y no pierdes lo escrito.',
+    directTo: 'a',
     offError: 'Ambas lecturas necesitan un número entero para continuar. Cero es válido: significa que no hay desnivel.',
     offErrorWhole: 'Ambas lecturas necesitan un número entero. Una fracción sola no es suficiente.',
     offErrorMax: 'Ambas lecturas deben ser de 1000 pulgadas o menos para continuar.',
@@ -1055,6 +1111,15 @@ const STR = {
     offRStuck: 'Simply place your laser somewhere right on the floor, measure from there.',
     offWallStuck: 'Simply place your laser somewhere on any wall, measure from there.',
     pairBottom: 'Bottom', pairTop: 'Top', pairLeft: 'Left', pairRight: 'Right',
+    directOpen: 'I already have the readings: enter them all on one screen',
+    directTitle: 'Type on the graph',
+    directIntro: 'Tap a number on the graph and type it right there: the base width and height, and readings A, B, C and D. The A to B offset is calculated for you: B minus A.',
+    chipW: 'Width', chipH: 'Height', editDone: 'Done',
+    directGuided: 'Guide me step by step instead',
+    directContinue: 'Continue to photo',
+    directBase: 'Base dimensions',
+    directWhy: 'Same as guided mode, with every reading in view. You can switch modes any time and keep what you typed.',
+    directTo: 'to',
     offError: 'Both readings need a whole number to continue. Zero is valid: it means no offset.',
     offErrorWhole: 'Both readings need a whole number. A fraction on its own is not enough.',
     offErrorMax: 'Both readings must be 1000 inches or less to continue.',
@@ -1281,23 +1346,28 @@ function toFracStr(decimal) {
   if (whole === 0) return `${sign}${n}/${d}"`;
   return `${sign}${whole} ${n}/${d}"`;
 }
-function offsetResult(key) {
-  const c = state.offsets[key].committed;
+function offsetResult(key, live) {
+  const c = live ? offsetTotals(key) : state.offsets[key].committed;
   if (!c) return null;
   const diff = c.a - c.b;
-  if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
+  if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0, signed: 0, slabel: '0"', dlabel: 'Nivel' };
   const val = Math.abs(diff);
   let arrow;
   if (key === 'L') arrow = diff > 0 ? '→' : '←';
   else if (key === 'R') arrow = diff > 0 ? '←' : '→';
   else if (key === 'T') arrow = diff > 0 ? '↓' : '↑';
   else arrow = diff > 0 ? '↑' : '↓';
-  return { val, dir: arrow, label: arrow + ' ' + toFracStr(val), raw: diff };
+  // Signed offset along the measuring direction A -> B (confirmed: A=10, B=12
+  // gives +2): end minus start = -(a - b). Shown beside the arrow label; the
+  // arrow and every dimension still come from raw (a - b), unchanged.
+  const signed = -diff;
+  const slabel = (signed > 0 ? '+' : '-') + toFracStr(val);
+  return { val, dir: arrow, label: arrow + ' ' + toFracStr(val), dlabel: arrow + ' ' + toFracStr(val) + ' (' + slabel + ')', raw: diff, signed, slabel };
 }
-function derivedDims() {
-  const c = state.dims.committed;
-  if (!c || !offsetsAllDone()) return null;
-  const izq = offsetResult('L'), der = offsetResult('R'), techo = offsetResult('T'), piso = offsetResult('B');
+function derivedDims(live) {
+  const c = live ? (dimsValid() ? dimsTotals() : null) : state.dims.committed;
+  if (!c || !(live ? OFF_KEYS.every((k) => !offsetValidationError(k)) : offsetsAllDone())) return null;
+  const izq = offsetResult('L', live), der = offsetResult('R', live), techo = offsetResult('T', live), piso = offsetResult('B', live);
   return {
     anchoTop: Math.max(0, c.w - izq.raw - der.raw),
     altoDer: Math.max(0, c.h - techo.raw - piso.raw)
@@ -1337,7 +1407,7 @@ function section1HintText() {
   return S().step1HintLocation;
 }
 const STEP_EL = {
-  details: 'flow-step1', dims: 'flow-step2',
+  details: 'flow-step1', dims: 'flow-step2', direct: 'flow-step-direct',
   offL: 'flow-step-offL', offR: 'flow-step-offR', offT: 'flow-step-offT', offB: 'flow-step-offB',
   photo: 'flow-step-photo', summary: 'flow-step-summary'
 };
@@ -1483,7 +1553,7 @@ function renderSummaryNav() {
   $('flow-sum-h').textContent = c ? toFracStr(c.h) : '---';
   for (const k of OFF_KEYS) {
     const r = offsetResult(k);
-    $('flow-sum-off' + k).textContent = r ? r.label : '---';
+    $('flow-sum-off' + k).textContent = r ? r.dlabel : '---';
   }
   const name = resolvedCustomerName();
   $('flow-sum-cust').textContent = name || S().sumNoCustomer;
@@ -1558,7 +1628,9 @@ function mountGraph() {
   if (!cvs || !panel || typeof window.embedGraph !== 'function') return;
   const w = Math.max(280, Math.floor(panel.clientWidth));
   const h = Math.max(220, Math.floor(panel.clientHeight));
-  cvs.width = w; cvs.height = h;
+  const dpr = Math.min(3, window.devicePixelRatio || 1);
+  cvs.__nvDpr = dpr;
+  cvs.width = Math.round(w * dpr); cvs.height = Math.round(h * dpr);
   /* Feed: the embed payload's base fields, the same shape dashboard
      passes for a job (hueco.anchoBot / hueco.altoIzq are the stored
      whole+fraction totals of the wizard's base fields). Until base
@@ -1567,20 +1639,56 @@ function mountGraph() {
      desnivel labels (uncommitted walls stay 'Nivel', the renderer's
      own neutral), plus the derived top width / right height once
      all four are in, exactly like dashboard's _graphDataFor. */
-  const c = state.dims.committed;
-  const lab = (k) => { const r = offsetResult(k); return r ? r.label : 'Nivel'; };
+  const edit = state.activeSection === 'direct';
+  let c = state.dims.committed;
+  if (edit) {
+    // Live and coherent: each typed base value drives the geometry at
+    // once; an untyped one keeps the neutral default.
+    const tt = dimsTotals();
+    const okn = (v) => typeof v === 'number' && isFinite(v) && v > 0;
+    const typedN = (w) => String(w ?? '').trim() !== '';
+    c = { w: (typedN(state.dims.wWhole) && okn(tt.w)) ? tt.w : 36, h: (typedN(state.dims.hWhole) && okn(tt.h)) ? tt.h : 84 };
+  }
+  else if (!c && !dimsValidationError()) c = dimsTotals();
+  const lab = (k) => {
+    const r = edit ? (offsetValidationError(k) ? null : offsetResult(k, true)) : offsetResult(k);
+    return r ? r.dlabel : 'Nivel';
+  };
   const payload = {
     anchoBot: c ? c.w : 36, altoIzq: c ? c.h : 84,
     pIL: lab('L'), pDL: lab('R'), tL: lab('T'), pL: lab('B')
   };
-  const der = derivedDims();
+  const der = derivedDims(edit);
   if (der) { payload.anchoTop = der.anchoTop; payload.altoDer = der.altoDer; }
+  if (edit) {
+    payload.editable = true;
+    payload.onEdit = openGraphEditor;
+    const t = dimsTotals();
+    const typed = (w) => String(w ?? '').trim() !== '';
+    payload.chips = {
+      W: { t: typed(state.dims.wWhole) ? S().chipW + ' ' + toFracStr(t.w) : S().chipW + ' ?', ok: typed(state.dims.wWhole) },
+      H: { t: typed(state.dims.hWhole) ? S().chipH + ' ' + toFracStr(t.h) : S().chipH + ' ?', ok: typed(state.dims.hWhole) }
+    };
+    for (const r of DIRECT_ROWS) {
+      const o = state.offsets[r.key];
+      const ot = offsetTotals(r.key);
+      const ta = typed(o.aWhole), tb = typed(o.bWhole);
+      const lines = [r.pair, (ta ? toFracStr(ot.a) : '?') + ' \u2192 ' + (tb ? toFracStr(ot.b) : '?')];
+      const res = (ta && tb && !offsetValidationError(r.key)) ? offsetResult(r.key, true) : null;
+      if (res) lines.push(res.slabel);
+      payload.chips[r.key] = { t: lines, ok: !!res };
+    }
+  }
   window.embedGraph(cvs, payload);
   graphMounted = true;
 }
 let resizeTimer = null;
+let lastGraphW = 0;
 window.addEventListener('resize', () => {
   if (!graphMounted) return;
+  // A keyboard changes only the height: keep the graph as it is.
+  if (window.innerWidth === lastGraphW && document.body.classList.contains('flow-gedit-open')) return;
+  lastGraphW = window.innerWidth;
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(mountGraph, 250);
 });
@@ -1671,6 +1779,7 @@ function sectionDone(key) {
   return offsetDone(key.slice(3));
 }
 function gateFor(key) {
+  if (key === 'direct') return section1Done() ? '' : 'step1';
   const idx = SECTION_ORDER.indexOf(key);
   for (let i = 0; i < idx; i++) {
     const missing = SECTION_ORDER[i];
@@ -1680,6 +1789,13 @@ function gateFor(key) {
     return key === 'photo' ? 'hintOffsetsFirst' : 'hintPrevOffset';
   }
   return '';
+}
+function syncGraphMode() {
+  const on = state.activeSection === 'direct';
+  document.body.classList.toggle('flow-graph-main', on);
+  if (!on) closeGraphEditor();
+  if (on) directTouched(true);
+  mountGraph();
 }
 function goToSection(key) {
   const gate = gateFor(key);
@@ -1693,7 +1809,8 @@ function goToSection(key) {
   if (offKey) state.offsets[offKey].visited = true;
   $('flow-hint').textContent = '';
   render();
-  scrollToForm();
+  syncGraphMode();
+  if (key !== 'direct') scrollToForm(); else window.scrollTo(0, 0);
   return true;
 }
 
@@ -1824,6 +1941,127 @@ function bindOffset(key) {
 }
 for (const k of OFF_KEYS) bindOffset(k);
 
+/* ---------- direct entry (readings on one screen) ----------
+   Reversible preview interpretation of "enter values directly OR be
+   guided": the user types the base dimensions and the A/B/C/D readings
+   themselves; offsets stay derived (A to B = B minus A). It edits the
+   same state fields as the guided steps, so switching modes keeps every
+   typed value. Order follows the measurement order: A+B, C+D, B+D, A+C. */
+const DIRECT_ROWS = [
+  { key: 'L', pair: 'A + B', aKey: 'pairBottom', bKey: 'pairTop', title: 'secOffL' },
+  { key: 'R', pair: 'C + D', aKey: 'pairBottom', bKey: 'pairTop', title: 'secOffR' },
+  { key: 'T', pair: 'B + D', aKey: 'pairLeft', bKey: 'pairRight', title: 'secOffT' },
+  { key: 'B', pair: 'A + C', aKey: 'pairLeft', bKey: 'pairRight', title: 'secOffB' }
+];
+function buildDirectRows() {
+  /* Read-only summary under the graph: the numbers themselves are typed on
+     the graph (tap a chip), not in a form. */
+  let h = '<div class="flow-dims-unit" id="flow-d-base-res"></div>';
+  for (const r of DIRECT_ROWS) {
+    h += '<div class="flow-dims-unit" id="flow-d-' + r.key + '-res" aria-live="polite"></div>';
+  }
+  $('flow-direct-rows').innerHTML = h;
+}
+function directFill() { directTouched(true); }
+let directGraphTimer = null;
+function directTouched(noTouch) {
+  if (!noTouch) state.touched = true;
+  $('flow-direct-error').classList.remove('on');
+  clearTimeout(directGraphTimer);
+  directGraphTimer = setTimeout(() => { if (graphMounted) mountGraph(); }, 120);
+  const typed = (w) => String(w ?? '').trim() !== '';
+  const bt = dimsTotals();
+  $('flow-d-base-res').textContent = (typed(state.dims.wWhole) && typed(state.dims.hWhole)) ? S().widthLabel + ' x ' + S().heightLabel + ': ' + toFracStr(bt.w) + ' x ' + toFracStr(bt.h) : '';
+  for (const r of DIRECT_ROWS) {
+    const o = state.offsets[r.key];
+    const el = $('flow-d-' + r.key + '-res');
+    if (!typed(o.aWhole) || !typed(o.bWhole)) { el.textContent = ''; continue; }
+    const t = offsetTotals(r.key);
+    const sgn = t.b - t.a;
+    const pl = r.pair.split(' + ');
+    el.textContent = pl[0] + ' ' + S().directTo + ' ' + pl[1] + ': ' + (Math.abs(sgn) < 0.001 ? '0"' : (sgn > 0 ? '+' : '-') + toFracStr(Math.abs(sgn)));
+  }
+}
+
+/* On-graph editor: tapping a chip on the graph opens this small popover
+   next to it. Same state fields as the guided steps. */
+function closeGraphEditor() {
+  document.body.classList.remove('flow-gedit-open');
+  const p = $('flow-gedit'); if (p) p.remove();
+}
+function openGraphEditor(key, rect) {
+  closeGraphEditor();
+  const panel = $('flow-graph-canvas').parentElement;
+  const fields = key === 'W' ? [[S().widthLabel, 'wWhole', 'wFrac', state.dims]]
+    : key === 'H' ? [[S().heightLabel, 'hWhole', 'hFrac', state.dims]]
+    : (() => { const r = DIRECT_ROWS.find((x) => x.key === key); const o = state.offsets[key];
+        const pl = r.pair.split(' + ');
+        return [[pl[0] + ' \u00b7 ' + S()[r.aKey], 'aWhole', 'aFrac', o], [pl[1] + ' \u00b7 ' + S()[r.bKey], 'bWhole', 'bFrac', o]]; })();
+  const p = document.createElement('div');
+  document.body.classList.add('flow-gedit-open');
+  p.id = 'flow-gedit'; p.className = 'flow-gedit'; p.setAttribute('role', 'dialog');
+  let h = '';
+  fields.forEach((f, i) => {
+    h += '<label class="flow-gedit-f"><span>' + esc(f[0]) + '</span><span class="flow-gedit-row">' +
+      '<input type="number" class="flow-whole" data-i="' + i + '" min="0" step="1" inputmode="numeric" placeholder="' + esc(S().wholePh) + '" />' +
+      '<select class="flow-frac" data-i="' + i + '" aria-label="' + esc(S().ariaFraction) + '">' + FRAC_OPTIONS + '</select></span></label>';
+  });
+  h += '<button type="button" class="flow-gedit-done">' + esc(S().editDone) + '</button>';
+  p.innerHTML = h;
+  panel.appendChild(p);
+  fields.forEach((f, i) => {
+    const w = p.querySelector('input[data-i="' + i + '"]'), fr = p.querySelector('select[data-i="' + i + '"]');
+    w.value = f[3][f[1]]; fr.value = f[3][f[2]];
+    w.addEventListener('input', () => { f[3][f[1]] = w.value; directTouched(); });
+    fr.addEventListener('change', () => { f[3][f[2]] = fr.value; directTouched(); });
+    w.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); const nx = p.querySelector('input[data-i="' + (i + 1) + '"]'); if (nx) nx.focus(); else closeGraphEditor(); }
+      if (e.key === 'Escape') closeGraphEditor();
+    });
+  });
+  p.querySelector('.flow-gedit-done').addEventListener('click', closeGraphEditor);
+  const pw = p.offsetWidth, ph = p.offsetHeight;
+  let x = rect.x + rect.w / 2 - pw / 2, y = rect.y + rect.h + 8;
+  if (y + ph > panel.clientHeight - 6) y = Math.max(6, rect.y - ph - 8);
+  x = Math.max(6, Math.min(panel.clientWidth - pw - 6, x));
+  p.style.left = x + 'px'; p.style.top = y + 'px';
+  p.querySelector('input').focus();
+  try { p.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {}
+  if (window.visualViewport) { const vv = () => { if (!document.body.contains(p)) { window.visualViewport.removeEventListener('resize', vv); return; } try { p.scrollIntoView({ block: 'nearest' }); } catch (e) {} }; window.visualViewport.addEventListener('resize', vv); }
+}
+function syncGuidedInputs() {
+  const set = (id, v) => { const el = $(id); if (el) el.value = v; };
+  set('flow-w-whole', state.dims.wWhole); set('flow-w-frac', state.dims.wFrac);
+  set('flow-h-whole', state.dims.hWhole); set('flow-h-frac', state.dims.hFrac);
+  for (const k of OFF_KEYS) {
+    const o = state.offsets[k];
+    set('flow-off' + k + '-a-whole', o.aWhole); set('flow-off' + k + '-a-frac', o.aFrac);
+    set('flow-off' + k + '-b-whole', o.bWhole); set('flow-off' + k + '-b-frac', o.bFrac);
+  }
+}
+buildDirectRows();
+$('flow-direct-open').addEventListener('click', () => { if (goToSection('direct')) directFill(); });
+$('flow-direct-guided').addEventListener('click', () => { syncGuidedInputs(); goToSection('dims'); });
+$('flow-direct-continue').addEventListener('click', () => {
+  state.touched = true;
+  const err = $('flow-direct-error');
+  let errKey = dimsValidationError();
+  if (!errKey) for (const k of OFF_KEYS) { errKey = offsetValidationError(k); if (errKey) break; }
+  if (errKey) {
+    err.textContent = S()[errKey] || S().offError;
+    err.classList.add('on');
+    return;
+  }
+  state.dims.error = false;
+  state.dims.committed = dimsTotals();
+  for (const k of OFF_KEYS) { state.offsets[k].error = false; state.offsets[k].committed = offsetTotals(k); state.offsets[k].visited = true; }
+  state.dims.visited = true;
+  syncGuidedInputs();
+  render();
+  mountGraph();
+  goToSection('photo');
+});
+
 /* ---------- photo of area ----------
    The app's photo handling, minus the wizard's annotation editor
    (the boards ask for a plain photo of the area): the picked image
@@ -1921,11 +2159,13 @@ function buildFlowJob() {
       piso: piso ? piso.label : null
     },
     paredes: {
-      izq:   { a: state.offsets.L.committed.a, b: state.offsets.L.committed.b, desnivel: izq.raw },
-      der:   { a: state.offsets.R.committed.a, b: state.offsets.R.committed.b, desnivel: der.raw },
-      techo: { a: state.offsets.T.committed.a, b: state.offsets.T.committed.b, desnivel: techo.raw },
-      piso:  { a: state.offsets.B.committed.a, b: state.offsets.B.committed.b, desnivel: piso.raw }
+      izq:   { a: state.offsets.L.committed.a, b: state.offsets.L.committed.b, desnivel: izq.raw, desnivelAB: izq.signed },
+      der:   { a: state.offsets.R.committed.a, b: state.offsets.R.committed.b, desnivel: der.raw, desnivelAB: der.signed },
+      techo: { a: state.offsets.T.committed.a, b: state.offsets.T.committed.b, desnivel: techo.raw, desnivelAB: techo.signed },
+      piso:  { a: state.offsets.B.committed.a, b: state.offsets.B.committed.b, desnivel: piso.raw, desnivelAB: piso.signed }
     },
+    // desnivelAB is end minus start along A->B; records without this marker keep the old a-b meaning
+    offsetConvention: 'end-minus-start-v1',
     customer: resolvedCustomerName(),
     customerId: ensureCustomerId(),
     project: state.project ? state.project.name : '',
