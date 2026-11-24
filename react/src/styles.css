@@ -52,3 +52,4 @@ h1{font-size:22px}}
 .sticky{position:sticky;top:12px;align-self:start}
 .tot{display:flex;justify-content:space-between;padding:8px 8px;color:var(--dim)}.tot b{color:var(--tx);font-weight:500}.tot.big{border-top:1px solid var(--bd);font-size:17px}.tot.big b{font-weight:700}
 .sticky{z-index:40}.sheet .field{margin-bottom:8px}.sheet .btn{min-height:42px}.sheet label{margin-bottom:4px}.sheet{padding-top:12px!important}
+input[type=checkbox]{width:22px;height:22px;min-height:0;padding:0;accent-color:#fafafa;vertical-align:middle}
