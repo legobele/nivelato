@@ -16,7 +16,7 @@
 // the client can lie, the token can't.
 
 const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
-const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
+const { onDocumentUpdated, onDocumentWritten } = require('firebase-functions/v2/firestore');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const functions = require('firebase-functions');
@@ -816,7 +816,10 @@ exports.switchOrgContext = onCall({ region: 'us-central1', memory: '256MiB' }, a
   const user = userSnap.data();
   if (target === user.orgId) return { ok: true, orgId: target, already: true };
   const membership = membershipsOf(user)[target];
-  if (!membership || membership.disabled === true) {
+  // Pending (disabled === true) and REJECTED memberships can never be
+  // activated by switching context; rejected stays rejected. An active
+  // membership switching in still needs a seat under the member cap.
+  if (!membership || membership.disabled === true || membership.disabled === 'rejected') {
     throw new HttpsError('permission-denied', 'Not a member of that account.');
   }
   const org = await loadContextOrg(target);
@@ -831,7 +834,28 @@ exports.switchOrgContext = onCall({ region: 'us-central1', memory: '256MiB' }, a
   } else {
     patch.permissions = admin.firestore.FieldValue.delete();
   }
-  await db.doc(`users/${uid}`).update(patch);
+  // Member cap: switching moves the seat with the user. Reserve in the
+  // target org and release the previous org's seat in ONE transaction -
+  // the target reservation contends on orgs/{target} so two switches or a
+  // switch racing a join still serialize. At the cap the switch fails and
+  // the user stays in their current org.
+  const userRef = db.doc(`users/${uid}`);
+  await db.runTransaction(async (tx) => {
+    // Firestore transactions: every read before the first write.
+    const fresh = await tx.get(userRef);
+    if (!fresh.exists) throw new HttpsError('failed-precondition', 'No user profile yet.');
+    const cur = fresh.data();
+    const wasActiveElsewhere = cur.disabled !== true && cur.disabled !== 'rejected'
+      && typeof cur.orgId === 'string' && cur.orgId !== target;
+    const prevRef = wasActiveElsewhere ? db.doc(`orgs/${cur.orgId}`) : null;
+    const prevSnap = prevRef ? await tx.get(prevRef) : null;
+    await txReserveSeat(tx, db.doc(`orgs/${target}`)); // reads, then writes the target org
+    if (prevSnap && prevSnap.exists) {
+      const c = prevSnap.data().memberCount;
+      if (typeof c === 'number' && c > 0) tx.update(prevRef, { memberCount: c - 1 });
+    }
+    tx.update(userRef, patch);
+  });
   const prev = request.auth.token || {};
   const flow = org.flow || null;
   const claims = {
@@ -1621,6 +1645,35 @@ exports.markNotificationRead = onCall({ region: 'us-central1', memory: '256MiB' 
   }
   await ref.set({ readAt: now }, { merge: true });
   return { ok: true, marked: 1 };
+});
+
+// deleteNotifications: the signed-in user deletes their OWN notifications,
+// one by id or all of them. Only users/{caller}/notifications is touched.
+exports.deleteNotifications = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'deleteNotifications requires a signed-in user.');
+  }
+  const col = db.collection(`users/${request.auth.uid}/notifications`);
+  const id = String((request.data && request.data.id) || '').trim();
+  const all = !!(request.data && request.data.all);
+  if (all) {
+    let deleted = 0;
+    for (let i = 0; i < 10; i++) { // 10 x 200 cap per call
+      const snap = await col.limit(200).get();
+      if (snap.empty) break;
+      const batch = db.batch();
+      snap.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+      deleted += snap.size;
+      if (snap.size < 200) break;
+    }
+    return { ok: true, deleted };
+  }
+  if (!id || id.includes('/')) {
+    throw new HttpsError('invalid-argument', 'Falta el id de la notificación.');
+  }
+  await col.doc(id).delete(); // idempotent: deleting a missing doc is fine
+  return { ok: true, deleted: 1 };
 });
 
 // ---------------------------------------------------------------------------
@@ -2559,6 +2612,221 @@ const INVITE_ROLE_LABELS = {
   cotizador: 'Cotizador',
 };
 
+// ---------------------------------------------------------------------------
+// Member cap (PR launch policy, 2026-11-24): an org with a numeric memberCap
+// on its org doc may not grow past that many ACTIVE users. Orgs WITHOUT
+// memberCap are uncapped (existing companies keep working exactly as today;
+// the field is set server-side when a company application is approved, never
+// by the client - firestore.rules pin it).
+//
+// Enforcement is a seat COUNTER on the org doc (memberCount), not a member
+// query: every activation path reserves its seat inside the same Firestore
+// transaction that activates the user, and the reservation writes the org
+// doc. Two concurrent joins therefore contend on one document - Firestore
+// serializes them and the loser retries, re-reads the incremented counter
+// and blocks. A query-count inside the transaction cannot prove that
+// invariant (writes land on different docs), and counting pending joiners
+// deadlocks two simultaneous joins at cap-1; both are avoided here.
+//   - memberCount semantics: reserved seats = activated members.
+//   - Lazy init: orgs that predate the counter get it computed once inside
+//     the reserving transaction (active = disabled neither true nor
+//     'rejected'), so first use also contends on the org doc.
+//   - Decrements (member removed, rejected or deleted) are maintained by the
+//     maintainMemberCount trigger below; increments happen ONLY here.
+// ---------------------------------------------------------------------------
+const MEMBER_CAP_MSG = (cap) => `This company already has the maximum of ${cap} users.`;
+function _isActiveMember(d) {
+  const dis = d.data().disabled;
+  return dis !== true && dis !== 'rejected';
+}
+async function txReserveSeat(tx, orgRef) {
+  const orgSnap = await tx.get(orgRef);
+  if (!orgSnap.exists) return;
+  const cap = orgSnap.data().memberCap;
+  if (typeof cap !== 'number' || cap <= 0) return; // no cap set: uncapped
+  let count = orgSnap.data().memberCount;
+  if (typeof count !== 'number') {
+    const memSnap = await tx.get(db.collection('users').where('orgId', '==', orgRef.id));
+    count = 0;
+    for (const d of memSnap.docs) { if (_isActiveMember(d)) count++; }
+  }
+  if (count >= cap) throw new HttpsError('resource-exhausted', MEMBER_CAP_MSG(cap));
+  tx.update(orgRef, { memberCount: count + 1 });
+}
+// Owner approves a pending member. The ONLY activation path a client can
+// reach directly was closed by the rules pin (disabled -> false is
+// function-only); approvals reserve a seat here under the member cap.
+exports.approveMember = onCall(async (req) => {
+  if (!req.auth) throw new HttpsError('unauthenticated', 'Sign in first.');
+  const uid = String(req.data && req.data.uid || '');
+  if (!uid) throw new HttpsError('invalid-argument', 'uid required');
+  const callerSnap = await db.doc(`users/${req.auth.uid}`).get();
+  const caller = callerSnap.data() || {};
+  if (caller.disabled === true || caller.disabled === 'rejected' || caller.role !== 'owner') {
+    throw new HttpsError('permission-denied', 'Owners only.');
+  }
+  const targetRef = db.doc(`users/${uid}`);
+  const orgRef = db.doc(`orgs/${caller.orgId}`);
+  await db.runTransaction(async (tx) => {
+    const targetSnap = await tx.get(targetRef);
+    if (!targetSnap.exists) throw new HttpsError('not-found', 'No such member.');
+    const t = targetSnap.data();
+    if (t.orgId !== caller.orgId) throw new HttpsError('permission-denied', 'Different company.');
+    if (t.disabled !== true) throw new HttpsError('failed-precondition', 'Member is not pending.');
+    // Firestore transactions: every read before the first write, so the
+    // invite is read up front and applied after the reservation.
+    const patch = { disabled: false };
+    const email = String(t.email || '').trim().toLowerCase();
+    const invRef = email ? db.doc(`orgs/${caller.orgId}/invites/${email}`) : null;
+    const invSnap = invRef ? await tx.get(invRef) : null;
+    let applyInvite = null;
+    if (invSnap && invSnap.exists && invSnap.data().status === 'pending') {
+      const inv = invSnap.data();
+      if (INVITE_ROLES.includes(inv.role)) patch.role = inv.role;
+      if (inv.permissions && typeof inv.permissions === 'object') {
+        const clean = {};
+        for (const k of INVITE_PERM_KEYS) {
+          if (typeof inv.permissions[k] === 'boolean') clean[k] = inv.permissions[k];
+        }
+        if (Object.keys(clean).length) patch.permissions = clean;
+      }
+      applyInvite = invRef;
+    }
+    await txReserveSeat(tx, orgRef); // reads, then writes the org
+    if (applyInvite) tx.update(applyInvite, { status: 'accepted' });
+    tx.update(targetRef, patch);
+  });
+  return { ok: true };
+});
+
+// Staff-only provisioning of the member cap. Setting memberCap is the one
+// step that turns the 5-user policy on for a PR company; the firestore.rules
+// pin keeps clients from writing it. Run by Nivelato staff after a company
+// application is approved (the approval itself stays a console action).
+// QGC stays exempt from the cap: orgs flagged qgc/tier QGC are refused, and cap=null removes a cap. A cap below the
+// current active count is refused rather than locking members out. The
+// counter is (re)computed in the same transaction so it starts exact.
+const PR_DEFAULT_MEMBER_CAP = 5;
+async function _provisionMemberCap(orgId, cap) {
+  const orgRef = db.doc(`orgs/${orgId}`);
+  return db.runTransaction(async (tx) => {
+    const orgSnap = await tx.get(orgRef);
+    if (!orgSnap.exists) throw new HttpsError('not-found', 'No such company.');
+    const o = orgSnap.data();
+    if (cap !== null && (orgId === 'qgc' || o.qgc === true || String(o.tier || '').toUpperCase() === 'QGC')) {
+      throw new HttpsError('failed-precondition', 'QGC is exempt from the member cap.');
+    }
+    const memSnap = await tx.get(db.collection('users').where('orgId', '==', orgId));
+    let active = 0;
+    for (const d of memSnap.docs) { if (_isActiveMember(d)) active++; }
+    if (cap === null) {
+      tx.update(orgRef, { memberCap: FieldValue.delete(), memberCount: FieldValue.delete() });
+      return { ok: true, memberCap: null, active };
+    }
+    if (active > cap) {
+      throw new HttpsError('failed-precondition', `Company has ${active} active users, more than ${cap}.`);
+    }
+    tx.update(orgRef, { memberCap: cap, memberCount: active });
+    return { ok: true, memberCap: cap, active };
+  });
+}
+
+exports.setOrgMemberCap = onCall({ region: 'us-central1', memory: '256MiB' }, async (request) => {
+  if (!(await isStaff(request.auth))) {
+    throw new HttpsError('permission-denied', 'Staff only.');
+  }
+  const orgId = String(request.data && request.data.orgId || '').trim();
+  if (!orgId || orgId.includes('/')) throw new HttpsError('invalid-argument', 'orgId required');
+  const raw = request.data ? request.data.cap : undefined;
+  const cap = raw === undefined ? PR_DEFAULT_MEMBER_CAP : raw;
+  if (cap !== null && !(Number.isInteger(cap) && cap >= 1 && cap <= 1000)) {
+    throw new HttpsError('invalid-argument', 'cap must be a whole number 1-1000, or null to remove it.');
+  }
+  return _provisionMemberCap(orgId, cap);
+});
+
+// Automatic provisioning at approval. Applications are reviewed in the
+// Firebase Console (rules: read/write console-only). When staff move an
+// application to status 'approved' AND record the company's org id on it
+// (field orgId), the default cap is applied with the same transaction
+// setOrgMemberCap uses. Fires only on that status transition, so the
+// result write-back below cannot retrigger it. An approval without an
+// orgId, or against a QGC org, writes a note instead of guessing a
+// company: nothing is capped. The result is recorded on the application
+// (capProvisioning) so staff can see it from the console.
+exports.provisionCapOnApproval = onDocumentWritten('companyApplications/{appId}', async (event) => {
+  const before = event.data && event.data.before && event.data.before.exists ? event.data.before.data() : null;
+  const after = event.data && event.data.after && event.data.after.exists ? event.data.after.data() : null;
+  if (!after || after.status !== 'approved' || (before && before.status === 'approved')) return;
+  const ref = event.data.after.ref;
+  const orgId = typeof after.orgId === 'string' ? after.orgId.trim() : '';
+  const note = async (r) => { await ref.update({ capProvisioning: Object.assign({ at: FieldValue.serverTimestamp() }, r) }); };
+  if (!orgId || orgId.includes('/')) { await note({ ok: false, reason: 'no-org-id: set orgId on the application, then run setOrgMemberCap' }); return; }
+  try {
+    const r = await _provisionMemberCap(orgId, PR_DEFAULT_MEMBER_CAP);
+    await note({ ok: true, memberCap: r.memberCap, active: r.active, orgId });
+  } catch (e) {
+    await note({ ok: false, reason: String((e && e.message) || e).slice(0, 200), orgId });
+  }
+});
+
+// Counter maintenance for the paths that FREE a seat: an active member
+// becoming rejected or their doc being deleted. Increments happen only in
+// txReserveSeat (activation paths); this trigger is the single decrement
+// writer, and it recomputes rather than decrements (see below). Activations must never reach the client directly - the
+// rules pin users.disabled flips to callables so every activation passes
+// through txReserveSeat.
+exports.maintainMemberCount = onDocumentWritten('users/{uid}', async (event) => {
+  const before = event.data && event.data.before;
+  const wasActive = before && before.exists && before.data().disabled !== true && before.data().disabled !== 'rejected';
+  const after = event.data && event.data.after;
+  const isActive = after && after.exists && after.data().disabled !== true && after.data().disabled !== 'rejected';
+  if (wasActive === isActive) return;
+  if (!wasActive && isActive) return; // increments are txReserveSeat's job
+  const orgId = (before && before.exists && before.data().orgId) || (after && after.exists && after.data().orgId);
+  if (!orgId) return;
+  const orgRef = db.doc(`orgs/${orgId}`);
+  // The counter is RECOMPUTED from the member list inside a transaction,
+  // not decremented by delta. Delta handling is order-dependent: distinct
+  // removal events for one member across reactivation cycles, delivered
+  // late or out of order, or an event arriving after a lazy-init already
+  // excluded that member, would double-decrement (undercount => a sixth
+  // seat) or skip a decrement (overcount). Setting memberCount = actual
+  // active members is idempotent, so duplicate, late and reordered events
+  // all converge on the same value. The write contends on the org doc with
+  // txReserveSeat, so it serializes against concurrent activations.
+  // Counter absent (uncapped / not yet initialized): nothing to maintain;
+  // the next reservation lazy-inits from the member list.
+  try {
+    await db.runTransaction(async (tx) => {
+      const orgSnap = await tx.get(orgRef);
+      if (!orgSnap.exists || typeof orgSnap.data().memberCount !== 'number') return;
+      const memSnap = await tx.get(db.collection('users').where('orgId', '==', orgId));
+      let actual = 0;
+      for (const d of memSnap.docs) { if (_isActiveMember(d)) actual++; }
+      if (actual !== orgSnap.data().memberCount) tx.update(orgRef, { memberCount: actual });
+    });
+  } catch (e) {
+    console.error('[memberCount] recompute failed for org', orgId, e && e.message);
+  }
+});
+
+// Non-transactional pre-check for UI-facing gates (e.g. QR mint): fast fail
+// before work starts. The authoritative check is always txReserveSeat.
+async function assertMemberCap(orgId) {
+  const orgSnap = await db.doc(`orgs/${orgId}`).get();
+  if (!orgSnap.exists) return;
+  const cap = orgSnap.data().memberCap;
+  if (typeof cap !== 'number' || cap <= 0) return;
+  let count = orgSnap.data().memberCount;
+  if (typeof count !== 'number') {
+    const memSnap = await db.collection('users').where('orgId', '==', orgId).get();
+    count = 0;
+    for (const d of memSnap.docs) { if (_isActiveMember(d)) count++; }
+  }
+  if (count >= cap) throw new HttpsError('resource-exhausted', MEMBER_CAP_MSG(cap));
+}
+
 // Applies a pending invite to a freshly-joined (disabled) user doc.
 // Returns the updated user object on success, null when there is no
 // applicable invite or anything fails (caller keeps the pending block).
@@ -2585,7 +2853,13 @@ async function applyPendingInvite(uid, user, token) {
       }
       if (Object.keys(clean).length) patch.permissions = clean;
     }
-    await db.doc(`users/${uid}`).update(patch);
+    // Member cap: reserve the seat in the same transaction that activates
+    // the joiner; at the cap this throws, the catch below returns null and
+    // the joiner stays pending until a seat frees or the cap is raised.
+    await db.runTransaction(async (tx) => {
+      await txReserveSeat(tx, db.doc(`orgs/${orgId}`));
+      tx.update(db.doc(`users/${uid}`), patch);
+    });
     // Account switcher: record the membership server-side so the org
     // shows up in the member's context list from their first session.
     const _membershipEntry = {
@@ -2942,6 +3216,9 @@ exports.createWorkshopEnrollmentToken = onCall({ region: 'us-central1', memory: 
   if (!orgId) throw new HttpsError('invalid-argument', 'Falta la empresa.');
   const { uid } = await requireEnrollManager(request, orgId);
 
+  // Member cap: at the cap a join QR cannot be used, so do not mint one.
+  await assertMemberCap(orgId);
+
   const today = new Date().toISOString().slice(0, 10);
   await checkRateLimit(`enroll-create-open:${orgId}:${today}`, 50);
 
@@ -3055,7 +3332,12 @@ async function redeemOpenEnrollment(uid, user, authToken, rawCode) {
       if (tok.status !== 'pending') return;
       if (!tok.expiresAt || tok.expiresAt.toMillis() <= now) return;
       if (tok.orgId !== orgId) return;
+      // Member cap: the seat reservation writes the org doc, so two
+      // simultaneous redeems contend on it - one commits, the other
+      // retries, re-reads the full counter and throws. The token stays
+      // pending for a freed seat; the caller surfaces the cap message.
       const patch = { disabled: false };
+      await txReserveSeat(tx, db.doc(`orgs/${orgId}`));
       tx.update(userRef, patch);
       const membershipEntry = {
         role: user.role || 'medidor',
@@ -3113,9 +3395,11 @@ async function redeemEnrollmentForInvite(uid, user, authToken, rawCode) {
       if (!tok.expiresAt || tok.expiresAt.toMillis() <= now) return;
       if (tok.orgId !== orgId || tok.email !== email) return;
       if (inv.status !== 'pending') return;
-      // Same application applyPendingInvite performs (role pinned to the
-      // invite set, permission overrides filtered to the known keys).
+      // Member cap: reserve the seat on the org doc inside this
+      // transaction (see txReserveSeat). At the cap this throws and the
+      // whole redeem - token burn included - rolls back.
       const patch = { disabled: false };
+      await txReserveSeat(tx, db.doc(`orgs/${orgId}`));
       if (INVITE_ROLES.includes(inv.role)) patch.role = inv.role;
       if (inv.permissions && typeof inv.permissions === 'object') {
         const clean = {};
