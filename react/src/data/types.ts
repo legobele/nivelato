@@ -37,5 +37,7 @@ export interface Repo {
   notifications(): Promise<Notif[]>;
   markRead(id: string): Promise<void>;
   deleteNotif(id: string): Promise<void>;
+  addCustomer(name: string): Promise<void>;
+  addProject(customer: string, name: string): Promise<void>;
   saveJob(j: Omit<Job, 'id' | 'createdAt' | 'status' | 'installerName'>): Promise<string>;
 }

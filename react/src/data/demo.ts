@@ -26,7 +26,7 @@ let prices: PriceItem[] = [
   { id: 'p2', nombre: 'Marco aluminio', unidad: 'pie', precio: 6.25, activo: true },
   { id: 'p3', nombre: 'Instalación', unidad: 'hora', precio: 45, activo: true }];
 export function demoRepo(): Repo {
-  let jobs = [...seed];
+  let jobs = [...seed]; const xc: string[] = []; const xp: { customer: string; name: string }[] = [];
   let quotes: Quote[] = [mkq('q1', 'COT-0001', 'Residencia Ortiz', 'enviada', [L('Vidrio templado 1/4"', 2, 14.5, 'porPieCuadrado', 30), L('Instalación', 3, 45, 'porUnidad')], 2), mkq('q2', 'COT-0002', 'Farmacia Central', 'aprobada', [L('Vidrio templado 1/4"', 1, 14.5, 'porPieCuadrado', 80)], 8)];
   let notifs: Notif[] = [{ id: 'n1', type: 'device', title: 'Nuevo inicio de sesión', body: 'Medidor demo inició sesión en un dispositivo nuevo.', createdAt: Date.now() - 36e5, read: false }, { id: 'n2', type: 'update', title: 'Nueva versión disponible', createdAt: Date.now() - 864e5, read: true }];
   const me: any = { uid: 'u3', name: 'Medidor demo', role: 'owner', tier: 'ultra', orgId: 'demo', permissions: {} };
@@ -36,9 +36,12 @@ export function demoRepo(): Repo {
     customers: async () => {
       const m = new Map<string, Customer>();
       for (const j of jobs) { const c = m.get(j.customer) ?? { id: j.customerId ?? j.customer, nombre: j.customer, jobs: 0, last: 0 }; c.jobs++; c.last = Math.max(c.last, j.createdAt); m.set(j.customer, c); }
+      for (const n of xc) if (!m.has(n)) m.set(n, { id: encodeURIComponent(n), nombre: n, jobs: 0, last: Date.now() });
       return [...m.values()];
     },
-    projects: async () => { const m = new Map<string, any>(); for (const j of jobs) { if (!j.project) continue; const k = j.customer + '|' + j.project; const p = m.get(k) ?? { id: k, name: j.project, customer: j.customer, jobs: 0 }; p.jobs++; m.set(k, p); } return [...m.values()]; },
+    addCustomer: async (n) => { n = n.trim(); if (!n) throw new Error('name'); if (xc.includes(n) || jobs.some((j) => j.customer === n)) throw new Error('dup'); xc.push(n); },
+    addProject: async (c, n) => { n = n.trim(); if (!n || !c) throw new Error('name'); if (xp.some((p) => p.customer === c && p.name === n) || jobs.some((j) => j.customer === c && j.project === n)) throw new Error('dup'); xp.push({ customer: c, name: n }); },
+    projects: async () => { const m = new Map<string, any>(); for (const j of jobs) { if (!j.project) continue; const k = j.customer + '|' + j.project; const p = m.get(k) ?? { id: k, name: j.project, customer: j.customer, jobs: 0 }; p.jobs++; m.set(k, p); } for (const x of xp) { const k = x.customer + '|' + x.name; if (!m.has(k)) m.set(k, { id: k, name: x.name, customer: x.customer, jobs: 0 }); } return [...m.values()]; },
     quotes: async () => quotes,
     saveQuote: async (q) => { const id = 'q' + (quotes.length + 1); quotes = [{ ...q, id, numero: 'COT-' + String(quotes.length + 1).padStart(4, '0'), estado: 'borrador', creadoEl: Date.now() }, ...quotes]; return id; },
     setQuoteState: async (id, e) => { quotes = quotes.map((q) => (q.id === id ? { ...q, estado: e } : q)); },

@@ -42,6 +42,7 @@ export async function liveRepo(user: User): Promise<Repo> {
     members: async () => (await getDocs(collection(db, 'users'))).docs.map((d) => ({ uid: d.id, ...d.data() }) as Member).filter((m: any) => (m as any).orgId === orgId),
     priceList: async () => { const cid = org.data()?.companyId; if (!cid) return []; return (await getDocs(collection(db, 'companies', cid, 'priceList'))).docs.map((d) => ({ id: d.id, ...d.data() }) as any); },
     savePrice: async () => { throw new Error(RO); }, deletePrice: async () => { throw new Error(RO); },
+    addCustomer: async () => { throw new Error(RO); }, addProject: async () => { throw new Error(RO); },
     saveJob: async () => { throw new Error('La vista previa React no escribe datos de producción.'); },
   };
 }
