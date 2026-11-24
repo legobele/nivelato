@@ -5,6 +5,7 @@ import { useT } from '../i18n';
 import { mountPhotoEditor } from '../core/photoEditor';
 import markup from '../ui/photoMarkup';
 import '../photo.css';
+import { toFracStr } from '../core/leveling';
 import type { Job } from '../data/types';
 
 const DICT = {
@@ -34,16 +35,16 @@ export function Photo() {
     root.querySelectorAll('[data-i18n]').forEach((el) => { const k = el.getAttribute('data-i18n') as keyof typeof d; if (d[k]) el.textContent = d[k]; });
     root.querySelectorAll('[data-i18n-ph]').forEach((el) => { const k = el.getAttribute('data-i18n-ph') as keyof typeof d; if (d[k]) el.setAttribute('placeholder', d[k]); });
     const hd = mountPhotoEditor({ lang, onDone: async (dataUrl, annotations) => {
-      try { if (!r.writable || !jid) { const a = document.createElement('a'); a.href = dataUrl; a.download = 'nivelato-medidas.jpg'; a.click(); setMsg(t('photoDownloaded')); } else { await r.setAnnotatedPhoto(jid, dataUrl, annotations); nav('/medidas/' + jid); return; } } catch (e: any) { setMsg(e.message); }
+      try { if (!r.writable || !jid) { const a = document.createElement('a'); a.href = dataUrl; a.download = 'nivelato-medidas.jpg'; a.click(); setMsg(t('photoDownloaded')); } else { await r.setAnnotatedPhoto(jid, dataUrl, annotations, h.current?.original() ?? null); nav('/medidas/' + jid); return; } } catch (e: any) { setMsg(e.message); }
       h.current?.ack();
     } });
-    h.current = hd; return () => hd.destroy();
+    h.current = hd; (window as any).__photo = hd; return () => hd.destroy();
   }, [lang]); // eslint-disable-line
   useEffect(() => { if (!job || !h.current) return; const w = job.paredes;
-    h.current.setMeasurements({ anchoBot: job.hueco.anchoBot, anchoTop: job.hueco.anchoTop, altoIzq: job.hueco.altoIzq, altoDer: job.hueco.altoDer, paredIzq: job.desniveles.paredIzq, paredDer: job.desniveles.paredDer, techo: job.desniveles.techo, piso: job.desniveles.piso, paredIzqRaw: w.izq.desnivel, paredDerRaw: w.der.desnivel, techoRaw: w.techo.desnivel, pisoRaw: w.piso.desnivel, customer: job.customer, annotations: (job as any).annotations });
-    if (job.photo) h.current.loadDataUrl(job.photo); }, [job]);
+    h.current.setMeasurements({ anchoBot: job.hueco.anchoBot, anchoTop: job.hueco.anchoTop, altoIzq: job.hueco.altoIzq, altoDer: job.hueco.altoDer, paredIzq: job.desniveles.paredIzq, paredDer: job.desniveles.paredDer, techo: job.desniveles.techo, piso: job.desniveles.piso, paredIzqRaw: w.izq.desnivel, paredDerRaw: w.der.desnivel, techoRaw: w.techo.desnivel, pisoRaw: w.piso.desnivel, customer: job.customer, offsetSigned: Object.fromEntries((['izq', 'der', 'techo', 'piso'] as const).map((k, i) => [['paredIzq', 'paredDer', 'techo', 'piso'][i], (w[k] as any).desnivelAB ? (((w[k] as any).desnivelAB > 0 ? '+' : '-') + toFracStr(Math.abs((w[k] as any).desnivelAB))) : ''])), annotations: (job as any).annotations });
+    { const src = job.photo || (job as any).originalPhoto; if (src) h.current.loadDataUrl(src); } }, [job]);
   return (<div className="photo-root"><div ref={ref} dangerouslySetInnerHTML={{ __html: markup }} style={{ height: '100%' }} />
-    <div style={{ position: 'fixed', bottom: 64, right: 12, zIndex: 60, display: 'flex', gap: 8 }}>
+    <div className="photo-float">
       {r.mode === 'demo' && <button className="header-btn" onClick={() => h.current?.loadDataUrl(sampleDataUrl())}>{t('sampleImage')}</button>}
       <button className="header-btn" onClick={() => nav(jid ? '/medidas/' + jid : -1 as any)}>{t('back')}</button></div>
     {msg && <div role="status" style={{ position: 'fixed', bottom: 56, left: 0, right: 0, textAlign: 'center', zIndex: 60, color: '#fff' }}>{msg}</div>}</div>);
