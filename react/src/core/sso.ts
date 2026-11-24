@@ -24,3 +24,21 @@ export function parseSso(search: string, hash: string): SsoParams {
   return { ctoken: f.get('ctoken') || p.get('ctoken'), next: f.get('next') || p.get('next'), redirectUri: p.get('redirect_uri') || f.get('redirect_uri'), clientId: p.get('client_id') || f.get('client_id') || 'Aplicación externa' };
 }
 export const isSsoUrl = (search: string, hash: string) => /^#\/?sso(\?|$)/.test(hash) || /(^#|&)ctoken=/.test(hash) || new URLSearchParams(search).has('ctoken') || /sso\.html$/.test(location.pathname);
+
+/* Handoff flows with injected dependencies, so behavior is testable with mocks and no real token. */
+export interface HandoffDeps { signInWithCustomToken(token: string): Promise<unknown>; navigate(url: string): void }
+export async function completeHandoff(p: SsoParams, d: HandoffDeps, fallback = '/dashboard.html'): Promise<'ok' | 'failed' | 'none'> {
+  if (!p.ctoken) return 'none';
+  try { await d.signInWithCustomToken(p.ctoken); d.navigate(sanitizeNext(p.next) || fallback); return 'ok'; } catch { return 'failed'; }
+}
+export interface ExternalDeps { getIdToken(): Promise<string>; userDoc(): Promise<{ name?: string; role?: string; orgId?: string }>; user: { uid: string; email?: string | null; displayName?: string | null }; navigate(url: string): void }
+/* Legacy "sign in with Nivelato" for external apps: the allowlist gate runs BEFORE any token is minted. */
+export async function redirectExternal(redirectUri: string | null, d: ExternalDeps): Promise<'ok' | 'denied' | 'failed'> {
+  if (!redirectUri || !redirectUriIsAllowed(redirectUri)) return 'denied';
+  try {
+    const token = await d.getIdToken(); const u = await d.userDoc();
+    const payload = { token, uid: d.user.uid, name: u.name || d.user.displayName || '', email: d.user.email || '', role: u.role || '', orgId: u.orgId || '' };
+    d.navigate(redirectUri + (redirectUri.includes('?') ? '&' : '?') + 'nivelato_token=' + encodeURIComponent(JSON.stringify(payload)));
+    return 'ok';
+  } catch { return 'failed'; }
+}
