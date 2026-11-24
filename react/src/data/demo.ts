@@ -24,6 +24,8 @@ const mkq = (id: string, numero: string, nombre: string, estado: Quote['estado']
 let prices: PriceItem[] = [
   { id: 'p1', nombre: 'Vidrio templado 1/4"', unidad: 'pie2', precio: 14.5, activo: true, tipo: 'vidrio', modeloPrecio: 'porPieCuadrado', grosor: '1/4' },
   { id: 'p2', nombre: 'Marco aluminio', unidad: 'pieza', precio: 6.25, activo: true, tipo: 'herraje', modeloPrecio: 'porUnidad' },
+  { id: 's1', nombre: 'Sacabocados estándar', unidad: 'unidad', precio: 18, activo: true, tipo: 'sacabocados', modeloPrecio: 'porUnidad' },
+  { id: 'b1', nombre: 'Barreno', unidad: 'unidad', precio: 7.5, activo: true, tipo: 'barreno', modeloPrecio: 'porUnidad' },
   { id: 'p3', nombre: 'Instalación', unidad: 'hora', precio: 45, activo: true, tipo: 'manoDeObra', modeloPrecio: 'porUnidad' }];
 export function demoRepo(): Repo {
   const team: import('./types').Member[] = [
