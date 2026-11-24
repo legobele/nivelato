@@ -1785,7 +1785,7 @@ try {
          llevan el mismo tratamiento (píldora secundaria): que una sola
          fuera primaria sólida rompía la jerarquía del grupo. El
          primario de medidas vive en la cabecera de la vista Medidas. -->
-    <a class="niv-btn-pill" id="home-act-new-measure" href="https://app.nivelatolabs.com/">+ Nueva medida</a>
+    <a class="niv-btn-pill" id="home-act-new-measure" href="https://app.nivelatolabs.com/flow.html">+ Nueva medida</a>
     <button type="button" class="niv-btn-pill" id="home-act-new-project" onclick="openNewProject()">+ Nuevo proyecto</button>
     <button type="button" class="niv-btn-pill" id="home-act-new-customer" onclick="window._panelNewCustomer()">+ Nuevo cliente</button>
     <button type="button" class="niv-btn-pill" id="home-act-quotes" style="display:none" onclick="window.showDashView('quotes')">Cotizaciones</button>
@@ -5296,7 +5296,8 @@ let currentUser;
       if (kind === 'project' && action === 'open' && id) { window.openProject(id); return; }
       if (kind === 'customer' && action === 'view') { window.openCustomer(label); return; }
       if (kind === 'customer' && action === 'new-measure') {
-        window.location.href = '/flow.html?customer=' + encodeURIComponent(label || '');
+        // flow.html lives on app.nivelatolabs.com (this host 404s it): carry the session over.
+        import('./sso-handoff.js').then(m => m.handoffTo('https://app.nivelatolabs.com/flow.html?customer=' + encodeURIComponent(label || '')));
         return;
       }
       if (kind === 'measure' && action === 'view' && id) {
@@ -7725,14 +7726,14 @@ document.addEventListener('keydown', function(e) {
 <script src="./press-yaoi.js"></script>
 <script src="./niv-drag.js"></script>
 <script type="module">
-  // Cross-origin session handoff for the "Nueva medida" entries: the wizard
+  // Cross-origin session handoff for the "Nueva medida" entries: the flow
   // lives on app.nivelatolabs.com, so a raw navigation arrives session-less
   // and its guard bounces to login (the double-login bug, fixed 2026-10-28).
   // handoffOnClick preventDefaults and carries the session via sso.html;
   // the anchor keeps its href as the no-JS fallback.
   import { handoffOnClick } from "./sso-handoff.js";
-  handoffOnClick('btn-new-measure', 'https://app.nivelatolabs.com/');
-  handoffOnClick('home-act-new-measure', 'https://app.nivelatolabs.com/');
+  handoffOnClick('btn-new-measure', 'https://app.nivelatolabs.com/flow.html');
+  handoffOnClick('home-act-new-measure', 'https://app.nivelatolabs.com/flow.html');
 </script>
 </body>
 </html>
