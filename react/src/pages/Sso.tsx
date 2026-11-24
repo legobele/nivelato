@@ -2,15 +2,15 @@ import { useEffect, useState } from 'react';
 import { signInWithCustomToken } from 'firebase/auth';
 import { auth } from '../data/live';
 import { useT } from '../i18n';
-import { parseSso, redirectUriIsAllowed, sanitizeNext } from '../core/sso';
+import { parseSso, redirectUriIsAllowed, completeHandoff } from '../core/sso';
 export function Sso() {
   const { t } = useT(); const [P] = useState(() => parseSso(location.search, location.hash));
   const [state, setState] = useState<'idle' | 'working' | 'failed'>(P.ctoken ? 'working' : 'idle');
   useEffect(() => {
     if (!P.ctoken) return;
-    const tok = P.ctoken; const next = sanitizeNext(P.next);
+    const hp = P;
     history.replaceState(null, '', location.pathname + '#/sso'); // the token never stays in the address bar
-    (async () => { try { if (!auth) throw new Error('no auth'); await signInWithCustomToken(auth, tok); void next; location.hash = '#/'; location.reload(); } catch { setState('failed'); } })();
+    completeHandoff(hp, { signInWithCustomToken: async (tk) => { if (!auth) throw new Error('no auth'); return signInWithCustomToken(auth, tk); }, navigate: () => { location.hash = '#/'; location.reload(); } }).then((r) => { if (r === 'failed') setState('failed'); }); // preview: lands in the React app, not legacy /dashboard.html
   }, []);
   let msg = P.ctoken ? (state === 'failed' ? t('ssoFailed') : t('ssoCompleting')) : t('ssoRequestedBy') + ' ' + P.clientId;
   let err = '';

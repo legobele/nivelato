@@ -1,3 +1,5 @@
+import { JoinCode } from '../ui/JoinCode';
+import { EditRow } from '../ui/EditRow';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRepo } from '../App';
@@ -6,7 +8,7 @@ import type { Member, PriceItem } from '../data/types';
 export function Team() {
   const r = useRepo(); const { t } = useT(); const [m, setM] = useState<Member[]>([]);
   useEffect(() => { r.members().then(setM); }, [r]);
-  return (<><div className="head"><h1>{t('users')}</h1><Link className="btn sm" to="/ajustes">{t('back')}</Link></div><div className="card">
+  return (<><div className="head"><h1>{t('users')}</h1><Link className="btn sm" to="/ajustes">{t('back')}</Link></div><JoinCode /><div className="card">
     {m.map((x) => <div className="row" key={x.uid}><div className="t"><b>{x.name}</b><span>{x.email}</span></div><span className={'pill' + (x.role === 'pending' ? '' : ' ok')}>{t(x.role as K)}</span></div>)}</div></>);
 }
 export function Prices() {
@@ -43,9 +45,10 @@ export function SettingsPage({ onLogout, refresh }: { onLogout: () => void; refr
     <div className="row"><div className="t"><b>{t('language')}</b></div><div className="seg"><button className={lang === 'es' ? 'on' : ''} onClick={() => setLang('es')}>ES</button><button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button></div></div>
     {r.setRole && <div className="row"><div className="t"><b>{t('role')}</b></div><select style={{ width: 160 }} aria-label={t('role')} value={r.me.role} onChange={(e) => { r.setRole!(e.target.value); refresh(); }}>{(['owner', 'supervisor', 'medidor', 'cotizador'] as const).map((x) => <option key={x} value={x}>{t(x)}</option>)}</select></div>}
     <div className="row"><div className="t"><b>{t('italiano')}</b></div><span className="dim">nivelato</span></div>
-    <div className="row"><div className="t"><b>{t('account')}</b><span>{r.me.name}{(r.me as any).email ? ' · ' + (r.me as any).email : ''}</span></div><span className="pill ok">{t(r.me.role as K)}</span></div>
-    <div className="row"><div className="t"><b>{t('company')}</b><span>{r.orgName}</span></div></div>
+    <EditRow key={'n' + r.me.name} label={t('fullName')} value={r.me.name ?? ''} sub={(r as any).me.email} canEdit writable={r.writable} onSave={async (v) => { await r.updateName(v); refresh(); }} />
+    <div className="row"><div className="t"><b>{t('account')}</b></div><span className="pill ok">{t(r.me.role as K)}</span></div>
+    <EditRow key={'o' + r.orgName} label={t('company')} value={r.orgName} canEdit={r.me.role === 'owner'} writable={r.writable} onSave={async (v) => { await r.updateOrgName(v); refresh(); }} />
     <div className="row"><div className="t"><b>{t('ivuRate')}</b><span className="mono">11.5%</span></div></div>
-    <div className="row"><div className="t"><b>{t('version')}</b><span className="mono">2.0.0-preview.5</span></div></div>
+    <div className="row"><div className="t"><b>{t('version')}</b><span className="mono">2.0.0-preview.6</span></div></div>
     <div className="row"><button className="btn" onClick={onLogout}>{t('logout')}</button></div></div></>);
 }
