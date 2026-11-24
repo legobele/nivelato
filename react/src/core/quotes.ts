@@ -1,7 +1,9 @@
 /* Port of dashboard.html qRound2 / qAreaPie2 / qLineSubtotal / qTotals (same formulas). */
 export const qRound2 = (n: unknown) => Math.round((Number(n) || 0) * 100) / 100;
 export const qAreaPie2 = (anchoIn: number, altoIn: number) => qRound2((Number(anchoIn) || 0) * (Number(altoIn) || 0) / 144);
-export interface QLine { lineaId: string; descripcion: string; cantidad: number; precioUnitario: number; modeloPrecio: 'porUnidad' | 'porPieCuadrado'; areaPie2?: number; subtotalLinea?: number }
+export interface QLine { lineaId: string; descripcion: string; cantidad: number; precioUnitario: number; modeloPrecio: 'porUnidad' | 'porPieCuadrado' | ''; areaPie2?: number; anchoIn?: number; altoIn?: number; subtotalLinea?: number; tipo?: '' | 'personalizado' | 'sacabocados' | 'barreno'; itemRef?: unknown; medicionRef?: { jobId: string; medidaId: string; fuente: string }; forma?: string; dimensiones?: Record<string, number>; posicion?: { xIn?: number; yIn?: number; etiqueta?: string } }
+export const fmtUnit = (u: string) => (u === 'pie2' ? 'pie²' : u);
+export const lineDetail = (l: QLine) => { const d: string[] = []; if (l.anchoIn != null && l.altoIn != null) d.push(l.anchoIn + '" × ' + l.altoIn + '"'); if (l.areaPie2 != null) d.push(l.areaPie2 + ' pie²'); return d.join(' · '); };
 export function qLineSubtotal(l: QLine) {
   const cant = Number(l.cantidad) || 0, pu = Number(l.precioUnitario) || 0;
   if (l.modeloPrecio === 'porPieCuadrado') return qRound2(cant * pu * (Number(l.areaPie2) || 0));
