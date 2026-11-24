@@ -78,3 +78,5 @@ h1{font-size:40px;line-height:1.05}h2{font-size:26px;line-height:1.1}.brand{font
 .qpdf-notas{font-size:10pt;border:1px solid #e9ecef;border-radius:4pt;padding:7pt 10pt;margin:10pt 0}.qpdf-validez{font-size:9.5pt;color:#555!important;margin-bottom:16pt}
 .qpdf-sig{display:flex;gap:40pt;margin:22pt 0 12pt}.qpdf-sig>div{flex:1;font-size:9.5pt}.qpdf-sigline{border-bottom:1px solid #111;height:26pt;margin-bottom:3pt}.qpdf-foot{margin-top:14pt;padding-top:6pt;border-top:1px solid #dee2e6;font-size:9pt;color:#666!important;text-align:center}
 @page{size:Letter;margin:14mm}
+@media print{html,body,.app,.main{background:#fff!important}.paper{box-shadow:none!important;padding:0!important;margin:0!important;max-width:none!important}}
+@media print{:root,html,body,#root{background:#fff!important;color-scheme:light!important}}
