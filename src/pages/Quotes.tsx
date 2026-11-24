@@ -1,0 +1,89 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useRepo } from '../App';
+import { useT, type K } from '../i18n';
+import type { Job, PriceItem, Quote } from '../data/types';
+import { qAreaPie2, qLineSubtotal, qTotals, lineDetail, type QLine, type Descuento } from '../core/quotes';
+const money = (n: number) => '$' + n.toFixed(2);
+export function QuoteList() {
+  const r = useRepo(); const { t } = useT(); const [q, setQ] = useState<Quote[]>([]);
+  useEffect(() => { r.quotes().then(setQ); }, [r]);
+  return (<><div className="head"><h1>{t('quotes')}</h1>{r.can('createQuotes') && <Link className="btn pri" to="/cotizaciones/nueva">{t('newQuote')}</Link>}</div>
+    <div className="card">{q.map((x) => <Link key={x.id} to={'/cotizaciones/' + x.id} className="row"><div className="t"><b>{x.cliente.nombre}</b><span>{x.numero}</span></div><span className="mono nw">{money(x.totales.total)}</span><span className={'pill' + (x.estado === 'aprobada' ? ' ok' : '')}>{t(x.estado as K)}</span></Link>)}
+      {!q.length && <p className="dim">{t('none')}</p>}</div></>);
+}
+export function QuoteDetail() {
+  const { id } = useParams(); const r = useRepo(); const { t } = useT(); const [q, setQ] = useState<Quote | null | undefined>(undefined); const [err, setErr] = useState('');
+  const load = () => r.quotes().then((a) => setQ(a.find((x) => x.id === id) ?? null));
+  useEffect(() => { load(); }, [r, id]);
+  const set = async (e: Quote['estado']) => { try { await r.setQuoteState(id!, e); await load(); } catch (x: any) { setErr(x.message); } };
+  if (q === undefined) return null; if (!q) return <p>{t('notFound')}</p>;
+  const T = q.totales;
+  return (<><div className="head"><h1>{q.numero}</h1><div style={{ display: 'flex', gap: 8 }}><Link className="btn sm" to={'/cotizaciones/' + q.id + '/imprimir'}>{t('printView')}</Link><Link className="btn sm" to="/cotizaciones">{t('back')}</Link></div></div>
+    <p className="dim" style={{ marginTop: -12 }}>{q.cliente.nombre} · <span className={'pill' + (q.estado === 'aprobada' ? ' ok' : '')}>{t(q.estado as K)}</span></p>
+    <div className="card"><table><thead><tr><th>{t('item')}</th><th>{t('qty')}</th><th>{t('amount')}</th></tr></thead><tbody>
+      {q.lineas.map((l) => <tr key={l.lineaId}><td>{l.descripcion}{lineDetail(l) ? <span className="dim"> · {lineDetail(l)}</span> : null}</td><td className="mono">{l.cantidad}</td><td className="mono nw">{money(l.subtotalLinea ?? 0)}</td></tr>)}</tbody></table>
+      <div className="tot"><span>{t('subtotal')}</span><b className="mono">{money(T.subtotal)}</b></div>
+      {T.descuento > 0 && <div className="tot"><span>{t('discount')}</span><b className="mono">−{money(T.descuento)}</b></div>}
+      <div className="tot"><span>{t('ivu')} ({Math.round(T.tasaIVU * 1000) / 10}%)</span><b className="mono">{money(T.montoIVU)}</b></div>
+      <div className="tot big"><span>{t('total')}</span><b className="mono">{money(T.total)}</b></div>
+      {err && <p style={{ color: 'var(--bad)' }}>{err}</p>}
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+        {q.estado === 'borrador' && r.can('createQuotes') && <button className="btn pri" disabled={!r.writable} onClick={() => set('enviada')}>{t('send')}</button>}
+        {q.estado === 'enviada' && r.can('approveQuotes') && <><button className="btn pri" disabled={!r.writable} onClick={() => set('aprobada')}>{t('approve')}</button><button className="btn" disabled={!r.writable} onClick={() => set('rechazada')}>{t('reject')}</button></>}</div></div></>);
+}
+export function QuoteBuilder() {
+  const r = useRepo(); const { t } = useT(); const go = useNavigate();
+  const [items, setItems] = useState<PriceItem[]>([]); const [jobs, setJobs] = useState<Job[]>([]);
+  const [cl, setCl] = useState({ nombre: '', telefono: '', email: '', direccion: '' }); const [co, setCo] = useState<{ empresa: any; tasaIVU: number; validezDias: number } | null>(null); const [lines, setLines] = useState<QLine[]>([]);
+  const [desc, setDesc] = useState<Descuento>({ tipo: 'ninguno', valor: 0 }); const [tasa, setTasa] = useState('0.115'); const [val, setVal] = useState('30'); const [notas, setNotas] = useState(''); const [job, setJob] = useState(''); const [err, setErr] = useState('');
+  useEffect(() => { r.priceList().then((p) => setItems(p.filter((i) => i.activo))); r.jobs().then(setJobs); r.company().then((c) => { setCo(c); setTasa(String(c.tasaIVU)); setVal(String(c.validezDias)); }).catch(() => {}); }, [r]);
+  if (!r.can('createQuotes')) return <p className="dim">{t('noPerm')}</p>;
+  const sel = jobs.find((j) => j.id === job);
+  const add = (it: PriceItem) => { const pie = it.modeloPrecio === 'porPieCuadrado' || it.unidad === 'pie2' || it.unidad === 'pie²'; const l: QLine = { lineaId: Math.random().toString(36).slice(2, 8), descripcion: it.nombre, cantidad: 1, precioUnitario: it.precio, modeloPrecio: pie ? 'porPieCuadrado' : 'porUnidad', tipo: '', itemRef: { id: it.id }, ...(pie && sel ? { anchoIn: Math.round(sel.hueco.anchoBot * 100) / 100, altoIn: Math.round(sel.hueco.altoIzq * 100) / 100, areaPie2: qAreaPie2(sel.hueco.anchoBot, sel.hueco.altoIzq), medicionRef: { jobId: sel.id, medidaId: 'hueco', fuente: 'orgs' } } : pie ? { areaPie2: 0 } : {}) }; l.subtotalLinea = qLineSubtotal(l); setLines([...lines, l]); };
+  const addCustom = () => { const l: QLine = { lineaId: Math.random().toString(36).slice(2, 8), descripcion: '', cantidad: 1, precioUnitario: 0, modeloPrecio: 'porUnidad', tipo: 'personalizado', itemRef: null }; l.subtotalLinea = 0; setLines([...lines, l]); };
+  const upd = (i: number, p: Partial<QLine>) => setLines(lines.map((l, k) => { if (k !== i) return l; const n = { ...l, ...p }; n.subtotalLinea = qLineSubtotal(n); return n; }));
+  const T = useMemo(() => qTotals(lines, desc, Number(tasa)), [lines, desc, tasa]);
+  const save = async () => { if (!cl.nombre.trim()) { setErr(t('custName')); return; } if (!lines.length) { setErr(t('needLine')); return; } if (lines.some((l) => l.modeloPrecio === 'porPieCuadrado' && !(l.areaPie2 && l.areaPie2 > 0))) { setErr(t('needDims')); return; } if (lines.some((l) => l.tipo === 'personalizado' && (!l.descripcion.trim() || !(l.precioUnitario > 0)))) { setErr(t('needDescPrice')); return; } const tr = Number(tasa); if (!Number.isFinite(tr) || tr < 0) { setErr(t('badRate')); return; } try { const id = await r.saveQuote({ cliente: { nombre: cl.nombre.trim(), telefono: cl.telefono.trim(), email: cl.email.trim(), direccion: cl.direccion.trim() }, empresa: co?.empresa ?? {}, lineas: lines, descuento: desc.tipo === 'ninguno' ? { tipo: 'ninguno', valor: 0 } : desc, totales: T, validezDias: Math.max(1, Math.round(Number(val) || 30)), notas: notas.trim() }); go('/cotizaciones/' + id); } catch (e: any) { setErr(e.message); } };
+  return (<><div className="head"><h1>{t('newQuote')}</h1><Link className="btn sm" to="/cotizaciones">{t('back')}</Link></div>
+    <div className="grid g2"><div className="card">
+      <div className="field"><label htmlFor="qc">{t('cName')}</label><input id="qc" value={cl.nombre} onChange={(e) => setCl({ ...cl, nombre: e.target.value })} /></div>
+      <div className="pair"><div className="field"><label htmlFor="qph">{t('cPhone')}</label><input id="qph" inputMode="tel" value={cl.telefono} onChange={(e) => setCl({ ...cl, telefono: e.target.value })} /></div><div className="field"><label htmlFor="qem">{t('email')}</label><input id="qem" type="email" value={cl.email} onChange={(e) => setCl({ ...cl, email: e.target.value })} /></div></div>
+      <div className="field"><label htmlFor="qad">{t('cAddr')}</label><input id="qad" value={cl.direccion} onChange={(e) => setCl({ ...cl, direccion: e.target.value })} /></div>
+      <div className="field"><label htmlFor="qm">{t('fromMeasure')}</label><select id="qm" value={job} onChange={(e) => { setJob(e.target.value); const jj = jobs.find((x) => x.id === e.target.value); if (jj) setLines(lines.map((l) => { if (l.modeloPrecio !== 'porPieCuadrado') return l; const n = { ...l, anchoIn: Math.round(jj.hueco.anchoBot * 100) / 100, altoIn: Math.round(jj.hueco.altoIzq * 100) / 100, areaPie2: qAreaPie2(jj.hueco.anchoBot, jj.hueco.altoIzq), medicionRef: { jobId: jj.id, medidaId: 'hueco', fuente: 'orgs' } }; n.subtotalLinea = qLineSubtotal(n); return n; })); }}><option value="">{t('noMeasure')}</option>{jobs.map((j) => <option key={j.id} value={j.id}>{j.customer} · {j.project}</option>)}</select></div>
+      <label>{t('addLine')}</label><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>{items.map((i) => <button key={i.id} className="btn sm" onClick={() => add(i)}>{i.nombre}</button>)}<button className="btn sm" onClick={addCustom}>{t('customLine')}</button></div>
+      <div className="pair"><div className="field"><label htmlFor="qd">{t('discount')}</label><select id="qd" value={desc.tipo} onChange={(e) => setDesc({ tipo: e.target.value as any, valor: desc.valor })}><option value="ninguno">{t('none2')}</option><option value="porciento">{t('pct')}</option><option value="monto">{t('amt')}</option></select></div>
+        <div className="field"><label htmlFor="qv">&nbsp;</label><input id="qv" inputMode="decimal" disabled={desc.tipo === 'ninguno'} value={desc.valor || ''} onChange={(e) => setDesc({ ...desc, valor: Number(e.target.value) || 0 })} /></div></div>
+      <div className="pair"><div className="field"><label htmlFor="qt">{t('rate')}</label><input id="qt" inputMode="decimal" value={tasa} onChange={(e) => setTasa(e.target.value)} /></div><div className="field"><label htmlFor="qe">{t('valid')}</label><input id="qe" inputMode="numeric" value={val} onChange={(e) => setVal(e.target.value)} /></div></div>
+      <div className="field"><label htmlFor="qn">{t('notes')}</label><textarea id="qn" style={{ minHeight: 70, padding: 12 }} value={notas} onChange={(e) => setNotas(e.target.value)} /></div></div>
+      <div className="card"><table><thead><tr><th>{t('item')}</th><th>{t('qty')}</th><th>{t('amount')}</th></tr></thead><tbody>
+        {lines.map((l, i) => <tr key={l.lineaId}><td>{l.tipo === 'personalizado' ? <div style={{ display: 'grid', gap: 6 }}><input style={{ minHeight: 40 }} aria-label={t('descr')} placeholder={t('descr')} value={l.descripcion} onChange={(e) => upd(i, { descripcion: e.target.value })} /><input style={{ minHeight: 40, width: 110 }} inputMode="decimal" aria-label={t('unitPrice')} placeholder={t('unitPrice')} value={l.precioUnitario || ''} onChange={(e) => upd(i, { precioUnitario: Number(e.target.value) || 0 })} /></div> : l.descripcion}{l.modeloPrecio === 'porPieCuadrado' && <div><label className="dim" style={{ margin: 0 }}>pie²</label><input style={{ minHeight: 34, width: 90 }} inputMode="decimal" value={l.areaPie2 ?? ''} onChange={(e) => upd(i, { areaPie2: Number(e.target.value) || 0 })} /></div>}</td>
+          <td><input style={{ minHeight: 40, width: 64 }} inputMode="decimal" value={l.cantidad} onChange={(e) => upd(i, { cantidad: Number(e.target.value) || 0 })} aria-label={t('qty')} /></td><td className="mono nw">{money(l.subtotalLinea ?? 0)}</td></tr>)}</tbody></table>
+        <div className="tot"><span>{t('subtotal')}</span><b className="mono">{money(T.subtotal)}</b></div>{T.descuento > 0 && <div className="tot"><span>{t('discount')}</span><b className="mono">−{money(T.descuento)}</b></div>}
+        <div className="tot"><span>{t('ivu')}</span><b className="mono">{money(T.montoIVU)}</b></div><div className="tot big"><span>{t('total')}</span><b className="mono">{money(T.total)}</b></div>
+        {err && <p style={{ color: 'var(--bad)' }}>{err}</p>}<button className="btn pri" style={{ width: '100%', marginTop: 12 }} disabled={!r.writable} onClick={save}>{t('saveQuote')}</button></div></div></>);
+}
+
+export function QuotePrint() {
+  const { id } = useParams(); const r = useRepo(); const { t } = useT(); const [q, setQ] = useState<Quote | null | undefined>(undefined);
+  useEffect(() => { r.quotes().then((a) => setQ(a.find((x) => x.id === id) ?? null)); }, [r, id]);
+  if (q === undefined) return null; if (!q) return <p>{t('notFound')}</p>;
+  const T = q.totales; const e = q.empresa || {}; const c = q.cliente || { nombre: '' };
+  const f = (n: number) => new Date(n).toLocaleDateString(document.documentElement.lang === 'en' ? 'en-US' : 'es-PR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const eContact = [e.telefono, e.email].filter(Boolean).join(' · '); const cContact = [c.telefono, c.email].filter(Boolean).join(' · ');
+  const valida = q.validaHasta ?? (q.emitidaEl ?? q.creadoEl) + (q.validezDias || 30) * 864e5;
+  return (<><div className="head noprint"><h1>{q.numero}</h1><div style={{ display: 'flex', gap: 8 }}><button className="btn pri sm" onClick={() => window.print()}>{t('print')}</button><Link className="btn sm" to={'/cotizaciones/' + q.id}>{t('back')}</Link></div></div>
+    <div className="paper qpdf"><div className="qpdf-head"><div className="qpdf-co">{e.nombre || t('quotes')}</div>{e.direccion && <div>{e.direccion}</div>}{eContact && <div>{eContact}</div>}</div>
+      <div className="qpdf-title"><h1>{t('quoteWord')}</h1><div className="qpdf-folio">{t('noLabel')} {q.numero}</div></div>
+      <div className="qpdf-meta"><div><span>{t('issued')}:</span> {f(q.emitidaEl ?? q.creadoEl)}</div><div><span>{t('validUntil')}:</span> {f(valida)}</div><div><span>{t('status')}:</span> {t(q.estado as K)}</div></div>
+      <div className="qpdf-sec"><div className="qpdf-sec-title">{t('customer')}</div><div className="qpdf-box"><div className="qpdf-cn">{c.nombre || '-'}</div>{c.direccion && <div>{c.direccion}</div>}{cContact && <div>{cContact}</div>}</div></div>
+      <div className="qpdf-sec"><div className="qpdf-sec-title">{t('detail')} ({q.lineas.length} {t('lines')})</div>
+        <table className="qpdf-table"><thead><tr><th>{t('descr')}</th><th>{t('dims')}</th><th className="r">{t('qty')}</th><th className="r">{t('unitPrice')}</th><th className="r">{t('subtotal')}</th></tr></thead><tbody>
+          {q.lineas.map((l) => <tr key={l.lineaId}><td><div className="qpdf-line-desc">{l.descripcion}</div></td><td>{l.anchoIn != null && l.altoIn != null ? l.anchoIn + '" × ' + l.altoIn + '"' + (l.areaPie2 != null ? ' (' + l.areaPie2 + ' pie²)' : '') : '-'}</td><td className="r">{l.cantidad}</td><td className="r mono">{money(l.precioUnitario)}</td><td className="r mono">{money(l.subtotalLinea ?? 0)}</td></tr>)}</tbody></table></div>
+      <div className="qpdf-tot"><div className="row"><span>{t('subtotal')}</span><span className="mono">{money(T.subtotal)}</span></div>{T.descuento > 0 && <div className="row"><span>{t('discount')}</span><span className="mono">−{money(T.descuento)}</span></div>}
+        <div className="row"><span>{t('ivu')} ({Math.round(T.tasaIVU * 1000) / 10}%)</span><span className="mono">{money(T.montoIVU)}</span></div><div className="row grand"><span>{t('total').toUpperCase()}</span><span className="mono">{money(T.total)}</span></div></div>
+      {q.notas && <div className="qpdf-notas">{t('notesLbl')}: {q.notas}</div>}
+      <div className="qpdf-validez">{t('validText')} {q.validezDias} {t('daysFrom')}</div>
+      <div className="qpdf-sig"><div><div className="qpdf-sigline" />{t('customer')}: {c.nombre}</div><div><div className="qpdf-sigline" />{t('authBy')}</div></div>
+      <div className="qpdf-foot">{e.nombre}{eContact ? ' · ' + eContact : ''}</div></div></>);
+}
