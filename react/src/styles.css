@@ -68,3 +68,13 @@ h1{font-size:40px;line-height:1.05}h2{font-size:26px;line-height:1.1}.brand{font
 @media(max-width:820px){.ptable th,.ptable td{padding:8px 5px}.ptable input[type=text],.ptable input.mono{width:74px!important}.ptable .btn.sm{min-width:40px!important;padding:0 8px!important}.card:has(.ptable){padding-left:12px;padding-right:12px}}
 .paper *{color:#111}.paper th{color:#555}
 .paper .tot b,.paper .tot span,.paper .tot .mono{color:#111!important}
+
+.qpdf{font-size:11pt;line-height:1.45;color:#111}.qpdf-head{border-bottom:2px solid #f5a524;padding-bottom:8pt;margin-bottom:12pt}.qpdf-co{font-size:18pt;font-weight:700;color:#f5a524!important;margin-bottom:2pt}.qpdf-head div{font-size:10pt}
+.qpdf-title{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 6pt}.qpdf-title h1{font-size:20pt;letter-spacing:.06em;margin:0;font-family:Inter,sans-serif;color:#111}.qpdf-folio{font-size:12pt;font-weight:700}
+.qpdf-meta{font-size:10pt;margin-bottom:10pt}.qpdf-meta span{font-weight:600}.qpdf-sec{margin-bottom:10pt}.qpdf-sec-title{font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#f5a524!important;border-bottom:1px solid #dee2e6;padding-bottom:2pt;margin-bottom:5pt}
+.qpdf-box{background:#f8f9fa;border:1px solid #e9ecef;border-radius:4pt;padding:7pt 10pt}.qpdf-cn{font-weight:700;font-size:12pt}.qpdf-box div{font-size:10pt}
+.paper .qpdf-table{width:100%;border-collapse:collapse;margin:0 0 10pt;font-size:10pt}.paper .qpdf-table th{background:#f5a524;color:#fff!important;text-align:left;padding:5pt 7pt;font-size:9.5pt}.paper .qpdf-table td{padding:6pt 7pt;border-bottom:1px solid #e9ecef;vertical-align:top}.qpdf-table .r{text-align:right;white-space:nowrap}.qpdf-line-desc{font-weight:600}
+.qpdf-tot{margin-left:auto;width:46%;font-size:10.5pt}.qpdf-tot .row{display:flex;justify-content:space-between;padding:2.5pt 0;border:0}.qpdf-tot .row.grand{font-size:13pt;font-weight:700;border-top:2px solid #f5a524;margin-top:4pt;padding-top:6pt}
+.qpdf-notas{font-size:10pt;border:1px solid #e9ecef;border-radius:4pt;padding:7pt 10pt;margin:10pt 0}.qpdf-validez{font-size:9.5pt;color:#555!important;margin-bottom:16pt}
+.qpdf-sig{display:flex;gap:40pt;margin:22pt 0 12pt}.qpdf-sig>div{flex:1;font-size:9.5pt}.qpdf-sigline{border-bottom:1px solid #111;height:26pt;margin-bottom:3pt}.qpdf-foot{margin-top:14pt;padding-top:6pt;border-top:1px solid #dee2e6;font-size:9pt;color:#666!important;text-align:center}
+@page{size:Letter;margin:14mm}
