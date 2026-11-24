@@ -87,6 +87,11 @@ html, body { overflow-y: auto !important; }
   /* settings dark theme */
   body { background: #0e0e10; color: #f5f5f7; }
   .settings-shell { max-width: none; padding: 0; }
+  /* Width/responsiveness: use the available desktop width and center it,
+     instead of an 1100px-left-aligned column with dead space on the right.
+     Page-scoped to the account settings host. */
+  .niv-main { max-width: 1200px; margin-left: auto; margin-right: auto; }
+  @media (min-width: 1500px) { .niv-main { max-width: 1360px; } }
   #profile-pic-fallback { background: #26262b; }
   .btn-delete-account { background: transparent; border-color: rgba(229,72,77,0.5); color: #f87171; }
   .btn-delete-account:hover { background: rgba(229,72,77,0.1); }
@@ -544,7 +549,12 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById('info-joincode').textContent = orgId; // placeholder until org doc loads
   getDoc(doc(db, 'orgs', orgId)).then(
     (orgSnap) => {
-      const code = orgSnap.data()?.joinCode || orgId;
+      const data = orgSnap.data() || {};
+      // Workshop row shows the org's display name; the raw orgId only
+      // remains as a fallback when the doc has no name. Without this the
+      // Workshop and Code rows both printed the same code.
+      document.getElementById('info-org').textContent = data.name || orgId;
+      const code = data.joinCode || orgId;
       document.getElementById('info-joincode').textContent = code;
     },
     () => { /* keep orgId fallback */ }

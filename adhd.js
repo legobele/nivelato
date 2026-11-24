@@ -349,6 +349,24 @@ window.addEventListener('popstate', function(e) {
 // ─── CALCULATIONS ──────────────────────────────────────────────────────────
 let results = {};
 
+// Signed offset along the measuring direction (A->B on walls bottom to top,
+// A->B on top/bottom left to right): end minus start, so A=10, B=12 gives +2.
+// Display/storage only. The physical arrows and every dimension still use raw (a - b).
+function _signedFromRaw(raw) {
+  const v = -raw;
+  if (Math.abs(v) < 0.001) return { signed: 0, slabel: '0"' };
+  return { signed: v, slabel: (v > 0 ? '+' : '-') + toFracStr(Math.abs(v)) };
+}
+window._signedFromRaw = _signedFromRaw;
+function _withSigned(r) {
+  const x = _signedFromRaw(r.raw);
+  r.signed = x.signed; r.slabel = x.slabel;
+  return r;
+}
+function _dispLabel(r) {
+  return (r && r.slabel && r.val > 0) ? r.label + ' (' + r.slabel + ')' : (r ? r.label : '');
+}
+
 function calcDesnivel_wall(a, b) {
   const diff = a - b;
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
@@ -396,6 +414,7 @@ function recalcAll() {
     results.piso.dir = '\u2193';
     results.piso.label = '\u2193 ' + toFracStr(results.piso.val);
   }
+  _withSigned(results.paredIzq); _withSigned(results.paredDer); _withSigned(results.techo); _withSigned(results.piso);
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 0;
 
@@ -428,7 +447,17 @@ function runValidation() {
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
   const anyEntered = pI_A||pI_B||pD_A||pD_B||t_A||t_B||p_A||p_B;
-  if (!anyEntered) { _lastWarningKeys = []; return []; }
+  if (!anyEntered) {
+    // Nothing entered yet. That is only fine when the base opening is
+    // there (a perfectly level job legitimately has all-zero offsets);
+    // an empty draft must never read as "Measurements OK" on the summary
+    // or save without a warning.
+    if (anchoBot === 0 || altoIzq === 0) {
+      _lastWarningKeys = ['missing-base'];
+      return [L('Falta medida base del hueco - ingresa Ancho Abajo y Alto Izquierda', 'Base opening measurement is missing - enter Bottom Width and Left Height')];
+    }
+    _lastWarningKeys = []; return [];
+  }
 
   if ((pI_A > 0||pI_B > 0) && (pD_A > 0||pD_B > 0)) {
     const offsetIzq = pI_A - pI_B;
@@ -454,7 +483,7 @@ function runValidation() {
     warnings.push(L('Faltan niveles de arriba - mide del láser arriba en punto A (izq) y punto B (der)', 'Top levels are missing - measure from the laser at the top at point A (left) and point B (right)'));
     keys.push('missing-top-levels');
   }
-  if (anyEntered && (anchoBot === 0 || altoIzq === 0)) {
+  if (anchoBot === 0 || altoIzq === 0) {
     warnings.push(L('Falta medida base del hueco - ingresa Ancho Abajo y Alto Izquierda', 'Base opening measurement is missing - enter Bottom Width and Left Height'));
     keys.push('missing-base');
   }
@@ -511,7 +540,7 @@ function renderValidation() {
 // ─── SUMMARY ───────────────────────────────────────────────────────────────
 function _fmtPared(a, b, d) {
   const has = (a > 0 || b > 0);
-  const lbl = (d && d.label) ? d.label : '-';
+  const lbl = (d && d.label) ? _dispLabel(d) : '-';
   if (!has) return '-';
   return toFracStr(a) + ' / ' + toFracStr(b) + ' → ' + lbl;
 }
@@ -675,11 +704,13 @@ function _saveCurrentJob(warnings) {
     },
     // medidas crudas por pared + desnivel numérico en pulgadas (QA 2026-09-18)
     paredes: {
-      izq:   { a: pI_A, b: pI_B, desnivel: results.paredIzq?.raw ?? null },
-      der:   { a: pD_A, b: pD_B, desnivel: results.paredDer?.raw ?? null },
-      techo: { a: t_A,  b: t_B,  desnivel: results.techo?.raw    ?? null },
-      piso:  { a: p_A,  b: p_B,  desnivel: results.piso?.raw     ?? null },
+      izq:   { a: pI_A, b: pI_B, desnivel: results.paredIzq?.raw ?? null, desnivelAB: results.paredIzq?.signed ?? null },
+      der:   { a: pD_A, b: pD_B, desnivel: results.paredDer?.raw ?? null, desnivelAB: results.paredDer?.signed ?? null },
+      techo: { a: t_A,  b: t_B,  desnivel: results.techo?.raw    ?? null, desnivelAB: results.techo?.signed ?? null },
+      piso:  { a: p_A,  b: p_B,  desnivel: results.piso?.raw     ?? null, desnivelAB: results.piso?.signed ?? null },
     },
+    // Marks records whose desnivelAB is end-minus-start along A->B. Records without it keep the old a-b meaning in desnivel.
+    offsetConvention: 'end-minus-start-v1',
     customer: customer,
     project: project,
     location: location,
@@ -1146,7 +1177,7 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
       ctx.lineTo(ax2, ay2 + tickLen);
       ctx.stroke();
       ctx.textAlign = side === "left" ? "right" : "left";
-      ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2 + (side === "left" ? -14/scale : 14/scale), ay2);
+      ctx.fillText(HAS_DESNIVEL ? _dispLabel(result) : "", ax2 + (side === "left" ? -14/scale : 14/scale), ay2);
     } else {
       ctx.beginPath();
       ctx.moveTo(ax2 - tickLen, ay2);
@@ -1160,10 +1191,10 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
       // label beside the tip, techo label above it, no shared edge.
       if (side === 'top') {
         ctx.textBaseline = "bottom";
-        ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2, Math.min(ay2, arrowY) - 14/scale);
+        ctx.fillText(HAS_DESNIVEL ? _dispLabel(result) : "", ax2, Math.min(ay2, arrowY) - 14/scale);
       } else {
         ctx.textBaseline = "top";
-        ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2, Math.max(ay2, arrowY) + 14/scale);
+        ctx.fillText(HAS_DESNIVEL ? _dispLabel(result) : "", ax2, Math.max(ay2, arrowY) + 14/scale);
       }
     }
   }
@@ -1439,16 +1470,21 @@ window.embedGraph = function(cvs, data) {
   };
 
   // ── interactive embedded graph: same pan/zoom engine as the main app ──
-  var W = cvs.width, H = cvs.height;
+  // Backing store may be larger than the CSS size (device pixel ratio set by
+  // the host); all geometry below stays in CSS pixels.
+  var DPR = cvs.__nvDpr || 1;
+  var W = cvs.width / DPR, H = cvs.height / DPR;
   var st = cvs.__nvState = (cvs.__nvState || { x: 0, y: 0, scale: 1 });
 
-  function drawEmbed() {
-    var dctx = cvs.getContext('2d');
-    dctx.clearRect(0,0,W,H);
-    dctx.save();
-    dctx.translate(st.x, st.y);
-    dctx.scale(st.scale, st.scale);
-
+  // Bitmap presentation (same model as the main app's graph image): the
+  // scene is drawn ONCE per data/size change into an offscreen image,
+  // supersampled EMB_SS x, at scale 1 so labels and strokes are part of the
+  // picture. Pan/zoom only transforms that image, so text grows and shrinks
+  // with the zoom like a PNG instead of staying a fixed size.
+  var EMB_SS = 3;
+  var embImg = cvs.__nvImg || (cvs.__nvImg = document.createElement('canvas'));
+  function drawEmbedScene(dctx) {
+    dctx.clearRect(0, 0, W, H);
     dctx.fillStyle = '#f8faff';
     dctx.fillRect(0,0,W,H);
 
@@ -1456,15 +1492,22 @@ window.embedGraph = function(cvs, data) {
     // per-side padding that reserves label space OUTSIDE the shape.
     // Dimension lines sit 24/scale beyond the rough corners, ticks add
     // 6/scale, label glyphs ~14px beyond that, and the desnivel callouts
-    // sit ~16px above the top corners. Nominal padding (at st.scale 1):
+    // sit ~16px above the top corners. Nominal padding (at 1 1):
     // left 88, right 88, bottom 88, top 104 (72 base margin + 32 extra
     // label reserve above the top edge). Tiny canvases scale all four
     // down proportionally so bw/bh stay positive.
-    var padL = 88, padR = 88, padT = 104, padB = 88;
+    var padL = data.editable ? (W < 500 ? 130 : 128) : 88, padR = (data.editable && W < 500) ? 100 : 150, padT = 104, padB = 88;
     var padScale = Math.min(1, (W - 24) / (padL + padR), (H - 24) / (padT + padB));
     if (!(padScale > 0)) padScale = 1;
     padL *= padScale; padR *= padScale; padT *= padScale; padB *= padScale;
     var bx = padL, by = padT, bw = W - padL - padR, bh = H - padT - padB;
+    // Uniform inch scale: fit the base rectangle inside the padded box
+    // without stretching, and centre it, so the shape keeps its true
+    // proportions (48 x 84 stays tall) and text is never distorted.
+    var baseWE = data.anchoBot || 36, baseHE = data.altoIzq || 84;
+    var sU = Math.min(bw / baseWE, bh / baseHE);
+    var nbw = baseWE * sU, nbh = baseHE * sU;
+    bx += (bw - nbw) / 2; by += (bh - nbh) / 2; bw = nbw; bh = nbh;
 
     // ── TRUE-SCALE inch geometry (mirrors recalcAll; NO exaggeration) ──
     // Signed desniveles in inches: the ev() magnitudes above carry their
@@ -1492,8 +1535,8 @@ window.embedGraph = function(cvs, data) {
 
     // level reference (dashed gray)
     dctx.strokeStyle = '#adb5bd';
-    dctx.lineWidth = 1.5 / st.scale;
-    dctx.setLineDash([5 / st.scale, 5 / st.scale]);
+    dctx.lineWidth = 1.5 / 1;
+    dctx.setLineDash([5 / 1, 5 / 1]);
     dctx.strokeRect(bx, by, bw, bh);
     dctx.setLineDash([]);
 
@@ -1507,7 +1550,7 @@ window.embedGraph = function(cvs, data) {
     dctx.fillStyle = 'rgba(25,113,194,0.08)';
     dctx.fill();
     dctx.strokeStyle = '#1971c2';
-    dctx.lineWidth = 2 / st.scale;
+    dctx.lineWidth = 2 / 1;
     dctx.stroke();
 
     // desnivel arrows (gap between level and rough, at the moving corner)
@@ -1517,16 +1560,35 @@ window.embedGraph = function(cvs, data) {
       dctx.save();
       dctx.strokeStyle = '#e67700';
       dctx.fillStyle = '#e67700';
-      dctx.lineWidth = 1.8 / st.scale;
+      dctx.lineWidth = 1.8 / 1;
       var x1 = horiz ? p1.x + off : p1.x;
       var y1 = horiz ? p1.y : p1.y + off;
       var x2 = horiz ? p2.x + off : p2.x;
       var y2 = horiz ? p2.y : p2.y + off;
       dctx.beginPath(); dctx.moveTo(x1, y1); dctx.lineTo(x2, y2); dctx.stroke();
-      dctx.font = 'bold ' + (11 / st.scale) + 'px Inter, system-ui, sans-serif';
-      dctx.textAlign = 'center';
-      dctx.textBaseline = 'middle';
-      dctx.fillText(label, (x1 + x2) / 2, (y1 + y2) / 2 - (horiz ? 10 / st.scale : -10 / st.scale));
+      dctx.font = 'bold ' + (11 / 1) + 'px Inter, system-ui, sans-serif';
+      if (horiz) {
+        dctx.textAlign = 'center';
+        dctx.textBaseline = 'middle';
+        dctx.fillText(label, (x1 + x2) / 2, (y1 + y2) / 2 - 10);
+      } else {
+        // Right-edge callouts live OUTSIDE the shape in their own reserved
+        // column (right of the dimension label), joined to the corner by a
+        // thin leader, on two lines (arrow + size, then the signed value),
+        // so they never cross the wall or the other callouts.
+        var ym = (y1 + y2) / 2;
+        var lx = x1 + 62;
+        var sp = label.indexOf(' (');
+        var l1 = sp > 0 ? label.slice(0, sp) : label, l2 = sp > 0 ? label.slice(sp + 1) : '';
+        dctx.lineWidth = 1;
+        dctx.setLineDash([2, 2]);
+        dctx.beginPath(); dctx.moveTo(x1, ym); dctx.lineTo(lx - 4, ym); dctx.stroke();
+        dctx.setLineDash([]);
+        dctx.textAlign = 'left';
+        dctx.textBaseline = 'middle';
+        dctx.fillText(l1, lx, ym - (l2 ? 7 : 0));
+        if (l2) dctx.fillText(l2, lx, ym + 7);
+      }
       dctx.restore();
     };
     // left/right edges: horizontal offset arrows at TOP (where the lean is)
@@ -1544,11 +1606,11 @@ window.embedGraph = function(cvs, data) {
     var dim = function(x1, y1, x2, y2, label, vertical) {
       dctx.save();
       dctx.strokeStyle = '#adb5bd';
-      dctx.lineWidth = 1 / st.scale;
-      dctx.setLineDash([3 / st.scale, 3 / st.scale]);
+      dctx.lineWidth = 1 / 1;
+      dctx.setLineDash([3 / 1, 3 / 1]);
       dctx.beginPath(); dctx.moveTo(x1, y1); dctx.lineTo(x2, y2); dctx.stroke();
       dctx.setLineDash([]);
-      var tl = 6 / st.scale;
+      var tl = 6 / 1;
       if (!vertical) {
         dctx.beginPath(); dctx.moveTo(x1, y1 - tl); dctx.lineTo(x1, y1 + tl); dctx.stroke();
         dctx.beginPath(); dctx.moveTo(x2, y2 - tl); dctx.lineTo(x2, y2 + tl); dctx.stroke();
@@ -1557,26 +1619,85 @@ window.embedGraph = function(cvs, data) {
         dctx.beginPath(); dctx.moveTo(x2 - tl, y2); dctx.lineTo(x2 + tl, y2); dctx.stroke();
       }
       dctx.fillStyle = '#495057';
-      dctx.font = 'bold ' + (12 / st.scale) + 'px Inter, system-ui, sans-serif';
-      if (!vertical) { dctx.textAlign = 'center'; dctx.textBaseline = 'bottom'; dctx.fillText(label, (x1 + x2) / 2, y1 - 2 / st.scale); }
-      else { dctx.save(); dctx.translate((x1 + x2) / 2, (y1 + y2) / 2); dctx.rotate(-Math.PI / 2); dctx.textAlign = 'center'; dctx.textBaseline = 'bottom'; dctx.fillText(label, 0, -2 / st.scale); dctx.restore(); }
+      dctx.font = 'bold ' + (12 / 1) + 'px Inter, system-ui, sans-serif';
+      if (!vertical) { dctx.textAlign = 'center'; dctx.textBaseline = 'bottom'; dctx.fillText(label, (x1 + x2) / 2, y1 - 2 / 1); }
+      else { dctx.save(); dctx.translate((x1 + x2) / 2, (y1 + y2) / 2); dctx.rotate(-Math.PI / 2); dctx.textAlign = 'center'; dctx.textBaseline = 'bottom'; dctx.fillText(label, 0, -2 / 1); dctx.restore(); }
       dctx.restore();
     };
-    if (anchoBot > 0) dim(roughBL.x, roughBL.y + 24 / st.scale, roughBR.x, roughBR.y + 24 / st.scale, toFracStr(anchoBot));
-    if (anchoBot > 0) dim(roughTL.x, roughTL.y - 24 / st.scale, roughTR.x, roughTR.y - 24 / st.scale, toFracStr(Math.max(0, anchoTop)));
-    if (altoIzq > 0) dim(roughTL.x - 24 / st.scale, roughTL.y, roughBL.x - 24 / st.scale, roughBL.y, toFracStr(altoIzq), true);
-    if (altoIzq > 0) dim(roughTR.x + 24 / st.scale, roughTR.y, roughBR.x + 24 / st.scale, roughBR.y, toFracStr(Math.max(0, altoDer)), true);
+    if (anchoBot > 0) dim(roughBL.x, roughBL.y + 24 / 1, roughBR.x, roughBR.y + 24 / 1, toFracStr(anchoBot));
+    if (anchoBot > 0) dim(roughTL.x, roughTL.y - 24 / 1, roughTR.x, roughTR.y - 24 / 1, toFracStr(Math.max(0, anchoTop)));
+    if (altoIzq > 0) dim(roughTL.x - 24 / 1, roughTL.y, roughBL.x - 24 / 1, roughBL.y, toFracStr(altoIzq), true);
+    if (altoIzq > 0) dim(roughTR.x + 24 / 1, roughTR.y, roughBR.x + 24 / 1, roughBR.y, toFracStr(Math.max(0, altoDer)), true);
 
-    // 🍞 bread mode — cover the graph area with bread, cropped to shape
+    // On-graph entry (flow.html direct mode): tappable chips drawn into the
+    // bitmap, so they zoom with it. Hit rects (scene px) go to cvs.__nvHot.
+    var hot = [];
+    if (data.editable) {
+      var chip = function(key, cx, cy, lines, filled, rightEdge) {
+        dctx.save();
+        dctx.font = 'bold 11px Inter, system-ui, sans-serif';
+        var cw = 0; lines.forEach(function(t) { cw = Math.max(cw, dctx.measureText(t).width); });
+        cw += 14; var ch = lines.length * 14 + 8;
+        if (rightEdge) { cx = cx - cw / 2; if (cx - cw / 2 < 4) cx = 4 + cw / 2; }
+        dctx.beginPath();
+        if (dctx.roundRect) dctx.roundRect(cx - cw / 2, cy - ch / 2, cw, ch, 8); else dctx.rect(cx - cw / 2, cy - ch / 2, cw, ch);
+        dctx.fillStyle = filled ? '#e7f1ff' : '#fff8e1';
+        dctx.fill();
+        dctx.lineWidth = 1.6; dctx.strokeStyle = filled ? '#1971c2' : '#e67700';
+        dctx.setLineDash(filled ? [] : [4, 3]);
+        dctx.stroke(); dctx.setLineDash([]);
+        dctx.fillStyle = '#1b2733'; dctx.textAlign = 'center'; dctx.textBaseline = 'middle';
+        lines.forEach(function(t, k) { dctx.fillText(t, cx, cy - (lines.length - 1) * 7 + k * 14); });
+        dctx.restore();
+        hot.push({ key: key, x: cx - cw / 2 - 6, y: cy - ch / 2 - 6, w: cw + 12, h: ch + 12 });
+      };
+      var c = data.chips || {};
+      chip('W', (roughBL.x + roughBR.x) / 2, roughBL.y + 24 + 18, [c.W && c.W.t || 'Width ?'], !!(c.W && c.W.ok));
+      chip('H', roughTL.x - 24 - 16, (roughTL.y + roughBL.y) / 2, [c.H && c.H.t || 'Height ?'], !!(c.H && c.H.ok), true);
+      var wl = function(k, fallback) { return c[k] ? c[k].t : [fallback, '? \u2192 ?']; };
+      var okc = function(k) { return !!(c[k] && c[k].ok); };
+      chip('L', bx + 8 + 34, by + bh * 0.4, wl('L', 'A+B'), okc('L'));
+      chip('R', bx + bw - 8 - 34, by + bh * 0.62, wl('R', 'C+D'), okc('R'));
+      chip('T', bx + bw / 2, by + 30, wl('T', 'B+D'), okc('T'));
+      chip('B', bx + bw / 2, by + bh - 30, wl('B', 'A+C'), okc('B'));
+    }
+    cvs.__nvHot = hot;
+
+  }
+  function drawEmbed() {
+    var dctx = cvs.getContext('2d');
+    var key = W + 'x' + H + '|' + DPR + '|' + JSON.stringify(data);
+    if (cvs.__nvImgKey !== key) {
+      embImg.width = Math.max(1, Math.round(W * Math.max(EMB_SS, DPR)));
+      embImg.height = Math.max(1, Math.round(H * Math.max(EMB_SS, DPR)));
+      var g = embImg.getContext('2d');
+      g.setTransform(Math.max(EMB_SS, DPR), 0, 0, Math.max(EMB_SS, DPR), 0, 0);
+      drawEmbedScene(g);
+      cvs.__nvImgKey = key;
+    }
+    dctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    dctx.clearRect(0, 0, W, H);
+    dctx.fillStyle = '#f8faff';
+    dctx.fillRect(0, 0, W, H);
+    dctx.save();
+    dctx.translate(st.x, st.y);
+    dctx.scale(st.scale, st.scale);
+    dctx.imageSmoothingEnabled = true;
+    dctx.imageSmoothingQuality = 'high';
+    dctx.drawImage(embImg, 0, 0, W, H);
+    dctx.restore();
+    // bread mode stays fixed to the viewport, as in the main graph
     if (window.BREAD && window.BREAD.isOn()) {
       dctx.save();
-      dctx.scale(1 / st.scale, 1 / st.scale);
       window.BREAD.draw(dctx, W, H);
       dctx.restore();
     }
-
-    dctx.restore();
   }
+  // Handlers are wired once but embedGraph re-runs per data change: always
+  // call the latest draw so pan/zoom never repaints stale data.
+  cvs.__nvDraw = drawEmbed;
+  cvs.__nvOnEdit = data.editable ? data.onEdit : null;
+  cvs.__nvEditable = !!data.editable;
 
   drawEmbed();
 
@@ -1585,13 +1706,26 @@ window.embedGraph = function(cvs, data) {
     cvs.__nvWired = true;
     var isDrag = false, dragStart = {x:0,y:0}, vpAtDrag = {x:0,y:0};
     var touchDrag = null, lastPinch = null;
+    function hitEdit(clientX, clientY) {
+      if (!cvs.__nvEditable || !cvs.__nvOnEdit || !cvs.__nvHot) return;
+      var r = cvs.getBoundingClientRect();
+      var px = clientX - r.left, py = clientY - r.top;
+      var sx = (px - st.x) / st.scale, sy = (py - st.y) / st.scale;
+      for (var k = cvs.__nvHot.length - 1; k >= 0; k--) {
+        var h = cvs.__nvHot[k];
+        if (sx >= h.x && sx <= h.x + h.w && sy >= h.y && sy <= h.y + h.h) {
+          cvs.__nvOnEdit(h.key, { x: st.x + h.x * st.scale, y: st.y + h.y * st.scale, w: h.w * st.scale, h: h.h * st.scale });
+          return;
+        }
+      }
+    }
     function applyZoom(cx, cy, factor) {
       var ns = Math.max(0.3, Math.min(10, st.scale * Math.max(0.85, Math.min(1.18, factor))));
       var sf = ns / st.scale;
       st.x = cx - sf * (cx - st.x);
       st.y = cy - sf * (cy - st.y);
       st.scale = ns;
-      drawEmbed();
+      cvs.__nvDraw();
     }
     cvs.addEventListener('mousedown', function(e) {
       if (e.button !== 0) return;
@@ -1603,9 +1737,12 @@ window.embedGraph = function(cvs, data) {
       if (!isDrag) return;
       st.x = vpAtDrag.x + (e.clientX - dragStart.x);
       st.y = vpAtDrag.y + (e.clientY - dragStart.y);
-      drawEmbed();
+      cvs.__nvDraw();
     });
-    window.addEventListener('mouseup', function() { isDrag = false; cvs.style.cursor = 'grab'; });
+    window.addEventListener('mouseup', function(e) {
+      var wasDrag = isDrag; isDrag = false; cvs.style.cursor = 'grab';
+      if (wasDrag && Math.abs(e.clientX - dragStart.x) < 4 && Math.abs(e.clientY - dragStart.y) < 4) hitEdit(e.clientX, e.clientY);
+    });
     cvs.style.cursor = 'grab';
     cvs.addEventListener('wheel', function(e) {
       e.preventDefault();
@@ -1625,7 +1762,7 @@ window.embedGraph = function(cvs, data) {
       if (e.touches.length === 1 && touchDrag) {
         st.x = touchDrag.sx + (e.touches[0].clientX - touchDrag.x);
         st.y = touchDrag.sy + (e.touches[0].clientY - touchDrag.y);
-        drawEmbed();
+        cvs.__nvDraw();
       } else if (e.touches.length === 2 && lastPinch !== null) {
         var dx = e.touches[0].clientX - e.touches[1].clientX, dy = e.touches[0].clientY - e.touches[1].clientY;
         var dist = Math.sqrt(dx*dx + dy*dy);
@@ -1636,7 +1773,14 @@ window.embedGraph = function(cvs, data) {
         lastPinch = dist;
       }
     }, { passive: false });
-    cvs.addEventListener('touchend', function() { touchDrag = null; lastPinch = null; });
+    cvs.addEventListener('touchend', function(e) {
+      var td = touchDrag;
+      touchDrag = null; lastPinch = null;
+      if (td && e.changedTouches && e.changedTouches.length === 1) {
+        var t = e.changedTouches[0];
+        if (Math.abs(t.clientX - td.x) < 8 && Math.abs(t.clientY - td.y) < 8) hitEdit(t.clientX, t.clientY);
+      }
+    });
   }
 };
 
@@ -1656,6 +1800,8 @@ window.openPhotoEditor = function() {
     paredDer: results.paredDer?.label,
     techo:    results.techo?.label,
     piso:     results.piso?.label,
+    // Signed A->B values (end minus start) so the editor's offset badges show "(+2\")" like the app.
+    offsetSigned: { paredIzq: results.paredIzq?.slabel || '', paredDer: results.paredDer?.slabel || '', techo: results.techo?.slabel || '', piso: results.piso?.slabel || '' },
     customer: document.getElementById('customer-name')?.value || '',
     // (v1.2.18) anotaciones guardadas de esta medida: photo.html las
     // restaura (posición + tamaños) al abrir el editor de nuevo.

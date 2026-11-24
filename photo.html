@@ -21,8 +21,8 @@ try{var __cm=('; '+document.cookie).match(/; nivelato-login-lang=(es|en)(?:;|$)/
   /* HEADER */
   /* chrome bars aligned to the shared dark tokens (niv-dark.css --niv-surface / --niv-border-soft) */
   header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--niv-surface); border-bottom: 1px solid var(--niv-border-soft); flex-shrink: 0; gap: 10px; }
-  .header-titles { min-width: 0; }
-  .header-title { font-size: 15px; font-weight: 700; }
+  .header-titles { min-width: 0; flex: 1 1 auto; }
+  .header-title { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .header-sub { font-size: 11px; color: var(--niv-text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .header-btns { display: flex; gap: 8px; flex-shrink: 0; }
   .header-btn { padding: 8px 14px; border: 1px solid var(--niv-border-soft); border-radius: var(--niv-pill); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; background: var(--niv-surface-2); color: var(--niv-text); }
@@ -33,6 +33,13 @@ try{var __cm=('; '+document.cookie).match(/; nivelato-login-lang=(es|en)(?:;|$)/
   .header-btn svg { width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px; }
   .header-btn:hover { filter: brightness(1.15); }
   .header-btn:disabled { opacity: 0.4; cursor: default; }
+  @media (max-width: 480px) {
+    header { padding: 8px 10px; gap: 8px; }
+    .header-title { font-size: 14px; }
+    .header-btns { gap: 6px; }
+    .header-btn { padding: 8px 11px; font-size: 12.5px; white-space: nowrap; }
+    .header-btn svg { margin-right: 4px; }
+  }
 
   /* STAGE */
   #stage { flex: 1; position: relative; overflow: hidden; background: var(--niv-bg); display: flex; align-items: center; justify-content: center; touch-action: none; }
@@ -463,7 +470,16 @@ function renderFrame(c, cn, opts) {
     c.moveTo(basePt.x, basePt.y);
     c.lineTo(offPt.x, offPt.y);
     c.stroke();
-    drawLabel(c, label, offPt.x + dx, offPt.y + dy, 0, labelFontSize() * 0.82);
+    // Signed labels ("... (+2\")") are longer: for the right-edge badges
+    // (dx > 0) place them inside the frame, to the left of the corner, so
+    // they stay clear of the dimension line and the corner handle.
+    let px = offPt.x + dx, py = offPt.y + dy;
+    if (dx > 0 && label.indexOf('(') >= 0) {
+      c.font = 'bold ' + (labelFontSize() * 0.82) + 'px system-ui, sans-serif';
+      px = offPt.x - c.measureText(label).width / 2 - bd * 0.9;
+      py = offPt.y + (dy > 0 ? bd * 0.2 + dy : -bd * 1.6);
+    }
+    drawLabel(c, label, px, py, 0, labelFontSize() * 0.82);
     c.restore();
   };
   const bd = labelFontSize() * 1.1;
@@ -1163,9 +1179,13 @@ window.addEventListener('message', (e) => {
       techo: rawOrLabel(numRaw('techoRaw', 'techo', 'techo'), e.data.techo, '↑'),
       piso: rawOrLabel(numRaw('pisoRaw', 'piso', 'piso'), e.data.piso, '↓')
     };
+    // Optional signed A->B value (e.data.offsetSigned, e.g. '+2"'): appended
+    // to the badge text; older senders omit it and keep the plain label.
+    const sg = e.data.offsetSigned || {};
+    const withSigned = (lab, k) => (lab && lab !== 'Nivel' && typeof sg[k] === 'string' && sg[k]) ? lab + ' (' + sg[k] + ')' : (lab || '');
     offsetLabels = {
-      paredIzq: e.data.paredIzq || '', paredDer: e.data.paredDer || '',
-      techo: e.data.techo || '', piso: e.data.piso || ''
+      paredIzq: withSigned(e.data.paredIzq, 'paredIzq'), paredDer: withSigned(e.data.paredDer, 'paredDer'),
+      techo: withSigned(e.data.techo, 'techo'), piso: withSigned(e.data.piso, 'piso')
     };
     if (e.data.annotations) {
       if (img) restoreAnnotations(e.data.annotations);
