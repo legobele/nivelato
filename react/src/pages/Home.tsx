@@ -27,7 +27,7 @@ export function Home() {
     </div>
     <div className="grid g2">
       <div className="card"><div className="head" style={{ marginBottom: 4 }}><h2 style={{ flex: 1 }}>{t('recentProjects')}</h2><Link className="btn sm" to="/proyectos">{t('all')}</Link></div>
-        {projects.slice(0, 5).map((p) => <Link key={p.id} to={'/proyectos/' + encodeURIComponent(p.id)} className="row"><div className="t"><b>{p.name}</b><span>{p.customer}</span></div></Link>)}
+        {projects.slice(0, 5).map((p) => <Link key={p.id} to={'/proyectos/' + encodeURIComponent(p.id)} className="row"><div className="t"><b className="pname">{p.name}</b><span>{p.customer}</span></div></Link>)}
         {!projects.length && <p className="dim">{t('noProjects')}</p>}</div>
       <div className="card"><div className="head" style={{ marginBottom: 4 }}><h2 style={{ flex: 1 }}>{t('recent')}</h2><Link className="btn sm" to="/medidas">{t('all')}</Link></div>
         {jobs.slice(0, 5).map((j) => <JobRow key={j.id} j={j} />)}</div>

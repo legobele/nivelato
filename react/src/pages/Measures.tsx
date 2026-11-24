@@ -8,7 +8,7 @@ import { toFracStr } from '../core/leveling';
 const fmt = (t: number) => new Date(t).toLocaleDateString(document.documentElement.lang === 'en' ? 'en-US' : 'es-PR', { day: 'numeric', month: 'short' });
 export function JobRow({ j }: { j: Job }) {
   const { t } = useT();
-  return <Link to={`/medidas/${j.id}`} className="row"><div className="t"><b>{j.customer || t('noCust')}</b><span>{j.project}{j.area ? ' · ' + j.area : ''}</span></div>
+  return <Link to={`/medidas/${j.id}`} className="row"><div className="t"><b className="pname">{j.customer || t("noCust")}</b><span>{j.project}{j.area ? ' · ' + j.area : ''}</span></div>
     <span className="mono dim">{toFracStr(j.hueco.anchoBot)} × {toFracStr(j.hueco.altoIzq)}</span><span className="dim nw">{fmt(j.createdAt)}</span></Link>;
 }
 export function Measures() {

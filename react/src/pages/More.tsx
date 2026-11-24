@@ -3,11 +3,12 @@ import { Link, useParams } from 'react-router-dom';
 import { useRepo } from '../App';
 import { useT } from '../i18n';
 import type { Job, Notif, Project } from '../data/types';
+import { AddForm } from '../ui/AddForm';
 import { JobRow } from './Measures';
 export function Projects() {
   const r = useRepo(); const { t } = useT(); const [p, setP] = useState<Project[]>([]);
-  useEffect(() => { r.projects().then(setP); }, [r]);
-  return (<><div className="head"><h1>{t('projects')}</h1></div><div className="card">{p.map((x) => <Link key={x.id} to={'/proyectos/' + encodeURIComponent(x.id)} className="row"><div className="t"><b>{x.name}</b><span>{x.customer}</span></div><span className="dim">{x.jobs} {x.jobs === 1 ? t('job') : t('jobs')}</span></Link>)}{!p.length && <p className="dim">{t('none')}</p>}</div></>);
+  const [cs, setCs] = useState<string[]>([]); const [cu, setCu] = useState(''); const load = () => r.projects().then(setP); useEffect(() => { load(); r.customers().then((a) => { setCs(a.map((x) => x.nombre)); setCu((v) => v || a[0]?.nombre || ''); }); }, [r]);
+  return (<><div className="head"><h1>{t('projects')}</h1></div><AddForm label={t('newProject')} writable={r.writable} onCreate={async (n) => { await r.addProject(cu, n); await load(); }} extra={<div className="field"><label htmlFor="pc">{t('customer')}</label><select id="pc" value={cu} onChange={(e) => setCu(e.target.value)}>{cs.map((c) => <option key={c}>{c}</option>)}</select></div>} /><div className="card">{p.map((x) => <Link key={x.id} to={'/proyectos/' + encodeURIComponent(x.id)} className="row"><div className="t"><b className="pname">{x.name}</b><span>{x.customer}</span></div><span className="dim">{x.jobs} {x.jobs === 1 ? t('job') : t('jobs')}</span></Link>)}{!p.length && <p className="dim">{t('none')}</p>}</div></>);
 }
 export function ProjectDetail() {
   const { id } = useParams(); const r = useRepo(); const { t } = useT(); const [j, setJ] = useState<Job[]>([]);

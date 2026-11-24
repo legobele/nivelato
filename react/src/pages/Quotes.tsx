@@ -19,7 +19,7 @@ export function QuoteDetail() {
   const set = async (e: Quote['estado']) => { try { await r.setQuoteState(id!, e); await load(); } catch (x: any) { setErr(x.message); } };
   if (q === undefined) return null; if (!q) return <p>{t('notFound')}</p>;
   const T = q.totales;
-  return (<><div className="head"><h1>{q.numero}</h1><Link className="btn sm" to="/cotizaciones">{t('back')}</Link></div>
+  return (<><div className="head"><h1>{q.numero}</h1><div style={{ display: 'flex', gap: 8 }}><Link className="btn sm" to={'/cotizaciones/' + q.id + '/imprimir'}>{t('printView')}</Link><Link className="btn sm" to="/cotizaciones">{t('back')}</Link></div></div>
     <p className="dim" style={{ marginTop: -12 }}>{q.cliente} · <span className={'pill' + (q.estado === 'aprobada' ? ' ok' : '')}>{t(q.estado as K)}</span></p>
     <div className="card"><table><thead><tr><th>{t('item')}</th><th>{t('qty')}</th><th>{t('amount')}</th></tr></thead><tbody>
       {q.lineas.map((l) => <tr key={l.lineaId}><td>{l.descripcion}{l.modeloPrecio === 'porPieCuadrado' ? <span className="dim"> · {l.areaPie2} pie²</span> : null}</td><td className="mono">{l.cantidad}</td><td className="mono nw">{money(l.subtotalLinea ?? 0)}</td></tr>)}</tbody></table>
@@ -59,4 +59,18 @@ export function QuoteBuilder() {
         <div className="tot"><span>{t('subtotal')}</span><b className="mono">{money(T.subtotal)}</b></div>{T.descuento > 0 && <div className="tot"><span>{t('discount')}</span><b className="mono">−{money(T.descuento)}</b></div>}
         <div className="tot"><span>{t('ivu')}</span><b className="mono">{money(T.montoIVU)}</b></div><div className="tot big"><span>{t('total')}</span><b className="mono">{money(T.total)}</b></div>
         {err && <p style={{ color: 'var(--bad)' }}>{err}</p>}<button className="btn pri" style={{ width: '100%', marginTop: 12 }} disabled={!r.writable} onClick={save}>{t('saveQuote')}</button></div></div></>);
+}
+
+export function QuotePrint() {
+  const { id } = useParams(); const r = useRepo(); const { t } = useT(); const [q, setQ] = useState<Quote | null | undefined>(undefined);
+  useEffect(() => { r.quotes().then((a) => setQ(a.find((x) => x.id === id) ?? null)); }, [r, id]);
+  if (q === undefined) return null; if (!q) return <p>{t('notFound')}</p>;
+  const T = q.totales; const f = (n: number) => new Date(n).toLocaleDateString(document.documentElement.lang === 'en' ? 'en-US' : 'es-PR', { day: 'numeric', month: 'long', year: 'numeric' });
+  return (<><div className="head noprint"><h1>{q.numero}</h1><div style={{ display: 'flex', gap: 8 }}><button className="btn pri sm" onClick={() => window.print()}>{t('print')}</button><Link className="btn sm" to={'/cotizaciones/' + q.id}>{t('back')}</Link></div></div>
+    <div className="paper"><header><div><div className="pname" style={{ fontSize: 28 }}>{r.orgName}</div></div><div style={{ textAlign: 'right' }}><b>{q.numero}</b><div>{t('date')}: {f(q.creadoEl)}</div><div>{t('validUntil')}: {f(q.creadoEl + q.validezDias * 864e5)}</div></div></header>
+      <p><b>{t('customer')}:</b> {q.cliente}</p>
+      <table><thead><tr><th>{t('item')}</th><th>{t('qty')}</th><th>{t('amount')}</th><th>{t('subtotal')}</th></tr></thead><tbody>{q.lineas.map((l) => <tr key={l.lineaId}><td>{l.descripcion}{l.modeloPrecio === 'porPieCuadrado' ? ' · ' + l.areaPie2 + ' pie²' : ''}</td><td className="mono">{l.cantidad}</td><td className="mono">{money(l.precioUnitario)}</td><td className="mono nw">{money(l.subtotalLinea ?? 0)}</td></tr>)}</tbody></table>
+      <div className="tot"><span>{t('subtotal')}</span><b className="mono">{money(T.subtotal)}</b></div>{T.descuento > 0 && <div className="tot"><span>{t('discount')}</span><b className="mono">−{money(T.descuento)}</b></div>}
+      <div className="tot"><span>{t('ivu')} ({Math.round(T.tasaIVU * 1000) / 10}%)</span><b className="mono">{money(T.montoIVU)}</b></div><div className="tot big"><span>{t('total')}</span><b className="mono">{money(T.total)}</b></div>
+      {q.notas && <p><b>{t('notesLbl')}:</b> {q.notas}</p>}</div></>);
 }
