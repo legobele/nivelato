@@ -1,3 +1,4 @@
+import { AddUser } from '../ui/AddUser';
 import { JoinCode } from '../ui/JoinCode';
 import { EditRow } from '../ui/EditRow';
 import { useEffect, useState } from 'react';
@@ -8,7 +9,7 @@ import type { Member, PriceItem } from '../data/types';
 export function Team() {
   const r = useRepo(); const { t } = useT(); const [m, setM] = useState<Member[]>([]);
   useEffect(() => { r.members().then(setM); }, [r]);
-  return (<><div className="head"><h1>{t('users')}</h1><Link className="btn sm" to="/ajustes">{t('back')}</Link></div><JoinCode /><div className="card">
+  return (<><div className="head"><h1>{t('users')}</h1><Link className="btn sm" to="/ajustes">{t('back')}</Link></div><JoinCode /><AddUser onChange={() => r.members().then(setM)} /><div className="card">
     {m.map((x) => <div className="row" key={x.uid}><div className="t"><b>{x.name}</b><span>{x.email}</span></div><span className={'pill' + (x.role === 'pending' ? '' : ' ok')}>{t(x.role as K)}</span></div>)}</div></>);
 }
 export function Prices() {
@@ -49,6 +50,6 @@ export function SettingsPage({ onLogout, refresh }: { onLogout: () => void; refr
     <div className="row"><div className="t"><b>{t('account')}</b></div><span className="pill ok">{t(r.me.role as K)}</span></div>
     <EditRow key={'o' + r.orgName} label={t('company')} value={r.orgName} canEdit={r.me.role === 'owner'} writable={r.writable} onSave={async (v) => { await r.updateOrgName(v); refresh(); }} />
     <div className="row"><div className="t"><b>{t('ivuRate')}</b><span className="mono">11.5%</span></div></div>
-    <div className="row"><div className="t"><b>{t('version')}</b><span className="mono">2.0.0-preview.6</span></div></div>
+    <div className="row"><div className="t"><b>{t('version')}</b><span className="mono">2.0.0-preview.7</span></div></div>
     <div className="row"><button className="btn" onClick={onLogout}>{t('logout')}</button></div></div></>);
 }
