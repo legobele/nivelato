@@ -50,3 +50,5 @@
 .photo-root .quick-chips button{ min-height: 44px; padding: 6px 12px; border: 1px solid var(--niv-border-soft); border-radius: 6px; background: transparent; color: var(--niv-text); font-size: 12px; font-family: inherit; cursor: pointer; }
 .photo-root .quick-chips button:hover{ border-color: var(--niv-accent); color: var(--niv-text); }
 .photo-root #hint-bar{ font-size: 11px; color: var(--niv-text-dim); text-align: center; padding: 8px 16px; background: var(--niv-surface); border-top: 1px solid var(--niv-border-soft); flex-shrink: 0; }
+.photo-float{position:fixed;bottom:64px;right:12px;z-index:60;display:flex;gap:8px}
+@media (max-width:640px){.photo-float{bottom:128px}}

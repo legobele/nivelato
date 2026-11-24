@@ -8,6 +8,7 @@ import { LangProvider, useT } from './i18n';
 import { IBell, IHome, IRuler, IUsers, ITag, ICog } from './ui/Icons';
 import { Sso } from './pages/Sso';
 import { isSsoUrl } from './core/sso';
+import { Gate, gateKind } from './pages/Gate';
 import { Login } from './pages/Login';
 import { Home } from './pages/Home';
 import { Measures, MeasureDetail } from './pages/Measures';
@@ -26,6 +27,7 @@ const nav = [
 export function App() { return <LangProvider><Inner /></LangProvider>; }
 function Inner() {
   const { t } = useT(); const sso = isSsoUrl(location.search, location.hash); const [, bump] = useState(0);
+  useEffect(() => { const h = () => bump((n) => n + 1); addEventListener('hashchange', h); return () => removeEventListener('hashchange', h); }, []);
   const [repo, setRepo] = useState<Repo | null>(null);
   const [booting, setBooting] = useState(true);
   const demo = new URLSearchParams(location.search).has('demo') || sessionStorage.getItem('niv-demo') === '1';
@@ -37,6 +39,7 @@ function Inner() {
   useEffect(() => { const a = () => setOnline(true), b = () => setOnline(false); addEventListener('online', a); addEventListener('offline', b); return () => { removeEventListener('online', a); removeEventListener('offline', b); }; }, []);
   const out = useMemo(() => async () => { sessionStorage.removeItem('niv-demo'); if (liveEnabled) await logOut().catch(() => {}); setRepo(null); }, []);
   if (sso) return <Sso />;
+  const gk = gateKind(location.hash); if (gk) return <Gate kind={gk} />;
   if (booting) return null;
   if (!repo) return <Login onDemo={() => { sessionStorage.setItem('niv-demo', '1'); setRepo(demoRepo()); }} live={liveEnabled} />;
   const items = nav.filter((n: any) => !n.perm || (n.perm === 'quote' ? repo.can('createQuotes') || repo.can('approveQuotes') : repo.can(n.perm)));
