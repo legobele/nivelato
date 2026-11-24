@@ -1,7 +1,7 @@
 /* Live adapter: READ-ONLY against the production Firestore schema (orgs/{org}/jobs, customers; companies/{id}/priceList).
    The preview build never writes production data. saveJob throws until the cutover is approved. */
 import { initializeApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth';
+import { initializeAuth, browserSessionPersistence, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getFirestore, collection, getDocs, getDoc, doc, query, orderBy, limit, where } from 'firebase/firestore';
 import type { Repo, Job, Member } from './types';
@@ -14,8 +14,9 @@ const cfg = {
   storageBucket: 'nivelato-app.firebasestorage.app', messagingSenderId: '759893408531', appId: '1:759893408531:web:696e2da5f004a3bac5f8e6',
 };
 export const liveEnabled = Boolean(cfg.apiKey);
-const app = liveEnabled ? initializeApp(cfg) : null;
-export const auth = app ? getAuth(app) : null;
+// Named app + session-only persistence: the preview never shares or keeps a sign-in with any other app on the same origin.
+const app = liveEnabled ? initializeApp(cfg, 'nivelato-react-preview') : null;
+export const auth = app ? initializeAuth(app, { persistence: browserSessionPersistence }) : null;
 export const signIn = (e: string, p: string) => signInWithEmailAndPassword(auth!, e, p);
 export const logOut = () => signOut(auth!);
 export const watchAuth = (cb: (u: User | null) => void) => (auth ? onAuthStateChanged(auth, cb) : (cb(null), () => {}));
