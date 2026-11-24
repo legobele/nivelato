@@ -30,7 +30,7 @@ export async function liveRepo(user: User): Promise<Repo> {
   const me = { uid: user.uid, ...(meSnap.data()) , orgId } as any; const can = makePermChecker(me);
   const toJob = (d: any): Job => ({ id: d.id, ...d.data(), createdAt: ts(d.data().createdAt) } as Job);
   return {
-    mode: 'live', writable: false, me, can, orgName: org.data()?.name ?? 'Organización',
+    mode: 'live', writable: false, me, can, orgName: org.data()?.name ?? 'Organización', joinCode: (org.data()?.joinCode as string) || orgId,
     jobs: async () => (await getDocs(can('viewOthersMeasurements') ? query(collection(db, 'orgs', orgId, 'jobs'), orderBy('createdAt', 'desc'), limit(200)) : query(collection(db, 'orgs', orgId, 'jobs'), where('installerUid', '==', user.uid), limit(200)))).docs.map(toJob).filter((j) => j.status !== 'draft'),
     job: async (id) => { const s = await getDoc(doc(db, 'orgs', orgId, 'jobs', id)); return s.exists() ? toJob(s) : null; },
     customers: async () => { const js = (await getDocs(can('viewOthersMeasurements') ? query(collection(db, 'orgs', orgId, 'jobs'), limit(500)) : query(collection(db, 'orgs', orgId, 'jobs'), where('installerUid', '==', user.uid), limit(500)))).docs.map(toJob); const m = new Map<string, any>(); for (const j of js) { if (!j.customer) continue; const c = m.get(j.customer) ?? { id: j.customerId ?? encodeURIComponent(j.customer), nombre: j.customer, jobs: 0, last: 0 }; c.jobs++; c.last = Math.max(c.last, j.createdAt); m.set(j.customer, c); } return [...m.values()]; },
@@ -42,6 +42,7 @@ export async function liveRepo(user: User): Promise<Repo> {
     members: async () => (await getDocs(collection(db, 'users'))).docs.map((d) => ({ uid: d.id, ...d.data() }) as Member).filter((m: any) => (m as any).orgId === orgId),
     priceList: async () => { const cid = org.data()?.companyId; if (!cid) return []; return (await getDocs(collection(db, 'companies', cid, 'priceList'))).docs.map((d) => ({ id: d.id, ...d.data() }) as any); },
     savePrice: async () => { throw new Error(RO); }, deletePrice: async () => { throw new Error(RO); },
+    updateName: async () => { throw new Error(RO); }, updateOrgName: async () => { throw new Error(RO); },
     addCustomer: async () => { throw new Error(RO); }, addProject: async () => { throw new Error(RO); },
     saveJob: async () => { throw new Error('La vista previa React no escribe datos de producción.'); },
   };

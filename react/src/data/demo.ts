@@ -26,12 +26,15 @@ let prices: PriceItem[] = [
   { id: 'p2', nombre: 'Marco aluminio', unidad: 'pie', precio: 6.25, activo: true },
   { id: 'p3', nombre: 'Instalación', unidad: 'hora', precio: 45, activo: true }];
 export function demoRepo(): Repo {
-  let jobs = [...seed]; const xc: string[] = []; const xp: { customer: string; name: string }[] = [];
+  let orgName = 'Taller Demo'; let jobs = [...seed]; const xc: string[] = []; const xp: { customer: string; name: string }[] = [];
   let quotes: Quote[] = [mkq('q1', 'COT-0001', 'Residencia Ortiz', 'enviada', [L('Vidrio templado 1/4"', 2, 14.5, 'porPieCuadrado', 30), L('Instalación', 3, 45, 'porUnidad')], 2), mkq('q2', 'COT-0002', 'Farmacia Central', 'aprobada', [L('Vidrio templado 1/4"', 1, 14.5, 'porPieCuadrado', 80)], 8)];
   let notifs: Notif[] = [{ id: 'n1', type: 'device', title: 'Nuevo inicio de sesión', body: 'Medidor demo inició sesión en un dispositivo nuevo.', createdAt: Date.now() - 36e5, read: false }, { id: 'n2', type: 'update', title: 'Nueva versión disponible', createdAt: Date.now() - 864e5, read: true }];
   const me: any = { uid: 'u3', name: 'Medidor demo', role: 'owner', tier: 'ultra', orgId: 'demo', permissions: {} };
   return {
-    mode: 'demo', writable: true, orgName: 'Taller Demo', me, setRole: (r) => { me.role = r; }, can: (k) => makePermChecker(me)(k),
+    mode: 'demo', writable: true, joinCode: 'DEMO-4821', get orgName() { return orgName; },
+    updateName: async (n) => { n = n.trim(); if (!n) throw new Error('name'); me.name = n; },
+    updateOrgName: async (n) => { if (me.role !== 'owner') throw new Error('No permission'); n = n.trim(); if (!n) throw new Error('name'); orgName = n; },
+     me, setRole: (r) => { me.role = r; }, can: (k) => makePermChecker(me)(k),
     jobs: async () => (makePermChecker(me)('viewOthersMeasurements') ? jobs : jobs.filter((j) => j.installerUid === me.uid)), job: async (id) => jobs.find((j) => j.id === id) ?? null,
     customers: async () => {
       const m = new Map<string, Customer>();

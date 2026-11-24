@@ -23,6 +23,7 @@ export interface Repo {
   setRole?(r: string): void;
   can(k: PermKey): boolean;
   orgName: string;
+  joinCode?: string;
   jobs(): Promise<Job[]>;
   job(id: string): Promise<Job | null>;
   customers(): Promise<Customer[]>;
@@ -39,5 +40,7 @@ export interface Repo {
   deleteNotif(id: string): Promise<void>;
   addCustomer(name: string): Promise<void>;
   addProject(customer: string, name: string): Promise<void>;
+  updateName(name: string): Promise<void>;
+  updateOrgName(name: string): Promise<void>;
   saveJob(j: Omit<Job, 'id' | 'createdAt' | 'status' | 'installerName'>): Promise<string>;
 }
